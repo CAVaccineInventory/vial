@@ -1,0 +1,7 @@
+db.sqlite3
+Pipfile
+__pycache__
+.coverage
+.vscode
+.DS_Store
+env.sh
