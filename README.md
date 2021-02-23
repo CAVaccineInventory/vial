@@ -31,3 +31,7 @@ Running this requires two environment variables. I have a file called `env.sh` w
     export SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
     export DJANGO_SECRET_KEY="just a big random string"
     export DJANGO_DEBUG=1
+
+## Running the tests
+
+To run the tests, change directory to the `vaccinate` folder and run `pytest`.
