@@ -5,10 +5,11 @@
 ## What this does so far
 
 - SSO using Auth0 to sign users in with a Django user account
+- Run tests in GitHub Actions CI using pytest-django
+- Enforce Black code style in GitHub Actions
 
 ## What this will do
 
-- Run tests in GitHub Actions CI using pytest-django
 - Django ORM models for the schema needed to replace the core reports and locations tables from Airtable
 - Django admin configured to support managing those
 - Import existing data so we can really exercise the prototype
