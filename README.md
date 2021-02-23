@@ -35,3 +35,9 @@ Running this requires two environment variables. I have a file called `env.sh` w
 ## Running the tests
 
 To run the tests, change directory to the `vaccinate` folder and run `pytest`.
+
+## Code formatting
+
+This repository uses [Black](https://github.com/psf/black) to enforce coding style as part of the CI tests.
+
+Run `black .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.

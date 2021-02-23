@@ -3,3 +3,4 @@ social-auth-app-django~=4.0.0
 python-jose~=3.2.0
 python-dotenv~=0.15.0
 pytest-django~=4.1.0
+black==20.8b1
