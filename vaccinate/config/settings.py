@@ -1,5 +1,7 @@
 import dj_database_url
 from pathlib import Path
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -11,6 +13,15 @@ DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
 
 ALLOWED_HOSTS = ["*"]
 
+# Sentry
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+    )
 
 # Auth0
 SOCIAL_AUTH_TRAILING_SLASH = False
