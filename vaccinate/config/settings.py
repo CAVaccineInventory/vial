@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
 
-ALLOWED_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["*"]
 
 
 # Auth0
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -83,6 +84,14 @@ DATABASES = {
 if "DATABASE_URL" in os.environ:
     # Parse database configuration from $DATABASE_URL
     DATABASES["default"] = dj_database_url.config()
+
+
+# Static files
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_URL = "/static/"
+# Ensure STATIC_ROOT exists.
+os.makedirs(STATIC_ROOT, exist_ok=True)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
