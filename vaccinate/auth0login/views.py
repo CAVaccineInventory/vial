@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as log_out
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from urllib.parse import urlencode
 from django.conf import settings
@@ -18,13 +19,23 @@ def index(request):
 @login_required
 def dashboard(request):
     user = request.user
-    auth0user = user.social_auth.get(provider="auth0")
-    userdata = {
-        "user_id": auth0user.uid,
-        "name": user.first_name,
-        "picture": auth0user.extra_data["picture"],
-        "email": auth0user.extra_data["email"],
-    }
+    auth0user = None
+    try:
+        auth0user = user.social_auth.get(provider="auth0")
+        userdata = {
+            "user_id": auth0user.uid,
+            "name": user.first_name,
+            "picture": auth0user.extra_data["picture"],
+            "email": auth0user.extra_data["email"],
+        }
+    except ObjectDoesNotExist:
+        userdata = {
+            "user_id": user.id,
+            "name": user.username,
+            "picture": "",
+            "email": user.email,
+            "not_auth0": True,
+        }
 
     return render(
         request,
