@@ -10,6 +10,7 @@
 - Django ORM models for the new schema currently under discussion
 - Populates the state and county tables with 50 states + every county in CA
 - Configures Django Admin to run against those new models
+- Continuous Deployment to a staging environment (temporarily hosted on Heroku)
 
 ## What this will do
 
