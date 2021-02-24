@@ -7,11 +7,12 @@
 - SSO using Auth0 to sign users in with a Django user account
 - Run tests in GitHub Actions CI using pytest-django
 - Enforce Black code style in GitHub Actions
+- Django ORM models for the new schema currently under discussion
+- Populates the state and county tables with 50 states + every county in CA
+- Configures Django Admin to run against those new models
 
 ## What this will do
 
-- Django ORM models for the schema needed to replace the core reports and locations tables from Airtable
-- Django admin configured to support managing those
 - Import existing data so we can really exercise the prototype
 - I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
