@@ -96,6 +96,12 @@ class County(models.Model):
     vaccine_dashboard_url = CharTextField(null=True, blank=True)
     vaccine_data_url = CharTextField(null=True, blank=True)
     vaccine_arcgis_url = CharTextField(null=True, blank=True)
+    airtable_id = models.CharField(
+        max_length=20,
+        null=True,
+        unique=True,
+        help_text="Airtable record ID, if this has one",
+    )
 
     def __str__(self):
         return self.name
@@ -167,6 +173,12 @@ class Location(models.Model):
     internal_notes = models.TextField(null=True, blank=True)
     do_not_call = models.BooleanField(default=False)
     do_not_call_reason = models.TextField(null=True, blank=True)
+    airtable_id = models.CharField(
+        max_length=20,
+        null=True,
+        unique=True,
+        help_text="Airtable record ID, if this has one",
+    )
 
     def __str__(self):
         return self.name
@@ -295,6 +307,13 @@ class CallReport(models.Model):
         db_table="call_report_availability_tag",
     )
 
+    airtable_id = models.CharField(
+        max_length=20,
+        null=True,
+        unique=True,
+        help_text="Airtable record ID, if this has one",
+    )
+
     def __str__(self):
         return "Call to {} by {} at {}".format(
             self.location, self.reporter, self.created_at
@@ -321,6 +340,12 @@ class EvaReport(models.Model):
     )
     uploaded_at = models.DateTimeField(
         help_text="this is the time when we uploaded Eva's report. It might not even be on the same day that the report was filed"
+    )
+    airtable_id = models.CharField(
+        max_length=20,
+        null=True,
+        unique=True,
+        help_text="Airtable record ID, if this has one",
     )
 
     def __str__(self):

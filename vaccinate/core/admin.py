@@ -33,6 +33,7 @@ class CountyAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)
+    readonly_fields = ("airtable_id",)
 
 
 @admin.register(Location)
@@ -49,6 +50,7 @@ class LocationAdmin(admin.ModelAdmin):
     )
     list_filter = ("location_type", "state", "provider", "soft_deleted")
     raw_id_fields = ("county", "provider", "duplicate_of")
+    readonly_fields = ("airtable_id",)
 
 
 @admin.register(Reporter)
@@ -76,6 +78,7 @@ class CallReportAdmin(admin.ModelAdmin):
     list_display = ("location", "report_source", "reported_by", "created_at")
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = ("created_at", "report_source")
+    readonly_fields = ("airtable_id",)
 
 
 @admin.register(EvaReport)
@@ -89,6 +92,7 @@ class EvaReportAdmin(admin.ModelAdmin):
     )
     raw_id_fields = ("location",)
     list_filter = ("valid_at", "has_vaccines")
+    readonly_fields = ("airtable_id",)
 
 
 @admin.register(CallRequestReason)
