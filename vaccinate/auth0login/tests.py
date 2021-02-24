@@ -98,7 +98,10 @@ def test_login_with_auth0_complete(
     user = User.objects.get(pk=user_id)
     assert user.email == expected_email
     assert user.is_staff == should_be_staff
-
+    if should_be_staff:
+        assert user.groups.filter(name='default-view-core').exists()
+    else:
+        assert not user.groups.filter(name='default-view-core').exists()
 
 def _get_state(client):
     response = client.get("/login/auth0")
