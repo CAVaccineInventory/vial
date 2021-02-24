@@ -6,28 +6,48 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0004_populate_location_type_provider_type_availability_tag'),
+        ("core", "0004_populate_location_type_provider_type_availability_tag"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='callreport',
-            name='airtable_id',
-            field=models.CharField(help_text='Airtable record ID, if this has one', max_length=20, null=True, unique=True),
+            model_name="callreport",
+            name="airtable_id",
+            field=models.CharField(
+                help_text="Airtable record ID, if this has one",
+                max_length=20,
+                null=True,
+                unique=True,
+            ),
         ),
         migrations.AddField(
-            model_name='county',
-            name='airtable_id',
-            field=models.CharField(help_text='Airtable record ID, if this has one', max_length=20, null=True, unique=True),
+            model_name="county",
+            name="airtable_id",
+            field=models.CharField(
+                help_text="Airtable record ID, if this has one",
+                max_length=20,
+                null=True,
+                unique=True,
+            ),
         ),
         migrations.AddField(
-            model_name='evareport',
-            name='airtable_id',
-            field=models.CharField(help_text='Airtable record ID, if this has one', max_length=20, null=True, unique=True),
+            model_name="evareport",
+            name="airtable_id",
+            field=models.CharField(
+                help_text="Airtable record ID, if this has one",
+                max_length=20,
+                null=True,
+                unique=True,
+            ),
         ),
         migrations.AddField(
-            model_name='location',
-            name='airtable_id',
-            field=models.CharField(help_text='Airtable record ID, if this has one', max_length=20, null=True, unique=True),
+            model_name="location",
+            name="airtable_id",
+            field=models.CharField(
+                help_text="Airtable record ID, if this has one",
+                max_length=20,
+                null=True,
+                unique=True,
+            ),
         ),
     ]
