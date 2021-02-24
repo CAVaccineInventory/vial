@@ -74,7 +74,7 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 @admin.register(CallReport)
 class CallReportAdmin(admin.ModelAdmin):
     list_display = ("location", "report_source", "reported_by", "created_at")
-    raw_id_fields = ("location", "reported_by", "call_request", "availability_tags")
+    raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = ("created_at", "report_source")
 
 
@@ -121,7 +121,6 @@ class PublishedReportAdmin(admin.ModelAdmin):
     raw_id_fields = (
         "location",
         "reported_by",
-        "availability_tags",
         "call_reports",
         "eva_reports",
     )
