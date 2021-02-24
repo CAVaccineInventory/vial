@@ -2,6 +2,8 @@
 
 **This repository is currently a prototype / proof of concept**. This message will be removed should that no longer be true!
 
+Project background: [Spinning up a new Django app to act as a backend for VaccinateCA](https://github.com/CAVaccineInventory/simonw-internal-blog/blob/main/2021-02/2021-02-23.md)
+
 ## What this does so far
 
 - SSO using Auth0 to sign users in with a Django user account
