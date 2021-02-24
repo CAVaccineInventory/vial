@@ -39,7 +39,7 @@ jobs:
       env:
         DJANGO_SECRET_KEY: secret for running tests
         SOCIAL_AUTH_AUTH0_SECRET: auth0-secret-would-go-here
-        DATABASE_URL: postgres://postgres:postgres@postgres:5432/vaccinate
+        DATABASE_URL: postgres://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/vaccinate
       run: |
         cd vaccinate
         pytest
