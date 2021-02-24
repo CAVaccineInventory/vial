@@ -1,3 +1,4 @@
+import dj_database_url
 from pathlib import Path
 import os
 
@@ -70,16 +71,16 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "vaccinate",
     }
 }
 
+if "DATABASE_URL" in os.environ:
+    # Parse database configuration from $DATABASE_URL
+    DATABASES["default"] = dj_database_url.config()
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

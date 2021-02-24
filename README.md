@@ -33,6 +33,14 @@ Running this requires two environment variables. I have a file called `env.sh` w
     export DJANGO_SECRET_KEY="just a big random string"
     export DJANGO_DEBUG=1
 
+In development you will need to have a local PostgreSQL server running - I use PostgreSQL.app on my Mac for this.
+
+Then create a database called `vaccinate` by running this in the terminal:
+
+    createdb vaccinate
+
+If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`.
+
 ## Running the tests
 
 To run the tests, change directory to the `vaccinate` folder and run `pytest`.

@@ -4,3 +4,5 @@ python-jose~=3.2.0
 python-dotenv~=0.15.0
 pytest-django~=4.1.0
 black==20.8b1
+psycopg2-binary==2.8.6
+dj-database-url==0.5.0
