@@ -75,10 +75,18 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 
 @admin.register(CallReport)
 class CallReportAdmin(admin.ModelAdmin):
-    list_display = ("location", "report_source", "reported_by", "created_at")
+    list_display = (
+        "created_at",
+        "availability",
+        "location",
+        "report_source",
+        "reported_by",
+        "created_at",
+    )
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = ("created_at", "report_source")
     readonly_fields = ("airtable_id",)
+    ordering = ("-created_at",)
 
 
 @admin.register(EvaReport)

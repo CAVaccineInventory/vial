@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from .fields import CharTextField
 
@@ -289,7 +290,7 @@ class CallReport(models.Model):
         Reporter, related_name="call_reports", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
+        default=datetime.datetime.utcnow,
         help_text="the time when the report was submitted. We will interpret this as a validity time",
     )
     call_request = models.ForeignKey(
@@ -316,8 +317,12 @@ class CallReport(models.Model):
 
     def __str__(self):
         return "Call to {} by {} at {}".format(
-            self.location, self.reporter, self.created_at
+            self.location, self.reported_by, self.created_at
         )
+
+    def availability(self):
+        # Used by the admin list view
+        return ", ".join(self.availability_tags.values_list("name", flat=True))
 
     class Meta:
         db_table = "call_report"

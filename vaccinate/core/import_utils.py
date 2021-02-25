@@ -1,5 +1,16 @@
 from github_contents import GithubContents
-from .models import Location, State, LocationType, Provider, County, ProviderType
+from .models import (
+    AppointmentTag,
+    AvailabilityTag,
+    CallReport,
+    Location,
+    State,
+    LocationType,
+    Provider,
+    County,
+    ProviderType,
+    Reporter,
+)
 
 
 def load_airtable_backup(filepath, token):
@@ -58,3 +69,49 @@ def import_airtable_location(location):
     return Location.objects.update_or_create(
         airtable_id=location["airtable_id"], defaults=kwargs
     )[0]
+
+
+def import_airtable_report(report):
+    other = AppointmentTag.objects.get(name="other")
+    # This is entirely wrong - need to figure out:
+    assert "Reported by" in report, "Missing 'Reported by'"
+    reported_by = Reporter.objects.get_or_create(
+        airtable_name=report["Reported by"]["id"]
+    )[0]
+    try:
+        location = Location.objects.get(airtable_id=report["Location"][0])
+    except Location.DoesNotExist:
+        assert False, "No location record for location ID={}".format(report["Location"])
+    except KeyError:
+        assert False, "No Location key in JSON object at all"
+
+    kwargs = {
+        "location": location,
+        # Currently hard-coded to caller app:
+        "report_source": "ca",
+        # Currently hard-coded to 'other'
+        "appointment_tag": other,
+        # "appointment_details": "",
+        # "public_notes": "",
+        "internal_notes": report.get("Internal Notes"),
+        "reported_by": reported_by,
+        "created_at": report["airtable_createdTime"],
+        # "call_request": ...
+    }
+
+    tags = []
+    assert "Availability" in report, "Missing Availability"
+    for tag in report["Availability"]:
+        try:
+            tags.append(AvailabilityTag.objects.get(name=tag))
+        except AvailabilityTag.DoesNotExist:
+            assert False, "Invalid tag: {}".format(tag)
+
+    report_obj = CallReport.objects.update_or_create(
+        airtable_id=report["airtable_id"], defaults=kwargs
+    )[0]
+
+    for availability_tag in tags:
+        report_obj.availability_tags.add(availability_tag)
+
+    return report_obj
