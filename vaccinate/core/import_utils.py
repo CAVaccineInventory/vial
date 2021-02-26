@@ -52,8 +52,6 @@ def import_airtable_location(location):
         county = County.objects.get(
             state__abbreviation="CA", name=location["County"].replace(" County", "")
         )
-    else:
-        assert False, "No county"
     assert location.get("Latitude"), "No latitude"
     kwargs = {
         "name": location["Name"],

@@ -151,7 +151,11 @@ class Location(models.Model):
         help_text="a location may or may not be associated with a provider",
     )
     county = models.ForeignKey(
-        County, related_name="locations", on_delete=models.PROTECT
+        County,
+        null=True,
+        blank=True,
+        related_name="locations",
+        on_delete=models.PROTECT,
     )
     # This was originally specified as a 'coordinate point' but Django doesn't easily
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
