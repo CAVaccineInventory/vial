@@ -46,6 +46,7 @@ class LocationAdmin(admin.ModelAdmin):
     search_fields = ("name", "full_address")
     list_display = (
         "name",
+        "times_called",
         "full_address",
         "state",
         "county",
@@ -56,6 +57,15 @@ class LocationAdmin(admin.ModelAdmin):
     list_filter = ("location_type", "state", "provider", "soft_deleted")
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("airtable_id",)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(times_called_count=Count("call_reports"))
+
+    def times_called(self, inst):
+        return inst.times_called_count
+
+    times_called.admin_order_field = "times_called_count"
 
 
 @admin.register(Reporter)
