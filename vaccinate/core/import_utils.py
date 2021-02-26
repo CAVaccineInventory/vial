@@ -12,6 +12,17 @@ from .models import (
     Reporter,
 )
 
+FIX_AVAILABILITY_TAGS = {
+    "Vaccinating essential workers": "Yes: Vaccinating essential workers",
+    "Scheduling second dose only": "Yes: Scheduling second dose only",
+}
+FIX_COUNTIES = {
+    # 'Napa ' => 'Napa'
+    "recjptepZLP1mzVDC": "recJ1fLYsngDaIRLG",
+    # 'San Francisco County' => 'San Francisco'
+    "recKSehOUATJ8CUkp": "recOuBZk28GMl7mVw",
+}
+
 
 def load_airtable_backup(filepath, token):
     github = GithubContents("CAVaccineInventory", "airtable-data-backup", token)
@@ -21,13 +32,6 @@ def load_airtable_backup(filepath, token):
 def import_airtable_location(location):
     assert location.get("Name"), "No name"
     ca = State.objects.get(abbreviation="CA")
-    # Special case: # "Napa ": "recjptepZLP1mzVDC" was a duplicate county
-    fix_counties = {
-        # 'Napa ' => 'Napa'
-        "recjptepZLP1mzVDC": "recJ1fLYsngDaIRLG",
-        # 'San Francisco County' => 'San Francisco'
-        "recKSehOUATJ8CUkp": "recOuBZk28GMl7mVw",
-    }
     address = location.get("Address") or ""
     # For the moment we default LocationType to Pharmacy - we should add "Unknown"
     location_type = location.get("Location Type", "Other")
@@ -40,7 +44,7 @@ def import_airtable_location(location):
     county = None
     if location.get("County link"):
         county = County.objects.get(
-            airtable_id=fix_counties.get(
+            airtable_id=FIX_COUNTIES.get(
                 location["County link"][0], location["County link"][0]
             )
         )
@@ -103,6 +107,7 @@ def import_airtable_report(report):
     tags = []
     assert "Availability" in report, "Missing Availability"
     for tag in report["Availability"]:
+        tag = FIX_AVAILABILITY_TAGS.get(tag, tag)
         try:
             tags.append(AvailabilityTag.objects.get(name=tag))
         except AvailabilityTag.DoesNotExist:
