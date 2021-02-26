@@ -259,7 +259,7 @@ class AppointmentTag(models.Model):
 
 class CallReport(models.Model):
     """
-    A report from a human making a phone call.
+    A report on the availability of the vaccine. Could be from a phone call, or a site visit, or reading a website.
     """
 
     class ReportSource(models.TextChoices):
