@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 import json
@@ -59,8 +60,17 @@ class LocationAdmin(admin.ModelAdmin):
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
     search_fields = ("airtable_name", "auth0_name")
-    list_display = ("airtable_name", "auth0_name", "auth0_role_name")
+    list_display = ("airtable_name", "auth0_name", "auth0_role_name", "call_count")
     list_filter = ("auth0_role_name",)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.annotate(reporter_call_count=Count("call_reports"))
+
+    def call_count(self, inst):
+        return inst.reporter_call_count
+
+    call_count.admin_order_field = "reporter_call_count"
 
 
 @admin.register(AvailabilityTag)
