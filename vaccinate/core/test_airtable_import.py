@@ -75,7 +75,8 @@ def test_import_airtable_location():
 
 
 @pytest.mark.django_db
-def test_import_airtable_report():
+def test_import_airtable_report_pre_help_vaccinate_launch():
+    # This report is from before the help.vaccinateca app was launched
     report_json = {
         "Affiliation (from Location)": ["Rite-Aid"],
         "Availability": ["No: no vaccine inventory"],
@@ -96,7 +97,7 @@ def test_import_airtable_report():
         "airtable_createdTime": "2021-01-28T03:19:51.000Z",
         "airtable_id": "reczzhVUpoBQb6CUA",
         "is_latest_report_for_location": 0,
-        "location_id": ["receRct4dcHKQmvDs"],
+        "location_id": ["rec00NpJzUnVDpLaQ"],
         "location_latest_eva_report_time": ["2021-02-20T03:33:41.000Z"],
         "location_latest_report_id": [21388],
         "location_latest_report_time": ["2021-02-20T05:09:06.000Z"],
@@ -126,3 +127,67 @@ def test_import_airtable_report():
     assert list(report.availability_tags.values_list("name", flat=True)) == [
         "No: no vaccine inventory"
     ]
+
+
+@pytest.mark.django_db
+def test_import_airtable_report_post_help_vaccinate_launch():
+    # This report is from AFTER help.vaccinateca app launched
+    report_json = {
+        "ID": 26383,
+        "Hour": 23,
+        "time": "2021-02-25T23:54:04.000Z",
+        "Location": ["rec00NpJzUnVDpLaQ"],
+        "report_id": "recXBlDw9Zr7bB84O",
+        "Report Type": "Volunteer",
+        "Reported by": {
+            "id": "usr3nFXwxJnpVjv4i",
+            "name": "Help.vaccinateCA RW Role account for API token",
+            "email": "jesse+role-rw-help-vaccinateca@vaccinateca.com",
+        },
+        "airtable_id": "recXBlDw9Zr7bB84O",
+        "location_id": ["rec00NpJzUnVDpLaQ"],
+        "Availability": [
+            "Yes: vaccinating 65+",
+            "Yes: appointment required",
+            "Yes: appointment calendar currently full",
+        ],
+        "tmp_eva_flips": [None],
+        "Internal Notes": "Essential workers start March 1st\n",
+        "Do not call until": "2021-02-26T00:49:34.606Z",
+        "auth0_reporter_id": "auth0|6037",
+        "auth0_reporter_name": "S B",
+        "Name (from Location)": ["RITE AID PHARMACY 05537"],
+        "airtable_createdTime": "2021-02-25T23:54:04.000Z",
+        "auth0_reporter_roles": "Volunteer Caller",
+        "Appointments by phone?": True,
+        "County (from Location)": ["Los Angeles County"],
+        "location_latest_report_id": [26383],
+        "Affiliation (from Location)": ["Rite-Aid"],
+        "location_latest_report_time": ["2021-02-25T23:54:04.000Z"],
+        "Location Type (from Location)": ["Pharmacy"],
+        "is_latest_report_for_location": 1,
+        "location_latest_eva_report_time": ["2021-02-24T05:16:09.000Z"],
+        "Number of Reports (from Location)": [3],
+        "Appointment scheduling instructions": "Uses county scheduling system",
+    }
+    assert not CallReport.objects.filter(airtable_id="rec00NpJzUnVDpLaQ").exists()
+
+    # The location would have been created already
+    import_airtable_location(location_json)
+
+    report = import_airtable_report(report_json)
+
+    assert report.report_source == "ca"
+    assert report.appointment_tag.name == "other"
+    assert report.location.name == "Kaiser Permanente Pharmacy #568"
+    assert report.internal_notes == "Essential workers start March 1st\n"
+    assert report.reported_by.airtable_name is None
+    assert report.reported_by.auth0_name == "auth0|6037"
+    assert report.reported_by.auth0_role_name == "Volunteer Caller"
+    assert str(report.created_at) == "2021-02-25T23:54:04.000Z"
+    assert report.airtable_id == "recXBlDw9Zr7bB84O"
+    assert set(report.availability_tags.values_list("name", flat=True)) == {
+        "Yes: vaccinating 65+",
+        "Yes: appointment required",
+        "Yes: appointment calendar currently full",
+    }

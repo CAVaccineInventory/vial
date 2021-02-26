@@ -77,11 +77,18 @@ def import_airtable_location(location):
 
 def import_airtable_report(report):
     other = AppointmentTag.objects.get(name="other")
-    # This is entirely wrong - need to figure out:
+
     assert "Reported by" in report, "Missing 'Reported by'"
-    reported_by = Reporter.objects.get_or_create(
-        airtable_name=report["Reported by"]["id"]
-    )[0]
+    if report.get("auth0_reporter_id"):
+        reported_by = Reporter.objects.get_or_create(
+            auth0_name=report["auth0_reporter_id"],
+            defaults={"auth0_role_name": report["auth0_reporter_roles"]},
+        )[0]
+    else:
+        reported_by = Reporter.objects.get_or_create(
+            airtable_name=report["Reported by"]["id"],
+        )[0]
+
     try:
         location = Location.objects.get(airtable_id=report["Location"][0])
     except Location.DoesNotExist:
@@ -93,14 +100,14 @@ def import_airtable_report(report):
         "location": location,
         # Currently hard-coded to caller app:
         "report_source": "ca",
-        # Currently hard-coded to 'other'
+        # Currently hard-coded to 'other' - this is solvable with more thought:
         "appointment_tag": other,
         # "appointment_details": "",
         # "public_notes": "",
         "internal_notes": report.get("Internal Notes"),
         "reported_by": reported_by,
         "created_at": report["airtable_createdTime"],
-        # "call_request": ...
+        # "call_request" isn't a concept that exists in Airtable
         "airtable_json": report,
     }
 
