@@ -1,3 +1,4 @@
+import datetime
 from django.contrib.sessions.models import Session
 from django.contrib.auth.models import User
 import pytest
@@ -71,8 +72,10 @@ def test_login_with_auth0_start(client):
     ),
 )
 def test_login_with_auth0_complete(
-    client, requests_mock, id_token, expected_email, should_be_staff
+    client, requests_mock, time_machine, id_token, expected_email, should_be_staff
 ):
+    # The tokens I baked into the tests have an expiry date:
+    time_machine.move_to(datetime.datetime(2021, 2, 24, 10, 0, 0))
     requests_mock.post(
         "https://vaccinateca.us.auth0.com/oauth/token",
         json={
