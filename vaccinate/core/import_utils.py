@@ -110,8 +110,7 @@ def import_airtable_report(report):
     }
 
     tags = []
-    assert "Availability" in report, "Missing Availability"
-    for tag in report["Availability"]:
+    for tag in report.get("Availability") or []:
         tag = FIX_AVAILABILITY_TAGS.get(tag, tag)
         try:
             tags.append(AvailabilityTag.objects.get(name=tag))
