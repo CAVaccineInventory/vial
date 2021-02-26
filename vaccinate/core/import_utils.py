@@ -97,6 +97,7 @@ def import_airtable_report(report):
         "reported_by": reported_by,
         "created_at": report["airtable_createdTime"],
         # "call_request": ...
+        "airtable_json": report,
     }
 
     tags = []

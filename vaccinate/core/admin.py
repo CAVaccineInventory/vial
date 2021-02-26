@@ -84,8 +84,12 @@ class CallReportAdmin(admin.ModelAdmin):
         "created_at",
     )
     raw_id_fields = ("location", "reported_by", "call_request")
-    list_filter = ("created_at", "report_source")
-    readonly_fields = ("airtable_id",)
+    list_filter = (
+        "created_at",
+        "report_source",
+        ("airtable_json", admin.EmptyFieldListFilter),
+    )
+    readonly_fields = ("airtable_id", "airtable_json")
     ordering = ("-created_at",)
 
 

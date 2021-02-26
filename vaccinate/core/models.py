@@ -314,6 +314,7 @@ class CallReport(models.Model):
         unique=True,
         help_text="Airtable record ID, if this has one",
     )
+    airtable_json = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return "Call to {} by {} at {}".format(
