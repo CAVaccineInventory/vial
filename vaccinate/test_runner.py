@@ -4,6 +4,7 @@
 #
 # https://pytest-django.readthedocs.io/en/latest/faq.html#how-can-i-use-manage-py-test-with-pytest-django
 
+
 class PytestTestRunner:
     """Runs pytest to discover and run tests."""
 
