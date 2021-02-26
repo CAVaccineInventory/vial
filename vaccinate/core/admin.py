@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
+import json
 from .models import (
     LocationType,
     ProviderType,
@@ -89,8 +92,18 @@ class CallReportAdmin(admin.ModelAdmin):
         "report_source",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
-    readonly_fields = ("airtable_id", "airtable_json")
+    exclude = ("airtable_json",)
+    readonly_fields = ("airtable_id", "airtable_json_prettified")
     ordering = ("-created_at",)
+
+    def airtable_json_prettified(self, instance):
+        return mark_safe(
+            '<pre style="font-size: 0.8em">{}</pre>'.format(
+                escape(json.dumps(instance.airtable_json, indent=2))
+            )
+        )
+
+    airtable_json_prettified.short_description = "Airtable JSON"
 
 
 @admin.register(EvaReport)
