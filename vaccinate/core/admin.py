@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 import json
@@ -72,6 +73,20 @@ class ReporterAdmin(admin.ModelAdmin):
 
     call_count.admin_order_field = "reporter_call_count"
 
+    readonly_fields = ("recent_calls",)
+
+    def recent_calls(self, instance):
+        return mark_safe(
+            render_to_string(
+                "admin/_reporter_recent_calls.html",
+                {
+                    "reporter": instance,
+                    "recent_calls": instance.call_reports.order_by("-created_at")[:20],
+                    "call_count": instance.call_reports.count(),
+                },
+            )
+        )
+
 
 @admin.register(AvailabilityTag)
 class AvailabilityTagAdmin(admin.ModelAdmin):
@@ -105,6 +120,10 @@ class CallReportAdmin(admin.ModelAdmin):
     exclude = ("airtable_json",)
     readonly_fields = ("airtable_id", "airtable_json_prettified")
     ordering = ("-created_at",)
+
+    def lookup_allowed(self, lookup, value):
+        "Enable all querystring lookups! Really powerful, and we trust our staff"
+        return True
 
     def airtable_json_prettified(self, instance):
         return mark_safe(
