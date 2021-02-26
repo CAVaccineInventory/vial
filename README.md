@@ -14,10 +14,15 @@ Project background: [Spinning up a new Django app to act as a backend for Vaccin
 - Configures Django Admin to run against those new models
 - Continuous Deployment to a staging environment (temporarily hosted on Heroku)
 
+For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
+
 ## What this will do
 
 - Import existing data so we can really exercise the prototype
 - I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
+- Provide an alternative API to the Airtable one so that `help.vaccinate` can write directly to Django
+
+The [issues](https://github.com/CAVaccineInventory/django.vaccinate/issues) in this repo closely track upcoming work.
 
 ## Setup
 
