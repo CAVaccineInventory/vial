@@ -78,9 +78,9 @@ def import_airtable_report(report):
     appointment_details = ""
     if "Appointments by phone?" in report:
         appointments_by_phone = report["Appointments by phone?"]
-        appointment_scheduling_instructions = report[
-            "Appointment scheduling instructions"
-        ]
+        appointment_scheduling_instructions = (
+            report.get("Appointment scheduling instructions") or ""
+        )
         appointment_tag_string, appointment_details = derive_appointment_tag(
             appointments_by_phone, appointment_scheduling_instructions
         )
