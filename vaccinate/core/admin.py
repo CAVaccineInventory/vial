@@ -14,7 +14,7 @@ from .models import (
     Reporter,
     AvailabilityTag,
     AppointmentTag,
-    CallReport,
+    Report,
     EvaReport,
     CallRequestReason,
     CallRequest,
@@ -111,8 +111,8 @@ class AppointmentTagAdmin(admin.ModelAdmin):
     list_display = ("name", "has_details")
 
 
-@admin.register(CallReport)
-class CallReportAdmin(admin.ModelAdmin):
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "created_at",
         "availability",

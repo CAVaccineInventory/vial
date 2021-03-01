@@ -257,7 +257,7 @@ class AppointmentTag(models.Model):
         db_table = "appointment_tag"
 
 
-class CallReport(models.Model):
+class Report(models.Model):
     """
     A report on the availability of the vaccine. Could be from a phone call, or a site visit, or reading a website.
     """
@@ -421,7 +421,7 @@ class CallRequest(models.Model):
         help_text=" the type of tip that prompted this call request, if any",
     )
     tip_report = models.ForeignKey(
-        CallReport,
+        Report,
         blank=True,
         null=True,
         related_name="prompted_call_requests",
@@ -478,7 +478,7 @@ class PublishedReport(models.Model):
         db_table="published_report_availability_tag",
     )
     call_reports = models.ManyToManyField(
-        CallReport,
+        Report,
         related_name="published_reports",
         db_table="published_report_call_report",
     )

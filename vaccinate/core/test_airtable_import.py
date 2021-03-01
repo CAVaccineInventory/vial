@@ -1,4 +1,4 @@
-from .models import Location, CallReport
+from .models import Location, Report
 from .import_utils import import_airtable_location, import_airtable_report
 import pytest
 
@@ -107,7 +107,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
         "time": "2021-01-28T03:19:51.000Z",
         "tmp_eva_flips": [None],
     }
-    assert not CallReport.objects.filter(airtable_id="rec00NpJzUnVDpLaQ").exists()
+    assert not Report.objects.filter(airtable_id="rec00NpJzUnVDpLaQ").exists()
 
     # The location would have been created already
     import_airtable_location(location_json)
@@ -170,7 +170,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
         "Number of Reports (from Location)": [3],
         "Appointment scheduling instructions": "Uses county scheduling system",
     }
-    assert not CallReport.objects.filter(airtable_id="rec00NpJzUnVDpLaQ").exists()
+    assert not Report.objects.filter(airtable_id="rec00NpJzUnVDpLaQ").exists()
 
     # The location would have been created already
     import_airtable_location(location_json)

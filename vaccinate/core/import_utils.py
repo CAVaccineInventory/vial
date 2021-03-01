@@ -2,7 +2,7 @@ from github_contents import GithubContents
 from .models import (
     AppointmentTag,
     AvailabilityTag,
-    CallReport,
+    Report,
     Location,
     State,
     LocationType,
@@ -117,7 +117,7 @@ def import_airtable_report(report):
         except AvailabilityTag.DoesNotExist:
             assert False, "Invalid tag: {}".format(tag)
 
-    report_obj = CallReport.objects.update_or_create(
+    report_obj = Report.objects.update_or_create(
         airtable_id=report["airtable_id"], defaults=kwargs
     )[0]
 
