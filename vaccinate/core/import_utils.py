@@ -93,13 +93,20 @@ def import_airtable_report(report, availability_tags=None):
 
     assert "Reported by" in report, "Missing 'Reported by'"
     if report.get("auth0_reporter_id"):
-        reported_by = Reporter.objects.get_or_create(
-            auth0_name=report["auth0_reporter_id"],
-            defaults={"auth0_role_name": report["auth0_reporter_roles"]},
+        reported_by = Reporter.objects.update_or_create(
+            external_id="auth0:{}".format(report["auth0_reporter_id"]),
+            defaults={
+                "name": report["auth0_reporter_name"],
+                "auth0_role_name": report["auth0_reporter_roles"],
+            },
         )[0]
     else:
-        reported_by = Reporter.objects.get_or_create(
-            airtable_name=report["Reported by"]["id"],
+        reported_by = Reporter.objects.update_or_create(
+            external_id="airtable:{}".format(report["Reported by"]["id"]),
+            defaults={
+                "name": report["Reported by"]["name"],
+                "email": report["Reported by"]["email"],
+            },
         )[0]
 
     try:
@@ -127,9 +134,9 @@ def import_airtable_report(report, availability_tags=None):
     for tag_name in report.get("Availability") or []:
         tag_name = fix_availability_tags.get(tag_name, tag_name)
         try:
-            tags.append(AvailabilityTag.objects.get(name=tag))
+            tags.append(AvailabilityTag.objects.get(name=tag_name))
         except AvailabilityTag.DoesNotExist:
-            assert False, "Invalid tag: {}".format(tag)
+            assert False, "Invalid tag: {}".format(tag_name)
 
     report_obj = Report.objects.update_or_create(
         airtable_id=report["airtable_id"], defaults=kwargs

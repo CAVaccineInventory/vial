@@ -125,7 +125,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
         report.internal_notes
         == "The automotive mentioned that riteaid.com will have all the information they're looking for. As soon as they get the vaccines, based on eligibility they are going to deliver it to the public\n"
     )
-    assert report.reported_by.airtable_name == "usrsCexDQt6GmdDm0"
+    assert report.reported_by.external_id == "airtable:usrsCexDQt6GmdDm0"
     assert str(report.created_at) == "2021-01-28T03:19:51.000Z"
     assert report.airtable_id == "reczzhVUpoBQb6CUA"
     assert list(report.availability_tags.values_list("name", flat=True)) == [
@@ -185,8 +185,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     assert report.appointment_tag.slug == "county_website"
     assert report.location.name == "Kaiser Permanente Pharmacy #568"
     assert report.internal_notes == "Essential workers start March 1st\n"
-    assert report.reported_by.airtable_name is None
-    assert report.reported_by.auth0_name == "auth0|6037"
+    assert report.reported_by.external_id == "auth0:auth0|6037"
     assert report.reported_by.auth0_role_name == "Volunteer Caller"
     assert str(report.created_at) == "2021-02-25T23:54:04.000Z"
     assert report.airtable_id == "recXBlDw9Zr7bB84O"
