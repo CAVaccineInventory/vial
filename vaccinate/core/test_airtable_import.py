@@ -129,7 +129,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
     assert str(report.created_at) == "2021-01-28T03:19:51.000Z"
     assert report.airtable_id == "reczzhVUpoBQb6CUA"
     assert list(report.availability_tags.values_list("name", flat=True)) == [
-        "No: no vaccine inventory"
+        "No vaccine inventory"
     ]
 
 
@@ -191,9 +191,9 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     assert str(report.created_at) == "2021-02-25T23:54:04.000Z"
     assert report.airtable_id == "recXBlDw9Zr7bB84O"
     assert set(report.availability_tags.values_list("name", flat=True)) == {
-        "Yes: vaccinating 65+",
-        "Yes: appointment required",
-        "Yes: appointment calendar currently full",
+        "Vaccinating 65+",
+        "Appointment required",
+        "Appointment calendar currently full",
     }
 
 

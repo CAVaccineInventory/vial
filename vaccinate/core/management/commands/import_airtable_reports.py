@@ -1,3 +1,4 @@
+from core.models import AvailabilityTag
 from django.core.management.base import BaseCommand, CommandError
 from core.import_utils import load_airtable_backup, import_airtable_report
 import json
@@ -26,9 +27,12 @@ class Command(BaseCommand):
         else:
             content = open(json_file).read()
         reports = json.loads(content)
+        # Load these once to avoid loading them on every call to
+        # the import_availability_report function
+        availability_tags = AvailabilityTag.objects.all()
         for report in reports:
             try:
-                import_airtable_report(report)
+                import_airtable_report(report, availability_tags)
             except AssertionError as e:
                 print("Skipping {}, reason={}".format(report["airtable_id"], str(e)))
                 continue

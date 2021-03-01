@@ -12,10 +12,6 @@ from .models import (
     Reporter,
 )
 
-FIX_AVAILABILITY_TAGS = {
-    "Vaccinating essential workers": "Yes: Vaccinating essential workers",
-    "Scheduling second dose only": "Yes: Scheduling second dose only",
-}
 FIX_COUNTIES = {
     # 'Napa ' => 'Napa'
     "recjptepZLP1mzVDC": "recJ1fLYsngDaIRLG",
@@ -73,7 +69,17 @@ def import_airtable_location(location):
     )[0]
 
 
-def import_airtable_report(report):
+def import_airtable_report(report, availability_tags=None):
+    fix_availability_tags = {
+        "Vaccinating essential workers": "Yes: Vaccinating essential workers",
+        "Scheduling second dose only": "Yes: Scheduling second dose only",
+    }
+    if not availability_tags:
+        availability_tags = AvailabilityTag.objects.all()
+    for tag in availability_tags:
+        for previous_name in tag.previous_names:
+            fix_availability_tags[previous_name] = tag.name
+
     appointment_tag_string = "other"
     appointment_details = ""
     if (
@@ -122,7 +128,7 @@ def import_airtable_report(report):
 
     tags = []
     for tag in report.get("Availability") or []:
-        tag = FIX_AVAILABILITY_TAGS.get(tag, tag)
+        tag = fix_availability_tags.get(tag, tag)
         try:
             tags.append(AvailabilityTag.objects.get(name=tag))
         except AvailabilityTag.DoesNotExist:

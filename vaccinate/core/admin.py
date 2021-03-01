@@ -101,8 +101,8 @@ class ReporterAdmin(admin.ModelAdmin):
 @admin.register(AvailabilityTag)
 class AvailabilityTagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
-    list_display = ("name", "notes", "disabled")
-    list_filter = ("disabled",)
+    list_display = ("name", "group", "notes", "slug", "disabled")
+    list_filter = ("group", "disabled")
 
 
 @admin.register(AppointmentTag)

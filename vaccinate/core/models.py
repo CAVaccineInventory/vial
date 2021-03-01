@@ -226,8 +226,19 @@ class AvailabilityTag(models.Model):
     """
 
     name = CharTextField(unique=True)
+    slug = models.SlugField(null=True)
+    group = models.CharField(
+        max_length=10,
+        choices=(("yes", "yes"), ("no", "no"), ("skip", "skip")),
+        null=True,
+    )
     notes = CharTextField(null=True, blank=True)
     disabled = models.BooleanField(default=False)
+
+    previous_names = models.JSONField(
+        default=list,
+        help_text="Any previous names used for this tag, used for keeping import scripts working",
+    )
 
     def __str__(self):
         return self.name
