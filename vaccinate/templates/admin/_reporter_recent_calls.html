@@ -1,7 +1,7 @@
-<h2>{{ reporter }} has made {{ call_count }} call{{ call_count|pluralize }}</h2>
+<h2>{{ reporter }} has made {{ report_count }} report{{ report_count|pluralize }}</h2>
 
-<p><strong>Recent calls</strong> (<a href="/admin/core/report/?reported_by__exact={{ reporter.id }}">view all</a>)</p>
+<p><strong>Recent reports</strong> (<a href="/admin/core/report/?reported_by__exact={{ reporter.id }}">view all</a>)</p>
 
-{% for call in recent_calls %}
-    <p><a href="/admin/core/location/{{ call.location.id }}/change/">{{ call.location }}</a> on {{ call.created_at }}</p>
+{% for report in recent_reports %}
+    <p><a href="/admin/core/location/{{ report.location.id }}/change/">{{ report.location }}</a> on {{ report.created_at }}</p>
 {% endfor %}

@@ -281,7 +281,7 @@ class Report(models.Model):
 
     location = models.ForeignKey(
         Location,
-        related_name="call_reports",
+        related_name="reports",
         on_delete=models.PROTECT,
         help_text="a report must have a location",
     )
@@ -292,7 +292,7 @@ class Report(models.Model):
     )
     appointment_tag = models.ForeignKey(
         AppointmentTag,
-        related_name="call_reports",
+        related_name="reports",
         on_delete=models.PROTECT,
         help_text="a single appointment tag, indicating how appointments are made",
     )
@@ -304,7 +304,7 @@ class Report(models.Model):
     public_notes = models.TextField(null=True, blank=True)
     internal_notes = models.TextField(null=True, blank=True)
     reported_by = models.ForeignKey(
-        Reporter, related_name="call_reports", on_delete=models.PROTECT
+        Reporter, related_name="reports", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(
         default=datetime.datetime.utcnow,
@@ -314,14 +314,14 @@ class Report(models.Model):
         "CallRequest",
         null=True,
         blank=True,
-        related_name="call_reports",
+        related_name="reports",
         on_delete=models.PROTECT,
         help_text="the call request that this report was based on, if any.",
     )
 
     availability_tags = models.ManyToManyField(
         AvailabilityTag,
-        related_name="call_reports",
+        related_name="reports",
         db_table="call_report_availability_tag",
     )
 

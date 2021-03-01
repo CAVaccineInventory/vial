@@ -46,7 +46,7 @@ class LocationAdmin(admin.ModelAdmin):
     search_fields = ("name", "full_address")
     list_display = (
         "name",
-        "times_called",
+        "times_reported",
         "full_address",
         "state",
         "county",
@@ -60,12 +60,12 @@ class LocationAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate(times_called_count=Count("call_reports"))
+        return qs.annotate(times_reported_count=Count("reports"))
 
-    def times_called(self, inst):
-        return inst.times_called_count
+    def times_reported(self, inst):
+        return inst.times_reported_count
 
-    times_called.admin_order_field = "times_called_count"
+    times_reported.admin_order_field = "times_reported_count"
 
 
 class ReporterProviderFilter(admin.SimpleListFilter):
@@ -84,17 +84,17 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
-    list_display = ("external_id", "name", "call_count")
+    list_display = ("external_id", "name", "report_count")
     list_filter = (ReporterProviderFilter, "auth0_role_name")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate(reporter_call_count=Count("call_reports"))
+        return qs.annotate(reporter_report_count=Count("reports"))
 
-    def call_count(self, inst):
-        return inst.reporter_call_count
+    def report_count(self, inst):
+        return inst.reporter_report_count
 
-    call_count.admin_order_field = "reporter_call_count"
+    report_count.admin_order_field = "reporter_report_count"
 
     readonly_fields = ("recent_calls",)
 
@@ -104,8 +104,8 @@ class ReporterAdmin(admin.ModelAdmin):
                 "admin/_reporter_recent_calls.html",
                 {
                     "reporter": instance,
-                    "recent_calls": instance.call_reports.order_by("-created_at")[:20],
-                    "call_count": instance.call_reports.count(),
+                    "recent_reports": instance.reports.order_by("-created_at")[:20],
+                    "report_count": instance.reports.count(),
                 },
             )
         )
