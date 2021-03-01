@@ -244,6 +244,7 @@ class AppointmentTag(models.Model):
     such as a URL.
     """
 
+    slug = models.SlugField(unique=True)
     name = models.CharField(max_length=30, unique=True)
     has_details = models.BooleanField(
         default=False,
