@@ -76,8 +76,11 @@ def import_airtable_location(location):
 def import_airtable_report(report):
     appointment_tag_string = "other"
     appointment_details = ""
-    if "Appointments by phone?" in report:
-        appointments_by_phone = report["Appointments by phone?"]
+    if (
+        "Appointments by phone?" in report
+        or "Appointment scheduling instructions" in report
+    ):
+        appointments_by_phone = bool(report.get("Appointments by phone?"))
         appointment_scheduling_instructions = (
             report.get("Appointment scheduling instructions") or ""
         )
