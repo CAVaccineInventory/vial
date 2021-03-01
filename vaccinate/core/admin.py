@@ -68,8 +68,8 @@ class LocationAdmin(admin.ModelAdmin):
     times_called.admin_order_field = "times_called_count"
 
 
-class CountryFilter(admin.SimpleListFilter):
-    title = "Provider"  # or use _('country') for translated title
+class ReporterProviderFilter(admin.SimpleListFilter):
+    title = "Provider"
     parameter_name = "provider"
 
     def lookups(self, request, model_admin):
@@ -85,7 +85,7 @@ class CountryFilter(admin.SimpleListFilter):
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
     list_display = ("external_id", "name", "call_count")
-    list_filter = (CountryFilter,)
+    list_filter = (ReporterProviderFilter, "auth0_role_name")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
