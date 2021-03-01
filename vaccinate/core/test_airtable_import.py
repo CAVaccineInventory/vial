@@ -201,6 +201,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     "appointments_by_phone,appointment_scheduling_instructions,expected_tag,expected_instructions",
     (
         (True, "555-555-5555", "phone", "555-555-5555"),
+        (True, "Uses county scheduling system", "county_website", None),
         (False, "Uses county scheduling system", "county_website", None),
         (False, "https://myturn.ca.gov/", "myturn_ca_gov", None),
         (False, "www.example.com", "web", "www.example.com"),

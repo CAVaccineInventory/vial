@@ -130,12 +130,12 @@ def import_airtable_report(report):
 def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instructions):
     # https://github.com/CAVaccineInventory/django.vaccinate/issues/20
     # Returns (appointment_tag, other_instructions)
-    if appointments_by_phone:
-        return "phone", appointment_scheduling_instructions
-    elif appointment_scheduling_instructions == "Uses county scheduling system":
+    if appointment_scheduling_instructions == "Uses county scheduling system":
         return "county_website", None
     elif appointment_scheduling_instructions == "https://myturn.ca.gov/":
         return "myturn_ca_gov", None
+    elif appointments_by_phone:
+        return "phone", appointment_scheduling_instructions
     elif (
         appointment_scheduling_instructions.startswith("http://")
         or appointment_scheduling_instructions.startswith("https://")
