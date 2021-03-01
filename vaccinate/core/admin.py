@@ -117,14 +117,14 @@ class ReportAdmin(admin.ModelAdmin):
         "created_at",
         "availability",
         "location",
-        "report_source",
+        "appointment_tag",
         "reported_by",
         "created_at",
     )
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "created_at",
-        "report_source",
+        "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
     exclude = ("airtable_json",)
