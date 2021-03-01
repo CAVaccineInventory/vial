@@ -70,10 +70,7 @@ def import_airtable_location(location):
 
 
 def import_airtable_report(report, availability_tags=None):
-    fix_availability_tags = {
-        "Vaccinating essential workers": "Yes: Vaccinating essential workers",
-        "Scheduling second dose only": "Yes: Scheduling second dose only",
-    }
+    fix_availability_tags = {}
     if not availability_tags:
         availability_tags = AvailabilityTag.objects.all()
     for tag in availability_tags:
@@ -127,8 +124,8 @@ def import_airtable_report(report, availability_tags=None):
     }
 
     tags = []
-    for tag in report.get("Availability") or []:
-        tag = fix_availability_tags.get(tag, tag)
+    for tag_name in report.get("Availability") or []:
+        tag_name = fix_availability_tags.get(tag_name, tag_name)
         try:
             tags.append(AvailabilityTag.objects.get(name=tag))
         except AvailabilityTag.DoesNotExist:
