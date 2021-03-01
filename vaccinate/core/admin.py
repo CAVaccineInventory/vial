@@ -202,6 +202,6 @@ class PublishedReportAdmin(admin.ModelAdmin):
     raw_id_fields = (
         "location",
         "reported_by",
-        "call_reports",
+        "reports",
         "eva_reports",
     )

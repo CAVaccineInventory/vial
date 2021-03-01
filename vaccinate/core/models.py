@@ -343,7 +343,7 @@ class Report(models.Model):
         return ", ".join(self.availability_tags.values_list("name", flat=True))
 
     class Meta:
-        db_table = "call_report"
+        db_table = "reports"
 
 
 class EvaReport(models.Model):
@@ -490,10 +490,10 @@ class PublishedReport(models.Model):
         related_name="published_reports",
         db_table="published_report_availability_tag",
     )
-    call_reports = models.ManyToManyField(
+    reports = models.ManyToManyField(
         Report,
         related_name="published_reports",
-        db_table="published_report_call_report",
+        db_table="published_report_reports",
     )
     eva_reports = models.ManyToManyField(
         EvaReport,
