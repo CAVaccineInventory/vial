@@ -4,6 +4,16 @@
 
 Project background: [Spinning up a new Django app to act as a backend for VaccinateCA](https://github.com/CAVaccineInventory/simonw-internal-blog/blob/main/2021-02/2021-02-23.md)
 
+## Architectural principles for this app
+
+- Write code (and issue comments and commit messages) with the expectation that the entire repository will be open to the public some day. So keep secrets out of the code, and don't be uncouth!
+- As few moving parts as possible. Right now this means:
+  - The app is written in Django
+  - _All_ data is stored in PostgreSQL - even data that might be a better fit for a dedicated logging system or message queue. We'll adopt additional storage mechanisms only when PostgreSQL starts creaking at the seams.
+- Django migrations are great. We use these enthusiastically, with a goal of making schema changes boring and common, not exciting and rare.
+
+As a result, hosting this (or moving this to a different host) should be as easy as setting up a Django app with an attached PostgreSQL database.
+
 ## What this does so far
 
 - SSO using Auth0 to sign users in with a Django user account
