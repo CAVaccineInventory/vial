@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0012_location_county_can_be_null'),
+        ("core", "0012_location_county_can_be_null"),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='CallReport',
-            new_name='Report',
+            old_name="CallReport",
+            new_name="Report",
         ),
     ]
