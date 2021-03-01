@@ -1,5 +1,9 @@
 from .models import Location, Report
-from .import_utils import import_airtable_location, import_airtable_report
+from .import_utils import (
+    derive_appointment_tag,
+    import_airtable_location,
+    import_airtable_report,
+)
 import pytest
 
 
@@ -191,3 +195,28 @@ def test_import_airtable_report_post_help_vaccinate_launch():
         "Yes: appointment required",
         "Yes: appointment calendar currently full",
     }
+
+
+@pytest.mark.parametrize(
+    "appointments_by_phone,appointment_scheduling_instructions,expected_tag,expected_instructions",
+    (
+        (True, "555-555-5555", "phone", "555-555-5555"),
+        (False, "Uses county scheduling system", "county_website", None),
+        (False, "https://myturn.ca.gov/", "myturn_ca_gov", None),
+        (False, "www.example.com", "web", "www.example.com"),
+        (False, "http://www.example.com", "web", "http://www.example.com"),
+        (False, "https://www.example.com", "web", "https://www.example.com"),
+        (False, "Something else", "other", "Something else"),
+    ),
+)
+def test_derive_appointment_tag(
+    appointments_by_phone,
+    appointment_scheduling_instructions,
+    expected_tag,
+    expected_instructions,
+):
+    actual_tag, actual_instructions = derive_appointment_tag(
+        appointments_by_phone, appointment_scheduling_instructions
+    )
+    assert actual_tag == expected_tag
+    assert actual_instructions == expected_instructions
