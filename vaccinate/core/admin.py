@@ -68,11 +68,24 @@ class LocationAdmin(admin.ModelAdmin):
     times_called.admin_order_field = "times_called_count"
 
 
+class CountryFilter(admin.SimpleListFilter):
+    title = "Provider"  # or use _('country') for translated title
+    parameter_name = "provider"
+
+    def lookups(self, request, model_admin):
+        return (("auth0", "Auth0"), ("airtable", "Airtable"))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(external_id__startswith=self.value())
+        else:
+            return queryset
+
+
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
-    search_fields = ("airtable_name", "auth0_name")
-    list_display = ("airtable_name", "auth0_name", "auth0_role_name", "call_count")
-    list_filter = ("auth0_role_name",)
+    list_display = ("external_id", "name", "call_count")
+    list_filter = (CountryFilter,)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

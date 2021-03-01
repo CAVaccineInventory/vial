@@ -200,12 +200,13 @@ class Reporter(models.Model):
     - Airtable users: these are users who are authenticated through Airtable rather than Auth0.
     """
 
-    airtable_name = CharTextField(null=True, blank=True)
-    auth0_name = CharTextField(null=True, blank=True)
+    external_id = models.SlugField(unique=True)
+    name = CharTextField(null=True, blank=True)
+    email = CharTextField(null=True, blank=True)
     auth0_role_name = CharTextField(null=True, blank=True)
 
     def __str__(self):
-        return self.airtable_name or self.auth0_name
+        return self.name or self.external_id
 
     class Meta:
         db_table = "reporter"
