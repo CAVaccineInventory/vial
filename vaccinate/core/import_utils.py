@@ -74,7 +74,16 @@ def import_airtable_location(location):
 
 
 def import_airtable_report(report):
-    other = AppointmentTag.objects.get(name="other")
+    appointment_tag_string = "other"
+    appointment_details = ""
+    if "Appointments by phone?" in report:
+        appointments_by_phone = report["Appointments by phone?"]
+        appointment_scheduling_instructions = report[
+            "Appointment scheduling instructions"
+        ]
+        appointment_tag_string, appointment_details = derive_appointment_tag(
+            appointments_by_phone, appointment_scheduling_instructions
+        )
 
     assert "Reported by" in report, "Missing 'Reported by'"
     if report.get("auth0_reporter_id"):
@@ -98,9 +107,8 @@ def import_airtable_report(report):
         "location": location,
         # Currently hard-coded to caller app:
         "report_source": "ca",
-        # Currently hard-coded to 'other' - this is solvable with more thought:
-        "appointment_tag": other,
-        # "appointment_details": "",
+        "appointment_tag": AppointmentTag.objects.get(slug=appointment_tag_string),
+        "appointment_details": appointment_details,
         # "public_notes": "",
         "internal_notes": report.get("Internal Notes"),
         "reported_by": reported_by,

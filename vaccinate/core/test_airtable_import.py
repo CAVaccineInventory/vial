@@ -119,7 +119,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
     report = import_airtable_report(report_json)
 
     assert report.report_source == "ca"
-    assert report.appointment_tag.name == "other"
+    assert report.appointment_tag.slug == "other"
     assert report.location.name == "Kaiser Permanente Pharmacy #568"
     assert (
         report.internal_notes
@@ -182,7 +182,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     report = import_airtable_report(report_json)
 
     assert report.report_source == "ca"
-    assert report.appointment_tag.name == "other"
+    assert report.appointment_tag.slug == "county_website"
     assert report.location.name == "Kaiser Permanente Pharmacy #568"
     assert report.internal_notes == "Essential workers start March 1st\n"
     assert report.reported_by.airtable_name is None
