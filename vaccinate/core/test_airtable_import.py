@@ -149,6 +149,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
             "name": "Help.vaccinateCA RW Role account for API token",
             "email": "jesse+role-rw-help-vaccinateca@vaccinateca.com",
         },
+        "Notes": "Jan 23: Has vaccine but no appointments available.",
         "airtable_id": "recXBlDw9Zr7bB84O",
         "location_id": ["rec00NpJzUnVDpLaQ"],
         "Availability": [
@@ -186,6 +187,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     assert report.appointment_tag.slug == "county_website"
     assert report.location.name == "Kaiser Permanente Pharmacy #568"
     assert report.internal_notes == "Essential workers start March 1st\n"
+    assert report.public_notes == "Jan 23: Has vaccine but no appointments available."
     assert report.reported_by.external_id == "auth0:auth0|6037"
     assert report.reported_by.auth0_role_name == "Volunteer Caller"
     assert str(report.created_at) == "2021-02-25T23:54:04.000Z"

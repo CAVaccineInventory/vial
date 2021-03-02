@@ -122,7 +122,7 @@ def import_airtable_report(report, availability_tags=None):
         "report_source": "ca",
         "appointment_tag": AppointmentTag.objects.get(slug=appointment_tag_string),
         "appointment_details": appointment_details,
-        # "public_notes": "",
+        "public_notes": report.get("Notes"),
         "internal_notes": report.get("Internal Notes"),
         "reported_by": reported_by,
         "created_at": report["airtable_createdTime"],
