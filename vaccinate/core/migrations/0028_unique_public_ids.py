@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0027_backfill_public_id'),
+        ("core", "0027_backfill_public_id"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='location',
-            name='public_id',
-            field=models.SlugField(help_text='ID that we expose outside of the application', unique=True),
+            model_name="location",
+            name="public_id",
+            field=models.SlugField(
+                help_text="ID that we expose outside of the application", unique=True
+            ),
         ),
         migrations.AlterField(
-            model_name='report',
-            name='public_id',
-            field=models.SlugField(help_text='ID that we expose outside of the application', unique=True),
+            model_name="report",
+            name="public_id",
+            field=models.SlugField(
+                help_text="ID that we expose outside of the application", unique=True
+            ),
         ),
     ]
