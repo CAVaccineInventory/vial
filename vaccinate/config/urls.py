@@ -3,12 +3,15 @@ from django.http.response import HttpResponsePermanentRedirect
 from django.urls import path, include
 from django.shortcuts import redirect
 from auth0login.views import logout
+from api import views as api_views
 from core import views as core_views
 
 
 urlpatterns = [
     path("", core_views.index),
     path("logout", logout),
+    path("api/submitReport", api_views.submit_report),
+    path("api/submitReport/debug", api_views.submit_report_debug),
     path("", include("django.contrib.auth.urls")),
     path("", include("social_django.urls")),
     path(

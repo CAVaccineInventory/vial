@@ -119,6 +119,10 @@ class County(models.Model):
 
 class Location(models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
+    is_test_data = models.BooleanField(
+        default=False,
+        help_text="Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.",
+    )
     name = CharTextField()
     phone_number = CharTextField(null=True, blank=True)
     full_address = CharTextField(
@@ -301,6 +305,11 @@ class Report(models.Model):
     class ReportSource(models.TextChoices):
         CALLER_APP = "ca", "Caller app"
         DATA_CORRECTIONS = "dc", "Data corrections"
+
+    is_test_data = models.BooleanField(
+        default=False,
+        help_text="Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.",
+    )
 
     location = models.ForeignKey(
         Location,
