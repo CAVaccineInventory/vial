@@ -1,8 +1,5 @@
-# auth0login/auth0backend.py
-
-import requests
-from jose import jwt
 from social_core.backends.oauth import BaseOAuth2
+from .auth0_utils import decode_and_verify_jwt
 
 
 class Auth0(BaseOAuth2):
@@ -25,19 +22,8 @@ class Auth0(BaseOAuth2):
         return details["user_id"]
 
     def get_user_details(self, response):
-        # Obtain JWT and the keys to validate the signature
-        jwt_keys_url = "https://" + self.setting("DOMAIN") + "/.well-known/jwks.json"
         id_token = response.get("id_token")
-        jwks = requests.get(jwt_keys_url).content
-        issuer = "https://" + self.setting("DOMAIN") + "/"
-        audience = self.setting("KEY")  # CLIENT_ID
-        payload = jwt.decode(
-            id_token,
-            jwks,
-            algorithms=["RS256"],
-            audience=audience,
-            issuer=issuer,
-        )
+        payload = decode_and_verify_jwt(id_token)
         # Example payload:
         # {
         #     "https://help.vaccinateca.com/roles": [
@@ -59,7 +45,6 @@ class Auth0(BaseOAuth2):
         #     "iat": 1614199471,
         #     "exp": 1614235471,
         # }
-
         return {
             "username": payload["nickname"],
             "first_name": payload["name"],
