@@ -128,6 +128,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
     assert report.reported_by.external_id == "airtable:usrsCexDQt6GmdDm0"
     assert str(report.created_at) == "2021-01-28T03:19:51.000Z"
     assert report.airtable_id == "reczzhVUpoBQb6CUA"
+    assert report.public_id == "reczzhVUpoBQb6CUA"
     assert list(report.availability_tags.values_list("name", flat=True)) == [
         "No vaccine inventory"
     ]
@@ -189,6 +190,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     assert report.reported_by.auth0_role_name == "Volunteer Caller"
     assert str(report.created_at) == "2021-02-25T23:54:04.000Z"
     assert report.airtable_id == "recXBlDw9Zr7bB84O"
+    assert report.public_id == "recXBlDw9Zr7bB84O"
     assert set(report.availability_tags.values_list("name", flat=True)) == {
         "Vaccinating 65+",
         "Appointment required",

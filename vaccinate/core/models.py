@@ -5,6 +5,7 @@ from django.utils import dateformat
 from .fields import CharTextField
 from .baseconverter import pid
 import pytz
+import uuid
 
 
 class LocationType(models.Model):
@@ -203,11 +204,15 @@ class Location(models.Model):
         return "l" + pid.from_int(self.pk)
 
     def save(self, *args, **kwargs):
-        if self.public_id is None and self.airtable_id:
+        set_public_id_later = False
+        if (not self.public_id) is None and self.airtable_id:
             self.public_id = self.airtable_id
         else:
-            self.public_id = self.pid
+            set_public_id_later = False
+            self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
+        if set_public_id_later:
+            Location.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
 class Reporter(models.Model):
@@ -380,11 +385,15 @@ class Report(models.Model):
         return "r" + pid.from_int(self.pk)
 
     def save(self, *args, **kwargs):
-        if self.public_id is None and self.airtable_id:
+        set_public_id_later = False
+        if (not self.public_id) and self.airtable_id:
             self.public_id = self.airtable_id
         else:
-            self.public_id = self.pid
+            set_public_id_later = False
+            self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
+        if set_public_id_later:
+            Report.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
 class EvaReport(models.Model):
