@@ -6,18 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0028_unique_public_ids'),
+        ("core", "0028_unique_public_ids"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='location',
-            name='is_test_data',
-            field=models.BooleanField(default=False, help_text='Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.'),
+            model_name="location",
+            name="is_test_data",
+            field=models.BooleanField(
+                default=False,
+                help_text="Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.",
+            ),
         ),
         migrations.AddField(
-            model_name='report',
-            name='is_test_data',
-            field=models.BooleanField(default=False, help_text='Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.'),
+            model_name="report",
+            name="is_test_data",
+            field=models.BooleanField(
+                default=False,
+                help_text="Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.",
+            ),
         ),
     ]
