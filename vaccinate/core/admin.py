@@ -127,7 +127,7 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
-        "created_at",
+        "created_at_in_la_timezone",
         "availability",
         "location",
         "appointment_tag",
@@ -141,7 +141,11 @@ class ReportAdmin(admin.ModelAdmin):
         ("airtable_json", admin.EmptyFieldListFilter),
     )
     exclude = ("airtable_json",)
-    readonly_fields = ("airtable_id", "airtable_json_prettified")
+    readonly_fields = (
+        "created_at_in_la_timezone",
+        "airtable_id",
+        "airtable_json_prettified",
+    )
     ordering = ("-created_at",)
 
     def lookup_allowed(self, lookup, value):

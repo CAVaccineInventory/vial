@@ -1,6 +1,9 @@
 import datetime
 from django.db import models
+from django.utils import timezone
+from django.utils import dateformat
 from .fields import CharTextField
+import pytz
 
 
 class LocationType(models.Model):
@@ -332,6 +335,15 @@ class Report(models.Model):
         help_text="Airtable record ID, if this has one",
     )
     airtable_json = models.JSONField(null=True, blank=True)
+
+    def created_at_in_la_timezone(self):
+        tz = pytz.timezone("America/Los_Angeles")
+        created_at_la = timezone.localtime(self.created_at, tz)
+        return (
+            dateformat.format(created_at_la, "jS M Y fa").replace(".", "")
+            + " "
+            + created_at_la.tzname()
+        )
 
     def __str__(self):
         return "Call to {} by {} at {}".format(
