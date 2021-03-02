@@ -40,9 +40,17 @@ Check out the repository. Create a new Python virtual environment for it (I use 
 
 Set your environment variables, see *Configuration* section below.
 
-Run the server with `./manage.py runserver 0.0.0.0:3000`
+`cd vaccinate` and then run the server with `./manage.py runserver 0.0.0.0:3000`
 
-Visit it at `http://localhost:3000/dashboard` - it's important to use `localhost:3000` as that is the URL that is allow-listed for logins by the Auth0 configuration.
+Visit it at `http://localhost:3000/` - it's important to use `localhost:3000` as that is the URL that is allow-listed for logins by the Auth0 configuration. Click "sign in" and sign in with an Auth0 account.
+
+Once you have signed in and created an account you should grant yourself super-user access so you can use every feature of the admin site. You can do that by running the following:
+
+    cd vaccinate
+    ./manage.py shell
+    >>> from django.contrib.auth.models import User
+    >>> User.objects.all().update(is_superuser=True, is_staff=True)
+    >>> <Ctrl+D> to exit
 
 ## Configuration
 
