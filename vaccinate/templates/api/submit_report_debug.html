@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Try /api/submitReport - VaccinateCA</title>
+    <style>
+      header img {
+        height: 40px;
+      }
+      body {
+        font-family: Helvetica, sans-serif;
+      }
+      main textarea {
+        width: 80%;
+        height: 10em;
+      }
+      input[type="submit"] {
+        background-color: #4caf50;
+        border: 1px solid darkgreen;
+        border-radius: 4px;
+        color: white;
+        padding: 5px 20px;
+        margin-top: 0.5em;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+      }
+      input[type="submit"]:active {
+        background-color: darkgreen;
+      }
+    </style>
+  </head>
+  <body id="app-unspecified">
+    <header>
+      <img
+        src="https://help.vaccinateca.com/assets/img/logo.png"
+        alt="VaccinateCA"
+      />
+    </header>
+    <main>
+      <h1>Try /api/submitReport</h1>
+      <form class="trySubmitReport">
+        <div>
+          <textarea name="body" placeholder="JSON goes here"></textarea>
+        </div>
+        <div><input type="submit" value="Submit" /></div>
+      </form>
+      <div class="apiResponse" style="display: none">
+        <h3>API response</h3>
+        <p>Status code: <strong class="responseStatus"></strong></p>
+        <h4>Body</h4>
+        <pre class="responseBody"></pre>
+        <h4>Headers</h4>
+        <pre class="responseHeaders"></pre>
+      </div>
+    </main>
+    <script>
+      let form = document.querySelector(".trySubmitReport");
+      let textarea = form.getElementsByTagName("textarea")[0];
+      let apiResponse = document.querySelector(".apiResponse");
+      let responseStatus = document.querySelector(".responseStatus");
+      let responseHeaders = document.querySelector(".responseHeaders");
+      let responseBody = document.querySelector(".responseBody");
+      form.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const response = await fetch("/api/submitReport", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: textarea.value,
+        });
+        const data = await response.json();
+        apiResponse.style.display = 'block';
+        responseStatus.innerText = response.status;
+        responseHeaders.innerText = JSON.stringify(
+          Array.from(response.headers.entries()), null, 4)
+        responseBody.innerText = JSON.stringify(data, null, 4);
+      });
+    </script>
+  </body>
+</html>
