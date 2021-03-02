@@ -56,7 +56,7 @@ class LocationAdmin(admin.ModelAdmin):
     )
     list_filter = ("location_type", "state", "provider", "soft_deleted")
     raw_id_fields = ("county", "provider", "duplicate_of")
-    readonly_fields = ("airtable_id",)
+    readonly_fields = ("public_id", "airtable_id")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -143,6 +143,7 @@ class ReportAdmin(admin.ModelAdmin):
     exclude = ("airtable_json",)
     readonly_fields = (
         "created_at_in_la_timezone",
+        "public_id",
         "airtable_id",
         "airtable_json_prettified",
     )
