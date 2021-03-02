@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils import dateformat
 from .fields import CharTextField
+from .baseconverter import pid
 import pytz
 
 
@@ -187,12 +188,26 @@ class Location(models.Model):
         unique=True,
         help_text="Airtable record ID, if this has one",
     )
+    public_id = models.SlugField(
+        unique=True, help_text="ID that we expose outside of the application"
+    )
 
     def __str__(self):
         return self.name
 
     class Meta:
         db_table = "location"
+
+    @property
+    def pid(self):
+        return "l" + pid.from_int(self.pk)
+
+    def save(self, *args, **kwargs):
+        if self.public_id is None and self.airtable_id:
+            self.public_id = self.airtable_id
+        else:
+            self.public_id = self.pid
+        super().save(*args, **kwargs)
 
 
 class Reporter(models.Model):
@@ -335,6 +350,9 @@ class Report(models.Model):
         help_text="Airtable record ID, if this has one",
     )
     airtable_json = models.JSONField(null=True, blank=True)
+    public_id = models.SlugField(
+        unique=True, help_text="ID that we expose outside of the application"
+    )
 
     def created_at_in_la_timezone(self):
         tz = pytz.timezone("America/Los_Angeles")
@@ -345,17 +363,28 @@ class Report(models.Model):
             + created_at_la.tzname()
         )
 
-    def __str__(self):
-        return "Call to {} by {} at {}".format(
-            self.location, self.reported_by, self.created_at
-        )
-
     def availability(self):
         # Used by the admin list view
         return ", ".join(self.availability_tags.values_list("name", flat=True))
 
     class Meta:
         db_table = "reports"
+
+    def __str__(self):
+        return "Call to {} by {} at {}".format(
+            self.location, self.reported_by, self.created_at
+        )
+
+    @property
+    def pid(self):
+        return "r" + pid.from_int(self.pk)
+
+    def save(self, *args, **kwargs):
+        if self.public_id is None and self.airtable_id:
+            self.public_id = self.airtable_id
+        else:
+            self.public_id = self.pid
+        super().save(*args, **kwargs)
 
 
 class EvaReport(models.Model):
