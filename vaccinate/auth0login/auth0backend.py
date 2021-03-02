@@ -67,5 +67,4 @@ class Auth0(BaseOAuth2):
             "user_id": payload["sub"],
             "email": payload["email"],
             "roles": payload["https://help.vaccinateca.com/roles"],
-            "id_token": id_token,
         }
