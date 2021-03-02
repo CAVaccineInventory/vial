@@ -23,14 +23,14 @@ As a result, hosting this (or moving this to a different host) should be as easy
 - Populates the state and county tables with 50 states + every county in CA
 - Configures Django Admin to run against those new models
 - Continuous Deployment to a staging environment (temporarily hosted on Heroku)
+- Imports existing location and reports data from Airtable
 
 For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
 
 ## What this will do
 
-- Import existing data so we can really exercise the prototype
-- I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 - Provide an alternative API to the Airtable one so that `help.vaccinate` can write directly to Django
+- I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
 The [issues](https://github.com/CAVaccineInventory/django.vaccinate/issues) in this repo closely track upcoming work.
 
