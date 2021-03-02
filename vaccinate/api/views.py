@@ -27,7 +27,7 @@ def submit_report(request):
     try:
         payload = decode_and_verify_jwt(jwt_id_token)
     except Exception as e:
-        return JsonResponse({"error": "Could not decode JWT", 'details': str(e)})
+        return JsonResponse({"error": "Could not decode JWT", "details": str(e)})
     try:
         post_data = json.loads(request.body.decode("utf-8"))
     except ValueError as e:

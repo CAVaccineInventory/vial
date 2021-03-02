@@ -2,11 +2,15 @@ from .models import Location
 import pytest
 
 
-@pytest.mark.django_db
-def test_admin_create_location_sets_public_id(client, admin_user):
+@pytest.fixture()
+def admin_client(client, admin_user):
     client.force_login(admin_user)
+    return client
+
+
+def test_admin_create_location_sets_public_id(admin_client):
     assert Location.objects.count() == 0
-    response = client.post(
+    response = admin_client.post(
         "/admin/core/location/add/",
         {
             "name": "hello",
