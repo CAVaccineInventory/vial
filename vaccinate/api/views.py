@@ -31,4 +31,8 @@ def submit_report(request):
 
 
 def submit_report_debug(request):
-    return render(request, "api/submit_report_debug.html")
+    return render(
+        request,
+        "api/submit_report_debug.html",
+        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
+    )

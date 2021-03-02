@@ -31,6 +31,13 @@
       input[type="submit"]:active {
         background-color: darkgreen;
       }
+      input[type="text"], textarea {
+        border: 1px solid #666;
+        padding: 5px;
+      }
+      label {
+        font-weight: bold;
+      }
     </style>
   </head>
   <body id="app-unspecified">
@@ -43,8 +50,9 @@
     <main>
       <h1>Try /api/submitReport</h1>
       <form class="trySubmitReport">
+        <p><label>JWT token: <input type="text" name="jwt" size="40" value="{{ jwt }}"></label></p>
         <div>
-          <textarea name="body" placeholder="JSON goes here"></textarea>
+          <textarea name="body" placeholder="JSON POST body goes here"></textarea>
         </div>
         <div><input type="submit" value="Submit" /></div>
       </form>
@@ -59,7 +67,8 @@
     </main>
     <script>
       let form = document.querySelector(".trySubmitReport");
-      let textarea = form.getElementsByTagName("textarea")[0];
+      let bodyTextarea = form.getElementsByTagName("textarea")[0];
+      let jwtInput = form.querySelector("[name=jwt]");
       let apiResponse = document.querySelector(".apiResponse");
       let responseStatus = document.querySelector(".responseStatus");
       let responseHeaders = document.querySelector(".responseHeaders");
@@ -70,8 +79,9 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": "Bearer " + jwtInput.value
           },
-          body: textarea.value,
+          body: bodyTextarea.value,
         });
         const data = await response.json();
         apiResponse.style.display = 'block';

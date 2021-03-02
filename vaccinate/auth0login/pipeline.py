@@ -14,3 +14,5 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
             group.user_set.add(user)
         else:
             group.user_set.remove(user)
+        # Stash the id_token as 'jwt' in the session
+        kwargs["request"].session["jwt"] = response["id_token"]
