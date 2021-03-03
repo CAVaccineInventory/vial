@@ -209,9 +209,9 @@ class Location(models.Model):
 
     def save(self, *args, **kwargs):
         set_public_id_later = False
-        if (not self.public_id) is None and self.airtable_id:
+        if (not self.public_id) and self.airtable_id:
             self.public_id = self.airtable_id
-        else:
+        elif not self.public_id:
             set_public_id_later = True
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
@@ -397,7 +397,7 @@ class Report(models.Model):
         set_public_id_later = False
         if (not self.public_id) and self.airtable_id:
             self.public_id = self.airtable_id
-        else:
+        elif not self.public_id:
             set_public_id_later = True
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)

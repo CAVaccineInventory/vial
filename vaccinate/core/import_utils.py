@@ -63,6 +63,7 @@ def import_airtable_location(location):
         "county": county,
         "latitude": location["Latitude"],
         "longitude": location["Longitude"],
+        "public_id": location["airtable_id"],
     }
     return Location.objects.update_or_create(
         airtable_id=location["airtable_id"], defaults=kwargs
@@ -121,6 +122,7 @@ def import_airtable_report(report, availability_tags=None):
         "created_at": report["airtable_createdTime"],
         # "call_request" isn't a concept that exists in Airtable
         "airtable_json": report,
+        "public_id": report["airtable_id"],
     }
 
     report_obj = Report.objects.update_or_create(
