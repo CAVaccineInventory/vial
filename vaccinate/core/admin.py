@@ -153,6 +153,7 @@ class ReportAdmin(admin.ModelAdmin):
 
     def test(self, instance):
         return instance.is_test_data
+
     test.boolean = True
 
     def lookup_allowed(self, lookup, value):
