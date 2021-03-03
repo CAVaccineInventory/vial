@@ -46,3 +46,5 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
     # And check the tags
     actual_tags = [tag.slug for tag in report.availability_tags.all()]
     assert actual_tags == fixture["expected_availability_tags"]
+    # Should have been submitted by the JWT user
+    assert report.reported_by.external_id == "auth0:auth0|6036cd942c0b2a007093cbf0"
