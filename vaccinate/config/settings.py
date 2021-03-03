@@ -1,4 +1,5 @@
 import dj_database_url
+from django.conf.locale.en import formats as en_formats
 from pathlib import Path
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -92,6 +93,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.timezone_middleware.TimezoneMiddleware",
 ]
 
 if PRODUCTION:
@@ -170,5 +172,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+en_formats.DATETIME_FORMAT = "jS M Y fA e"
 
 TEST_RUNNER = "test_runner.PytestTestRunner"

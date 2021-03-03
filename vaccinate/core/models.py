@@ -368,13 +368,13 @@ class Report(models.Model):
         unique=True, help_text="ID that we expose outside of the application"
     )
 
-    def created_at_in_la_timezone(self):
-        tz = pytz.timezone("America/Los_Angeles")
-        created_at_la = timezone.localtime(self.created_at, tz)
+    def created_at_utc(self):
+        tz = pytz.UTC
+        created_at_utc = timezone.localtime(self.created_at, tz)
         return (
-            dateformat.format(created_at_la, "jS M Y fa").replace(".", "")
+            dateformat.format(created_at_utc, "jS M Y fa").replace(".", "")
             + " "
-            + created_at_la.tzname()
+            + created_at_utc.tzname()
         )
 
     def availability(self):

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
@@ -84,17 +84,25 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
-    list_display = ("external_id", "name", "report_count")
+    list_display = ("external_id", "name", "report_count", "latest_report")
     list_filter = (ReporterProviderFilter, "auth0_role_name")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate(reporter_report_count=Count("reports"))
+        return qs.annotate(
+            reporter_report_count=Count("reports"),
+            reporter_latest_report=Max("reports__created_at"),
+        )
 
     def report_count(self, inst):
         return inst.reporter_report_count
 
     report_count.admin_order_field = "reporter_report_count"
+
+    def latest_report(self, inst):
+        return inst.reporter_latest_report
+
+    latest_report.admin_order_field = "reporter_latest_report"
 
     readonly_fields = ("recent_calls",)
 
@@ -128,14 +136,14 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "test",
-        "created_at_in_la_timezone",
+        "created_at",
         "availability",
         "location",
         "appointment_tag",
         "reported_by",
-        "created_at",
+        "created_at_utc",
     )
-    list_display_links = ("test", "created_at_in_la_timezone")
+    list_display_links = ("test", "created_at")
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "created_at",
@@ -145,7 +153,7 @@ class ReportAdmin(admin.ModelAdmin):
     )
     exclude = ("airtable_json",)
     readonly_fields = (
-        "created_at_in_la_timezone",
+        "created_at_utc",
         "public_id",
         "airtable_id",
         "airtable_json_prettified",
