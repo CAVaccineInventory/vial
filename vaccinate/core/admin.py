@@ -135,6 +135,7 @@ class ReportAdmin(admin.ModelAdmin):
         "reported_by",
         "created_at",
     )
+    list_display_links = ("test", "created_at_in_la_timezone")
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "created_at",
