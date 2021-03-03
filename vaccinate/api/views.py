@@ -50,7 +50,7 @@ def submit_report(request, on_request_logged):
         # Check JWT token is valid
         jwt_id_token = authorization.split("Bearer ")[1]
         try:
-            jwt_payload = decode_and_verify_jwt(jwt_id_token)
+            jwt_payload = decode_and_verify_jwt(jwt_id_token, try_fallback=True)
         except Exception as e:
             return JsonResponse(
                 {"error": "Could not decode JWT", "details": str(e)}, status=403
