@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     "social_django",
     "auth0login",
     "core",
+    "api",
 ]
 
 MIDDLEWARE = [

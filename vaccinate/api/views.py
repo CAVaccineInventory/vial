@@ -7,6 +7,7 @@ from pydantic import BaseModel, validator, ValidationError, Field
 from typing import List, Optional
 from core.models import AppointmentTag, AvailabilityTag, Location, Report, Reporter
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
+from .utils import log_api_requests
 import json
 import pytz
 
@@ -30,7 +31,8 @@ class ReportValidator(BaseModel):
 
 
 @csrf_exempt
-def submit_report(request):
+@log_api_requests
+def submit_report(request, on_request_logged):
     # The ?test=1 version accepts &fake_user=external_id
     reporter = None
     user_info = {}
@@ -101,6 +103,12 @@ def submit_report(request):
 
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
+
+    def log_created_report(log):
+        log.created_report = report
+        log.save()
+
+    on_request_logged(log_created_report)
 
     return JsonResponse(
         {
