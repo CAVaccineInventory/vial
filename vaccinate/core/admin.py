@@ -208,7 +208,7 @@ class CallRequestAdmin(admin.ModelAdmin):
         "call_request_reason",
     )
     list_filter = ("call_request_reason",)
-    raw_id_fields = ("claimed_by", "tip_report")
+    raw_id_fields = ("location", "claimed_by", "tip_report")
 
 
 @admin.register(PublishedReport)
