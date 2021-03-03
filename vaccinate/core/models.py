@@ -47,11 +47,11 @@ class Provider(models.Model):
     """
 
     name = CharTextField(unique=True)
-    contact_phone_number = CharTextField()
+    contact_phone_number = CharTextField(null=True, blank=True)
     main_url = CharTextField(null=True, blank=True)
     vaccine_info_url = CharTextField(null=True, blank=True)
     vaccine_locations_url = CharTextField(null=True, blank=True)
-    public_notes = models.TextField()
+    public_notes = models.TextField(null=True, blank=True)
     appointments_url = CharTextField(null=True, blank=True)
     provider_type = models.ForeignKey(
         ProviderType, related_name="providers", on_delete=models.PROTECT
