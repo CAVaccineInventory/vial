@@ -339,7 +339,7 @@ class Report(models.Model):
         Reporter, related_name="reports", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(
-        default=datetime.datetime.utcnow,
+        default=timezone.now,
         help_text="the time when the report was submitted. We will interpret this as a validity time",
     )
     call_request = models.ForeignKey(
