@@ -5,37 +5,6 @@ import pytest
 import urllib
 
 
-# Copied from https://vaccinateca.us.auth0.com/.well-known/jwks.json on 24th Feb 2021:
-MOCK_JWKS = {
-    "keys": [
-        {
-            "alg": "RS256",
-            "kty": "RSA",
-            "use": "sig",
-            "n": "rahm2egU3O9X4fevh2YFm8aJPhA5TPGuWZPQldVCSrRs7G1bv7D4Hpkal8SuGjkFilK5r6r8-LoRlgvFgPXMYhmZ6C2iVX6diqd2hlayC6nmJmj9wIJ8uwFoC6piaEZD2SOki4bK1c_1yUICF3b_tcFsCS3g7mBihEF31_ohAoleRnGMqLZPkpY1tK52iuw4rQaTO9SAh4wPExLpjPyVKzE8DuVHQY9dJc8XtzY0_niwcqkAS4rPhBeiWUq04blf2KM_ypGmh4HovEMZIqClKkb6OraAqxEwjsRmxSXjI9CKjnQ6q8dF04mUN1OuZKYEjxumT2BhU0UloserH87n0Q",
-            "e": "AQAB",
-            "kid": "frtiPaxg_e2WoM1xToR0G",
-            "x5t": "hPIXTWMzKF6ixWVcJfMyNYVJfEk",
-            "x5c": [
-                "MIIDCzCCAfOgAwIBAgIJPLztFasLKg/YMA0GCSqGSIb3DQEBCwUAMCMxITAfBgNVBAMTGHZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbTAeFw0yMTAyMDQwMjE0MDFaFw0zNDEwMTQwMjE0MDFaMCMxITAfBgNVBAMTGHZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAK2oZtnoFNzvV+H3r4dmBZvGiT4QOUzxrlmT0JXVQkq0bOxtW7+w+B6ZGpfErho5BYpSua+q/Pi6EZYLxYD1zGIZmegtolV+nYqndoZWsgup5iZo/cCCfLsBaAuqYmhGQ9kjpIuGytXP9clCAhd2/7XBbAkt4O5gYoRBd9f6IQKJXkZxjKi2T5KWNbSudorsOK0GkzvUgIeMDxMS6Yz8lSsxPA7lR0GPXSXPF7c2NP54sHKpAEuKz4QXollKtOG5X9ijP8qRpoeB6LxDGSKgpSpG+jq2gKsRMI7EZsUl4yPQio50OqvHRdOJlDdTrmSmBI8bpk9gYVNFJaLHqx/O59ECAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUBw5XPQZ3owZj1knalUBOLA0PEPAwDgYDVR0PAQH/BAQDAgKEMA0GCSqGSIb3DQEBCwUAA4IBAQBsAQ0uFOmLK3DaJt2CtKQpdvoIj00/oWS9B6ZANZzfwZ/CDPqpvjGDwnK2ImDArKqsfLf1vQUVIm9miASIWWjLCruxk4AFZeeNGYnBIvdv2+zMk7C0VDsFbUoAWHAfSUn2iCnSG57N6A1bNf/nZTHHfiR/O1zRFmQ1wQHbhjYHcidxTeQaSEJI+2A4SKCMm0nMrICc6jUXIet8KrSiizJonDSqXd8X9JQ+Y4aHK4ob2DFUCxkAUdX+BS18P7/oMibWxwG0wLbpSbSLqmESfOsin/HrTGdv89bjmuQJTzVNnuZsJl43zVwpiwWMJZMpQW2SjNI+wTwiMAyLxAnPQVGS"
-            ],
-        },
-        {
-            "alg": "RS256",
-            "kty": "RSA",
-            "use": "sig",
-            "n": "0bgROqkt_6dGvytITrOTiCsirpr45osjigg2tQ1YkXS_H6out_QegcIxr_qe01JompD5mOIpCGZSsCAavM9FHhf7tTp21fJr7N_fSKndl6d5QCwhRjjA-3DAAJzt42UMg6YSATi0BLM60ap1SA9O6GPYrfL3IevCWqEcHuQjfiSdGTStoUkI6YO_4cTyuILvjY58369HMYjYA5303hQND9ckR8_z8oalmh9OEmBdHpilg0ZnhITiTT-sFr3RafKGGaxCUXjLbeR7NaaRIQ_LUoDvHLyVh40XoEeSOyIj7n3a18WE4qhCmrc539nb3d9jY3b4xiD6kcHxYOfzf_vBIw",
-            "e": "AQAB",
-            "kid": "xU8DLqrQ61ymbiAPwrhlz",
-            "x5t": "OMRUjd9Xz-7VjO73LHOw0uq2HZQ",
-            "x5c": [
-                "MIIDCzCCAfOgAwIBAgIJdr+IWJ/wZxkWMA0GCSqGSIb3DQEBCwUAMCMxITAfBgNVBAMTGHZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbTAeFw0yMTAyMDQwMjE0MDJaFw0zNDEwMTQwMjE0MDJaMCMxITAfBgNVBAMTGHZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANG4ETqpLf+nRr8rSE6zk4grIq6a+OaLI4oINrUNWJF0vx+qLrf0HoHCMa/6ntNSaJqQ+ZjiKQhmUrAgGrzPRR4X+7U6dtXya+zf30ip3ZeneUAsIUY4wPtwwACc7eNlDIOmEgE4tASzOtGqdUgPTuhj2K3y9yHrwlqhHB7kI34knRk0raFJCOmDv+HE8riC742OfN+vRzGI2AOd9N4UDQ/XJEfP8/KGpZofThJgXR6YpYNGZ4SE4k0/rBa90WnyhhmsQlF4y23kezWmkSEPy1KA7xy8lYeNF6BHkjsiI+592tfFhOKoQpq3Od/Z293fY2N2+MYg+pHB8WDn83/7wSMCAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUcZKBYTZsFJVhcGqKx6Px3oRmXsAwDgYDVR0PAQH/BAQDAgKEMA0GCSqGSIb3DQEBCwUAA4IBAQC8HtDPG3FDzoz2yU38xWpx58VP8Q6FERWsjhJ20Yc1xTYmrNel37Y7zA/MkcHOc+tZI4W2GpdiFtYQmsrZ2176gSCnHaWt8uc/u5PTVeXMYgVGeBWby76fc0Ci9UP0++xcCqK3CNyOP+aTh1lGYdinT/s1P91IiK0fMTjnD1z/E4jEUkYi7zg81XooP+Bvbq8DdJwl0ZfaQk1cpE983iybgRSof0X54QJsNwSOFMfKZoXZSozHDyAwZ0UbKdazwCwMytJu5lp87QMmCgF17pV21op+++BhD2VYbYRGsZqRalbNJB1cUCxkkVUIAPqDSNrgUat1eblkvMdzRokgbENA"
-            ],
-        },
-    ]
-}
-
-
 @pytest.mark.django_db
 def test_login_with_auth0_start(client):
     response = client.get("/login/auth0")
@@ -72,7 +41,13 @@ def test_login_with_auth0_start(client):
     ),
 )
 def test_login_with_auth0_complete(
-    client, requests_mock, time_machine, id_token, expected_email, should_be_staff
+    client,
+    requests_mock,
+    time_machine,
+    id_token,
+    expected_email,
+    should_be_staff,
+    mock_well_known_jwts,
 ):
     # The tokens I baked into the tests have an expiry date:
     time_machine.move_to(datetime.datetime(2021, 2, 24, 10, 0, 0))
@@ -85,10 +60,6 @@ def test_login_with_auth0_complete(
             "expires_in": 86400,
             "token_type": "Bearer",
         },
-    )
-    requests_mock.get(
-        "https://vaccinateca.us.auth0.com/.well-known/jwks.json",
-        json=MOCK_JWKS,
     )
     state = _get_state(client)
     response = client.get("/complete/auth0?code=auth0code&state={}".format(state))

@@ -45,7 +45,7 @@ def submit_report(request, on_request_logged):
         authorization = request.META.get("HTTP_AUTHORIZATION") or ""
         if not authorization.startswith("Bearer "):
             return JsonResponse(
-                {"error": "Authorization header must start with 'Bearer'"}
+                {"error": "Authorization header must start with 'Bearer'"}, status=403
             )
         # Check JWT token is valid
         jwt_id_token = authorization.split("Bearer ")[1]
