@@ -20,6 +20,6 @@ urlpatterns = [
     ),
     # Over-ride Django admin default login/logout
     path("admin/login/", lambda r: redirect("/login/auth0", permanent=False)),
-    path("admin/logout/", lambda r: redirect("/logout/", permanent=False)),
+    path("admin/logout/", lambda r: redirect("/logout", permanent=False)),
     path("admin/", admin.site.urls),
 ]
