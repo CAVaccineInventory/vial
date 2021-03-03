@@ -66,6 +66,8 @@ def send_row(row, url):
             time.sleep(i)
             errors.append(str(e))
             continue
+        else:
+            break
     if response is None:
         return 600, {"errors": errors}
     try:
