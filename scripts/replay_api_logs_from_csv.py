@@ -6,6 +6,7 @@ import csv
 import httpx
 import json
 import pytz
+import time
 
 
 @click.command()
@@ -56,7 +57,17 @@ def send_row(row, url):
         }
     )
     payload = json.loads(row["payload"])
-    response = httpx.post(url, json=payload)
+    response = None
+    errors = []
+    for i in range(1, 4):
+        try:
+            response = httpx.post(url, json=payload)
+        except Exception as e:
+            time.sleep(i)
+            errors.append(str(e))
+            continue
+    if response is None:
+        return 600, {"errors": errors}
     try:
         data = response.json()
     except Exception as e:
