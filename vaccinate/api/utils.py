@@ -16,9 +16,9 @@ def log_api_requests(view_fn):
         response_body_json = None
         if request.method == "POST":
             try:
-                post_body_json = json.loads(response.content)
+                post_body_json = json.loads(request.body)
             except ValueError:
-                post_body = response.content
+                post_body = request.body
         try:
             response_body_json = json.loads(response.content)
         except ValueError:

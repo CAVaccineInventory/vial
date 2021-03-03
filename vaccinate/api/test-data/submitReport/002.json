@@ -1,0 +1,23 @@
+{
+    "input": {
+        "Location": "recgDrq7aQMo0M5x7",
+        "Appointment scheduling instructions": "www.walgreens.com",
+        "Availability": [
+            "Yes: vaccinating 65+",
+            "Yes: appointment required",
+            "Vaccinating essential workers"
+        ],
+        "Notes": "Check the Walgreens site regularly to see when appointments open up.",
+        "Internal Notes": ""
+    },
+    "expected_status": 200,
+    "expected_fields": {
+        "location__public_id": "recgDrq7aQMo0M5x7",
+        "public_notes": "Check the Walgreens site regularly to see when appointments open up."
+    },
+    "expected_availability_tags": [
+        "appointment_required",
+        "vaccinating_65_plus",
+        "vaccinating_essential_workers"
+    ]
+}

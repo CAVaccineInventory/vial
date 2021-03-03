@@ -1,4 +1,5 @@
 from core.models import Report, Location
+from api.models import ApiLog
 import json
 import pathlib
 import pytest
@@ -8,9 +9,30 @@ tests_dir = pathlib.Path(__file__).parent / "test-data" / "submitReport"
 
 @pytest.mark.django_db
 def test_submit_report_api_bad_token(client):
-    response = client.post("/api/submitReport", json={})
+    response = client.post("/api/submitReport")
     assert response.json() == {"error": "Authorization header must start with 'Bearer'"}
     assert response.status_code == 403
+    last_log = ApiLog.objects.order_by("-id")[0]
+    assert {
+        "method": "POST",
+        "path": "/api/submitReport",
+        "query_string": "",
+        "remote_ip": "127.0.0.1",
+        "response_status": 403,
+        "created_report_id": None,
+    }.items() <= last_log.__dict__.items()
+
+
+@pytest.mark.django_db
+def test_submit_report_api_invalid_json(client, jwt_id_token):
+    response = client.post(
+        "/api/submitReport",
+        "This is bad JSON",
+        content_type="text/plain",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert response.status_code == 400
+    assert response.json()["error"] == "Expecting value: line 1 column 1 (char 0)"
 
 
 @pytest.mark.django_db
