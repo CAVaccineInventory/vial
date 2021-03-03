@@ -127,6 +127,7 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
+        "test",
         "created_at_in_la_timezone",
         "availability",
         "location",
@@ -138,6 +139,7 @@ class ReportAdmin(admin.ModelAdmin):
     list_filter = (
         "created_at",
         "appointment_tag",
+        "is_test_data",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
     exclude = ("airtable_json",)
@@ -148,6 +150,10 @@ class ReportAdmin(admin.ModelAdmin):
         "airtable_json_prettified",
     )
     ordering = ("-created_at",)
+
+    def test(self, instance):
+        return instance.is_test_data
+    test.boolean = True
 
     def lookup_allowed(self, lookup, value):
         "Enable all querystring lookups! Really powerful, and we trust our staff"

@@ -70,13 +70,6 @@ def import_airtable_location(location):
 
 
 def import_airtable_report(report, availability_tags=None):
-    fix_availability_tags = {}
-    if not availability_tags:
-        availability_tags = AvailabilityTag.objects.all()
-    for tag in availability_tags:
-        for previous_name in tag.previous_names:
-            fix_availability_tags[previous_name] = tag.name
-
     appointment_tag_string = "other"
     appointment_details = ""
     if (
@@ -130,20 +123,14 @@ def import_airtable_report(report, availability_tags=None):
         "airtable_json": report,
     }
 
-    tags = []
-    for tag_name in report.get("Availability") or []:
-        tag_name = fix_availability_tags.get(tag_name, tag_name)
-        try:
-            tags.append(AvailabilityTag.objects.get(name=tag_name))
-        except AvailabilityTag.DoesNotExist:
-            assert False, "Invalid tag: {}".format(tag_name)
-
     report_obj = Report.objects.update_or_create(
         airtable_id=report["airtable_id"], defaults=kwargs
     )[0]
 
-    for availability_tag in tags:
-        report_obj.availability_tags.add(availability_tag)
+    for tag_model in resolve_availability_tags(
+        report.get("Availability") or [], availability_tags=availability_tags
+    ):
+        report_obj.availability_tags.add(tag_model)
 
     return report_obj
 
@@ -151,6 +138,7 @@ def import_airtable_report(report, availability_tags=None):
 def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instructions):
     # https://github.com/CAVaccineInventory/django.vaccinate/issues/20
     # Returns (appointment_tag, other_instructions)
+    appointment_scheduling_instructions = appointment_scheduling_instructions or ""
     if appointment_scheduling_instructions == "Uses county scheduling system":
         return "county_website", None
     elif appointment_scheduling_instructions == "https://myturn.ca.gov/":
@@ -165,3 +153,24 @@ def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instruc
         return "web", appointment_scheduling_instructions
     else:
         return "other", appointment_scheduling_instructions
+
+
+def resolve_availability_tags(tags, availability_tags=None):
+    # Given a list of string tags e.g. ["Yes: vaccinating 65+"]
+    # returns matching AvailabilityTag objects, taking any
+    # previous_names into account
+    fix_availability_tags = {}
+    if not availability_tags:
+        availability_tags = AvailabilityTag.objects.all()
+    for availability_tag in availability_tags:
+        for previous_name in availability_tag.previous_names:
+            fix_availability_tags[previous_name] = availability_tag.name
+
+    tag_models = []
+    for tag_name in tags:
+        tag_name = fix_availability_tags.get(tag_name, tag_name)
+        try:
+            tag_models.append(AvailabilityTag.objects.get(name=tag_name))
+        except AvailabilityTag.DoesNotExist:
+            assert False, "Invalid tag: {}".format(tag_name)
+    return tag_models

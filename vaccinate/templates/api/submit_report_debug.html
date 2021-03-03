@@ -31,7 +31,8 @@
       input[type="submit"]:active {
         background-color: darkgreen;
       }
-      input[type="text"], textarea {
+      input[type="text"],
+      textarea {
         border: 1px solid #666;
         padding: 5px;
       }
@@ -50,13 +51,22 @@
     <main>
       <h1>Try /api/submitReport</h1>
       <form class="trySubmitReport">
-        <p><label>JWT token: <input type="text" name="jwt" size="40" value="{{ jwt }}"></label></p>
+        <p>
+          <label
+            >JWT token:
+            <input type="text" name="jwt" size="40" value="{{ jwt }}"
+          /></label>
+        </p>
         <div>
-          <textarea name="body" placeholder="JSON POST body goes here"></textarea>
+          <textarea
+            name="body"
+            placeholder="JSON POST body goes here"
+          ></textarea>
         </div>
         <div><input type="submit" value="Submit" /></div>
       </form>
       <div class="apiResponse" style="display: none">
+        <p class="adminUrl"></p>
         <h3>API response</h3>
         <p>Status code: <strong class="responseStatus"></strong></p>
         <h4>Body</h4>
@@ -67,6 +77,7 @@
     </main>
     <script>
       let form = document.querySelector(".trySubmitReport");
+      let adminUrl = document.querySelector(".adminUrl");
       let bodyTextarea = form.getElementsByTagName("textarea")[0];
       let jwtInput = form.querySelector("[name=jwt]");
       let apiResponse = document.querySelector(".apiResponse");
@@ -75,21 +86,38 @@
       let responseBody = document.querySelector(".responseBody");
       form.addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        const response = await fetch("/api/submitReport", {
+        const response = await fetch("/api/submitReport?test=1", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + jwtInput.value
+            Authorization: "Bearer " + jwtInput.value,
           },
           body: bodyTextarea.value,
         });
         const data = await response.json();
-        apiResponse.style.display = 'block';
+        apiResponse.style.display = "block";
+        if (data.admin_url) {
+          adminUrl.innerHTML = `<a href="${
+            data.admin_url
+          }">View report "${htmlEscape(data.report)}" in admin</a>`;
+        } else {
+          adminUrl.innerHTML = "";
+        }
         responseStatus.innerText = response.status;
         responseHeaders.innerText = JSON.stringify(
-          Array.from(response.headers.entries()), null, 4)
+          Array.from(response.headers.entries()),
+          null,
+          4
+        );
         responseBody.innerText = JSON.stringify(data, null, 4);
       });
+      const htmlEscape = (s) =>
+        s
+          .replace(/&/g, "&amp;")
+          .replace(/>/g, "&gt;")
+          .replace(/</g, "&lt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
     </script>
   </body>
 </html>
