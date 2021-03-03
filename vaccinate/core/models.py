@@ -371,9 +371,7 @@ class Report(models.Model):
     def created_at_utc(self):
         tz = pytz.UTC
         created_at_utc = timezone.localtime(self.created_at, tz)
-        return (
-            dateformat.format(created_at_utc, "jS M Y fA e")
-        )
+        return dateformat.format(created_at_utc, "jS M Y fA e")
 
     def availability(self):
         # Used by the admin list view
