@@ -60,6 +60,7 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
     assert response.status_code == fixture["expected_status"]
     # Load new report from DB and check it
     report = Report.objects.order_by("-id")[0]
+    assert response.json()["created"] == [report.public_id]
     assert report.pid == response.json()["created"][0]
     expected_field_values = Report.objects.filter(pk=report.pk).values(
         *list(fixture["expected_fields"].keys())
