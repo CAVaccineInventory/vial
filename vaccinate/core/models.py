@@ -372,9 +372,7 @@ class Report(models.Model):
         tz = pytz.UTC
         created_at_utc = timezone.localtime(self.created_at, tz)
         return (
-            dateformat.format(created_at_utc, "jS M Y fa").replace(".", "")
-            + " "
-            + created_at_utc.tzname()
+            dateformat.format(created_at_utc, "jS M Y fA e")
         )
 
     def availability(self):
