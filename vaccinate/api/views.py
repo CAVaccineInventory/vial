@@ -48,7 +48,9 @@ def submit_report(request):
         try:
             jwt_payload = decode_and_verify_jwt(jwt_id_token)
         except Exception as e:
-            return JsonResponse({"error": "Could not decode JWT", "details": str(e)})
+            return JsonResponse(
+                {"error": "Could not decode JWT", "details": str(e)}, status=403
+            )
         reporter = Reporter.objects.update_or_create(
             external_id="auth0:{}".format(jwt_payload["sub"]),
             defaults={
@@ -63,11 +65,11 @@ def submit_report(request):
     try:
         post_data = json.loads(request.body.decode("utf-8"))
     except ValueError as e:
-        return JsonResponse({"error": str(e), "user": user_info})
+        return JsonResponse({"error": str(e), "user": user_info}, status=400)
     try:
         report_data = ReportValidator(**post_data).dict()
     except ValidationError as e:
-        return JsonResponse({"error": e.errors(), "user": user_info})
+        return JsonResponse({"error": e.errors(), "user": user_info}, status=400)
     # Now we add the report
     appointment_tag_string, appointment_details = derive_appointment_tag(
         report_data["appointments_by_phone"], report_data["appointment_details"]
