@@ -28,7 +28,11 @@ def cli(endpoint, csv_filepath, base_url):
     # Collect all of the rows we are going to process in memory
     # - streaming would be more efficient, but I want to count
     # the endpoint matches and show a progress bar
-    rows = [row for row in reader if row["endpoint"] == endpoint]
+    rows = [
+        row
+        for row in reader
+        if row["endpoint"] == endpoint and "SERVICE_UNAVAILABLE" not in row["payload"]
+    ]
     status_count = defaultdict(int)
     with click.progressbar(rows, show_pos=True) as progress_rows:
         for row in progress_rows:
