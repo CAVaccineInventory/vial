@@ -29,8 +29,8 @@ for model in (LocationType, ProviderType, State):
 @admin.register(Provider)
 class ProviderAdmin(admin.ModelAdmin):
     search_fields = ("name",)
-    list_display = ("name", "main_url", "provider_type")
-    list_filter = ("provider_type",)
+    list_display = ("name", "main_url", "contact_phone_number", "provider_type")
+    list_editable = ("main_url", "contact_phone_number", "provider_type")
 
 
 @admin.register(County)

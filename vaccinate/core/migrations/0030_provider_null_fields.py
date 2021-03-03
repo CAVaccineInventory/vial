@@ -7,18 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0029_location_report_is_test_data'),
+        ("core", "0029_location_report_is_test_data"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='provider',
-            name='contact_phone_number',
+            model_name="provider",
+            name="contact_phone_number",
             field=core.fields.CharTextField(blank=True, max_length=65000, null=True),
         ),
         migrations.AlterField(
-            model_name='provider',
-            name='public_notes',
+            model_name="provider",
+            name="public_notes",
             field=models.TextField(blank=True, null=True),
         ),
     ]
