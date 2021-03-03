@@ -57,6 +57,17 @@
             <input type="text" name="jwt" size="40" value="{{ jwt }}"
           /></label>
         </p>
+        <p>
+          <label
+            >Fake user ID:
+            <input
+              type="text"
+              name="fake_user"
+              size="40"
+              value=""
+              placeholder="Optional, use this instead of a JWT"
+          /></label>
+        </p>
         <div>
           <textarea
             name="body"
@@ -80,13 +91,18 @@
       let adminUrl = document.querySelector(".adminUrl");
       let bodyTextarea = form.getElementsByTagName("textarea")[0];
       let jwtInput = form.querySelector("[name=jwt]");
+      let fakeUserInput = form.querySelector("[name=fake_user]");
       let apiResponse = document.querySelector(".apiResponse");
       let responseStatus = document.querySelector(".responseStatus");
       let responseHeaders = document.querySelector(".responseHeaders");
       let responseBody = document.querySelector(".responseBody");
       form.addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        const response = await fetch("/api/submitReport?test=1", {
+        let url = "/api/submitReport?test=1";
+        if (fakeUserInput.value) {
+          url += "&fake_user=" + encodeURIComponent(fakeUserInput.value);
+        }
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
