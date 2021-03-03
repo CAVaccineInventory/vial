@@ -1,9 +1,11 @@
 from collections import defaultdict
+from dateutil import parser
 from urllib.parse import urlencode
 import click
 import csv
 import httpx
 import json
+import pytz
 
 
 @click.command()
@@ -38,7 +40,17 @@ def cli(endpoint, csv_filepath, base_url):
 
 
 def send_row(row, url):
-    url += "?" + urlencode({"test": 1, "fake_user": row["auth0_reporter_id"]})
+    created_in_los_angeles = parser.parse(row["Created"])
+    tz = pytz.timezone("America/Los_Angeles")
+    created_in_utc = tz.localize(created_in_los_angeles).astimezone(pytz.UTC)
+    url += "?" + urlencode(
+        {
+            "test": 1,
+            "fake_user": row["auth0_reporter_id"],
+            "fake_timestamp": created_in_utc.isoformat(),
+            "fake_remote_ip": row["remote_ip"],
+        }
+    )
     payload = json.loads(row["payload"])
     response = httpx.post(url, json=payload)
     try:

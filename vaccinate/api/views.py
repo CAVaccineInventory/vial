@@ -1,4 +1,5 @@
 from auth0login.auth0_utils import decode_and_verify_jwt
+from dateutil import parser
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -7,6 +8,7 @@ from typing import List, Optional
 from core.models import AppointmentTag, AvailabilityTag, Location, Report, Reporter
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 import json
+import pytz
 
 
 class ReportValidator(BaseModel):
@@ -75,7 +77,7 @@ def submit_report(request):
         report_data["appointments_by_phone"], report_data["appointment_details"]
     )
     availability_tags = resolve_availability_tags(report_data["availability"])
-    report = Report.objects.create(
+    kwargs = dict(
         is_test_data=bool(request.GET.get("test")),
         location=report_data["location"],
         # Currently hard-coded to caller app:
@@ -86,6 +88,14 @@ def submit_report(request):
         internal_notes=report_data["internal_notes"],
         reported_by=reporter,
     )
+    if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
+        fake_timestamp = parser.parse(request.GET["fake_timestamp"])
+        if fake_timestamp.tzinfo is None:
+            # Assume this is UTC
+            fake_timestamp = pytz.UTC.localize(fake_timestamp)
+        kwargs["created_at"] = fake_timestamp
+
+    report = Report.objects.create(**kwargs)
     for tag_model in availability_tags:
         report.availability_tags.add(tag_model)
 
