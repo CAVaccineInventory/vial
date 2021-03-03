@@ -28,17 +28,28 @@ def cli(endpoint, csv_filepath, base_url):
     # the endpoint matches and show a progress bar
     rows = [row for row in reader if row["endpoint"] == endpoint]
     status_count = defaultdict(int)
-    with click.progressbar(rows) as progress_rows:
+    with click.progressbar(rows, show_pos=True) as progress_rows:
         for row in progress_rows:
-            status = send_row(row, url)
+            status, data = send_row(row, url)
             status_count[status] += 1
-    print(status_count)
+            if status != 200:
+                click.echo(json.dumps(data, indent=2), err=True)
+    click.echo(json.dumps(status_count))
 
 
 def send_row(row, url):
     url += "?" + urlencode({"test": 1, "fake_user": row["auth0_reporter_id"]})
-    response = httpx.post(url, json=json.loads(row["payload"]))
-    return response.status_code
+    payload = json.loads(row["payload"])
+    response = httpx.post(url, json=payload)
+    try:
+        data = response.json()
+    except Exception as e:
+        data = {"json_error": str(e)}
+    return response.status_code, {
+        "status": response.status_code,
+        "input": payload,
+        "output": data,
+    }
 
 
 if __name__ == "__main__":
