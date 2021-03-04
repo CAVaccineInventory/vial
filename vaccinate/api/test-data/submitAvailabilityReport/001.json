@@ -1,0 +1,45 @@
+{
+    "location": "recaQlVkkI1rNarvx",
+    "input": {
+        "feed_update":  {
+            "uuid": "02d63a35-5dbc-4ac8-affb-14603bf6eb2e",
+            "github_url": "https://example.com",
+            "feed_provider": "test_provider"
+        },
+        "location": "116",
+        "availability_windows": [
+            {
+                "starts_at": "2021-02-28T10:00:00Z",
+                "ends_at": "2021-02-28T11:00:00Z",
+                "slots": 25,
+                "additional_restrictions": []
+            },
+            {
+                "starts_at": "2021-02-28T11:00:00Z",
+                "ends_at": "2021-02-28T12:00:00Z",
+                "slots": 18,
+                "additional_restrictions": ["vaccinating_65_plus"]
+            }
+        ]
+    },
+    "expected_status": 201,
+    "expected_fields": {
+        "location__public_id": "recaQlVkkI1rNarvx"
+    },
+    "expected_windows": [
+        {
+            "expected_fields":
+            {
+                "slots": 25
+            },
+            "expected_additional_restrictions": []
+        },
+        {
+            "expected_fields":
+            {
+                "slots": 18
+            },
+            "expected_additional_restrictions": ["vaccinating_65_plus"]
+        }
+    ]
+}

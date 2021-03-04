@@ -1,4 +1,5 @@
 import datetime
+
 from django.db import models
 from django.utils import timezone
 from django.utils import dateformat
@@ -444,17 +445,19 @@ class CallRequestReason(models.Model):
         db_table = "call_request_reason"
 
 
+class ReportType(models.TextChoices):
+    EVA = "eva_report", "Eva report"
+    SCOOBY = "scooby_report", "Scooby report"
+    DATA_CORRECTIONS = "data_corrections_report", "Data corrections report"
+    FEED = "feed_report", "Feed report"
+
+
 class CallRequest(models.Model):
     """
     A request to make a phone call (i.e., an entry in the call queue).
     This reifies the notion of "requesting a call" so that all of the call attempts can be tracked with full history.
     For example, if a bug in an app has us call a location repeatedly, we have the full record of why those calls were made.
     """
-
-    class ReportType(models.TextChoices):
-        EVA = "eva_report", "Eva report"
-        SCOOBY = "scooby_report", "Scooby report"
-        DATA_CORRECTIONS = "data_corrections_report", "Data corrections report"
 
     location = models.ForeignKey(
         Location, related_name="call_requests", on_delete=models.PROTECT
@@ -563,3 +566,93 @@ class PublishedReport(models.Model):
 
     class Meta:
         db_table = "published_report"
+
+
+class FeedProvider(models.Model):
+    """
+    A provider of feed-based data, such as a JSON API or a scraper for a particular web page.
+    Used to track the provenance of availability data.
+    """
+
+    name = models.TextField(unique=True)
+    slug = models.TextField(unique=True)
+    # expand with other metadata as needed
+
+
+class FeedUpdate(models.Model):
+    """
+    A single update produced by a FeedProvider.
+    For an API consumer, this corresponds to a single ingestion event.
+    For a scraper, this corresponds to a single page scrape.
+
+    A single update might include many AppointmentAvailabilityReports, generally one per location.
+    """
+
+    uuid = models.UUIDField(primary_key=True)
+    feed_provider = models.ForeignKey(
+        FeedProvider, related_name="updates", on_delete=models.PROTECT
+    )
+    github_url = models.URLField(
+        "GitHub URL where the contents of this feed report can be found"
+    )
+
+
+class AppointmentAvailabilityReport(models.Model):
+    """
+    A report about vaccine appointment availability at a known location.
+    A single report might encompass a large number of availability windows, each of which might have special constraints
+    on who is eligible to use it (e.g., only second Moderna doses).
+    """
+
+    location = models.ForeignKey(
+        Location, related_name="availability_reports", on_delete=models.PROTECT
+    )
+
+    feed_update = models.ForeignKey(
+        FeedUpdate,
+        related_name="appointment_availability_reports",
+        on_delete=models.PROTECT,
+    )
+
+    created_at = models.DateTimeField(default=timezone.now)
+    feed_json = models.JSONField(null=True, blank=True)
+    is_test_data = models.BooleanField(default=False)
+
+
+class AppointmentAvailabilityWindow(models.Model):
+    """
+    A window during which vaccination appointments are currently available.
+    A window might have additional restrictions (i.e., restrictions beyond the general restrictions for the location),
+    which are currently the same AvailabilityTags used to capture restrictions about the location.
+    The restrictions for this window are the union of the restrictions for the location and the additional_restrictions.
+    """
+
+    availability_report = models.ForeignKey(
+        AppointmentAvailabilityReport, related_name="windows", on_delete=models.PROTECT
+    )
+
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+
+    slots = models.IntegerField(
+        help_text="the number of appointments available in this window"
+    )
+
+    additional_restrictions = models.ManyToManyField(
+        AvailabilityTag, db_table="appointment_availability_window_availability_tag"
+    )
+
+
+class LocationFeedConcordance(models.Model):
+    """
+    A known relationship between a location in our database and a location identification scheme used by a FeedProvider.
+    e.g., a CVS store number
+    """
+
+    location = models.ForeignKey(
+        Location, related_name="feed_concordances", on_delete=models.PROTECT
+    )
+    feed_provider = models.ForeignKey(
+        FeedProvider, related_name="location_concordances", on_delete=models.PROTECT
+    )
+    provider_id = models.TextField(null=False)

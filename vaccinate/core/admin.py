@@ -19,6 +19,8 @@ from .models import (
     CallRequestReason,
     CallRequest,
     PublishedReport,
+    FeedProvider,
+    LocationFeedConcordance,
 )
 
 # Simple models first
@@ -226,3 +228,13 @@ class PublishedReportAdmin(admin.ModelAdmin):
         "reports",
         "eva_reports",
     )
+
+
+@admin.register(FeedProvider)
+class FeedProviderAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug")
+
+
+@admin.register(LocationFeedConcordance)
+class LocationFeedConcordanceAdmin(admin.ModelAdmin):
+    list_display = ("feed_provider", "location", "provider_id")
