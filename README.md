@@ -54,7 +54,7 @@ Once you have signed in and created an account you should grant yourself super-u
 
 You'll also neet to run this command once or your static assets will 404:
 
-   ./manage.py collectstatic
+    ./manage.py collectstatic
 
 ## Configuration
 
