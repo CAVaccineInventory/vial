@@ -24,12 +24,14 @@ As a result, hosting this (or moving this to a different host) should be as easy
 - Configures Django Admin to run against those new models
 - Continuous Deployment to a staging environment (temporarily hosted on Heroku)
 - Imports existing location and reports data from Airtable
+- Provides a `/api/submitReport` API that imitates the Netlify/Airtable one - [documentation here](docs/api.md)
 
 For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
 
 ## What this will do
 
-- Provide an alternative API to the Airtable one so that `help.vaccinate` can write directly to Django
+- API for the next call that a user should make
+- Export options matching the public APIs we currently generate from Airtable
 - I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
 The [issues](https://github.com/CAVaccineInventory/django.vaccinate/issues) in this repo closely track upcoming work.
