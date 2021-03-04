@@ -34,7 +34,7 @@ For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInve
 
 The [issues](https://github.com/CAVaccineInventory/django.vaccinate/issues) in this repo closely track upcoming work.
 
-## Setup
+## Setting up a development environment
 
 Check out the repository. Create a new Python virtual environment for it (I use `pipenv shell` to do this). Install the dependencies with `pip install -r requirements.txt`.
 
@@ -51,6 +51,10 @@ Once you have signed in and created an account you should grant yourself super-u
     >>> from django.contrib.auth.models import User
     >>> User.objects.all().update(is_superuser=True, is_staff=True)
     >>> <Ctrl+D> to exit
+
+You'll also neet to run this command once or your static assets will 404:
+
+   ./manage.py collectstatic
 
 ## Configuration
 
