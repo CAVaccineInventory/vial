@@ -78,6 +78,7 @@ def test_login_with_auth0_complete(
         assert not user.groups.filter(name="default-view-core").exists()
     # Should redirect to / - redirecting to /admin/ caused
     # a redirect loop for not-staff users
+    assert response.url == "/"
 
 
 def _get_state(client):
