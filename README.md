@@ -60,7 +60,11 @@ You'll also neet to run this command once or your static assets will 404:
 
 ## Configuration
 
-Running this requires two environment variables. I have a file called `env.sh` which I `source env.sh` when working on the project which looks like this:
+Running this requires some secrets in environment variables:
+ - `SOCIAL_AUTH_AUTH0_SECRET` can be found in the [Auth0 application configuration page](https://manage.auth0.com/dashboard/us/vaccinateca/applications/7JMM4bb1eC7taGN1OlaLBIXJN1w42vac/settings).
+ - `DJANGO_SECRET_KEY` can be any random string.  One way to generate one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
+
+I have a file called `env.sh` which I `source env.sh` when working on the project which looks like this:
 
     export SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
     export DJANGO_SECRET_KEY="just a big random string"
