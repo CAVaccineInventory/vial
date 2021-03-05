@@ -37,6 +37,14 @@ class ApiLog(models.Model):
         on_delete=models.SET_NULL,
         help_text="Report that was created by this API call, if any",
     )
+    created_availability_report = models.ForeignKey(
+        "core.AppointmentAvailabilityReport",
+        null=True,
+        blank=True,
+        related_name="created_by_api_logs",
+        on_delete=models.SET_NULL,
+        help_text="Availability report that was created by this API call, if any",
+    )
 
     class Meta:
         db_table = "api_log"

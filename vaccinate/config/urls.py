@@ -12,6 +12,7 @@ urlpatterns = [
     path("logout", logout),
     path("api/submitReport", api_views.submit_report),
     path("api/submitReport/debug", api_views.submit_report_debug),
+    path("api/submitAvailabilityReport", api_views.submit_availability_report),
     path("", include("django.contrib.auth.urls")),
     path("", include("social_django.urls")),
     path(

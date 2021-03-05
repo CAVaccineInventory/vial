@@ -25,6 +25,9 @@ if SENTRY_DSN:
         send_default_pii=True,
     )
 
+# Scraper API key
+SCRAPER_API_KEY = os.environ["SCRAPER_API_KEY"]
+
 # Auth0
 SOCIAL_AUTH_TRAILING_SLASH = False
 SOCIAL_AUTH_AUTH0_DOMAIN = "vaccinateca.us.auth0.com"
