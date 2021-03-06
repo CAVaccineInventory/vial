@@ -80,6 +80,6 @@ To run the tests, change directory to the `vaccinate` folder and run `pytest`.
 
 ## Code formatting
 
-This repository uses [Black](https://github.com/psf/black) to enforce coding style as part of the CI tests.
+This repository uses [Black](https://github.com/psf/black) and [isort](https://pycqa.github.io/isort/) to enforce coding style as part of the CI tests.
 
-Run `black .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
+Run `black .` and `isort .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.

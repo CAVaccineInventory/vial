@@ -35,6 +35,9 @@ jobs:
     - name: Run Black
       run: |
         black --check --diff .
+    - name: Run isort
+      run: |
+        isort --check .
     - name: Run tests
       env:
         DJANGO_SECRET_KEY: secret for running tests
