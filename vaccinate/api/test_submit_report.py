@@ -1,8 +1,9 @@
-from core.models import Report, Location
-from api.models import ApiLog
 import json
 import pathlib
+
 import pytest
+from api.models import ApiLog
+from core.models import Location, Report
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "submitReport"
 

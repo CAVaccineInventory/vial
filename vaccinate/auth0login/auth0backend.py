@@ -1,4 +1,5 @@
 from social_core.backends.oauth import BaseOAuth2
+
 from .auth0_utils import decode_and_verify_jwt
 
 

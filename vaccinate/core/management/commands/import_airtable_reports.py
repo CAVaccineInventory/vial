@@ -1,7 +1,8 @@
+import json
+
+from core.import_utils import import_airtable_report, load_airtable_backup
 from core.models import AvailabilityTag
 from django.core.management.base import BaseCommand, CommandError
-from core.import_utils import load_airtable_backup, import_airtable_report
-import json
 
 
 class Command(BaseCommand):

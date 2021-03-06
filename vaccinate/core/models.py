@@ -1,11 +1,12 @@
 import datetime
-from django.db import models
-from django.utils import timezone
-from django.utils import dateformat
-from .fields import CharTextField
-from .baseconverter import pid
-import pytz
 import uuid
+
+import pytz
+from django.db import models
+from django.utils import dateformat, timezone
+
+from .baseconverter import pid
+from .fields import CharTextField
 
 
 class LocationType(models.Model):

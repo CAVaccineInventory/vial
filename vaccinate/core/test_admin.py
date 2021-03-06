@@ -1,5 +1,6 @@
-from .models import Location
 import pytest
+
+from .models import Location
 
 
 @pytest.fixture()
