@@ -10,6 +10,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY vaccinate/ vaccinate/
 
+# Passed down by Cloud Build, which we make available at runtime
+ARG COMMIT_SHA
+ENV COMMIT_SHA=${COMMIT_SHA}
 
 # Pulled in at runtime
 ENV DEPLOY=unknown
