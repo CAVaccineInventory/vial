@@ -11,6 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY vaccinate/ vaccinate/
 
 
+# Pulled in at runtime
+ENV DEPLOY=unknown
+
 WORKDIR $APP_HOME/vaccinate
 
 # Running manage.py requires a full set of environment variables,
