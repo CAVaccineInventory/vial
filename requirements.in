@@ -17,7 +17,8 @@ psycopg2-binary
 # Easy reconfiguration of
 dj-database-url
 
-# Read .env files
+# Read .env files of secrets, and those from GCP secrets
+google-cloud-secret-manager
 python-dotenv
 
 # Typing and validation on data
