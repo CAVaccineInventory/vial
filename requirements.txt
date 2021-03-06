@@ -7,7 +7,9 @@
 appdirs==1.4.4 \
     --hash=sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41 \
     --hash=sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128
-    # via black
+    # via
+    #   black
+    #   django-migration-linter
 asgiref==3.3.1 \
     --hash=sha256:5ee950735509d04eb673bd7f7120f8fa1c9e2df495394992c73234d526907e17 \
     --hash=sha256:7162a3cb30ab0609f1a4c95938fd73e8604f63bdba516a7f7d64b83ff09478f0
@@ -100,10 +102,16 @@ dj-database-url==0.5.0 \
     --hash=sha256:4aeaeb1f573c74835b0686a2b46b85990571159ffc21aa57ecd4d1e1cb334163 \
     --hash=sha256:851785365761ebe4994a921b433062309eb882fedd318e1b0fcecc607ed02da9
     # via -r requirements.in
+django-migration-linter==2.5.1 \
+    --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
+    --hash=sha256:e4209e74393ddb86f31e8b7a13555fcecd1def506a04e1fe16b470248661dec7
+    # via -r requirements.in
 django==3.1.7 \
     --hash=sha256:32ce792ee9b6a0cbbec340123e229ac9f765dff8c2a4ae9247a14b2ba3a365a7 \
     --hash=sha256:baf099db36ad31f970775d0be5587cc58a6256a6771a44eb795b554d45f211b8
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   django-migration-linter
 ecdsa==0.14.1 \
     --hash=sha256:64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e \
     --hash=sha256:e108a5fe92c67639abae3260e43561af914e7fd0d27bae6d2ec1312ae7934dfe
@@ -352,6 +360,7 @@ six==1.15.0 \
     --hash=sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259 \
     --hash=sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced
     # via
+    #   django-migration-linter
     #   ecdsa
     #   python-dateutil
     #   python-jose
