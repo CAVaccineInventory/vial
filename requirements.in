@@ -1,19 +1,55 @@
+# Update requirements.txt after making changes to this file, by
+# running ./scripts/upgrade-requirements
+
+# Core django
 django
-social-auth-app-django
-python-jose
-python-dotenv
-pytest-django
-black
-psycopg2-binary
-dj-database-url
-whitenoise
+
+# Server
 gunicorn
+
+# Serve static files from wsgi; used in development and heroku, not in
+# production
+whitenoise
+
+# PostgreSQL backend
+psycopg2-binary
+
+# Easy reconfiguration of
+dj-database-url
+
+# Read .env files -- unused currently
+python-dotenv
+
+# Typing and validation on data
+pydantic
+
+# Authentication
+social-auth-app-django
+
+# Cryptography for JWT parsing and validation
+python-jose
+
+# Error logging
 sentry-sdk
-github-contents
+
+
+### Development
+
+# Testing
+pytest-django
 requests-mock
 time-machine
-pydantic
+
+# Formatting
+black
+
+# Dependency management
+pip-tools
+
+# Importing data from github snapshots
+github-contents
+
+# Used for import-from-CSV command line tool
 click
 httpx
 python-dateutil
-pip-tools
