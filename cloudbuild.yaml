@@ -4,11 +4,14 @@ steps:
     entrypoint: bash
     args: ["-c", "docker pull ${_IMAGE_NAME}:latest || exit 0"]
 
-  # See Dockerfile; build and tag the image, using the cache in the last step
+  # See Dockerfile; build and tag the image, using the cache in the last step.
+  # We build the COMMIT_SHA into the image, so it knows what version it is.
   - id: "build image"
     name: "gcr.io/cloud-builders/docker"
     args:
       - build
+      - "--build-arg"
+      - "COMMIT_SHA=$COMMIT_SHA"
       - "-t"
       - "${_IMAGE_NAME}:${COMMIT_SHA}"
       - "-t"
