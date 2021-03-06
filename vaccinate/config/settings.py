@@ -24,6 +24,7 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration()],
         traces_sample_rate=1.0,
         send_default_pii=True,
+        environment=os.environ.get("DEPLOY", "unknown"),
     )
 
 # Auth0
