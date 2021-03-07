@@ -1,14 +1,67 @@
 steps:
+  # We need to unshallow the clone so Sentry can get the history; except that
+  # this is a private repository, and the FETCH step has thrown the keys away
+  # already.  Install a deploy key, known_hosts and swap the URL around to the
+  # ssh one, so we can unshallow.
+  - name: "gcr.io/cloud-builders/git"
+    secretEnv: ["_SSH_KEY"]
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        echo "$$_SSH_KEY" >> /root/.ssh/id_ed25519
+        chmod 400 /root/.ssh/id_ed25519
+        cp .github/known_hosts /root/.ssh/known_hosts
+    volumes:
+      - name: "ssh"
+        path: /root/.ssh
+  - name: gcr.io/cloud-builders/git
+    args:
+      - "remote"
+      - "set-url"
+      - "origin"
+      - "git@github.com:CAVaccineInventory/django.vaccinate"
+  - name: gcr.io/cloud-builders/git
+    args: ["fetch", "--unshallow"]
+    volumes:
+      - name: "ssh"
+        path: /root/.ssh
+
+  # Tell Sentry about the release; we need to use `/bin/sh` as the entrypoint to
+  # allow the $_SENTRY_TOKEN injection at runtime.
+  - name: getsentry/sentry-cli
+    entrypoint: /bin/sh
+    args:
+      - "-c"
+      - |
+        sentry-cli --auth-token=$$_SENTRY_TOKEN \
+            releases --org=vaccinateca \
+            new --project=django ${COMMIT_SHA}
+    secretEnv: ["_SENTRY_TOKEN"]
+  # Also tell it the commits that it has
+  - name: getsentry/sentry-cli
+    entrypoint: /bin/sh
+    args:
+      - "-c"
+      - |
+        sentry-cli --auth-token=$$_SENTRY_TOKEN \
+          releases --org=vaccinateca \
+          set-commits --auto ${COMMIT_SHA}
+    secretEnv: ["_SENTRY_TOKEN"]
+
   # Pull the previous image, as a starting point
   - name: gcr.io/cloud-builders/docker
     entrypoint: bash
     args: ["-c", "docker pull ${_IMAGE_NAME}:latest || exit 0"]
 
-  # See Dockerfile; build and tag the image, using the cache in the last step
+  # See Dockerfile; build and tag the image, using the cache in the last step.
+  # We build the COMMIT_SHA into the image, so it knows what version it is.
   - id: "build image"
     name: "gcr.io/cloud-builders/docker"
     args:
       - build
+      - "--build-arg"
+      - "COMMIT_SHA=$COMMIT_SHA"
       - "-t"
       - "${_IMAGE_NAME}:${COMMIT_SHA}"
       - "-t"
@@ -42,6 +95,23 @@ steps:
         "migrate",
       ]
 
+  # Finalize the Sentry release, timestamp for deploy duration
+  - name: getsentry/sentry-cli
+    entrypoint: /bin/sh
+    args:
+      - "-c"
+      - |
+        sentry-cli --auth-token=$$_SENTRY_TOKEN \
+            releases --org=vaccinateca \
+            finalize ${COMMIT_SHA}
+    secretEnv: ["_SENTRY_TOKEN"]
+  - name: getsentry/sentry-cli
+    entrypoint: /bin/sh
+    args: ["-c", "date +%s > /timestamp/build"]
+    volumes:
+      - name: "timestamp"
+        path: /timestamp
+
   # Deploy the new code.
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     args:
@@ -61,8 +131,31 @@ steps:
     id: Deploy
     entrypoint: gcloud
 
+  # Tell Sentry about the deploy
+  - name: getsentry/sentry-cli
+    entrypoint: /bin/sh
+    args:
+      - "-c"
+      # TODO --started=....unix...
+      - |
+        sentry-cli --auth-token=$$_SENTRY_TOKEN \
+            releases --org=vaccinateca \
+            deploys ${COMMIT_SHA} new \
+            --env=${_DEPLOY} --started=$(cat /timestamp/build)
+    volumes:
+      - name: "timestamp"
+        path: /timestamp
+    secretEnv: ["_SENTRY_TOKEN"]
+
 options:
   dynamic_substitutions: true
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/373178984669/secrets/sentry-release-token/versions/latest
+      env: _SENTRY_TOKEN
+    - versionName: projects/373178984669/secrets/github-deploy/versions/latest
+      env: _SSH_KEY
 
 substitutions:
   _SERVICE_NAME: vaccinate

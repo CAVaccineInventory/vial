@@ -24,12 +24,16 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration()],
         traces_sample_rate=1.0,
         send_default_pii=True,
+        environment=os.environ.get("DEPLOY", "unknown"),
+        release=os.environ.get("COMMIT_SHA", None),
     )
 
 # Auth0
 SOCIAL_AUTH_TRAILING_SLASH = False
 SOCIAL_AUTH_AUTH0_DOMAIN = "vaccinateca.us.auth0.com"
-SOCIAL_AUTH_AUTH0_KEY = "7JMM4bb1eC7taGN1OlaLBIXJN1w42vac"
+SOCIAL_AUTH_AUTH0_KEY = os.environ.get(
+    "SOCIAL_AUTH_AUTH0_KEY", "7JMM4bb1eC7taGN1OlaLBIXJN1w42vac"
+)
 SOCIAL_AUTH_AUTH0_SECRET = os.environ["SOCIAL_AUTH_AUTH0_SECRET"]
 SOCIAL_AUTH_AUTH0_SCOPE = ["openid", "profile", "email"]
 

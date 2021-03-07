@@ -4,5 +4,5 @@ __pycache__
 .coverage
 .vscode
 .DS_Store
-/env.sh
+.env
 /vaccinate/staticfiles/
