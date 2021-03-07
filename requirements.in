@@ -36,6 +36,9 @@ python-jose
 # Error logging
 sentry-sdk
 
+# Observability
+honeycomb-beeline
+
 # Better interactive shell
 ipython
 
