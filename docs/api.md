@@ -18,6 +18,7 @@ The JSON document have the following keys:
 * **Availability** (required): a list of availability tags, see below
 * **Notes**: A free text field of public notes
 * **Internal Notes**: A free text field of private, internal notes
+* **Do not call until**: An ISO 8601-formatted timestamp, before which this location should not be called again
 
 Here is an example submission:
 ```json
@@ -64,6 +65,23 @@ Valid tags right now are:
 - "Restricted to city residents" - also known as: "Yes: restricted to city residents"
 - "Scheduling second dose only" - also known as: "Yes: Scheduling second dose only"
 - "Vaccinating 50+" - also known as: "Yes: vaccinating 50+"
+
+### Skip requests
+
+If a `Do not call until` timestamp is provided _and_ one of the availability tags is "Call back later"/"Skip: call back later",
+a new call request is enqueued with a vesting time equal to the `Do not call until` timestamp.
+This handles reports like "Closed until Monday" while making sure that we don't drop the request.
+
+An example of one of these requests:
+```json
+{
+  "Location": "rec5RXyYpi7IHQ2eN",
+  "Availability":["Skip: call back later"],
+  "Notes": "Feb 21: This location does not currently have vaccine available but may get stock in the coming weeks.", 
+  "Internal Notes": "Feb 21: The pharmacy tech transferred me to the \"dispensing pharmacy\" as the best place to get questions answered.", 
+  "Do not call until": "2021-03-07T18:35:03.742Z"
+}
+```
 
 ### Return value
 
