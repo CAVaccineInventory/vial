@@ -14,6 +14,9 @@ whitenoise
 # PostgreSQL backend
 psycopg2-binary
 
+# Verify that migrations are backwards compatable
+django-migration-linter
+
 # Easy reconfiguration of
 dj-database-url
 
