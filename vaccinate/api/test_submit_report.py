@@ -60,7 +60,6 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
     )
-    print(response.json())
     assert response.status_code == fixture["expected_status"]
     # Load new report from DB and check it
     report = Report.objects.order_by("-id")[0]
