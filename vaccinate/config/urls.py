@@ -1,11 +1,10 @@
+from api import views as api_views
+from auth0login.views import logout
+from core import views as core_views
 from django.contrib import admin
 from django.http.response import HttpResponsePermanentRedirect
-from django.urls import path, include
 from django.shortcuts import redirect
-from auth0login.views import logout
-from api import views as api_views
-from core import views as core_views
-
+from django.urls import include, path
 
 urlpatterns = [
     path("", core_views.index),

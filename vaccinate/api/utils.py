@@ -1,6 +1,7 @@
-from functools import wraps
-from .models import ApiLog
 import json
+from functools import wraps
+
+from .models import ApiLog
 
 
 def log_api_requests(view_fn):

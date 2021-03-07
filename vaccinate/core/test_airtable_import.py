@@ -1,11 +1,11 @@
-from .models import Location, Report
+import pytest
+
 from .import_utils import (
     derive_appointment_tag,
     import_airtable_location,
     import_airtable_report,
 )
-import pytest
-
+from .models import Location, Report
 
 location_json = {
     "# Data corrections": 0,

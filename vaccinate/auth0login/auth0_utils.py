@@ -1,6 +1,6 @@
+import requests
 from django.conf import settings
 from jose import jwt
-import requests
 
 
 def decode_and_verify_jwt(jwt_id_token, try_fallback=False):

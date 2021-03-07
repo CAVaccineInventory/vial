@@ -1,15 +1,16 @@
 from github_contents import GithubContents
+
 from .models import (
     AppointmentTag,
     AvailabilityTag,
-    Report,
+    County,
     Location,
-    State,
     LocationType,
     Provider,
-    County,
     ProviderType,
+    Report,
     Reporter,
+    State,
 )
 
 FIX_COUNTIES = {

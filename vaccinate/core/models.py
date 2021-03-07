@@ -1,11 +1,12 @@
 import datetime
-from django.db import models
-from django.utils import timezone
-from django.utils import dateformat
-from .fields import CharTextField
-from .baseconverter import pid
-import pytz
 import uuid
+
+import pytz
+from django.db import models
+from django.utils import dateformat, timezone
+
+from .baseconverter import pid
+from .fields import CharTextField
 
 
 class LocationType(models.Model):
@@ -451,7 +452,7 @@ class CallRequest(models.Model):
     For example, if a bug in an app has us call a location repeatedly, we have the full record of why those calls were made.
     """
 
-    class ReportType(models.TextChoices):
+    class TipType(models.TextChoices):
         EVA = "eva_report", "Eva report"
         SCOOBY = "scooby_report", "Scooby report"
         DATA_CORRECTIONS = "data_corrections_report", "Data corrections report"
@@ -483,7 +484,7 @@ class CallRequest(models.Model):
     )
 
     tip_type = CharTextField(
-        choices=ReportType.choices,
+        choices=TipType.choices,
         blank=True,
         null=True,
         help_text=" the type of tip that prompted this call request, if any",

@@ -60,11 +60,11 @@ You'll also neet to run this command once or your static assets will 404:
 
 ## Configuration
 
-Running this requires two environment variables. I have a file called `env.sh` which I `source env.sh` when working on the project which looks like this:
+Running this requires environment variables. Create a file like this named  `.env`, which is loaded by Django:
 
-    export SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
-    export DJANGO_SECRET_KEY="just a big random string"
-    export DJANGO_DEBUG=1
+    SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
+    DJANGO_SECRET_KEY="just a big random string"
+    DJANGO_DEBUG=1
 
 In development you will need to have a local PostgreSQL server running - I use PostgreSQL.app on my Mac for this.
 
@@ -72,7 +72,7 @@ Then create a database called `vaccinate` by running this in the terminal:
 
     createdb vaccinate
 
-If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`.
+If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`.  You can place this in the `.env` file.
 
 ## Running the tests
 
@@ -80,6 +80,6 @@ To run the tests, change directory to the `vaccinate` folder and run `pytest`.
 
 ## Code formatting
 
-This repository uses [Black](https://github.com/psf/black) to enforce coding style as part of the CI tests.
+This repository uses [Black](https://github.com/psf/black) and [isort](https://pycqa.github.io/isort/) to enforce coding style as part of the CI tests.
 
-Run `black .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
+Run `black .` and `isort .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.

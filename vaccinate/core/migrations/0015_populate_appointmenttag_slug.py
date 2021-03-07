@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 appointment_tag_slugs = {
     "County website": "county_website",
     "myturn.ca.gov": "myturn_ca_gov",
