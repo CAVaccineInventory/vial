@@ -1,10 +1,18 @@
 import json
+from datetime import datetime
 from typing import List, Optional
 
 import pytz
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
-from core.models import AppointmentTag, AvailabilityTag, Location, Report, Reporter
+from core.models import (
+    AppointmentTag,
+    CallRequest,
+    CallRequestReason,
+    Location,
+    Report,
+    Reporter,
+)
 from dateutil import parser
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -23,6 +31,7 @@ class ReportValidator(BaseModel):
     availability: List[str] = Field(alias="Availability")
     public_notes: Optional[str] = Field(alias="Notes")
     internal_notes: Optional[str] = Field(alias="Internal Notes")
+    do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
 
     @validator("location")
     def location_must_exist(cls, v):
@@ -105,6 +114,32 @@ def submit_report(request, on_request_logged):
 
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
+
+    # Handle skip requests
+    # Only check if "Do not call until is set"
+    if report_data["do_not_call_until"] is not None:
+        skip_reason = CallRequestReason.objects.get(short_reason="Previously skipped")
+        if skip_reason is None:
+            return JsonResponse(
+                {
+                    "error": "Report set do not call time but the database is missing the skip reason."
+                },
+                status=500,
+            )
+
+        if "skip_call_back_later" not in [tag.slug for tag in availability_tags]:
+            return JsonResponse(
+                {"error": "Report set do not call time but did not request a skip."},
+                status=400,
+            )
+
+        CallRequest.objects.create(
+            location=report_data["location"],
+            vesting_at=report_data["do_not_call_until"],
+            call_request_reason=skip_reason,
+            tip_type=CallRequest.TipType.SCOOBY,
+            tip_report=report,
+        )
 
     def log_created_report(log):
         log.created_report = report
