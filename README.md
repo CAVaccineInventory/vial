@@ -60,7 +60,7 @@ You'll also neet to run this command once or your static assets will 404:
 
 ## Configuration
 
-Running this requires a environment variables. Create a file like this named  `.env`, which is loaded by Django:
+Running this requires environment variables. Create a file like this named  `.env`, which is loaded by Django:
 
     SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
     DJANGO_SECRET_KEY="just a big random string"
