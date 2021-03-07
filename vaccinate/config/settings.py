@@ -25,6 +25,7 @@ if SENTRY_DSN:
         traces_sample_rate=1.0,
         send_default_pii=True,
         environment=os.environ.get("DEPLOY", "unknown"),
+        release=os.environ.get("COMMIT_SHA", None),
     )
 
 # Auth0
