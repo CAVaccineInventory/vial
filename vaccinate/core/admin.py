@@ -1,8 +1,9 @@
 import json
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -43,8 +44,67 @@ class CountyAdmin(admin.ModelAdmin):
     readonly_fields = ("airtable_id",)
 
 
+def make_call_request_queue_action(reason):
+    def add_to_call_request_queue(modeladmin, request, queryset):
+        locations = list(queryset.all())
+        now = timezone.now()
+        reason_obj = CallRequestReason.objects.get(short_reason=reason)
+        CallRequest.objects.bulk_create(
+            [
+                CallRequest(
+                    location=location, vesting_at=now, call_request_reason=reason_obj
+                )
+                for location in locations
+            ]
+        )
+        messages.success(
+            request,
+            "Added {} location{} to queue with reason: {}".format(
+                len(locations), "s" if len(locations) == 1 else "", reason
+            ),
+        )
+
+    return add_to_call_request_queue
+
+
+class LocationInQueueFilter(admin.SimpleListFilter):
+    title = "Currently queued"
+    parameter_name = "currently_queued"
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        return (
+            ("no", "No"),
+            ("yes", "Yes"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(call_requests__isnull=False)
+        if self.value() == "no":
+            return queryset.filter(call_requests__isnull=True)
+
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
+    def get_actions(self, request):
+        return {
+            "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")): (
+                make_call_request_queue_action(reason),
+                "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")),
+                "Add to queue: {}".format(reason),
+            )
+            for reason in CallRequestReason.objects.values_list(
+                "short_reason", flat=True
+            )
+        }
+
     search_fields = ("name", "full_address")
     list_display = (
         "name",
@@ -56,7 +116,13 @@ class LocationAdmin(admin.ModelAdmin):
         "provider",
         "soft_deleted",
     )
-    list_filter = ("location_type", "state", "provider", "soft_deleted")
+    list_filter = (
+        LocationInQueueFilter,
+        "location_type",
+        "state",
+        "provider",
+        "soft_deleted",
+    )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("public_id", "airtable_id")
 

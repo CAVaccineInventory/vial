@@ -100,6 +100,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "beeline.middleware.django.HoneyMiddleware",
+    "core.logging_middleware.RequestLoggingMiddleware",
     "core.timezone_middleware.TimezoneMiddleware",
 ]
 
