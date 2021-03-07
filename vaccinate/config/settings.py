@@ -151,6 +151,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
 # Ensure STATIC_ROOT exists.
 os.makedirs(STATIC_ROOT, exist_ok=True)
+WHITENOISE_ROOT = os.path.join(BASE_DIR, "rootfiles")
 
 
 # Password validation
