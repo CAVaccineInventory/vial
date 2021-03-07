@@ -1,0 +1,59 @@
+# Update requirements.txt after making changes to this file, by
+# running ./scripts/upgrade-requirements
+
+# Core django
+django
+
+# Server
+gunicorn
+
+# Serve static files from wsgi; used in development and heroku, not in
+# production
+whitenoise
+
+# PostgreSQL backend
+psycopg2-binary
+
+# Verify that migrations are backwards compatable
+django-migration-linter
+
+# Easy reconfiguration of
+dj-database-url
+
+# Read .env files of secrets, and those from GCP secrets
+google-cloud-secret-manager
+python-dotenv
+
+# Typing and validation on data
+pydantic
+
+# Authentication
+social-auth-app-django
+
+# Cryptography for JWT parsing and validation
+python-jose
+
+# Error logging
+sentry-sdk
+
+
+### Development
+
+# Testing
+pytest-django
+requests-mock
+time-machine
+
+# Formatting
+black
+
+# Dependency management
+pip-tools
+
+# Importing data from github snapshots
+github-contents
+
+# Used for import-from-CSV command line tool
+click
+httpx
+python-dateutil
