@@ -1,8 +1,9 @@
 import datetime
-from django.contrib.sessions.models import Session
-from django.contrib.auth.models import User
-import pytest
 import urllib
+
+import pytest
+from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
 
 
 @pytest.mark.django_db

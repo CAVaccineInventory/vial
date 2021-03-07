@@ -1,5 +1,5 @@
-from django.utils import timezone
 import pytz
+from django.utils import timezone
 
 
 class TimezoneMiddleware:

@@ -1,6 +1,6 @@
+from core.fields import CharTextField
 from django.db import models
 from django.utils import timezone
-from core.fields import CharTextField
 
 
 class ApiLog(models.Model):

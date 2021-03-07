@@ -1,12 +1,13 @@
-from collections import defaultdict
-from dateutil import parser
-from urllib.parse import urlencode
-import click
 import csv
-import httpx
 import json
-import pytz
 import time
+from collections import defaultdict
+from urllib.parse import urlencode
+
+import click
+import httpx
+import pytz
+from dateutil import parser
 
 
 @click.command()

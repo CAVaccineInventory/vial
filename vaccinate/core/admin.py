@@ -1,24 +1,26 @@
+import json
+
 from django.contrib import admin
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 from django.utils.html import escape
-import json
+from django.utils.safestring import mark_safe
+
 from .models import (
-    LocationType,
-    ProviderType,
-    Provider,
-    State,
-    County,
-    Location,
-    Reporter,
-    AvailabilityTag,
     AppointmentTag,
-    Report,
-    EvaReport,
-    CallRequestReason,
+    AvailabilityTag,
     CallRequest,
+    CallRequestReason,
+    County,
+    EvaReport,
+    Location,
+    LocationType,
+    Provider,
+    ProviderType,
     PublishedReport,
+    Report,
+    Reporter,
+    State,
 )
 
 # Simple models first

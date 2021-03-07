@@ -46,6 +46,7 @@ time-machine
 
 # Formatting
 black
+isort
 
 # Dependency management
 pip-tools

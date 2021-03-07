@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 reasons = ("Stale report", "New location", "Eva tip", "Data corrections tip")
 
 
