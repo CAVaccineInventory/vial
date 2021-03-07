@@ -36,6 +36,9 @@ python-jose
 # Error logging
 sentry-sdk
 
+# Better interactive shell
+ipython
+
 
 ### Development
 
