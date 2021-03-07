@@ -1,4 +1,32 @@
 steps:
+  # We need to unshallow the clone so Sentry can get the history; except that
+  # this is a private repository, and the FETCH step has thrown the keys away
+  # already.  Install a deploy key, known_hosts and swap the URL around to the
+  # ssh one, so we can unshallow.
+  - name: "gcr.io/cloud-builders/git"
+    secretEnv: ["_SSH_KEY"]
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        echo "$$_SSH_KEY" >> /root/.ssh/id_ed25519
+        chmod 400 /root/.ssh/id_ed25519
+        cp .github/known_hosts /root/.ssh/known_hosts
+    volumes:
+      - name: "ssh"
+        path: /root/.ssh
+  - name: gcr.io/cloud-builders/git
+    args:
+      - "remote"
+      - "set-url"
+      - "origin"
+      - "git@github.com:CAVaccineInventory/django.vaccinate"
+  - name: gcr.io/cloud-builders/git
+    args: ["fetch", "--unshallow"]
+    volumes:
+      - name: "ssh"
+        path: /root/.ssh
+
   # Tell Sentry about the release; we need to use `/bin/sh` as the entrypoint to
   # allow the $_SENTRY_TOKEN injection at runtime.
   - name: getsentry/sentry-cli
@@ -9,6 +37,16 @@ steps:
         sentry-cli --auth-token=$$_SENTRY_TOKEN \
             releases --org=vaccinateca \
             new --project=django ${COMMIT_SHA}
+    secretEnv: ["_SENTRY_TOKEN"]
+  # Also tell it the commits that it has
+  - name: getsentry/sentry-cli
+    entrypoint: /bin/sh
+    args:
+      - "-c"
+      - |
+        sentry-cli --auth-token=$$_SENTRY_TOKEN \
+          releases --org=vaccinateca \
+          set-commits --auto ${COMMIT_SHA}
     secretEnv: ["_SENTRY_TOKEN"]
 
   # Pull the previous image, as a starting point
@@ -116,6 +154,8 @@ availableSecrets:
   secretManager:
     - versionName: projects/373178984669/secrets/sentry-release-token/versions/latest
       env: _SENTRY_TOKEN
+    - versionName: projects/373178984669/secrets/github-deploy/versions/latest
+      env: _SSH_KEY
 
 substitutions:
   _SERVICE_NAME: vaccinate
