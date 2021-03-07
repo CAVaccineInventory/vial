@@ -197,6 +197,17 @@ class Location(models.Model):
     public_id = models.SlugField(
         unique=True, help_text="ID that we expose outside of the application"
     )
+    import_json = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Original JSON if this record was imported from elsewhere",
+    )
+    import_ref = models.SlugField(
+        db_index=True,
+        null=True,
+        blank=True,
+        help_text="If imported, unique identifier in the system it was imported from",
+    )
 
     def __str__(self):
         return self.name

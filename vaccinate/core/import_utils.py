@@ -1,3 +1,6 @@
+import json
+
+import httpx
 from github_contents import GithubContents
 
 from .models import (
@@ -177,3 +180,52 @@ def resolve_availability_tags(tags, availability_tags=None):
         except AvailabilityTag.DoesNotExist:
             assert False, "Invalid tag: {}".format(tag_name)
     return tag_models
+
+
+def load_vaccinefinder_locations(path_within_repo, github_token):
+    url = "https://api.github.com/repos/vaccine-feeds/raw-feed-data/contents/{}".format(
+        path_within_repo
+    )
+    response = httpx.get(
+        url, headers={"Authorization": "Bearer {}".format(github_token)}
+    )
+    response.raise_for_status()
+    # It may be a list OR a single item
+    data = response.json()
+    if isinstance(data, dict):
+        download_url = data["download_url"]
+        return httpx.get(download_url).json()
+    else:
+        # It's a directory listing - using download_urls is unlikely
+        # to work due to possible rate limits on the tokens. Instead
+        # we need to use the GithubContents class
+        github = GithubContents("vaccine-feeds", "raw-feed-data", github_token)
+        for item in data:
+            yield json.loads(github.read(item["path"])[0])
+
+
+def import_vaccinefinder_location(location):
+    import_ref = "vf:{}".format(location["guid"])
+    address_bits = [
+        location[key]
+        for key in ("address1", "address2", "city", "state", "zip")
+        if location[key]
+    ]
+    kwargs = {
+        "name": location["name"],
+        "full_address": ", ".join(address_bits),
+        "street_address": address_bits[0],
+        "city": location["city"],
+        "phone_number": location["phone"],
+        "zip_code": location["zip"],
+        "website": location["website"],
+        "state": State.objects.get(abbreviation=location["state"]),
+        # TODO: populate this:
+        # "hours": ""
+        "location_type": LocationType.objects.get(name="Unknown"),
+        "provider": None,
+        "latitude": location["lat"],
+        "longitude": location["long"],
+        "import_json": location,
+    }
+    return Location.objects.update_or_create(import_ref=import_ref, defaults=kwargs)[0]
