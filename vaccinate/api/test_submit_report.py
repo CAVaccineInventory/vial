@@ -1,9 +1,10 @@
 import json
 import pathlib
+from datetime import datetime
 
 import pytest
 from api.models import ApiLog
-from core.models import Location, Report
+from core.models import CallRequest, Location, Report
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "submitReport"
 
@@ -41,6 +42,7 @@ def test_submit_report_api_invalid_json(client, jwt_id_token):
 def test_submit_report_api_example(client, json_path, jwt_id_token):
     fixture = json.load(json_path.open())
     assert Report.objects.count() == 0
+    assert CallRequest.objects.count() == 0
     # Ensure location exists
     Location.objects.get_or_create(
         public_id=fixture["input"]["Location"],
@@ -72,3 +74,13 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
     assert actual_tags == fixture["expected_availability_tags"]
     # Should have been submitted by the JWT user
     assert report.reported_by.external_id == "auth0:auth0|6036cd942c0b2a007093cbf0"
+
+    if "expected_call_request" in fixture:  # this was a skip request
+        # need to manually parse out date for comparison
+        fixture["expected_call_request"]["vesting_at"] = datetime.strptime(
+            fixture["expected_call_request"]["vesting_at"], "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
+        field_values = CallRequest.objects.order_by("-id").values(
+            *list(fixture["expected_call_request"].keys())
+        )[0]
+        assert field_values == fixture["expected_call_request"]
