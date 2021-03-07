@@ -60,7 +60,12 @@ You'll also neet to run this command once or your static assets will 404:
 
 ## Configuration
 
-Running this requires environment variables. Create a file like this named  `.env`, which is loaded by Django:
+Running this requires some secrets in environment variables:
+
+- `SOCIAL_AUTH_AUTH0_SECRET` can be found in the [Auth0 application configuration page](https://manage.auth0.com/dashboard/us/vaccinateca/applications/7JMM4bb1eC7taGN1OlaLBIXJN1w42vac/settings).
+- `DJANGO_SECRET_KEY` can be any random string.  One way to generate one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
+
+Create a file like this named  `.env`, which is loaded by Django:
 
     SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
     DJANGO_SECRET_KEY="just a big random string"
