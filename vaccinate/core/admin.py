@@ -67,6 +67,30 @@ def make_call_request_queue_action(reason):
     return add_to_call_request_queue
 
 
+class LocationInQueueFilter(admin.SimpleListFilter):
+    title = "Currently queued"
+    parameter_name = "currently_queued"
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        return (
+            ("no", "No"),
+            ("yes", "Yes"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(call_requests__isnull=False)
+        if self.value() == "no":
+            return queryset.filter(call_requests__isnull=True)
+
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     def get_actions(self, request):
@@ -92,7 +116,13 @@ class LocationAdmin(admin.ModelAdmin):
         "provider",
         "soft_deleted",
     )
-    list_filter = ("location_type", "state", "provider", "soft_deleted")
+    list_filter = (
+        LocationInQueueFilter,
+        "location_type",
+        "state",
+        "provider",
+        "soft_deleted",
+    )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("public_id", "airtable_id")
 

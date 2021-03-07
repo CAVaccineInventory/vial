@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from django.contrib.messages import get_messages
 
@@ -80,3 +82,10 @@ def test_admin_location_actions_for_queue(admin_client):
     assert set(CallRequest.objects.values_list("location_id", flat=True)) == set(
         location.id for location in locations_to_queue
     )
+    # If we filter locations by "?currently_queued=yes" we should see them
+    response3 = admin_client.get("/admin/core/location/?currently_queued=yes")
+    assert response3.status_code == 200
+    listed_locations = set(
+        re.compile(">(Location \d+)<").findall(response3.content.decode("utf-8"))
+    )
+    assert listed_locations == {"Location 3", "Location 2", "Location 1"}
