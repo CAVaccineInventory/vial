@@ -1,8 +1,9 @@
 import json
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -43,8 +44,43 @@ class CountyAdmin(admin.ModelAdmin):
     readonly_fields = ("airtable_id",)
 
 
+def make_call_request_queue_action(reason):
+    def add_to_call_request_queue(modeladmin, request, queryset):
+        locations = list(queryset.all())
+        now = timezone.now()
+        reason_obj = CallRequestReason.objects.get(short_reason=reason)
+        CallRequest.objects.bulk_create(
+            [
+                CallRequest(
+                    location=location, vesting_at=now, call_request_reason=reason_obj
+                )
+                for location in locations
+            ]
+        )
+        messages.success(
+            request,
+            "Added {} location{} to queue with reason: {}".format(
+                len(locations), "s" if len(locations) == 1 else "", reason
+            ),
+        )
+
+    return add_to_call_request_queue
+
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
+    def get_actions(self, request):
+        return {
+            "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")): (
+                make_call_request_queue_action(reason),
+                "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")),
+                "Add to queue: {}".format(reason),
+            )
+            for reason in CallRequestReason.objects.values_list(
+                "short_reason", flat=True
+            )
+        }
+
     search_fields = ("name", "full_address")
     list_display = (
         "name",
