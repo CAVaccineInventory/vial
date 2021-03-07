@@ -94,16 +94,24 @@ class LocationInQueueFilter(admin.SimpleListFilter):
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     def get_actions(self, request):
-        return {
-            "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")): (
-                make_call_request_queue_action(reason),
-                "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")),
-                "Add to queue: {}".format(reason),
-            )
-            for reason in CallRequestReason.objects.values_list(
-                "short_reason", flat=True
-            )
-        }
+        actions = super().get_actions(request)
+        actions.update(
+            {
+                "add_to_call_request_queue_{}".format(
+                    reason.lower().replace(" ", "_")
+                ): (
+                    make_call_request_queue_action(reason),
+                    "add_to_call_request_queue_{}".format(
+                        reason.lower().replace(" ", "_")
+                    ),
+                    "Add to queue: {}".format(reason),
+                )
+                for reason in CallRequestReason.objects.values_list(
+                    "short_reason", flat=True
+                )
+            }
+        )
+        return actions
 
     search_fields = ("name", "full_address")
     list_display = (
