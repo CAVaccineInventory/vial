@@ -54,4 +54,5 @@ jobs:
         SOCIAL_AUTH_AUTH0_SECRET: auth0-secret-would-go-here
         DATABASE_URL: postgres://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/vaccinate
       run: |
+        # 7aefb8c is the git commit after which we are enforcing reversible migrations
         ./vaccinate/manage.py lintmigrations --project-root-path ./vaccinate 7aefb8cb6c19968ba7b97fdd099ccdd224e756f1
