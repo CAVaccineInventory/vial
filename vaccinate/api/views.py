@@ -1,15 +1,17 @@
+import json
+from typing import List, Optional
+
+import pytz
 from auth0login.auth0_utils import decode_and_verify_jwt
+from core.import_utils import derive_appointment_tag, resolve_availability_tags
+from core.models import AppointmentTag, AvailabilityTag, Location, Report, Reporter
 from dateutil import parser
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from pydantic import BaseModel, validator, ValidationError, Field
-from typing import List, Optional
-from core.models import AppointmentTag, AvailabilityTag, Location, Report, Reporter
-from core.import_utils import derive_appointment_tag, resolve_availability_tags
+from pydantic import BaseModel, Field, ValidationError, validator
+
 from .utils import log_api_requests
-import json
-import pytz
 
 
 class ReportValidator(BaseModel):

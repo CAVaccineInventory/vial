@@ -1,0 +1,81 @@
+steps:
+  # Pull the previous image, as a starting point
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args: ["-c", "docker pull ${_IMAGE_NAME}:latest || exit 0"]
+
+  # See Dockerfile; build and tag the image, using the cache in the last step
+  - id: "build image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - "-t"
+      - "${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "-t"
+      - "${_IMAGE_NAME}:latest"
+      - "--cache-from"
+      - "${_IMAGE_NAME}:latest"
+      - .
+
+  # Push the commit-sha tag (but not `latest` tag), so we can deploy it
+  - id: "push image"
+    name: "gcr.io/cloud-builders/docker"
+    args: ["push", "${_IMAGE_NAME}:${COMMIT_SHA}"]
+
+  # Apply the database migrations to the live database; exec-wrapper does
+  # nothing other than standing up a cloud_sql_proxy at the same path as Cloud
+  # Run/AppEngine, then exec'ing inside the image.  Because this needs access to
+  # secrets, pass in the GCLOUD_SETTINGS_NAME.
+  - id: "apply migrations"
+    name: "gcr.io/google-appengine/exec-wrapper"
+    args:
+      [
+        "-i",
+        "${_IMAGE_NAME}:${COMMIT_SHA}",
+        "-s",
+        "${_CLOUDSQL_INSTANCE}",
+        "-e",
+        "GCLOUD_SETTINGS_NAME=${_GCLOUD_SETTINGS_NAME}",
+        "--",
+        "python",
+        "manage.py",
+        "migrate",
+      ]
+
+  # Deploy the new code.
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args:
+      - run
+      - services
+      - update
+      - "${_SERVICE_NAME}-${_DEPLOY}"
+      - "--platform=managed"
+      - "--image=${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "--labels=commit-sha=${COMMIT_SHA},gcb-build-id=${BUILD_ID},deploy=${_DEPLOY}"
+      - "--region=${_DEPLOY_REGION}"
+      - "--set-env-vars=DEPLOY=${_DEPLOY}"
+      - "--set-env-vars=GCLOUD_SETTINGS_NAME=${_GCLOUD_SETTINGS_NAME}"
+      - "--set-env-vars=PRODUCTION=1"
+      - "--set-cloudsql-instances=${_CLOUDSQL_INSTANCE}"
+      - "--service-account=${_DEPLOY}@django-vaccinateca.iam.gserviceaccount.com"
+    id: Deploy
+    entrypoint: gcloud
+
+options:
+  dynamic_substitutions: true
+
+substitutions:
+  _SERVICE_NAME: vaccinate
+  _GCR_HOSTNAME: us.gcr.io
+  _IMAGE_NAME: "${_GCR_HOSTNAME}/${PROJECT_ID}/${_SERVICE_NAME}"
+
+  _DEPLOY: staging
+  _DEPLOY_REGION: us-west2
+  _DB_INSTANCE_NAME: "${_DEPLOY}"
+  _GCLOUD_SETTINGS_NAME: "django-${_DEPLOY}-env"
+  _CLOUDSQL_INSTANCE: "${PROJECT_ID}:${_DEPLOY_REGION}:${_DB_INSTANCE_NAME}"
+
+# As the final step, this updates the `latest` image tag, once the deploy is
+# complete.
+images:
+  - "${_IMAGE_NAME}:latest"

@@ -1,9 +1,10 @@
-import dj_database_url
-from django.conf.locale.en import formats as en_formats
-from pathlib import Path
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 import os
+from pathlib import Path
+
+import dj_database_url
+import sentry_sdk
+from django.conf.locale.en import formats as en_formats
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,6 +80,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_migration_linter",
     "social_django",
     "auth0login",
     "core",
@@ -133,6 +135,11 @@ DATABASES = {
 if "DATABASE_URL" in os.environ:
     # Parse database configuration from $DATABASE_URL
     DATABASES["default"] = dj_database_url.config()
+
+    # Work around https://github.com/jacobian/dj-database-url/pull/113
+    DATABASES["default"]["HOST"] = (
+        DATABASES["default"]["HOST"].replace("%3a", ":").replace("%3A", ":")
+    )
 
 
 # Static files

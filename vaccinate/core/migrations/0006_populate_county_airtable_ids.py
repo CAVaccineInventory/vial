@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 counties = {
     "Glenn": "rec0QOd7EXzSuZZvN",
     "Shasta": "rec1rvcyGSS6AgQEq",

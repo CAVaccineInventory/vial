@@ -1,7 +1,8 @@
+from urllib.parse import urlencode
+
+from django.conf import settings
 from django.contrib.auth import logout as log_out
 from django.http import HttpResponseRedirect
-from urllib.parse import urlencode
-from django.conf import settings
 
 
 def logout(request):

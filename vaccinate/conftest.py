@@ -1,6 +1,6 @@
-import pytest
 import datetime
 
+import pytest
 
 # Copied from https://vaccinateca.us.auth0.com/.well-known/jwks.json on 24th Feb 2021:
 MOCK_JWKS = {

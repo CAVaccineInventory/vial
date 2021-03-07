@@ -1,6 +1,7 @@
-from django.core.management.base import BaseCommand, CommandError
-from core.import_utils import load_airtable_backup, import_airtable_location
 import json
+
+from core.import_utils import import_airtable_location, load_airtable_backup
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):

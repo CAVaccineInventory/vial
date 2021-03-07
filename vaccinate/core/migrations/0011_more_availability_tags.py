@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 availability_tags = (
     (
         "No: may be a vaccination site in the future",
