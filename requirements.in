@@ -14,10 +14,14 @@ whitenoise
 # PostgreSQL backend
 psycopg2-binary
 
+# Verify that migrations are backwards compatable
+django-migration-linter
+
 # Easy reconfiguration of
 dj-database-url
 
-# Read .env files -- unused currently
+# Read .env files of secrets, and those from GCP secrets
+google-cloud-secret-manager
 python-dotenv
 
 # Typing and validation on data
