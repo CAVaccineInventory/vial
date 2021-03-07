@@ -23,5 +23,5 @@ WORKDIR $APP_HOME/vaccinate
 # despite `collectstatic` not caring what they are.
 RUN DJANGO_SECRET_KEY=1 SOCIAL_AUTH_AUTH0_SECRET= ./manage.py collectstatic --no-input
 
-CMD exec gunicorn -b :$PORT config.wsgi
+CMD exec gunicorn -c config/gunicorn.py -b :$PORT config.wsgi
 
