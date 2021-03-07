@@ -216,6 +216,10 @@ h11==0.12.0 \
     --hash=sha256:36a3cb8c0a032f56e2da7084577878a035d3b61d104230d4bd49c0c6b555a9c6 \
     --hash=sha256:47222cb6067e4a307d535814917cd98fd0a57b6788ce715755fa2b6c28b56042
     # via httpcore
+honeycomb-beeline==2.16.2 \
+    --hash=sha256:76490f8817bef2b93a61b8aad08cc902b46f92c6bb82fda257d74f39f0cc0032 \
+    --hash=sha256:963c766cc3fea90e5ccbc42f6253e4d5c4e89f621ea2418b6409e3a3fd8cd7ae
+    # via -r requirements.in
 httpcore==0.12.3 \
     --hash=sha256:37ae835fb370049b2030c3290e12ed298bf1473c41bb72ca4aa78681eba9b7c9 \
     --hash=sha256:93e822cd16c32016b414b789aeff4e855d0ccbfc51df563ee34d4dbadbb3bcdc
@@ -254,6 +258,10 @@ libcst==0.3.17 \
     --hash=sha256:2766671c107263daa3fc34e39d55134a6fe253701564d7670586f30eee2c201c \
     --hash=sha256:4638e4e8f166f4c74df399222d347ce3e1d316e206b550d8a6254d51b4cf7275
     # via google-cloud-secret-manager
+libhoney==1.10.0 \
+    --hash=sha256:4322c4e3a08f3304843f52ce8b19372569cf294db13d86d2fa7b466fcd90c979 \
+    --hash=sha256:a7ea3783b9ca011174b1c657887c56c9055028861bc59c5137abd0a4bf22e3d0
+    # via honeycomb-beeline
 mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
     --hash=sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8
@@ -537,6 +545,7 @@ requests==2.25.1 \
     # via
     #   github-contents
     #   google-api-core
+    #   libhoney
     #   requests-mock
     #   requests-oauthlib
     #   social-auth-core
@@ -563,6 +572,7 @@ six==1.15.0 \
     #   google-api-core
     #   google-auth
     #   grpcio
+    #   libhoney
     #   protobuf
     #   python-dateutil
     #   python-jose
@@ -587,6 +597,10 @@ sqlparse==0.4.1 \
     --hash=sha256:017cde379adbd6a1f15a61873f43e8274179378e95ef3fede90b5aa64d304ed0 \
     --hash=sha256:0f91fd2e829c44362cbcfab3e9ae12e22badaa8a29ad5ff599f9ec109f0454e8
     # via django
+statsd==3.3.0 \
+    --hash=sha256:c610fb80347fca0ef62666d241bce64184bd7cc1efe582f9690e045c25535eaa \
+    --hash=sha256:e3e6db4c246f7c59003e51c9720a51a7f39a396541cb9b147ff4b14d15b5dd1f
+    # via libhoney
 time-machine==2.1.0 \
     --hash=sha256:113f2d2177d20faab1b4f495d2bda073b5c68c3847103a6426ff0accab147395 \
     --hash=sha256:129d875f8ec1e081c70933d92446ba3ae2d17b23088c96b6fa5aeb174db5f245 \
@@ -692,6 +706,9 @@ whitenoise==5.2.0 \
     --hash=sha256:05ce0be39ad85740a78750c86a93485c40f08ad8c62a6006de0233765996e5c7 \
     --hash=sha256:05d00198c777028d72d8b0bbd234db605ef6d60e9410125124002518a48e515d
     # via -r requirements.in
+wrapt==1.12.1 \
+    --hash=sha256:b62ffa81fb85f4332a4f609cab4ac40709470da05643a082ec1eb88e6d9b97d7
+    # via honeycomb-beeline
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.0.1 \
