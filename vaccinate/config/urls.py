@@ -8,6 +8,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path("", core_views.index),
+    path("healthcheck", core_views.healthcheck),
     path("logout", logout),
     path("api/submitReport", api_views.submit_report),
     path("api/submitReport/debug", api_views.submit_report_debug),
