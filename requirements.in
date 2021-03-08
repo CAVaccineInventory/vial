@@ -1,5 +1,9 @@
 # Update requirements.txt after making changes to this file, by
-# running ./scripts/upgrade-requirements
+# running:
+#     ./scripts/update-requirements
+#
+# To upgrade pinned versions, run:
+#     ./scripts/update-requirements --upgrade
 
 # Core django
 django
