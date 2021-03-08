@@ -52,6 +52,7 @@ ipython
 # Testing
 pytest-django
 pytest-cov
+pytest-dotenv
 requests-mock
 time-machine
 
