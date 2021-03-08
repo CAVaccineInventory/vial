@@ -49,6 +49,7 @@ class CountyAdmin(admin.ModelAdmin):
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
+    ordering = ("name",)
 
 
 def make_call_request_queue_action(reason):
