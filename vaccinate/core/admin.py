@@ -275,7 +275,9 @@ class CallRequestReasonAdmin(admin.ModelAdmin):
 
 
 def clear_claims(modeladmin, request, queryset):
-    updated = queryset.update(claimed_by=None, claimed_until=None)
+    updated = queryset.exclude(claimed_by=None).update(
+        claimed_by=None, claimed_until=None
+    )
     messages.success(
         request,
         "Cleared claims for {} call request{}".format(
