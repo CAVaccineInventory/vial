@@ -25,8 +25,15 @@ from .models import (
 )
 
 # Simple models first
-for model in (LocationType, ProviderType, State):
+for model in (LocationType, ProviderType):
     admin.site.register(model)
+
+
+@admin.register(State)
+class StateAdmin(admin.ModelAdmin):
+    search_fields = ("name",)
+    list_display = ("name", "abbreviation", "fips_code")
+    ordering = ("name",)
 
 
 @admin.register(Provider)

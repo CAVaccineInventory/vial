@@ -69,11 +69,12 @@ class Provider(models.Model):
 
 class State(models.Model):
     """
-    Information about a US state.
+    Information about a US state or territory
     """
 
     abbreviation = models.CharField(max_length=2, unique=True)
     name = CharTextField(unique=True)
+    fips_code = models.CharField(unique=True, blank=True, null=True, max_length=2)
 
     def __str__(self):
         return self.name

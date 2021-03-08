@@ -6,7 +6,7 @@ from .models import State
 
 @pytest.mark.django_db
 def test_states_were_populated():
-    assert State.objects.count() == 50
+    assert State.objects.count() == 55
 
 
 def test_security_middleware_is_first():
