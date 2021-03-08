@@ -172,6 +172,10 @@ dj-database-url==0.5.0 \
     --hash=sha256:4aeaeb1f573c74835b0686a2b46b85990571159ffc21aa57ecd4d1e1cb334163 \
     --hash=sha256:851785365761ebe4994a921b433062309eb882fedd318e1b0fcecc607ed02da9
     # via -r requirements.in
+django-cors-headers==3.7.0 \
+    --hash=sha256:1ac2b1213de75a251e2ba04448da15f99bcfcbe164288ae6b5ff929dc49b372f \
+    --hash=sha256:96069c4aaacace786a34ee7894ff680780ec2644e4268b31181044410fecd12e
+    # via -r requirements.in
 django-migration-linter==2.5.1 \
     --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
     --hash=sha256:e4209e74393ddb86f31e8b7a13555fcecd1def506a04e1fe16b470248661dec7
@@ -181,6 +185,7 @@ django==3.1.7 \
     --hash=sha256:baf099db36ad31f970775d0be5587cc58a6256a6771a44eb795b554d45f211b8
     # via
     #   -r requirements.in
+    #   django-cors-headers
     #   django-migration-linter
 ecdsa==0.14.1 \
     --hash=sha256:64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e \

@@ -34,6 +34,9 @@ pydantic
 # Authentication
 social-auth-app-django
 
+# CORS for our /api/
+django-cors-headers
+
 # Cryptography for JWT parsing and validation
 python-jose
 
