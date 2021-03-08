@@ -1,0 +1,3 @@
+#!/bin/sh
+
+pip-compile --allow-unsafe --generate-hashes --quiet "$@"
