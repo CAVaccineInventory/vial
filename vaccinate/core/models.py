@@ -3,6 +3,7 @@ import uuid
 
 import pytz
 from django.db import models
+from django.db.models import Q
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
@@ -514,6 +515,14 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
+
+    @classmethod
+    def available_requests(cls):
+        now = timezone.now()
+        return cls.objects.filter(
+            Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
+            | Q(claimed_until__lte=now)
+        )
 
 
 class PublishedReport(models.Model):
