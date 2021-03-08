@@ -274,6 +274,16 @@ class CallRequestReasonAdmin(admin.ModelAdmin):
     list_display = ("short_reason", "long_reason")
 
 
+def clear_claims(modeladmin, request, queryset):
+    updated = queryset.update(claimed_by=None, claimed_until=None)
+    messages.success(
+        request,
+        "Cleared claims for {} call request{}".format(
+            updated, "s" if updated != 1 else ""
+        ),
+    )
+
+
 @admin.register(CallRequest)
 class CallRequestAdmin(admin.ModelAdmin):
     list_display = (
@@ -283,6 +293,7 @@ class CallRequestAdmin(admin.ModelAdmin):
         "claimed_until",
         "call_request_reason",
     )
+    actions = [clear_claims]
     list_filter = ("call_request_reason",)
     raw_id_fields = ("location", "claimed_by", "tip_report")
 
