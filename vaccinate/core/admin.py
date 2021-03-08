@@ -220,6 +220,7 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "test",
+        "state",
         "created_at",
         "availability",
         "location",
@@ -233,6 +234,7 @@ class ReportAdmin(admin.ModelAdmin):
         "created_at",
         "appointment_tag",
         "is_test_data",
+        "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
     readonly_fields = (
@@ -243,8 +245,14 @@ class ReportAdmin(admin.ModelAdmin):
     )
     ordering = ("-created_at",)
 
+    def state(self, instance):
+        return instance.location.state.abbreviation
+
     def test(self, instance):
         return instance.is_test_data
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("location__state")
 
     test.boolean = True
 
