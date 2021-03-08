@@ -132,7 +132,7 @@ class LocationAdmin(admin.ModelAdmin):
         "soft_deleted",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
-    readonly_fields = ("public_id", "airtable_id")
+    readonly_fields = ("public_id", "airtable_id", "import_json")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -227,12 +227,11 @@ class ReportAdmin(admin.ModelAdmin):
         "is_test_data",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
-    exclude = ("airtable_json",)
     readonly_fields = (
         "created_at_utc",
         "public_id",
         "airtable_id",
-        "airtable_json_prettified",
+        "airtable_json",
     )
     ordering = ("-created_at",)
 
@@ -244,15 +243,6 @@ class ReportAdmin(admin.ModelAdmin):
     def lookup_allowed(self, lookup, value):
         "Enable all querystring lookups! Really powerful, and we trust our staff"
         return True
-
-    def airtable_json_prettified(self, instance):
-        return mark_safe(
-            '<pre style="font-size: 0.8em">{}</pre>'.format(
-                escape(json.dumps(instance.airtable_json, indent=2))
-            )
-        )
-
-    airtable_json_prettified.short_description = "Airtable JSON"
 
 
 @admin.register(EvaReport)
