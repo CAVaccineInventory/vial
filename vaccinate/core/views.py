@@ -19,7 +19,8 @@ def healthcheck(request):
     cursor.execute("SELECT version();")
     return JsonResponse(
         {
-            "COMMIT_SHA": os.environ.get("COMMIT_SHA"),
+            "deployed_sha": os.environ.get("COMMIT_SHA")
+            or os.environ.get("HEROKU_SLUG_COMMIT"),
             "postgresql_version": cursor.fetchone()[0],
             "python_version": sys.version,
         }
