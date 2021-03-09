@@ -523,6 +523,10 @@ class CallRequest(models.Model):
         return cls.objects.filter(
             Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
             | Q(claimed_until__lte=now)
+        ).exclude(
+            location__reports__created_at__gte=(
+                timezone.now() - datetime.timedelta(days=1)
+            )
         )
 
 

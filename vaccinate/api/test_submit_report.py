@@ -4,7 +4,8 @@ from datetime import datetime
 
 import pytest
 from api.models import ApiLog
-from core.models import CallRequest, Location, Report
+from core.models import CallRequest, CallRequestReason, Location, Report
+from django.utils import timezone
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "submitReport"
 
@@ -44,7 +45,7 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
     assert Report.objects.count() == 0
     assert CallRequest.objects.count() == 0
     # Ensure location exists
-    Location.objects.get_or_create(
+    location = Location.objects.get_or_create(
         public_id=fixture["input"]["Location"],
         defaults={
             "latitude": 0,
@@ -53,7 +54,13 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
             "state_id": 1,
             "county_id": 1,
         },
+    )[0]
+    # Create a call request for this location
+    location.call_requests.create(
+        call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
+        vesting_at=timezone.now(),
     )
+    assert CallRequest.available_requests().count() == 1
     response = client.post(
         "/api/submitReport",
         fixture["input"],
@@ -84,3 +91,6 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
             *list(fixture["expected_call_request"].keys())
         )[0]
         assert field_values == fixture["expected_call_request"]
+
+    # Should no longer be available
+    assert CallRequest.available_requests().count() == 0
