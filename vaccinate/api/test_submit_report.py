@@ -40,7 +40,16 @@ def test_submit_report_api_invalid_json(client, jwt_id_token):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("json_path", tests_dir.glob("*.json"))
-def test_submit_report_api_example(client, json_path, jwt_id_token):
+def test_submit_report_api_example(
+    client, json_path, jwt_id_token, monkeypatch, requests_mock
+):
+    monkeypatch.setenv("ZAPIER_REPORT_URL", "https://zapier.example.com/")
+    mocked_zapier = requests_mock.post(
+        "https://zapier.example.com/",
+        json={
+            "ok": True,
+        },
+    )
     fixture = json.load(json_path.open())
     assert Report.objects.count() == 0
     assert CallRequest.objects.count() == 0
@@ -48,6 +57,7 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
     location = Location.objects.get_or_create(
         public_id=fixture["input"]["Location"],
         defaults={
+            "name": "A location",
             "latitude": 0,
             "longitude": 0,
             "location_type_id": 1,
@@ -94,3 +104,18 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
 
     # Should no longer be available
     assert CallRequest.available_requests().count() == 0
+
+    # Should have posted to Zapier
+    assert mocked_zapier.called_once
+    assert json.loads(mocked_zapier.last_request.body) == {
+        "report_url": "http://testserver/admin/core/report/change/{}/".format(
+            report.pk
+        ),
+        "location_name": "A location",
+        "location_full_address": None,
+        "location_state": "OR",
+        "reporter": "swillison+auth0-test-user@gmail.com",
+        "availability_tags": list(
+            report.availability_tags.values_list("name", flat=True)
+        ),
+    }

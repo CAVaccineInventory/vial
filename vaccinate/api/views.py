@@ -1,8 +1,10 @@
 import json
+import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 import pytz
+import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
@@ -158,6 +160,24 @@ def submit_report(request, on_request_logged):
     def log_created_report(log):
         log.created_report = report
         log.save()
+
+        # Send it to Zapier too
+        if os.environ.get("ZAPIER_REPORT_URL"):
+            requests.post(
+                os.environ["ZAPIER_REPORT_URL"],
+                json={
+                    "report_url": request.build_absolute_uri(
+                        "/admin/core/report/change/{}/".format(report.pk)
+                    ),
+                    "location_name": report.location.name,
+                    "location_full_address": report.location.full_address,
+                    "location_state": report.location.state.abbreviation,
+                    "reporter": str(report.reported_by),
+                    "availability_tags": list(
+                        report.availability_tags.values_list("name", flat=True)
+                    ),
+                },
+            )
 
     on_request_logged(log_created_report)
 
