@@ -1,6 +1,8 @@
+import debug_toolbar
 from api import views as api_views
 from auth0login.views import logout
 from core import views as core_views
+from django.conf import settings
 from django.contrib import admin
 from django.http.response import HttpResponsePermanentRedirect
 from django.shortcuts import redirect
@@ -33,4 +35,4 @@ urlpatterns = [
     path("admin/login/", lambda r: redirect("/login/auth0", permanent=False)),
     path("admin/logout/", lambda r: redirect("/logout", permanent=False)),
     path("admin/", admin.site.urls),
-]
+] + ([path("__debug__/", include(debug_toolbar.urls))] if settings.DEBUG else [])

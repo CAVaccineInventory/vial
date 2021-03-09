@@ -48,6 +48,10 @@ Set your environment variables, see *Configuration* section below.
 
 `cd vaccinate` and then run the server with `./manage.py runserver 0.0.0.0:3000`
 
+To enable the Django debug toolbar, run this instead:
+
+    DEBUG=1 ./manage.py runserver 0.0.0.0:3000
+
 Visit it at `http://localhost:3000/` - it's important to use `localhost:3000` as that is the URL that is allow-listed for logins by the Auth0 configuration. Click "sign in" and sign in with an Auth0 account.
 
 Once you have signed in and created an account you should grant yourself super-user access so you can use every feature of the admin site. You can do that by running the following:

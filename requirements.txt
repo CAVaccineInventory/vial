@@ -176,6 +176,10 @@ django-cors-headers==3.7.0 \
     --hash=sha256:1ac2b1213de75a251e2ba04448da15f99bcfcbe164288ae6b5ff929dc49b372f \
     --hash=sha256:96069c4aaacace786a34ee7894ff680780ec2644e4268b31181044410fecd12e
     # via -r requirements.in
+django-debug-toolbar==3.2 \
+    --hash=sha256:84e2607d900dbd571df0a2acf380b47c088efb787dce9805aefeb407341961d2 \
+    --hash=sha256:9e5a25d0c965f7e686f6a8ba23613ca9ca30184daa26487706d4829f5cfb697a
+    # via -r requirements.in
 django-migration-linter==2.5.1 \
     --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
     --hash=sha256:e4209e74393ddb86f31e8b7a13555fcecd1def506a04e1fe16b470248661dec7
@@ -186,6 +190,7 @@ django==3.1.7 \
     # via
     #   -r requirements.in
     #   django-cors-headers
+    #   django-debug-toolbar
     #   django-migration-linter
 docutils==0.16 \
     --hash=sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af \
@@ -672,7 +677,9 @@ social-auth-core==4.1.0 \
 sqlparse==0.4.1 \
     --hash=sha256:017cde379adbd6a1f15a61873f43e8274179378e95ef3fede90b5aa64d304ed0 \
     --hash=sha256:0f91fd2e829c44362cbcfab3e9ae12e22badaa8a29ad5ff599f9ec109f0454e8
-    # via django
+    # via
+    #   django
+    #   django-debug-toolbar
 statsd==3.3.0 \
     --hash=sha256:c610fb80347fca0ef62666d241bce64184bd7cc1efe582f9690e045c25535eaa \
     --hash=sha256:e3e6db4c246f7c59003e51c9720a51a7f39a396541cb9b147ff4b14d15b5dd1f
