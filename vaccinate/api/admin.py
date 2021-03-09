@@ -11,5 +11,8 @@ class ApiLogAdmin(admin.ModelAdmin):
         "path",
         "response_status",
     )
-    list_filter = ("created_at", "method", "response_status")
+    list_filter = ("created_at", "method", "response_status", "path")
     raw_id_fields = ("created_report",)
+
+    def has_change_permission(self, request, obj=None):
+        return False

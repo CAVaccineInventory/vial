@@ -25,8 +25,15 @@ from .models import (
 )
 
 # Simple models first
-for model in (LocationType, ProviderType, State):
+for model in (LocationType, ProviderType):
     admin.site.register(model)
+
+
+@admin.register(State)
+class StateAdmin(admin.ModelAdmin):
+    search_fields = ("name",)
+    list_display = ("name", "abbreviation", "fips_code")
+    ordering = ("name",)
 
 
 @admin.register(Provider)
@@ -42,6 +49,7 @@ class CountyAdmin(admin.ModelAdmin):
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
+    ordering = ("name",)
 
 
 def make_call_request_queue_action(reason):
@@ -94,16 +102,24 @@ class LocationInQueueFilter(admin.SimpleListFilter):
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     def get_actions(self, request):
-        return {
-            "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")): (
-                make_call_request_queue_action(reason),
-                "add_to_call_request_queue_{}".format(reason.lower().replace(" ", "_")),
-                "Add to queue: {}".format(reason),
-            )
-            for reason in CallRequestReason.objects.values_list(
-                "short_reason", flat=True
-            )
-        }
+        actions = super().get_actions(request)
+        actions.update(
+            {
+                "add_to_call_request_queue_{}".format(
+                    reason.lower().replace(" ", "_")
+                ): (
+                    make_call_request_queue_action(reason),
+                    "add_to_call_request_queue_{}".format(
+                        reason.lower().replace(" ", "_")
+                    ),
+                    "Add to queue: {}".format(reason),
+                )
+                for reason in CallRequestReason.objects.values_list(
+                    "short_reason", flat=True
+                )
+            }
+        )
+        return actions
 
     search_fields = ("name", "full_address")
     list_display = (
@@ -124,7 +140,7 @@ class LocationAdmin(admin.ModelAdmin):
         "soft_deleted",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
-    readonly_fields = ("public_id", "airtable_id")
+    readonly_fields = ("public_id", "airtable_id", "import_json")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -204,6 +220,7 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "test",
+        "state",
         "created_at",
         "availability",
         "location",
@@ -217,34 +234,31 @@ class ReportAdmin(admin.ModelAdmin):
         "created_at",
         "appointment_tag",
         "is_test_data",
+        "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
-    exclude = ("airtable_json",)
     readonly_fields = (
         "created_at_utc",
         "public_id",
         "airtable_id",
-        "airtable_json_prettified",
+        "airtable_json",
     )
     ordering = ("-created_at",)
 
+    def state(self, instance):
+        return instance.location.state.abbreviation
+
     def test(self, instance):
         return instance.is_test_data
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("location__state")
 
     test.boolean = True
 
     def lookup_allowed(self, lookup, value):
         "Enable all querystring lookups! Really powerful, and we trust our staff"
         return True
-
-    def airtable_json_prettified(self, instance):
-        return mark_safe(
-            '<pre style="font-size: 0.8em">{}</pre>'.format(
-                escape(json.dumps(instance.airtable_json, indent=2))
-            )
-        )
-
-    airtable_json_prettified.short_description = "Airtable JSON"
 
 
 @admin.register(EvaReport)
@@ -266,6 +280,18 @@ class CallRequestReasonAdmin(admin.ModelAdmin):
     list_display = ("short_reason", "long_reason")
 
 
+def clear_claims(modeladmin, request, queryset):
+    updated = queryset.exclude(claimed_by=None).update(
+        claimed_by=None, claimed_until=None
+    )
+    messages.success(
+        request,
+        "Cleared claims for {} call request{}".format(
+            updated, "s" if updated != 1 else ""
+        ),
+    )
+
+
 @admin.register(CallRequest)
 class CallRequestAdmin(admin.ModelAdmin):
     list_display = (
@@ -275,6 +301,7 @@ class CallRequestAdmin(admin.ModelAdmin):
         "claimed_until",
         "call_request_reason",
     )
+    actions = [clear_claims]
     list_filter = ("call_request_reason",)
     raw_id_fields = ("location", "claimed_by", "tip_report")
 

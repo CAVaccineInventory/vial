@@ -1,9 +1,11 @@
+import datetime
 import re
 
 import pytest
 from django.contrib.messages import get_messages
+from django.utils import timezone
 
-from .models import CallRequest, Location
+from .models import CallRequest, Location, Reporter, State
 
 
 @pytest.fixture()
@@ -18,7 +20,7 @@ def test_admin_create_location_sets_public_id(admin_client):
         "/admin/core/location/add/",
         {
             "name": "hello",
-            "state": "13",
+            "state": State.objects.get(abbreviation="OR").id,
             "location_type": "1",
             "latitude": "0",
             "longitude": "0",
@@ -29,7 +31,7 @@ def test_admin_create_location_sets_public_id(admin_client):
     assert response.status_code == 302
     location = Location.objects.order_by("-id")[0]
     assert location.name == "hello"
-    assert location.state.id == 13
+    assert location.state.id == State.objects.get(abbreviation="OR").pk
     assert location.location_type.id == 1
     assert location.pid.startswith("l")
     assert location.public_id == location.pid
@@ -43,7 +45,7 @@ def test_admin_location_actions_for_queue(admin_client):
         locations.append(
             Location.objects.create(
                 name="Location {}".format(i),
-                state_id=13,
+                state_id=State.objects.get(abbreviation="OR").id,
                 location_type_id=1,
                 latitude=30,
                 longitude=40,
@@ -86,6 +88,50 @@ def test_admin_location_actions_for_queue(admin_client):
     response3 = admin_client.get("/admin/core/location/?currently_queued=yes")
     assert response3.status_code == 200
     listed_locations = set(
-        re.compile(">(Location \d+)<").findall(response3.content.decode("utf-8"))
+        re.compile(r">(Location \d+)<").findall(response3.content.decode("utf-8"))
     )
     assert listed_locations == {"Location 3", "Location 2", "Location 1"}
+
+
+def test_clear_claims_action(admin_client):
+    locations = []
+    for i in range(1, 4):
+        locations.append(
+            Location.objects.create(
+                name="Location {}".format(i),
+                state_id=State.objects.get(abbreviation="OR").id,
+                location_type_id=1,
+                latitude=30,
+                longitude=40,
+            )
+        )
+    assert CallRequest.objects.count() == 0
+    # Add them to the call queue
+    admin_client.post(
+        "/admin/core/location/",
+        {
+            "action": "add_to_call_request_queue_data_corrections_tip",
+            "_selected_action": [l.id for l in locations],
+        },
+    )
+    assert CallRequest.objects.count() == 3
+    assert CallRequest.available_requests().count() == 3
+    # Claim all three
+    reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
+    CallRequest.objects.all().update(
+        claimed_by=reporter,
+        claimed_until=timezone.now() + datetime.timedelta(minutes=10),
+    )
+    assert CallRequest.available_requests().count() == 0
+    # Now clear two of them
+    response = admin_client.post(
+        "/admin/core/callrequest/",
+        {
+            "action": "clear_claims",
+            "_selected_action": [cr.id for cr in CallRequest.objects.all()[:2]],
+        },
+    )
+    messages = list(get_messages(response.wsgi_request))
+    assert len(messages) == 2
+    assert messages[1].message == "Cleared claims for 2 call requests"
+    assert CallRequest.available_requests().count() == 2

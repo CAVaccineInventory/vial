@@ -3,6 +3,7 @@ import uuid
 
 import pytz
 from django.db import models
+from django.db.models import Q
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
@@ -68,11 +69,12 @@ class Provider(models.Model):
 
 class State(models.Model):
     """
-    Information about a US state.
+    Information about a US state or territory
     """
 
     abbreviation = models.CharField(max_length=2, unique=True)
     name = CharTextField(unique=True)
+    fips_code = models.CharField(unique=True, blank=True, null=True, max_length=2)
 
     def __str__(self):
         return self.name
@@ -196,6 +198,17 @@ class Location(models.Model):
     )
     public_id = models.SlugField(
         unique=True, help_text="ID that we expose outside of the application"
+    )
+    import_json = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Original JSON if this record was imported from elsewhere",
+    )
+    import_ref = models.SlugField(
+        db_index=True,
+        null=True,
+        blank=True,
+        help_text="If imported, unique identifier in the system it was imported from",
     )
 
     def __str__(self):
@@ -503,6 +516,22 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
+
+    @classmethod
+    def available_requests(cls):
+        now = timezone.now()
+        return (
+            cls.objects.filter(
+                Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
+                | Q(claimed_until__lte=now)
+            )
+            .filter(location__state__abbreviation="OR")
+            .exclude(
+                location__reports__created_at__gte=(
+                    timezone.now() - datetime.timedelta(days=1)
+                )
+            )
+        )
 
 
 class PublishedReport(models.Model):

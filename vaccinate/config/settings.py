@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_migration_linter",
     "social_django",
+    "corsheaders",
     "auth0login",
     "core",
     "api",
@@ -93,6 +94,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -104,6 +106,12 @@ MIDDLEWARE = [
     "core.logging_middleware.RequestLoggingMiddleware",
     "core.timezone_middleware.TimezoneMiddleware",
 ]
+
+# CORS using https://github.com/adamchainz/django-cors-headers
+CORS_URLS_REGEX = r"^/api/.*$"
+# Swap this out later for CORS_ALLOWED_ORIGINS = ["https://example.com", ...]
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 if PRODUCTION:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
