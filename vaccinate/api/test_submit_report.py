@@ -111,10 +111,14 @@ def test_submit_report_api_example(
         "report_url": "http://testserver/admin/core/report/change/{}/".format(
             report.pk
         ),
+        "report_public_notes": report.public_notes,
+        "report_internal_notes": report.internal_notes,
         "location_name": "A location",
         "location_full_address": None,
         "location_state": "OR",
-        "reporter": "swillison+auth0-test-user@gmail.com",
+        "reporter_name": "swillison+auth0-test-user@gmail.com",
+        "reporter_id": "auth0:auth0|6036cd942c0b2a007093cbf0",
+        "reporter_role": "",
         "availability_tags": list(
             report.availability_tags.values_list("name", flat=True)
         ),

@@ -169,10 +169,14 @@ def submit_report(request, on_request_logged):
                     "report_url": request.build_absolute_uri(
                         "/admin/core/report/change/{}/".format(report.pk)
                     ),
+                    "report_public_notes": report.public_notes,
+                    "report_internal_notes": report.internal_notes,
                     "location_name": report.location.name,
                     "location_full_address": report.location.full_address,
                     "location_state": report.location.state.abbreviation,
-                    "reporter": str(report.reported_by),
+                    "reporter_name": report.reported_by.name,
+                    "reporter_id": report.reported_by.external_id,
+                    "reporter_role": report.reported_by.auth0_role_name,
                     "availability_tags": list(
                         report.availability_tags.values_list("name", flat=True)
                     ),
