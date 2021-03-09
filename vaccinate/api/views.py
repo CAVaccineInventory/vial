@@ -167,7 +167,7 @@ def submit_report(request, on_request_logged):
                 os.environ["ZAPIER_REPORT_URL"],
                 json={
                     "report_url": request.build_absolute_uri(
-                        "/admin/core/report/change/{}/".format(report.pk)
+                        "/admin/core/report/{}/change/".format(report.pk)
                     ),
                     "report_public_notes": report.public_notes,
                     "report_internal_notes": report.internal_notes,

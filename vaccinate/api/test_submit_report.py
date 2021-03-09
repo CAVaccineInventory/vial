@@ -108,7 +108,7 @@ def test_submit_report_api_example(
     # Should have posted to Zapier
     assert mocked_zapier.called_once
     assert json.loads(mocked_zapier.last_request.body) == {
-        "report_url": "http://testserver/admin/core/report/change/{}/".format(
+        "report_url": "http://testserver/admin/core/report/{}/change/".format(
             report.pk
         ),
         "report_public_notes": report.public_notes,

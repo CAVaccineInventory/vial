@@ -22,6 +22,13 @@ urlpatterns = [
         "admin/core/callreport/",
         lambda r: HttpResponsePermanentRedirect("/admin/core/report/"),
     ),
+    # I shipped code that sent the wrong URLs to a Discord bot in #96
+    path(
+        "admin/core/report/change/<int:id>/",
+        lambda r, id: HttpResponsePermanentRedirect(
+            "/admin/core/report/{}/change/".format(id)
+        ),
+    ),
     # Over-ride Django admin default login/logout
     path("admin/login/", lambda r: redirect("/login/auth0", permanent=False)),
     path("admin/logout/", lambda r: redirect("/logout", permanent=False)),
