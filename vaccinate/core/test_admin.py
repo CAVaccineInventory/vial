@@ -5,7 +5,7 @@ import pytest
 from django.contrib.messages import get_messages
 from django.utils import timezone
 
-from .models import CallRequest, Location, Reporter
+from .models import CallRequest, Location, Reporter, State
 
 
 @pytest.fixture()
@@ -20,7 +20,7 @@ def test_admin_create_location_sets_public_id(admin_client):
         "/admin/core/location/add/",
         {
             "name": "hello",
-            "state": "13",
+            "state": State.objects.get(abbreviation="OR").id,
             "location_type": "1",
             "latitude": "0",
             "longitude": "0",
@@ -31,7 +31,7 @@ def test_admin_create_location_sets_public_id(admin_client):
     assert response.status_code == 302
     location = Location.objects.order_by("-id")[0]
     assert location.name == "hello"
-    assert location.state.id == 13
+    assert location.state.id == State.objects.get(abbreviation="OR").pk
     assert location.location_type.id == 1
     assert location.pid.startswith("l")
     assert location.public_id == location.pid
@@ -45,7 +45,7 @@ def test_admin_location_actions_for_queue(admin_client):
         locations.append(
             Location.objects.create(
                 name="Location {}".format(i),
-                state_id=13,
+                state_id=State.objects.get(abbreviation="OR").id,
                 location_type_id=1,
                 latitude=30,
                 longitude=40,
@@ -99,7 +99,7 @@ def test_clear_claims_action(admin_client):
         locations.append(
             Location.objects.create(
                 name="Location {}".format(i),
-                state_id=13,
+                state_id=State.objects.get(abbreviation="OR").id,
                 location_type_id=1,
                 latitude=30,
                 longitude=40,

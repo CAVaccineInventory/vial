@@ -520,12 +520,16 @@ class CallRequest(models.Model):
     @classmethod
     def available_requests(cls):
         now = timezone.now()
-        return cls.objects.filter(
-            Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
-            | Q(claimed_until__lte=now)
-        ).exclude(
-            location__reports__created_at__gte=(
-                timezone.now() - datetime.timedelta(days=1)
+        return (
+            cls.objects.filter(
+                Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
+                | Q(claimed_until__lte=now)
+            )
+            .filter(location__state__abbreviation="OR")
+            .exclude(
+                location__reports__created_at__gte=(
+                    timezone.now() - datetime.timedelta(days=1)
+                )
             )
         )
 

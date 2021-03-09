@@ -27,7 +27,7 @@ def test_request_call(client, jwt_id_token):
     county = County.objects.get(fips_code="06079")  # San Luis Obispo
     location = Location.objects.create(
         county=county,
-        state=State.objects.get(abbreviation="CA"),
+        state=State.objects.get(abbreviation="OR"),
         name="SLO Pharmacy",
         phone_number="555 555-5555",
         full_address="5 5th Street",

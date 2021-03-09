@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 from api.models import ApiLog
-from core.models import CallRequest, CallRequestReason, Location, Report
+from core.models import CallRequest, CallRequestReason, Location, Report, State
 from django.utils import timezone
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "submitReport"
@@ -51,7 +51,7 @@ def test_submit_report_api_example(client, json_path, jwt_id_token):
             "latitude": 0,
             "longitude": 0,
             "location_type_id": 1,
-            "state_id": 1,
+            "state": State.objects.get(abbreviation="OR"),
             "county_id": 1,
         },
     )[0]
