@@ -1,8 +1,12 @@
 # django.vaccinate
 
-**This repository is currently a prototype / proof of concept**. This message will be removed should that no longer be true!
-
 Project background: [Spinning up a new Django app to act as a backend for VaccinateCA](https://github.com/CAVaccineInventory/simonw-internal-blog/blob/main/2021-02/2021-02-23.md)
+
+## Where this is hosted
+
+- https://vial.calltheshots.us/ is production - manually deployed using `scripts/deploy.sh`
+- https://vial-staging.calltheshots.us/ is our Google Cloud Run staging server - code is automatically deployed there on every commit
+- https://vaccinateca-preview.herokuapp.com/ is our Heroku staging server, soon to be retired - also uses continous deployment
 
 ## Architectural principles for this app
 
