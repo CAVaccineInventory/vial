@@ -49,6 +49,8 @@ honeycomb-beeline
 # Better interactive shell
 ipython
 
+# Django automatic model documentation
+docutils
 
 ### Development
 

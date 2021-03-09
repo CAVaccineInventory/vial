@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_migration_linter",
+    "django.contrib.admindocs",
     "social_django",
     "corsheaders",
     "auth0login",
