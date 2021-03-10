@@ -322,23 +322,23 @@ Unauthenticated. Returns a list of counties for the two-letter state code. For e
   "counties": [
     {
       "county_name": "Bristol",
-      "county_fips_code": 44001
+      "county_fips_code": "44001"
     },
     {
       "county_name": "Kent",
-      "county_fips_code": 44003
+      "county_fips_code": "44003"
     },
     {
       "county_name": "Newport",
-      "county_fips_code": 44005
+      "county_fips_code": "44005"
     },
     {
       "county_name": "Providence",
-      "county_fips_code": 44007
+      "county_fips_code": "44007"
     },
     {
       "county_name": "Washington",
-      "county_fips_code": 44009
+      "county_fips_code": "44009"
     }
   ]
 }

@@ -90,7 +90,7 @@ class County(models.Model):
     locations vaccines are sourced directly from the state or federal government.
     """
 
-    fips_code = models.IntegerField(unique=True)
+    fips_code = models.CharField(unique=True, max_length=5)
     name = CharTextField()
     state = models.ForeignKey(State, related_name="counties", on_delete=models.PROTECT)
     hotline_phone_number = CharTextField(null=True, blank=True)
