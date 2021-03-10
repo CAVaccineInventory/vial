@@ -310,7 +310,7 @@ Example output:
 }
 ```
 
-## GET /api/counties/<state>
+## GET /api/counties/&lt;state&gt;
 
 Unauthenticated. Returns a list of counties for the two-letter state code. For example: https://vaccinateca-preview.herokuapp.com/api/counties/RI
 
