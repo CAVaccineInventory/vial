@@ -55,7 +55,10 @@ jobs:
         DATABASE_URL: postgres://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/vaccinate
       run: |
         # 7aefb8c is the git commit after which we are enforcing reversible migrations
-        ./vaccinate/manage.py lintmigrations --project-root-path ./vaccinate 7aefb8cb6c19968ba7b97fdd099ccdd224e756f1
+        ./vaccinate/manage.py lintmigrations \
+          --project-root-path ./vaccinate \
+          --ignore-name 0038_county_fips_code_string_not_integer \
+          7aefb8cb6c19968ba7b97fdd099ccdd224e756f1
 
     - uses: codecov/codecov-action@v1
       with:
