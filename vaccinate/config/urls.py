@@ -16,6 +16,7 @@ urlpatterns = [
     path("api/submitReport/debug", api_views.submit_report_debug),
     path("api/requestCall", api_views.request_call),
     path("api/requestCall/debug", api_views.request_call_debug),
+    path("api/verifyToken", api_views.verify_token),
     path("", include("django.contrib.auth.urls")),
     path("", include("social_django.urls")),
     path("admin/docs/", lambda r: redirect("/admin/docs/models/", permanent=False)),

@@ -4,7 +4,7 @@ The goal is to update this documentation as part of any commit that modifies how
   
 The base URL for every API is currently https://vaccinateca-preview.herokuapp.com/
   
-## /api/submitReport
+## POST /api/submitReport
   
 This API records a new "report" in our database. A report is when someone checks with a vaccination location - usually by calling them - to find out their current status.
   
@@ -102,7 +102,7 @@ Anything submitted using that tool will have `is_test_data` set to True in the d
 
 You can view test reports here: https://vaccinateca-preview.herokuapp.com/admin/core/report/?is_test_data__exact=1
 
-## /api/requestCall
+## POST /api/requestCall
 
 Request a new location to call. This record will pick a location from the upcoming call queue and "lock" that record for twenty minutes, assigning it to your authenticated user.
 
@@ -144,5 +144,19 @@ The response currently looks like this:
         "Notes": null
     },
     "provider_record": {}
+}
+```
+
+## GET /api/verifyToken
+
+Private API for testing our own API tokens (not the JWTs). Send an API key as the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header.
+
+Returns status 302 and an `{"error": "message"}` if the API key is invalid, otherwise returns:
+
+```json
+{
+    "key_id": 1,
+    "description": "Description of the key",
+    "last_seen_at": "2021-03-10T01:43:32.010Z"
 }
 ```

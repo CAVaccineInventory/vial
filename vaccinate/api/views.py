@@ -24,7 +24,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
 
-from .utils import log_api_requests
+from .utils import log_api_requests, require_api_key
 
 
 class ReportValidator(BaseModel):
@@ -328,4 +328,15 @@ def request_call(request, on_request_logged):
             "provider_record": provider_record,
         },
         status=200,
+    )
+
+
+@require_api_key
+def verify_token(request):
+    return JsonResponse(
+        {
+            "key_id": request.api_key.id,
+            "last_seen_at": request.api_key.last_seen_at,
+            "description": request.api_key.description,
+        }
     )
