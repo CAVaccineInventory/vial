@@ -205,6 +205,7 @@ class Location(models.Model):
         help_text="Original JSON if this record was imported from elsewhere",
     )
     import_ref = models.SlugField(
+        max_length=100,
         db_index=True,
         null=True,
         blank=True,
