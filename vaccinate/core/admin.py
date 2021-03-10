@@ -1,10 +1,7 @@
-import json
-
 from django.contrib import admin, messages
-from django.db.models import Count, Max
+from django.db.models import Count, Exists, Max, OuterRef
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from .models import (
@@ -80,13 +77,6 @@ class LocationInQueueFilter(admin.SimpleListFilter):
     parameter_name = "currently_queued"
 
     def lookups(self, request, model_admin):
-        """
-        Returns a list of tuples. The first element in each
-        tuple is the coded value for the option that will
-        appear in the URL query. The second element is the
-        human-readable name for the option that will appear
-        in the right sidebar.
-        """
         return (
             ("no", "No"),
             ("yes", "Yes"),
@@ -94,9 +84,13 @@ class LocationInQueueFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == "yes":
-            return queryset.filter(call_requests__isnull=False)
+            return queryset.filter(
+                Exists(CallRequest.objects.filter(location=OuterRef("pk"))),
+            )
         if self.value() == "no":
-            return queryset.filter(call_requests__isnull=True)
+            return queryset.filter(
+                ~Exists(CallRequest.objects.filter(location=OuterRef("pk"))),
+            )
 
 
 @admin.register(Location)

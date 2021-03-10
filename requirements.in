@@ -49,12 +49,18 @@ honeycomb-beeline
 # Better interactive shell
 ipython
 
+# Django automatic model documentation
+docutils
 
 ### Development
+
+# Debug toolbar (dev only, not production)
+django-debug-toolbar
 
 # Testing
 pytest-django
 pytest-cov
+pytest-dotenv
 requests-mock
 time-machine
 

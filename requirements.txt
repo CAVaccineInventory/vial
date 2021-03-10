@@ -176,6 +176,10 @@ django-cors-headers==3.7.0 \
     --hash=sha256:1ac2b1213de75a251e2ba04448da15f99bcfcbe164288ae6b5ff929dc49b372f \
     --hash=sha256:96069c4aaacace786a34ee7894ff680780ec2644e4268b31181044410fecd12e
     # via -r requirements.in
+django-debug-toolbar==3.2 \
+    --hash=sha256:84e2607d900dbd571df0a2acf380b47c088efb787dce9805aefeb407341961d2 \
+    --hash=sha256:9e5a25d0c965f7e686f6a8ba23613ca9ca30184daa26487706d4829f5cfb697a
+    # via -r requirements.in
 django-migration-linter==2.5.1 \
     --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
     --hash=sha256:e4209e74393ddb86f31e8b7a13555fcecd1def506a04e1fe16b470248661dec7
@@ -186,7 +190,12 @@ django==3.1.7 \
     # via
     #   -r requirements.in
     #   django-cors-headers
+    #   django-debug-toolbar
     #   django-migration-linter
+docutils==0.16 \
+    --hash=sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af \
+    --hash=sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc
+    # via -r requirements.in
 ecdsa==0.14.1 \
     --hash=sha256:64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e \
     --hash=sha256:e108a5fe92c67639abae3260e43561af914e7fd0d27bae6d2ec1312ae7934dfe
@@ -500,12 +509,17 @@ pytest-django==4.1.0 \
     --hash=sha256:10e384e6b8912ded92db64c58be8139d9ae23fb8361e5fc139d8e4f8fc601bc2 \
     --hash=sha256:26f02c16d36fd4c8672390deebe3413678d89f30720c16efb8b2a6bf63b9041f
     # via -r requirements.in
+pytest-dotenv==0.5.2 \
+    --hash=sha256:2dc6c3ac6d8764c71c6d2804e902d0ff810fa19692e95fe138aefc9b1aa73732 \
+    --hash=sha256:40a2cece120a213898afaa5407673f6bd924b1fa7eafce6bda0e8abffe2f710f
+    # via -r requirements.in
 pytest==6.2.2 \
     --hash=sha256:9d1edf9e7d0b84d72ea3dbcdfd22b35fb543a5e8f2a60092dd578936bf63d7f9 \
     --hash=sha256:b574b57423e818210672e07ca1fa90aaf194a4f63f3ab909a2c67ebb22913839
     # via
     #   pytest-cov
     #   pytest-django
+    #   pytest-dotenv
 python-dateutil==2.8.1 \
     --hash=sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c \
     --hash=sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a
@@ -515,7 +529,9 @@ python-dateutil==2.8.1 \
 python-dotenv==0.15.0 \
     --hash=sha256:0c8d1b80d1a1e91717ea7d526178e3882732420b03f08afea0406db6402e220e \
     --hash=sha256:587825ed60b1711daea4832cf37524dfd404325b7db5e25ebe88c495c9f807a0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   pytest-dotenv
 python-jose==3.2.0 \
     --hash=sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b \
     --hash=sha256:67d7dfff599df676b04a996520d9be90d6cdb7e6dd10b4c7cacc0c3e2e92f2be
@@ -661,7 +677,9 @@ social-auth-core==4.1.0 \
 sqlparse==0.4.1 \
     --hash=sha256:017cde379adbd6a1f15a61873f43e8274179378e95ef3fede90b5aa64d304ed0 \
     --hash=sha256:0f91fd2e829c44362cbcfab3e9ae12e22badaa8a29ad5ff599f9ec109f0454e8
-    # via django
+    # via
+    #   django
+    #   django-debug-toolbar
 statsd==3.3.0 \
     --hash=sha256:c610fb80347fca0ef62666d241bce64184bd7cc1efe582f9690e045c25535eaa \
     --hash=sha256:e3e6db4c246f7c59003e51c9720a51a7f39a396541cb9b147ff4b14d15b5dd1f

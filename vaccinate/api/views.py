@@ -1,17 +1,24 @@
 import json
+import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 import pytz
+import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
     CallRequest,
     CallRequestReason,
+    County,
     Location,
+    LocationType,
+    Provider,
+    ProviderType,
     Report,
     Reporter,
+    State,
 )
 from dateutil import parser
 from django.db import transaction
@@ -22,7 +29,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
 
-from .utils import log_api_requests
+from .utils import log_api_requests, require_api_key
 
 
 class ReportValidator(BaseModel):
@@ -158,6 +165,28 @@ def submit_report(request, on_request_logged):
     def log_created_report(log):
         log.created_report = report
         log.save()
+
+        # Send it to Zapier too
+        if os.environ.get("ZAPIER_REPORT_URL"):
+            requests.post(
+                os.environ["ZAPIER_REPORT_URL"],
+                json={
+                    "report_url": request.build_absolute_uri(
+                        "/admin/core/report/{}/change/".format(report.pk)
+                    ),
+                    "report_public_notes": report.public_notes,
+                    "report_internal_notes": report.internal_notes,
+                    "location_name": report.location.name,
+                    "location_full_address": report.location.full_address,
+                    "location_state": report.location.state.abbreviation,
+                    "reporter_name": report.reported_by.name,
+                    "reporter_id": report.reported_by.external_id,
+                    "reporter_role": report.reported_by.auth0_role_name,
+                    "availability_tags": list(
+                        report.availability_tags.values_list("name", flat=True)
+                    ),
+                },
+            )
 
     on_request_logged(log_created_report)
 
@@ -304,4 +333,176 @@ def request_call(request, on_request_logged):
             "provider_record": provider_record,
         },
         status=200,
+    )
+
+
+@require_api_key
+def verify_token(request):
+    return JsonResponse(
+        {
+            "key_id": request.api_key.id,
+            "last_seen_at": request.api_key.last_seen_at,
+            "description": request.api_key.description,
+        }
+    )
+
+
+class LocationValidator(BaseModel):
+    name: str
+    state: str
+    latitude: float
+    longitude: float
+    location_type: str
+    import_ref: Optional[str]
+    # All of these are optional:
+    phone_number: Optional[str]
+    full_address: Optional[str]
+    city: Optional[str]
+    county: Optional[str]
+    google_places_id: Optional[str]
+    zip_code: Optional[str]
+    hours: Optional[str]
+    website: Optional[str]
+    airtable_id: Optional[str]
+    # Provider
+    provider_type: Optional[str]
+    provider_name: Optional[str]
+
+    @validator("state")
+    def state_must_exist(cls, value):
+        try:
+            return State.objects.get(abbreviation=value)
+        except State.DoesNotExist:
+            raise ValueError("State '{}' does not exist".format(value))
+
+    @validator("county")
+    def county_must_exist(cls, value, values):
+        try:
+            return values["state"].counties.get(name=value)
+        except County.DoesNotExist:
+            raise ValueError(
+                "County '{}' does not exist in state {}".format(
+                    value, values["state"].name
+                )
+            )
+
+    @validator("location_type")
+    def location_type_must_exist(cls, value):
+        try:
+            return LocationType.objects.get(name=value)
+        except LocationType.DoesNotExist:
+            raise ValueError("LocationType '{}' does not exist".format(value))
+
+    @validator("provider_type")
+    def provider_type_must_exist(cls, value):
+        try:
+            return ProviderType.objects.get(name=value)
+        except ProviderType.DoesNotExist:
+            raise ValueError("ProviderType '{}' does not exist".format(value))
+
+    @validator("provider_name")
+    def provider_name_requires_provider_type(cls, value, values):
+        assert values.get(
+            "provider_type"
+        ), "provider_type must be provided if provider_name is used"
+        return value
+
+
+@log_api_requests
+@require_api_key
+def import_locations(request, on_request_logged):
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    added_locations = []
+    updated_locations = []
+    errors = []
+    if isinstance(post_data, dict):
+        post_data = [post_data]
+    for location_json in post_data:
+        try:
+            location_data = LocationValidator(**location_json).dict()
+            kwargs = dict(
+                name=location_data["name"],
+                latitude=location_data["latitude"],
+                longitude=location_data["longitude"],
+                state=location_data["state"],
+                location_type=location_data["location_type"],
+                import_json=location_json,
+            )
+            if location_data.get("provider_type"):
+                kwargs["provider"] = Provider.objects.update_or_create(
+                    name=location_data["provider_name"],
+                    defaults={"provider_type": location_data["provider_type"]},
+                )[0]
+            for key in (
+                "phone_number",
+                "full_address",
+                "city",
+                "county",
+                "google_places_id",
+                "zip_code",
+                "hours",
+                "website",
+                "latitude",
+                "longitude",
+                "airtable_id",
+            ):
+                kwargs[key] = location_data.get(key)
+            kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
+            if location_json.get("import_ref"):
+                location, created = Location.objects.update_or_create(
+                    import_ref=location_json["import_ref"], defaults=kwargs
+                )
+                if created:
+                    added_locations.append(location)
+                else:
+                    updated_locations.append(location)
+            else:
+                location = Location.objects.create(**kwargs)
+                added_locations.append(location)
+        except ValidationError as e:
+            errors.append((location_json, e.errors()))
+    for location in added_locations:
+        location.refresh_from_db()
+    return JsonResponse(
+        {
+            "added": [location.public_id for location in added_locations],
+            "updated": [location.public_id for location in updated_locations],
+            "errors": errors,
+        }
+    )
+
+
+def location_types(request):
+    return JsonResponse(
+        {"location_types": list(LocationType.objects.values_list("name", flat=True))}
+    )
+
+
+def provider_types(request):
+    return JsonResponse(
+        {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
+    )
+
+
+def counties(request, state_abbreviation):
+    try:
+        state = State.objects.get(abbreviation=state_abbreviation)
+    except State.DoesNotExist:
+        return JsonResponse({"error": "Unknown state"}, status=404)
+    return JsonResponse(
+        {
+            "state_name": state.name,
+            "state_abbreviation": state.abbreviation,
+            "state_fips_code": state.fips_code,
+            "counties": [
+                {
+                    "county_name": county.name,
+                    "county_fips_code": county.fips_code,
+                }
+                for county in state.counties.all()
+            ],
+        }
     )

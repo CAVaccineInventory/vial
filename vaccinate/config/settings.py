@@ -13,6 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 PRODUCTION = os.environ.get("PRODUCTION")
 DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
+INTERNAL_IPS = ["127.0.0.1"]
 
 ALLOWED_HOSTS = ["*"]
 
@@ -84,7 +85,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.admindocs",
     "django_migration_linter",
+    "debug_toolbar",
     "social_django",
     "corsheaders",
     "auth0login",
@@ -105,7 +108,7 @@ MIDDLEWARE = [
     "beeline.middleware.django.HoneyMiddleware",
     "core.logging_middleware.RequestLoggingMiddleware",
     "core.timezone_middleware.TimezoneMiddleware",
-]
+] + (["debug_toolbar.middleware.DebugToolbarMiddleware"] if DEBUG else [])
 
 # CORS using https://github.com/adamchainz/django-cors-headers
 CORS_URLS_REGEX = r"^/api/.*$"
