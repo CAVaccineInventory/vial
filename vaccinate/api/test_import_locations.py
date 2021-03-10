@@ -1,5 +1,5 @@
 import pytest
-from core.models import Location
+from core.models import Location, LocationType, Provider, ProviderType
 
 from .models import ApiKey, ApiLog
 
@@ -16,6 +16,7 @@ def api_key(db):
 @pytest.mark.parametrize("use_list", (False, True))
 def test_import_location(client, api_key, use_list):
     assert Location.objects.count() == 0
+    assert Provider.objects.count() == 0
     location_input = {
         "name": "Walgreens San Francisco",
         "phone_number": "(555) 555-5554",
@@ -31,6 +32,8 @@ def test_import_location(client, api_key, use_list):
         "longitude": -122.439517,
         "location_type": "Pharmacy",
         "airtable_id": "airtable-1",
+        "provider_name": "Walgreens",
+        "provider_type": "Pharmacy",
     }
     json_input = location_input
     if use_list:
@@ -42,7 +45,12 @@ def test_import_location(client, api_key, use_list):
         HTTP_AUTHORIZATION="Bearer {}".format(api_key),
     )
     assert response.status_code == 200
+    assert not response.json()["errors"]
     assert Location.objects.count() == 1
+    assert Provider.objects.count() == 1
+    provider = Provider.objects.get()
+    assert provider.name == "Walgreens"
+    assert provider.provider_type.name == "Pharmacy"
     location = Location.objects.get()
     assert response.json() == {
         "errors": [],
@@ -112,4 +120,20 @@ def test_import_location_with_import_ref(client, api_key):
         "errors": [],
         "updated": [location2.public_id],
         "added": [],
+    }
+
+
+@pytest.mark.django_db
+def test_provider_types(client):
+    response = client.get("/api/providerTypes")
+    assert response.json() == {
+        "provider_types": list(ProviderType.objects.values_list("name", flat=True))
+    }
+
+
+@pytest.mark.django_db
+def test_location_types(client):
+    response = client.get("/api/locationTypes")
+    assert response.json() == {
+        "location_types": list(LocationType.objects.values_list("name", flat=True))
     }

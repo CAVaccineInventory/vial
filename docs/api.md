@@ -254,9 +254,32 @@ The following fields are all optional strings:
 
 If you are providing a `county` it must be the name of a county that exists within the provided state.
 
+You can also specify a `provider_name` and a `provider_type`, if the location belongs to a chain of locations.
+
+The `provider_type` must be one of the list of types from `/api/providerTypes`.
+
+The `provider_name` will be used to either create a new provider or associate your location with an existing provider with that name.
+
+## GET /api/providerTypes
+
+Unauthenticated. Returns a `"provider_types"` key containing a JSON array of names of valid provider types, e.g. `Pharmacy`.
+
+Example output:
+
+```json
+{
+    "provider_types": [
+        "Pharmacy",
+        "Hospital",
+        "Health Plan",
+        "Other"
+    ]
+}
+```
+
 ## GET /api/locationTypes
 
-Returns a `"location_types"` key containing a JSON array of names of valid location types, e.g. `Pharmacy`. No authentication required.
+Unauthenticated. Returns a `"location_types"` key containing a JSON array of names of valid location types, e.g. `Pharmacy`.
 
 Example output:
 

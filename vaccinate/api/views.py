@@ -14,6 +14,8 @@ from core.models import (
     County,
     Location,
     LocationType,
+    Provider,
+    ProviderType,
     Report,
     Reporter,
     State,
@@ -362,6 +364,9 @@ class LocationValidator(BaseModel):
     hours: Optional[str]
     website: Optional[str]
     airtable_id: Optional[str]
+    # Provider
+    provider_type: Optional[str]
+    provider_name: Optional[str]
 
     @validator("state")
     def state_must_exist(cls, value):
@@ -388,6 +393,20 @@ class LocationValidator(BaseModel):
         except LocationType.DoesNotExist:
             raise ValueError("LocationType '{}' does not exist".format(value))
 
+    @validator("provider_type")
+    def provider_type_must_exist(cls, value):
+        try:
+            return ProviderType.objects.get(name=value)
+        except ProviderType.DoesNotExist:
+            raise ValueError("ProviderType '{}' does not exist".format(value))
+
+    @validator("provider_name")
+    def provider_name_requires_provider_type(cls, value, values):
+        assert values.get(
+            "provider_type"
+        ), "provider_type must be provided if provider_name is used"
+        return value
+
 
 @log_api_requests
 @require_api_key
@@ -412,6 +431,13 @@ def import_locations(request, on_request_logged):
                 location_type=location_data["location_type"],
                 import_json=location_json,
             )
+            if location_data.get("provider_type"):
+                kwargs["provider"] = Provider.objects.update_or_create(
+                    name=location_data["provider_name"],
+                    defaults={
+                        "provider_type": location_data["provider_type"]
+                    }
+                )[0]
             for key in (
                 "phone_number",
                 "full_address",
@@ -454,6 +480,12 @@ def import_locations(request, on_request_logged):
 def location_types(request):
     return JsonResponse(
         {"location_types": list(LocationType.objects.values_list("name", flat=True))}
+    )
+
+
+def provider_types(request):
+    return JsonResponse(
+        {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
     )
 
 
