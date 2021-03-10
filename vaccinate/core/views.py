@@ -35,6 +35,7 @@ def healthcheck(request):
 def admin_commands(request):
     command_output = StringIO()
     error = None
+    message = None
     if request.method == "POST":
         command_to_run, args = {
             "import_counties": ("import_counties", []),
@@ -43,11 +44,13 @@ def admin_commands(request):
             error = "Unknown command"
         else:
             management.call_command(command_to_run, *args, stdout=command_output)
+            message = "Ran command: {}".format(command_to_run)
     return render(
         request,
         "admin/commands.html",
         {
             "output": command_output.getvalue(),
             "error": error,
+            "message": message,
         },
     )

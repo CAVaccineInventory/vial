@@ -20,5 +20,7 @@
     </p>
 {% endif %}
 
+{% if message %}<p><strong>{{ message }}</strong></p>{% endif %}
+
 {% if output %}<pre>{{ output }}</pre>{% endif %}
 {% endblock %}
