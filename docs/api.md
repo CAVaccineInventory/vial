@@ -101,3 +101,48 @@ A tool for trying out this API is available at https://vaccinateca-preview.herok
 Anything submitted using that tool will have `is_test_data` set to True in the database.
 
 You can view test reports here: https://vaccinateca-preview.herokuapp.com/admin/core/report/?is_test_data__exact=1
+
+## /api/requestCall
+
+Request a new location to call. This record will pick a location from the upcoming call queue and "lock" that record for twenty minutes, assigning it to your authenticated user.
+
+HTTP POST, sending an empty `{}` JSON object as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
+
+The response currently looks like this:
+
+```json
+
+    "id": "lcyzg",
+    "Name": "Fred Meyer Pharmacy #70100165",
+    "Phone number": "(541) 884-1780",
+    "Address": "2655 Shasta Way, Klamath Falls, OR, 97603",
+    "Internal notes": null,
+    "Hours": null,
+    "County": "Klamath",
+    "Location Type": "Unknown",
+    "Affiliation": null,
+    "Latest report": null,
+    "Latest report notes": [
+        null
+    ],
+    "County vaccine info URL": [
+        null
+    ],
+    "County Vaccine locations URL": [
+        null
+    ],
+    "Latest Internal Notes": [
+        null
+    ],
+    "Availability Info": [],
+    "Number of Reports": 0,
+    "county_record": {
+        "id": 2225,
+        "County": "Klamath",
+        "Vaccine info URL": null,
+        "Vaccine locations URL": null,
+        "Notes": null
+    },
+    "provider_record": {}
+}
+```
