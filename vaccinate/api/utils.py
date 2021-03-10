@@ -71,6 +71,7 @@ def log_api_requests(view_fn):
             response_status=response.status_code,
             response_body=response_body,
             response_body_json=response_body_json,
+            api_key=getattr(request, "api_key", None) or None,
         )
         for callback in on_request_logged:
             callback(log)

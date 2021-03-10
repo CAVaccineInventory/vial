@@ -39,7 +39,7 @@ def test_verify_token_last_seen_at(client):
     api_key = ApiKey.objects.create(
         id=2, key="8a2e60eb55011904fa495a27cd9c6393", description="Test"
     )
-    token = "2:8a2e60eb55011904fa495a27cd9c6393"
+    token = api_key.token()
     # Making two requests should not update last_seen_at
     response = client.get(
         "/api/verifyToken", HTTP_AUTHORIZATION="Bearer {}".format(token)

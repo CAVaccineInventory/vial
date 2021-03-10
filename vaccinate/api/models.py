@@ -21,6 +21,9 @@ class ApiKey(models.Model):
     description = models.TextField(help_text="What this API key is being used for")
     key = models.CharField(max_length=32, default=random_secret)
 
+    def token(self):
+        return "{}:{}".format(self.id, self.key)
+
     def __str__(self):
         return "{}:{}...".format(self.pk, self.key[:8])
 

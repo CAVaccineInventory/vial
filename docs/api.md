@@ -160,3 +160,115 @@ Returns status 302 and an `{"error": "message"}` if the API key is invalid, othe
     "last_seen_at": "2021-03-10T01:43:32.010Z"
 }
 ```
+
+## POST /api/importLocations
+
+Private API for us to import new locations into the database - or update existing locations.
+
+Accepts a POST with a JSON document with either a single location object or a list of location objects.
+
+You'll need an API key, which you pass in the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header. API keys can be created in the Django admin at https://vaccinateca-preview.herokuapp.com/admin/api/apikey/
+
+Each location should look like this:
+
+```json
+{
+    "name": "Walgreens San Francisco III",
+    "state": "CA",
+    "latitude": 37.781869,
+    "longitude": -122.439517,
+    "location_type": "Pharmacy",
+}
+```
+Each of these fields is required.
+
+The `state` value should be the two letter acronym for a state (or `AS` for American Samoa, `GU` for Guam, `MP` for Northern Mariana Islands, `PR` for Puerto Rico, `VI` for Virgin Islands or `DC` for District of Columbia).
+
+The latitude and longitude should be floating point values.
+
+The `location_type` should be one of the values shown on https://vaccinateca-preview.herokuapp.com/api/locationTypes
+
+There is also an optional `import_ref` key, described below.
+
+The API returns the following:
+
+```json
+{
+    "errors": [],
+    "added": ["lc", "ld"],
+    "updated": ["lb"],
+}
+```
+
+`errors` will contain a list of validation errors, if any.
+
+`added` returns the public IDs of any added locations.
+
+`updated` returns the public IDs of locatinos that were updated using an `import_ref`.
+
+### Using import_ref to import and later update locations
+
+If you are importing locations from another source that may provide updated data in the future, you can use the `import_ref` key to specify a unique import reference for the record.
+
+If you call `/api/importLocations` again in the future with the same `import_ref` value, the record will be updated in place rather than a new location being created.
+
+For example, submitting the following:
+
+```json
+{
+    "name": "Walgreens San Francisco III",
+    "state": "CA",
+    "latitude": 37.781869,
+    "longitude": -122.439517,
+    "location_type": "Pharmacy",
+    "import_ref": "walgreens-scraper:1231"
+}
+```
+Will assign an `import_ref` of `walgreens-scraper:1231` to the record. If you later submit the following:
+
+```json
+{
+    "name": "Walgreens San Francisco",
+    "state": "CA",
+    "latitude": 37.781869,
+    "longitude": -122.439517,
+    "location_type": "Super Site",
+    "import_ref": "walgreens-scraper:1231"
+}
+```
+The existing record will be updated with those altered values.
+
+Make sure you pick import refs that won't be used by anyone else: using a prefix that matches the location you are pulling from is a good idea.
+
+## GET /api/locationTypes
+
+Returns a `"location_types"` key containing a JSON array of names of valid location types, e.g. `Pharmacy`. No authentication required.
+
+Example output:
+
+```json
+{
+    "location_types": [
+        "Hospital / Clinic",
+        "Pharmacy",
+        "Super Site",
+        "Private Practice",
+        "School",
+        "Other",
+        "Nursing home",
+        "Urgent care",
+        "Dialysis clinic",
+        "Health department",
+        "Santa Barbara County Juvenile Hall",
+        "Mobile clinic",
+        "Specialist",
+        "Ambulance",
+        "In-home Senior Care",
+        "Mental Health",
+        "Rehabilitation Center",
+        "First Responder",
+        "Shelter",
+        "Unknown"
+    ]
+}
+```

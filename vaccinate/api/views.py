@@ -12,8 +12,10 @@ from core.models import (
     CallRequest,
     CallRequestReason,
     Location,
+    LocationType,
     Report,
     Reporter,
+    State,
 )
 from dateutil import parser
 from django.db import transaction
@@ -339,4 +341,80 @@ def verify_token(request):
             "last_seen_at": request.api_key.last_seen_at,
             "description": request.api_key.description,
         }
+    )
+
+
+class LocationValidator(BaseModel):
+    name: str
+    state: str
+    latitude: float
+    longitude: float
+    location_type: str
+    import_ref: Optional[str]
+
+    @validator("state")
+    def state_must_exist(cls, value):
+        try:
+            return State.objects.get(abbreviation=value)
+        except State.DoesNotExist:
+            raise ValueError("State '{}' does not exist".format(value))
+
+    @validator("location_type")
+    def location_type_must_exist(cls, value):
+        try:
+            return LocationType.objects.get(name=value)
+        except LocationType.DoesNotExist:
+            raise ValueError("LocationType '{}' does not exist".format(value))
+
+
+@log_api_requests
+@require_api_key
+def import_locations(request, on_request_logged):
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    added_locations = []
+    updated_locations = []
+    errors = []
+    if isinstance(post_data, dict):
+        post_data = [post_data]
+    for location_json in post_data:
+        try:
+            location_data = LocationValidator(**location_json).dict()
+            kwargs = dict(
+                name=location_data["name"],
+                latitude=location_data["latitude"],
+                longitude=location_data["longitude"],
+                state=location_data["state"],
+                location_type=location_data["location_type"],
+                import_json=location_json,
+            )
+            if location_json.get("import_ref"):
+                location, created = Location.objects.update_or_create(
+                    import_ref=location_json["import_ref"], defaults=kwargs
+                )
+                if created:
+                    added_locations.append(location)
+                else:
+                    updated_locations.append(location)
+            else:
+                location = Location.objects.create(**kwargs)
+                added_locations.append(location)
+        except ValidationError as e:
+            errors.append((location_json, e.errors()))
+    for location in added_locations:
+        location.refresh_from_db()
+    return JsonResponse(
+        {
+            "added": [location.public_id for location in added_locations],
+            "updated": [location.public_id for location in updated_locations],
+            "errors": errors,
+        }
+    )
+
+
+def location_types(request):
+    return JsonResponse(
+        {"location_types": list(LocationType.objects.values_list("name", flat=True))}
     )
