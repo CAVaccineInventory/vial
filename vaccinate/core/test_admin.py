@@ -5,7 +5,7 @@ import pytest
 from django.contrib.messages import get_messages
 from django.utils import timezone
 
-from .models import CallRequest, Location, Reporter, State
+from .models import CallRequest, County, Location, Reporter, State
 
 
 @pytest.fixture()
@@ -135,3 +135,36 @@ def test_clear_claims_action(admin_client):
     assert len(messages) == 2
     assert messages[1].message == "Cleared claims for 2 call requests"
     assert CallRequest.available_requests().count() == 2
+
+
+def test_admin_commands_superuser_only(client, django_user_model):
+    # No logged out users
+    assert client.get("/admin/commands/").status_code == 302
+    # No non-staff users
+    user = django_user_model.objects.create_user(username="not-staff")
+    client.force_login(user)
+    assert client.get("/admin/commands/").status_code == 302
+    # No staff users who are not super-users
+    staff_user = django_user_model.objects.create_user(username="staff", is_staff=True)
+    client.force_login(staff_user)
+    assert client.get("/admin/commands/").status_code == 302
+    # Super-users are allowed
+    super_user = django_user_model.objects.create_user(
+        username="super", is_staff=True, is_superuser=True
+    )
+    client.force_login(super_user)
+    assert client.get("/admin/commands/").status_code == 200
+
+
+def test_admin_commands_import_counties(admin_client, requests_mock):
+    requests_mock.get(
+        "https://us-counties.datasette.io/counties/county_fips.csv?_stream=on&_size=max",
+        text=(
+            "state,state_fips,county_fips,county_name\n"
+            "AK,02,02013,Aleutians East\n"
+            "AK,02,02016,Aleutians West"
+        ),
+    )
+    assert County.objects.filter(state__abbreviation="AK").count() == 0
+    admin_client.post("/admin/commands/", {"command": "import_counties"})
+    assert County.objects.filter(state__abbreviation="AK").count() == 2

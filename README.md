@@ -28,13 +28,19 @@ As a result, hosting this (or moving this to a different host) should be as easy
 - Configures Django Admin to run against those new models
 - Continuous Deployment to a staging environment (temporarily hosted on Heroku)
 - Imports existing location and reports data from Airtable
-- Provides a `/api/submitReport` API that imitates the Netlify/Airtable one - [documentation here](docs/api.md)
+- Provides a number of [fully documented](docs/api.md) APIs:
+  - `POST /api/submitReport` that imitates the Netlify/Airtable one for submitting a call report
+  - `POST /api/requestCall` (again imitating Netlify) for getting a new location to call
+  - `GET /api/verifyToken` to verify an API token
+  - `POST /api/importLocations` to import new locations
+  - `GET /api/providerTypes` - see valid provider types
+  - `GET /api/locationTypes` - see valid location types
+  - `GET /api/counties/CA` - list counties in a state - accepts two letter state codes
 
 For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
 
 ## What this will do
 
-- API for the next call that a user should make
 - Export options matching the public APIs we currently generate from Airtable
 - I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 

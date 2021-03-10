@@ -26,6 +26,7 @@ urlpatterns = [
     path("admin/docs/", lambda r: redirect("/admin/docs/models/", permanent=False)),
     path("admin/docs/", include("django.contrib.admindocs.urls")),
     path(
+        # I renamed this model
         "admin/core/callreport/",
         lambda r: HttpResponsePermanentRedirect("/admin/core/report/"),
     ),
@@ -36,6 +37,7 @@ urlpatterns = [
             "/admin/core/report/{}/change/".format(id)
         ),
     ),
+    path("admin/commands/", core_views.admin_commands),
     # Over-ride Django admin default login/logout
     path("admin/login/", lambda r: redirect("/login/auth0", permanent=False)),
     path("admin/logout/", lambda r: redirect("/logout", permanent=False)),

@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Run admin commands{% endblock %}
+{% block content %}
+<h1>Run admin commands (super-user only)</h1>
+
+<h2>Import counties</h2>
+<p>Import the full list of 3,000+ counties from <a href="https://us-counties.datasette.io/counties/county_fips">us-counties.datasette.io/counties/county_fips</a> - see <a href="https://github.com/CAVaccineInventory/django.vaccinate/issues/88">issue 88</a></p>
+<p><strong>Warning:</strong> This command can take a long time to run!</p>
+<form action="{{ request.path }}" method="POST">
+{% csrf_token %}
+<p>
+    <input type="hidden" name="command" value="import_counties">
+    <input type="submit" value="Import counties">
+</p>
+</form>
+
+{% if error %}
+    <p style="background-color: red; color: white; padding: 0.5em">
+        {{ error }}
+    </p>
+{% endif %}
+
+{% if message %}<p><strong>{{ message }}</strong></p>{% endif %}
+
+{% if output %}<pre>{{ output }}</pre>{% endif %}
+{% endblock %}
