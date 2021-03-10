@@ -434,9 +434,7 @@ def import_locations(request, on_request_logged):
             if location_data.get("provider_type"):
                 kwargs["provider"] = Provider.objects.update_or_create(
                     name=location_data["provider_name"],
-                    defaults={
-                        "provider_type": location_data["provider_type"]
-                    }
+                    defaults={"provider_type": location_data["provider_type"]},
                 )[0]
             for key in (
                 "phone_number",
