@@ -455,3 +455,24 @@ def location_types(request):
     return JsonResponse(
         {"location_types": list(LocationType.objects.values_list("name", flat=True))}
     )
+
+
+def counties(request, state_abbreviation):
+    try:
+        state = State.objects.get(abbreviation=state_abbreviation)
+    except State.DoesNotExist:
+        return JsonResponse({"error": "Unknown state"}, status=404)
+    return JsonResponse(
+        {
+            "state_name": state.name,
+            "state_abbreviation": state.abbreviation,
+            "state_fips_code": state.fips_code,
+            "counties": [
+                {
+                    "county_name": county.name,
+                    "county_fips_code": county.fips_code,
+                }
+                for county in state.counties.all()
+            ],
+        }
+    )
