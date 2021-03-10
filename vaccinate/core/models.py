@@ -528,7 +528,7 @@ class CallRequest(models.Model):
             .filter(location__state__abbreviation="OR")
             .exclude(
                 location__reports__created_at__gte=(
-                    timezone.now() - datetime.timedelta(days=1)
+                    timezone.now() - datetime.timedelta(days=3)
                 )
             )
         )
