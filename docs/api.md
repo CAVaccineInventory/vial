@@ -240,6 +240,20 @@ The existing record will be updated with those altered values.
 
 Make sure you pick import refs that won't be used by anyone else: using a prefix that matches the location you are pulling from is a good idea.
 
+The following fields are all optional strings:
+
+- `phone_number`
+- `full_address`
+- `city`
+- `county` - special case, see below
+- `google_places_id`
+- `zip_code`
+- `hours`
+- `website`
+- `airtable_id`
+
+If you are providing a `county` it must be the name of a county that exists within the provided state.
+
 ## GET /api/locationTypes
 
 Returns a `"location_types"` key containing a JSON array of names of valid location types, e.g. `Pharmacy`. No authentication required.

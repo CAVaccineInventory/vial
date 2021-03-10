@@ -11,6 +11,7 @@ from core.models import (
     AppointmentTag,
     CallRequest,
     CallRequestReason,
+    County,
     Location,
     LocationType,
     Report,
@@ -351,6 +352,16 @@ class LocationValidator(BaseModel):
     longitude: float
     location_type: str
     import_ref: Optional[str]
+    # All of these are optional:
+    phone_number: Optional[str]
+    full_address: Optional[str]
+    city: Optional[str]
+    county: Optional[str]
+    google_places_id: Optional[str]
+    zip_code: Optional[str]
+    hours: Optional[str]
+    website: Optional[str]
+    airtable_id: Optional[str]
 
     @validator("state")
     def state_must_exist(cls, value):
@@ -358,6 +369,17 @@ class LocationValidator(BaseModel):
             return State.objects.get(abbreviation=value)
         except State.DoesNotExist:
             raise ValueError("State '{}' does not exist".format(value))
+
+    @validator("county")
+    def county_must_exist(cls, value, values):
+        try:
+            return values["state"].counties.get(name=value)
+        except County.DoesNotExist:
+            raise ValueError(
+                "County '{}' does not exist in state {}".format(
+                    value, values["state"].name
+                )
+            )
 
     @validator("location_type")
     def location_type_must_exist(cls, value):
@@ -390,6 +412,21 @@ def import_locations(request, on_request_logged):
                 location_type=location_data["location_type"],
                 import_json=location_json,
             )
+            for key in (
+                "phone_number",
+                "full_address",
+                "city",
+                "county",
+                "google_places_id",
+                "zip_code",
+                "hours",
+                "website",
+                "latitude",
+                "longitude",
+                "airtable_id",
+            ):
+                kwargs[key] = location_data.get(key)
+            kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
             if location_json.get("import_ref"):
                 location, created = Location.objects.update_or_create(
                     import_ref=location_json["import_ref"], defaults=kwargs
