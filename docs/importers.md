@@ -35,4 +35,5 @@ Here's the comand-line recipe to import every Rhode Island location to our Herok
     python -m importers.vaccinefinder \
         ../raw-feed-data/vaccine-finder/RI/locations \
         --url 'https://vaccinateca-preview.herokuapp.com/api/importLocations' \
-        --token '1:e6c5e05637fdb6718d0c40efb3dfc98f'
+        --token '1:e6c5e05637fdb6718d0c40efb3dfc98f' \
+        --derive-counties
