@@ -93,29 +93,6 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
-def facet_counter(model, filter_title, parameter, parameter_column, name_column):
-    class FacetCountFilter(admin.SimpleListFilter):
-        title = filter_title
-        parameter_name = parameter
-
-        def lookups(self, request, model_admin):
-            qs = model_admin.get_queryset(request)
-            states_and_counts = (
-                qs.values_list(parameter_column, name_column)
-                .annotate(n=Count(parameter_column))
-                .order_by("-n")
-            )
-            for parameter, name, count in states_and_counts:
-                yield parameter, "{}: {:,}".format(name, count)
-
-        def queryset(self, request, queryset):
-            value = self.value()
-            if value:
-                return queryset.filter(**{parameter_column: value})
-
-    return FacetCountFilter
-
-
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     def get_actions(self, request):
@@ -151,14 +128,9 @@ class LocationAdmin(admin.ModelAdmin):
     )
     list_filter = (
         LocationInQueueFilter,
-        facet_counter(State, "State", "state", "state__abbreviation", "state__name"),
-        facet_counter(
-            LocationType,
-            "Location type",
-            "location_type",
-            "location_type__name",
-            "location_type__name",
-        ),
+        "location_type",
+        "state",
+        "provider",
         "soft_deleted",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
