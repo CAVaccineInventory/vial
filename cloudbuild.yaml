@@ -20,7 +20,7 @@ steps:
       - "remote"
       - "set-url"
       - "origin"
-      - "git@github.com:CAVaccineInventory/django.vaccinate"
+      - "git@github.com:CAVaccineInventory/vial"
   - name: gcr.io/cloud-builders/git
     args: ["fetch", "--unshallow"]
     volumes:

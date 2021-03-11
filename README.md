@@ -46,7 +46,7 @@ For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInve
 - Export options matching the public APIs we currently generate from Airtable
 - I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
-The [issues](https://github.com/CAVaccineInventory/django.vaccinate/issues) in this repo closely track upcoming work.
+The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo closely track upcoming work.
 
 ## Setting up a development environment
 

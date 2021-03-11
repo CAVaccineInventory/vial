@@ -23,7 +23,7 @@ from dateutil import parser
     help="URL to the base of the API",
 )
 def cli(endpoint, csv_filepath, base_url):
-    "Replace CSV API logs exported from Airtable, see https://github.com/CAVaccineInventory/django.vaccinate/issues/29"
+    "Replace CSV API logs exported from Airtable, see https://github.com/CAVaccineInventory/vial/issues/29"
     url = base_url + endpoint
     print(url)
     reader = csv.DictReader(csv_filepath)

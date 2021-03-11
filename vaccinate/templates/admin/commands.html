@@ -4,7 +4,7 @@
 <h1>Run admin commands (super-user only)</h1>
 
 <h2>Import counties</h2>
-<p>Import the full list of 3,000+ counties from <a href="https://us-counties.datasette.io/counties/county_fips">us-counties.datasette.io/counties/county_fips</a> - see <a href="https://github.com/CAVaccineInventory/django.vaccinate/issues/88">issue 88</a></p>
+<p>Import the full list of 3,000+ counties from <a href="https://us-counties.datasette.io/counties/county_fips">us-counties.datasette.io/counties/county_fips</a> - see <a href="https://github.com/CAVaccineInventory/vial/issues/88">issue 88</a></p>
 <p><strong>Warning:</strong> This command can take a long time to run!</p>
 <form action="{{ request.path }}" method="POST">
 {% csrf_token %}

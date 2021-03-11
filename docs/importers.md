@@ -2,11 +2,11 @@
 
 Importers are scripts that live in the `importers/` directory in this repository. They consume locations from a variety of sources and send them to the `/api/importLocations` API to import them into the database.
 
-You can run the tests for the importers by changing into the top level directory (`django.vaccinate`) and running `pytest importers`
+You can run the tests for the importers by changing into the top level directory (`vial`) and running `pytest importers`
 
 ## importers.vaccinefinder
 
-Run this importer from the top-level `django.vaccinate` folder like so:
+Run this importer from the top-level `vial` folder like so:
 
     python -m importers.vaccinefinder --help
 
