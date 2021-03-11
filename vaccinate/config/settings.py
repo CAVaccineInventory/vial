@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
     "django_migration_linter",
+    "advanced_filters",
     "debug_toolbar",
     "social_django",
     "corsheaders",

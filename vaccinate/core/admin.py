@@ -1,3 +1,4 @@
+from advanced_filters.admin import AdminAdvancedFiltersMixin
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, OuterRef
 from django.template.loader import render_to_string
@@ -94,7 +95,7 @@ class LocationInQueueFilter(admin.SimpleListFilter):
 
 
 @admin.register(Location)
-class LocationAdmin(admin.ModelAdmin):
+class LocationAdmin(AdminAdvancedFiltersMixin, admin.ModelAdmin):
     def get_actions(self, request):
         actions = super().get_actions(request)
         actions.update(
@@ -133,6 +134,12 @@ class LocationAdmin(admin.ModelAdmin):
         "provider",
         "soft_deleted",
     )
+    advanced_filter_fields = (
+        "name",
+        "location_type",
+        "provider",
+    )
+
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("public_id", "airtable_id", "import_json")
 

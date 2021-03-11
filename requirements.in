@@ -37,6 +37,9 @@ social-auth-app-django
 # CORS for our /api/
 django-cors-headers
 
+# Advanced admin filters
+django-advanced-filters
+
 # Cryptography for JWT parsing and validation
 python-jose
 
