@@ -68,6 +68,7 @@ pytest-httpx
 # Formatting
 black
 isort
+pyflakes
 
 # Dependency management
 pip-tools
