@@ -63,6 +63,7 @@ pytest-cov
 pytest-dotenv
 requests-mock
 time-machine
+pytest-httpx
 
 # Formatting
 black
