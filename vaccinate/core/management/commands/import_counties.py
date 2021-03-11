@@ -20,7 +20,7 @@ class Command(BaseCommand):
                 "fips_code", flat=True
             )
         }
-        s = io.StringIO(requests.get(counties_url).text)
+        s = io.StringIO(requests.get(counties_url, timeout=10).text)
         to_create = []
         for county in csv.DictReader(s):
             if str(county["county_fips"]) in existing_county_fips_codes:
