@@ -26,7 +26,7 @@ def test_login_with_auth0_start(client):
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     # I generated these id_token values using the process described in this issue comment:
-    # https://github.com/CAVaccineInventory/django.vaccinate/issues/8#issuecomment-785429712
+    # https://github.com/CAVaccineInventory/vial/issues/8#issuecomment-785429712
     "id_token,expected_email,should_be_staff",
     (
         (

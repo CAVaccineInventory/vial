@@ -408,6 +408,7 @@ class LocationValidator(BaseModel):
         return value
 
 
+@csrf_exempt
 @log_api_requests
 @require_api_key
 def import_locations(request, on_request_logged):

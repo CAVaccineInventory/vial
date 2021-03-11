@@ -1,4 +1,6 @@
-# django.vaccinate
+# VIAL
+
+VIAL = Vaccine Information Archive and Library. This is the Django application that powers (or will power) calltheshots.us
 
 Project background: [Spinning up a new Django app to act as a backend for VaccinateCA](https://github.com/CAVaccineInventory/simonw-internal-blog/blob/main/2021-02/2021-02-23.md)
 
@@ -44,7 +46,7 @@ For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInve
 - Export options matching the public APIs we currently generate from Airtable
 - I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
-The [issues](https://github.com/CAVaccineInventory/django.vaccinate/issues) in this repo closely track upcoming work.
+The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo closely track upcoming work.
 
 ## Setting up a development environment
 

@@ -142,7 +142,7 @@ def import_airtable_report(report, availability_tags=None):
 
 
 def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instructions):
-    # https://github.com/CAVaccineInventory/django.vaccinate/issues/20
+    # https://github.com/CAVaccineInventory/vial/issues/20
     # Returns (appointment_tag, other_instructions)
     appointment_scheduling_instructions = appointment_scheduling_instructions or ""
     if appointment_scheduling_instructions == "Uses county scheduling system":

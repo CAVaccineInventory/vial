@@ -145,6 +145,9 @@ class LocationAdmin(admin.ModelAdmin):
 
     times_reported.admin_order_field = "times_reported_count"
 
+    def lookup_allowed(self, lookup, value):
+        return True
+
 
 class ReporterProviderFilter(admin.SimpleListFilter):
     title = "Provider"
@@ -251,7 +254,6 @@ class ReportAdmin(admin.ModelAdmin):
     test.boolean = True
 
     def lookup_allowed(self, lookup, value):
-        "Enable all querystring lookups! Really powerful, and we trust our staff"
         return True
 
 
@@ -298,6 +300,9 @@ class CallRequestAdmin(admin.ModelAdmin):
     actions = [clear_claims]
     list_filter = ("call_request_reason",)
     raw_id_fields = ("location", "claimed_by", "tip_report")
+
+    def lookup_allowed(self, lookup, value):
+        return True
 
 
 @admin.register(PublishedReport)
