@@ -7,7 +7,7 @@ def decode_and_verify_jwt(jwt_id_token, try_fallback=False):
     # Verifies the signature of a JWT and returns the decoded payload
     DOMAIN = settings.SOCIAL_AUTH_AUTH0_DOMAIN
     jwt_keys_url = "https://" + DOMAIN + "/.well-known/jwks.json"
-    jwks = requests.get(jwt_keys_url).content
+    jwks = requests.get(jwt_keys_url, timeout=5).content
     try:
         return jwt.decode(
             jwt_id_token,
@@ -21,6 +21,7 @@ def decode_and_verify_jwt(jwt_id_token, try_fallback=False):
             fallback_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
                 headers={"Authorization": "Bearer {}".format(jwt_id_token)},
+                timeout=5,
             )
             fallback_response.raise_for_status()
             return fallback_response.json()
