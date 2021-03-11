@@ -17,7 +17,7 @@ from .models import ApiKey
     ),
 )
 def test_verify_token(client, token, expected_error, expected_body):
-    api_key = ApiKey.objects.create(
+    ApiKey.objects.create(
         id=1, key="1953b7a735274809f4ff230048b60a4a", description="Test"
     )
     response = client.get(

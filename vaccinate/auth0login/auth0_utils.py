@@ -16,7 +16,7 @@ def decode_and_verify_jwt(jwt_id_token, try_fallback=False):
             audience=settings.SOCIAL_AUTH_AUTH0_KEY,
             issuer="https://" + DOMAIN + "/",
         )
-    except Exception as e:
+    except Exception:
         if try_fallback:
             fallback_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
