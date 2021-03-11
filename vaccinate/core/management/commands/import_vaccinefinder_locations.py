@@ -1,11 +1,8 @@
-import json
-
-import httpx
 from core.import_utils import (
     import_vaccinefinder_location,
     load_vaccinefinder_locations,
 )
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

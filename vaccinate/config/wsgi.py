@@ -1,4 +1,3 @@
-import io
 import os
 
 from config.env import load_env

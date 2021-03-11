@@ -22,7 +22,6 @@ from core.models import (
 )
 from dateutil import parser
 from django.db import transaction
-from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone

@@ -1,7 +1,4 @@
-import logging
-
 import beeline
-import sentry_sdk
 
 
 class RequestLoggingMiddleware(object):

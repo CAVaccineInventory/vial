@@ -1,5 +1,5 @@
 from core.models import Report
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
