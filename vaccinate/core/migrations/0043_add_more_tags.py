@@ -7,10 +7,6 @@ from django.db import migrations
 
 def add_availability_tags(apps, schema_editor):
     more_tags = [
-        (
-            "education and childcare workers",
-            "education",
-        ),
         ("agriculture and food workers", "agriculture"),
         ("high-risk individuals", "high_risk"),
     ]
@@ -28,7 +24,7 @@ def add_availability_tags(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0041_availability_tag_emergency_services"),
+        ("core", "0042_availability_tag_education_childcare"),
     ]
 
     operations = [
