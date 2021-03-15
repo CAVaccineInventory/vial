@@ -251,6 +251,7 @@ The following fields are all optional strings:
 - `hours`
 - `website`
 - `airtable_id`
+- `import_json` - dictionary
 
 If you are providing a `county` it must be the name of a county that exists within the provided state.
 
@@ -259,6 +260,8 @@ You can also specify a `provider_name` and a `provider_type`, if the location be
 The `provider_type` must be one of the list of types from `/api/providerTypes`.
 
 The `provider_name` will be used to either create a new provider or associate your location with an existing provider with that name.
+
+If you provide the `import_json` dictionary it should be the original, raw JSON data that your importer script is working against. This will be stored in the `import_json` column in the locations table, and can later be used for debugging purposes.
 
 ## GET /api/providerTypes
 

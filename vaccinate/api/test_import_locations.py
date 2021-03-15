@@ -72,10 +72,35 @@ def test_import_location(client, api_key, use_list):
     assert location.latitude == 37.781869
     assert location.longitude == -122.439517
     assert location.location_type.name == "Pharmacy"
-    assert location.import_json == location_input
+    assert location.import_json is None
     # Check that ApiLog record was created
     log = ApiLog.objects.get()
     assert log.api_key.token() == api_key
+
+
+@pytest.mark.django_db
+def test_import_location_with_import_json(client, api_key):
+    location_input = {
+        "name": "Walgreens San Francisco II",
+        "import_json": {"This is import json": True},
+        "location_type": "Pharmacy",
+        "state": "CA",
+        "latitude": 37.781869,
+        "longitude": -122.439517,
+    }
+    assert Location.objects.count() == 0
+    response = client.post(
+        "/api/importLocations",
+        location_input,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response.status_code == 200
+    assert not response.json()["errors"]
+    assert Location.objects.count() == 1
+    location = Location.objects.get()
+    assert location.name == "Walgreens San Francisco II"
+    assert location.import_json == {"This is import json": True}
 
 
 @pytest.mark.django_db

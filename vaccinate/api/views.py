@@ -356,6 +356,7 @@ class LocationValidator(BaseModel):
     location_type: str
     import_ref: Optional[str]
     # All of these are optional:
+    import_json: Optional[dict]
     phone_number: Optional[str]
     full_address: Optional[str]
     city: Optional[str]
@@ -431,7 +432,7 @@ def import_locations(request, on_request_logged):
                 longitude=location_data["longitude"],
                 state=location_data["state"],
                 location_type=location_data["location_type"],
-                import_json=location_json,
+                import_json=location_data.get("import_json") or None,
             )
             if location_data.get("provider_type"):
                 kwargs["provider"] = Provider.objects.update_or_create(
