@@ -88,13 +88,14 @@ INSTALLED_APPS = [
     "django.contrib.admindocs",
     "django_migration_linter",
     "django_sql_dashboard",
-    "debug_toolbar",
     "social_django",
     "corsheaders",
     "auth0login",
     "core",
     "api",
 ]
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
