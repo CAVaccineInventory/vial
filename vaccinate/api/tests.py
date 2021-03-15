@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from core.models import AvailabilityTag
 
 from .models import ApiKey
 
@@ -51,3 +52,14 @@ def test_verify_token_last_seen_at(client):
     )
     last_seen_at2 = response2.json()["last_seen_at"]
     assert last_seen_at == last_seen_at2
+
+
+@pytest.mark.django_db
+def test_availability_tags(client):
+    response = client.get("/api/availabilityTags")
+    availability_tags = response.json()["availability_tags"]
+    assert availability_tags == list(
+        AvailabilityTag.objects.filter(disabled=False).values(
+            "slug", "name", "group", "notes", "previous_names"
+        )
+    )

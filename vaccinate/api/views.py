@@ -9,6 +9,7 @@ from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
+    AvailabilityTag,
     CallRequest,
     CallRequestReason,
     County,
@@ -487,6 +488,18 @@ def location_types(request):
 def provider_types(request):
     return JsonResponse(
         {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
+    )
+
+
+def availability_tags(request):
+    return JsonResponse(
+        {
+            "availability_tags": list(
+                AvailabilityTag.objects.filter(disabled=False).values(
+                    "slug", "name", "group", "notes", "previous_names"
+                )
+            )
+        }
     )
 
 

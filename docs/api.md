@@ -36,35 +36,13 @@ Here is an example submission:
 ```
 ### Availability tags
 
-For backwards compatibility with the existing application, there is some degree of flexibility in accepting availability tags. Our database at https://vaccinateca-preview.herokuapp.com/admin/core/availabilitytag/ lists the current tags, but each tag also has "previous names" which can be used instead.
+For backwards compatibility with the existing application, there is some degree of flexibility in accepting availability tags.
 
-Valid tags right now are:
+Ideally you would use the slug for a tag, for example `only_staff` for only vaccinating staff.
 
-- "Only vaccinating staff" - also known as: "No: only vaccinating staff"
-- "Not open to the public" - also known as: "No: not open to the public"
-- "Only vaccinating health care workers" - also known as: "No: only vaccinating health care workers"
-- "No vaccine inventory" - also known as: "No: no vaccine inventory"
-- "Incorrect contact information" - also known as: "No: incorrect contact information"
-- "Location permanently closed" - also known as: "No: location permanently closed"
-- "Will never be a vaccination site" - also known as: "No: will never be a vaccination site"
-- "Walk-ins accepted" - also known as: "Yes: walk-ins accepted"
-- "Appointment required" - also known as: "Yes: appointment required"
-- "Vaccinating 65+" - also known as: "Yes: vaccinating 65+"
-- "Vaccinating 70+" - also known as: "Yes: vaccinating 70+"
-- "Vaccinating 75+" - also known as: "Yes: vaccinating 75+"
-- "Vaccinating 80+" - also known as: "Yes: vaccinating 80+"
-- "Vaccinating 85+" - also known as: "Yes: vaccinating 85+"
-- "Restricted to county residents" - also known as: "Yes: restricted to county residents"
-- "Must be a current patient" - also known as: "Yes: must be a current patient"
-- "Must be a veteran" - also known as: "Yes: must be a veteran"
-- "Appointment calendar currently full" - also known as: "Yes: appointment calendar currently full"
-- "Coming soon" - also known as: "Yes: coming soon"
-- "Call back later" - also known as: "Skip: call back later"
-- "May be a vaccination site in the future" - also known as: "No: may be a vaccination site in the future"
-- "Vaccinating essential workers" - also known as: "Yes: Vaccinating essential workers"
-- "Restricted to city residents" - also known as: "Yes: restricted to city residents"
-- "Scheduling second dose only" - also known as: "Yes: Scheduling second dose only"
-- "Vaccinating 50+" - also known as: "Yes: vaccinating 50+"
+You can alternatively use the tag's full name, or one of the names contained in the "previous names" array.
+
+A list of valid tags with their slugs, names and previous_names can be found at https://vaccinateca-preview.herokuapp.com/api/availabilityTags
 
 ### Skip requests
 
@@ -310,6 +288,46 @@ Example output:
         "Shelter",
         "Unknown"
     ]
+}
+```
+
+## GET /api/availabilityTags
+
+Unauthenticated. Returns a `"availability_tags"` key containing a JSON array of availability tags.
+
+Example output:
+
+```json
+{
+  "availability_tags": [
+    {
+      "slug": "only_staff",
+      "name": "Only vaccinating staff",
+      "group": "no",
+      "notes": "This location is currently only vaccinating their own staff",
+      "previous_names": [
+        "No: only vaccinating staff"
+      ]
+    },
+    {
+      "slug": "not_open_to_the_public",
+      "name": "Not open to the public",
+      "group": "no",
+      "notes": "This location is currently not open to the public",
+      "previous_names": [
+        "No: not open to the public"
+      ]
+    },
+    {
+      "slug": "only_health_care_workers",
+      "name": "Only vaccinating health care workers",
+      "group": "no",
+      "notes": "This location is currently only vaccinating healthcare workers",
+      "previous_names": [
+        "No: only vaccinating health care workers"
+      ]
+    }
+  ]
 }
 ```
 
