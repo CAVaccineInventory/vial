@@ -37,3 +37,15 @@ Here's the comand-line recipe to import every Rhode Island location to our Herok
         --url 'https://vaccinateca-preview.herokuapp.com/api/importLocations' \
         --token '1:e6c5e05637fdb6718d0c40efb3dfc98f' \
         --derive-counties
+
+## importers.oregon_tableau_annotated
+
+For this file: https://github.com/vaccine-feeds/raw-feed-data/blob/main/tableau/oregon.health.authority.covid.19/admin_site_and_county_map_site_no_info_with_places_data.json
+
+Run like so:
+
+    python -i -m importers.oregon_tableau_annotated \
+        admin_site_and_county_map_site_no_info_with_places_data.json \
+        --token 'xxx' --url 'http://0.0.0.0:3000/api/importLocations'
+
+Leave off the `--url` argument to defalt to sending to Heroku.

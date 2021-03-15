@@ -185,6 +185,7 @@ def submit_report(request, on_request_logged):
                         report.availability_tags.values_list("name", flat=True)
                     ),
                 },
+                timeout=5,
             )
 
     on_request_logged(log_created_report)

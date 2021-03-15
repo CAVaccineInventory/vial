@@ -14,6 +14,7 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 PRODUCTION = os.environ.get("PRODUCTION")
 DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
 INTERNAL_IPS = ["127.0.0.1"]
+RUNNING_IN_PYTEST = bool(os.environ.get("RUNNING_IN_PYTEST"))
 
 ALLOWED_HOSTS = ["*"]
 
@@ -87,13 +88,15 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
     "django_migration_linter",
-    "debug_toolbar",
+    "django_sql_dashboard",
     "social_django",
     "corsheaders",
     "auth0login",
     "core",
     "api",
 ]
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -148,6 +151,14 @@ DATABASES = {
         "NAME": "vaccinate",
     }
 }
+if not RUNNING_IN_PYTEST:
+    DATABASES["dashboard"] = {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "vaccinate",
+        "OPTIONS": {
+            "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
+        },
+    }
 
 if "DATABASE_URL" in os.environ:
     # Parse database configuration from $DATABASE_URL
@@ -157,6 +168,13 @@ if "DATABASE_URL" in os.environ:
     DATABASES["default"]["HOST"] = (
         DATABASES["default"]["HOST"].replace("%3a", ":").replace("%3A", ":")
     )
+
+    # 'dashboard' is a read-only connection
+    if not RUNNING_IN_PYTEST:
+        DATABASES["dashboard"] = dj_database_url.config()
+        DATABASES["dashboard"]["OPTIONS"] = {
+            "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
+        }
 
 
 # Static files
