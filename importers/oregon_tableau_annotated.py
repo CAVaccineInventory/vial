@@ -65,13 +65,15 @@ def convert_location(location):
     import_ref = "oregon-tableau:{}".format(location["Location ID-value"])
     place_data = location.get("google_places_data")
     if not place_data:
+        print("Skipped because no Google places data:")
+        print(json.dumps(location))
         return None
     hours = None
     weekday_text = place_data.get("opening_hours", {}).get("weekday_text")
     if weekday_text:
         hours = "\n".join(weekday_text)
     return {
-        "name": location["Organization-alias"],
+        "name": place_data["name"],
         "full_address": place_data["formatted_address"],
         "street_address": location["Administration  Address-alias"],
         "city": location["City-alias"],
