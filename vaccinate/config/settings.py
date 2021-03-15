@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
     "django_migration_linter",
+    "django_sql_dashboard",
     "social_django",
     "corsheaders",
     "auth0login",
@@ -147,7 +148,14 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "vaccinate",
-    }
+    },
+    "dashboard": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "vaccinate",
+        "OPTIONS": {
+            "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
+        },
+    },
 }
 
 if "DATABASE_URL" in os.environ:
@@ -158,6 +166,12 @@ if "DATABASE_URL" in os.environ:
     DATABASES["default"]["HOST"] = (
         DATABASES["default"]["HOST"].replace("%3a", ":").replace("%3A", ":")
     )
+
+    # 'dashboard' is a read-only connection
+    DATABASES["dashboard"] = dj_database_url.config()
+    DATABASES["dashboard"]["OPTIONS"] = {
+        "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
+    }
 
 
 # Static files
