@@ -35,7 +35,7 @@ def decode_and_verify_jwt(jwt_id_token, try_fallback=False):
                     headers={"Authorization": "Bearer {}".format(jwt_id_token)},
                     timeout=5,
                 )
-                beeline.add_context({"status", fallback_response.status_code})
+                beeline.add_context({"status": fallback_response.status_code})
                 fallback_response.raise_for_status()
                 return fallback_response.json()
         else:
