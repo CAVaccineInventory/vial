@@ -167,6 +167,9 @@ if "DASHBOARD_DATABASE_URL" in os.environ:
     DATABASES["dashboard"]["OPTIONS"] = {
         "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
     }
+    DATABASES["dashboard"]["HOST"] = (
+        DATABASES["dashboard"]["HOST"].replace("%3a", ":").replace("%3A", ":")
+    )
 
 
 # Static files
