@@ -74,6 +74,11 @@ You'll also neet to run this command once or your static assets will 404:
 
     ./manage.py collectstatic
 
+To get the `/dashboard/` interface working in your local development environment you can run this:
+
+    DASHBOARD_DATABASE_URL=postgres://localhost/vaccinate \
+        ./manage.py runserver 0.0.0.0:3000
+
 ## Configuration
 
 Running this requires some secrets in environment variables:
