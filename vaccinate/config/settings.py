@@ -169,9 +169,13 @@ if "DATABASE_URL" in os.environ:
         DATABASES["default"]["HOST"].replace("%3a", ":").replace("%3A", ":")
     )
 
-    # 'dashboard' is a read-only connection
     if not RUNNING_IN_PYTEST:
-        DATABASES["dashboard"] = dj_database_url.config()
+        # 'dashboard' should be a read-only connection
+        if "DASHBOARD_DATABASE_URL" in os.environ:
+            dashboard_database_url = os.environ["DASHBOARD_DATABASE_URL"]
+        else:
+            dashboard_database_url = os.environ["DATABASE_URL"]
+        DATABASES["dashboard"] = dj_database_url.parse(dashboard_database_url)
         DATABASES["dashboard"]["OPTIONS"] = {
             "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
         }
