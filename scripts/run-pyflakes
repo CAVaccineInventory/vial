@@ -1,0 +1,2 @@
+#!/bin/bash
+git ls-files | grep '\.py$' | grep -v config/pythonrc.py | xargs pyflakes

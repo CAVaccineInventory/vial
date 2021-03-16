@@ -52,6 +52,9 @@ ipython
 # Django automatic model documentation
 docutils
 
+# SQL dashboard at /dashboard/
+django-sql-dashboard==0.3a1
+
 ### Development
 
 # Debug toolbar (dev only, not production)
@@ -68,6 +71,7 @@ pytest-httpx
 # Formatting
 black
 isort
+pyflakes
 
 # Dependency management
 pip-tools

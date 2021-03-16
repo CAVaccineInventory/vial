@@ -1,7 +1,7 @@
 {
     "input": {
         "Location": "rec5RXyYpi7IHQ2eN",
-        "Availability":["Skip: call back later"],
+        "Availability":["skip_call_back_later"],
         "Notes": "Feb 21: This location does not currently have vaccine available but may get stock in the coming weeks.",
         "Internal Notes": "Feb 21: The pharmacy tech transferred me to the \"dispensing pharmacy\" as the best place to get questions answered.",
         "Do not call until": "2021-03-07T18:35:03.742Z"

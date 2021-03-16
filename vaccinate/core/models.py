@@ -519,17 +519,19 @@ class CallRequest(models.Model):
         db_table = "call_request"
 
     @classmethod
-    def available_requests(cls):
+    def available_requests(cls, qs=None):
+        if qs is None:
+            qs = cls.objects
         now = timezone.now()
         return (
-            cls.objects.filter(
+            qs.filter(
                 Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
                 | Q(claimed_until__lte=now)
             )
             .filter(location__state__abbreviation="OR")
             .exclude(
                 location__reports__created_at__gte=(
-                    timezone.now() - datetime.timedelta(days=3)
+                    timezone.now() - datetime.timedelta(days=1)
                 )
             )
         )

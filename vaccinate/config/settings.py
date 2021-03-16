@@ -87,13 +87,15 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
     "django_migration_linter",
-    "debug_toolbar",
+    "django_sql_dashboard",
     "social_django",
     "corsheaders",
     "auth0login",
     "core",
     "api",
 ]
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -149,6 +151,7 @@ DATABASES = {
     }
 }
 
+
 if "DATABASE_URL" in os.environ:
     # Parse database configuration from $DATABASE_URL
     DATABASES["default"] = dj_database_url.config()
@@ -156,6 +159,16 @@ if "DATABASE_URL" in os.environ:
     # Work around https://github.com/jacobian/dj-database-url/pull/113
     DATABASES["default"]["HOST"] = (
         DATABASES["default"]["HOST"].replace("%3a", ":").replace("%3A", ":")
+    )
+
+# 'dashboard' should be a read-only connection
+if "DASHBOARD_DATABASE_URL" in os.environ:
+    DATABASES["dashboard"] = dj_database_url.parse(os.environ["DASHBOARD_DATABASE_URL"])
+    DATABASES["dashboard"]["OPTIONS"] = {
+        "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
+    }
+    DATABASES["dashboard"]["HOST"] = (
+        DATABASES["dashboard"]["HOST"].replace("%3a", ":").replace("%3A", ":")
     )
 
 

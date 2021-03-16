@@ -5,7 +5,6 @@ from core.models import (
     County,
     Location,
     LocationType,
-    Report,
     State,
 )
 from django.utils import timezone

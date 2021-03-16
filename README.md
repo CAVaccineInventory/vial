@@ -74,6 +74,11 @@ You'll also neet to run this command once or your static assets will 404:
 
     ./manage.py collectstatic
 
+To get the `/dashboard/` interface working in your local development environment you can run this:
+
+    DASHBOARD_DATABASE_URL=postgres://localhost/vaccinate \
+        ./manage.py runserver 0.0.0.0:3000
+
 ## Configuration
 
 Running this requires some secrets in environment variables:
@@ -104,3 +109,5 @@ To run the tests, change directory to the `vaccinate` folder and run `pytest`.
 This repository uses [Black](https://github.com/psf/black) and [isort](https://pycqa.github.io/isort/) to enforce coding style as part of the CI tests.
 
 Run `black .` and `isort .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
+
+Run `scripts/run-pyflakes` in the top-level directory to check for missing or unused imports.

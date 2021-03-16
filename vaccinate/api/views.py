@@ -9,6 +9,7 @@ from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
+    AvailabilityTag,
     CallRequest,
     CallRequestReason,
     County,
@@ -22,7 +23,6 @@ from core.models import (
 )
 from dateutil import parser
 from django.db import transaction
-from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -186,6 +186,7 @@ def submit_report(request, on_request_logged):
                         report.availability_tags.values_list("name", flat=True)
                     ),
                 },
+                timeout=5,
             )
 
     on_request_logged(log_created_report)
@@ -355,6 +356,7 @@ class LocationValidator(BaseModel):
     location_type: str
     import_ref: Optional[str]
     # All of these are optional:
+    import_json: Optional[dict]
     phone_number: Optional[str]
     full_address: Optional[str]
     city: Optional[str]
@@ -430,7 +432,7 @@ def import_locations(request, on_request_logged):
                 longitude=location_data["longitude"],
                 state=location_data["state"],
                 location_type=location_data["location_type"],
-                import_json=location_json,
+                import_json=location_data.get("import_json") or None,
             )
             if location_data.get("provider_type"):
                 kwargs["provider"] = Provider.objects.update_or_create(
@@ -485,6 +487,18 @@ def location_types(request):
 def provider_types(request):
     return JsonResponse(
         {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
+    )
+
+
+def availability_tags(request):
+    return JsonResponse(
+        {
+            "availability_tags": list(
+                AvailabilityTag.objects.filter(disabled=False).values(
+                    "slug", "name", "group", "notes", "previous_names"
+                )
+            )
+        }
     )
 
 

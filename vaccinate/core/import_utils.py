@@ -169,14 +169,15 @@ def resolve_availability_tags(tags, availability_tags=None):
     if not availability_tags:
         availability_tags = AvailabilityTag.objects.all()
     for availability_tag in availability_tags:
+        fix_availability_tags[availability_tag.name] = availability_tag.slug
         for previous_name in availability_tag.previous_names:
-            fix_availability_tags[previous_name] = availability_tag.name
+            fix_availability_tags[previous_name] = availability_tag.slug
 
     tag_models = []
     for tag_name in tags:
         tag_name = fix_availability_tags.get(tag_name, tag_name)
         try:
-            tag_models.append(AvailabilityTag.objects.get(name=tag_name))
+            tag_models.append(AvailabilityTag.objects.get(slug=tag_name))
         except AvailabilityTag.DoesNotExist:
             assert False, "Invalid tag: {}".format(tag_name)
     return tag_models

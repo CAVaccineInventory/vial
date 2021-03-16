@@ -288,6 +288,20 @@ def clear_claims(modeladmin, request, queryset):
     )
 
 
+class CallRequestAvailableFilter(admin.SimpleListFilter):
+    title = "Available in queue"
+    parameter_name = "available"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "In queue"), ("all", "Show all"))
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return CallRequest.available_requests(queryset)
+        else:
+            return queryset
+
+
 @admin.register(CallRequest)
 class CallRequestAdmin(admin.ModelAdmin):
     list_display = (
@@ -298,7 +312,10 @@ class CallRequestAdmin(admin.ModelAdmin):
         "call_request_reason",
     )
     actions = [clear_claims]
-    list_filter = ("call_request_reason",)
+    list_filter = (
+        CallRequestAvailableFilter,
+        "call_request_reason",
+    )
     raw_id_fields = ("location", "claimed_by", "tip_report")
 
     def lookup_allowed(self, lookup, value):
