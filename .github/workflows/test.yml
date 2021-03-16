@@ -42,8 +42,7 @@ jobs:
         isort --check .
     - name: Run pyflakes
       run: |
-        cd vaccinate
-        git ls-files | grep '\.py$' | grep -v config/pythonrc.py | xargs pyflakes
+        scripts/run-pyflakes
     - name: Run Django tests
       env:
         DJANGO_SECRET_KEY: secret for running tests

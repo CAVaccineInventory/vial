@@ -1,11 +1,8 @@
 import json
-import pathlib
 
 import click
 import httpx
 from click.exceptions import ClickException
-
-from .import_utils import derive_county
 
 
 @click.command()
