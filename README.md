@@ -8,7 +8,6 @@ Project background: [Spinning up a new Django app to act as a backend for Vaccin
 
 - https://vial.calltheshots.us/ is production - manually deployed using `scripts/deploy.sh`
 - https://vial-staging.calltheshots.us/ is our Google Cloud Run staging server - code is automatically deployed there on every commit
-- https://vaccinateca-preview.herokuapp.com/ is our Heroku staging server, soon to be retired - also uses continous deployment
 
 ## Architectural principles for this app
 
