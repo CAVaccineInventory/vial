@@ -45,7 +45,7 @@ fi
 echo
 echo "You are about to deploy the following commits:"
 echo '```'
-git --no-pager log --no-decorate --oneline "$DEPLOY_FROM" "^$ORIGIN_DEPLOY"
+git --no-pager log --no-decorate --oneline --reverse "$DEPLOY_FROM" "^$ORIGIN_DEPLOY"
 echo '```'
 
 echo

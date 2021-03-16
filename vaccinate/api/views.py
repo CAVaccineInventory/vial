@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
+import beeline
 import pytz
 import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
@@ -51,6 +52,7 @@ class ReportValidator(BaseModel):
             raise ValueError("Location '{}' does not exist".format(v))
 
 
+@beeline.traced("reporter_from_request")
 def reporter_from_request(request, allow_test=False):
     if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
         reporter = Reporter.objects.get_or_create(
@@ -93,6 +95,7 @@ def reporter_from_request(request, allow_test=False):
 
 @csrf_exempt
 @log_api_requests
+@beeline.traced(name="submit_report")
 def submit_report(request, on_request_logged):
     # The ?test=1 version accepts &fake_user=external_id
     reporter, user_info = reporter_from_request(request, allow_test=True)
@@ -168,26 +171,27 @@ def submit_report(request, on_request_logged):
 
         # Send it to Zapier too
         if os.environ.get("ZAPIER_REPORT_URL"):
-            requests.post(
-                os.environ["ZAPIER_REPORT_URL"],
-                json={
-                    "report_url": request.build_absolute_uri(
-                        "/admin/core/report/{}/change/".format(report.pk)
-                    ),
-                    "report_public_notes": report.public_notes,
-                    "report_internal_notes": report.internal_notes,
-                    "location_name": report.location.name,
-                    "location_full_address": report.location.full_address,
-                    "location_state": report.location.state.abbreviation,
-                    "reporter_name": report.reported_by.name,
-                    "reporter_id": report.reported_by.external_id,
-                    "reporter_role": report.reported_by.auth0_role_name,
-                    "availability_tags": list(
-                        report.availability_tags.values_list("name", flat=True)
-                    ),
-                },
-                timeout=5,
-            )
+            with beeline.tracer(name="zapier"):
+                requests.post(
+                    os.environ["ZAPIER_REPORT_URL"],
+                    json={
+                        "report_url": request.build_absolute_uri(
+                            "/admin/core/report/{}/change/".format(report.pk)
+                        ),
+                        "report_public_notes": report.public_notes,
+                        "report_internal_notes": report.internal_notes,
+                        "location_name": report.location.name,
+                        "location_full_address": report.location.full_address,
+                        "location_state": report.location.state.abbreviation,
+                        "reporter_name": report.reported_by.name,
+                        "reporter_id": report.reported_by.external_id,
+                        "reporter_role": report.reported_by.auth0_role_name,
+                        "availability_tags": list(
+                            report.availability_tags.values_list("name", flat=True)
+                        ),
+                    },
+                    timeout=5,
+                )
 
     on_request_logged(log_created_report)
 
@@ -222,6 +226,7 @@ def request_call_debug(request):
 
 @csrf_exempt
 @log_api_requests
+@beeline.traced(name="request_call")
 def request_call(request, on_request_logged):
     if request.method != "POST":
         return JsonResponse(

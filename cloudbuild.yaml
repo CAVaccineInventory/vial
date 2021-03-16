@@ -147,6 +147,18 @@ steps:
         path: /timestamp
     secretEnv: ["_SENTRY_TOKEN"]
 
+  # Tell honeycomb about the deploy
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: "bash"
+    args:
+      [
+        "./scripts/cd/honeytag.sh",
+        "vial-$_DEPLOY",
+        "Deploy $SHORT_SHA",
+        "https://github.com/CAVaccineInventory/vial/commits/$COMMIT_SHA",
+      ]
+    id: "Add Honeycomb deploy marker"
+
 options:
   dynamic_substitutions: true
 

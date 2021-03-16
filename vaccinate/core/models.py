@@ -242,7 +242,7 @@ class Reporter(models.Model):
     - Airtable users: these are users who are authenticated through Airtable rather than Auth0.
     """
 
-    external_id = models.SlugField(unique=True)
+    external_id = models.SlugField(unique=True, max_length=400)
     name = CharTextField(null=True, blank=True)
     email = CharTextField(null=True, blank=True)
     auth0_role_name = CharTextField(null=True, blank=True)
