@@ -505,6 +505,10 @@ pydantic==1.8.1 \
     --hash=sha256:fbfb608febde1afd4743c6822c19060a8dbdd3eb30f98e36061ba4973308059e \
     --hash=sha256:fff29fe54ec419338c522b908154a2efabeee4f483e48990f87e189661f31ce3
     # via -r requirements.in
+pyflakes==2.2.0 \
+    --hash=sha256:0d94e0e05a19e57a99444b6ddcf9a6eb2e5c68d3ca1e98e90707af8152c90a92 \
+    --hash=sha256:35b2d75ee967ea93b55750aa9edbbf72813e06a66ba54438df2cfac9e3c27fc8
+    # via -r requirements.in
 pygments==2.8.0 \
     --hash=sha256:37a13ba168a02ac54cc5891a42b1caec333e59b66addb7fa633ea8a6d73445c0 \
     --hash=sha256:b21b072d0ccdf29297a82a2363359d99623597b8a265b8081760e4d0f7153c88

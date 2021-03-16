@@ -5,6 +5,8 @@ from core.models import AvailabilityTag
 
 from .models import ApiKey
 
+GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -14,13 +16,11 @@ from .models import ApiKey
         ("1", "Bearer token must contain one ':'", None),
         ("2:123", "API key does not exist", None),
         ("1:123", "Invalid API key", None),
-        ("1:1953b7a735274809f4ff230048b60a4a", None, {}),
+        (f"1:{GOODTOKEN}", None, {}),
     ),
 )
 def test_verify_token(client, token, expected_error, expected_body):
-    api_key = ApiKey.objects.create(
-        id=1, key="1953b7a735274809f4ff230048b60a4a", description="Test"
-    )
+    ApiKey.objects.create(id=1, key=GOODTOKEN, description="Test")
     response = client.get(
         "/api/verifyToken", HTTP_AUTHORIZATION="Bearer {}".format(token)
     )
