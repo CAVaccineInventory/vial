@@ -87,6 +87,7 @@ def convert_location(location):
         "longitude": place_data["geometry"]["location"]["lng"],
         "hours": hours,
         "import_ref": import_ref,
+        "import_json": location,
     }
 
 
