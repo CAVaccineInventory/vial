@@ -53,7 +53,7 @@ ipython
 docutils
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.3a0
+django-sql-dashboard==0.3a1
 
 ### Development
 

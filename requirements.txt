@@ -188,9 +188,9 @@ django-migration-linter==2.5.1 \
     --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
     --hash=sha256:e4209e74393ddb86f31e8b7a13555fcecd1def506a04e1fe16b470248661dec7
     # via -r requirements.in
-django-sql-dashboard==0.3a0 \
-    --hash=sha256:6ab4acdeb4a4f52f4e5c3055c243ca0b6e729bb5c91c6900e72edfafd2adcead \
-    --hash=sha256:92066fdf139c3e7420e6b96b4bf8463191949788ee4feae200800d7df0195ecf
+django-sql-dashboard==0.3a1 \
+    --hash=sha256:c62b582e46dd931431ad1dfe5c7656101ac7aef5e231933001aed55c83c08417 \
+    --hash=sha256:dbbb3b88d1e1e1efecf25aebae7edd7dd0238c503a34a9ed4015506e1a7b3471
     # via -r requirements.in
 django==3.1.7 \
     --hash=sha256:32ce792ee9b6a0cbbec340123e229ac9f765dff8c2a4ae9247a14b2ba3a365a7 \
