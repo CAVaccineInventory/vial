@@ -1,3 +1,4 @@
+from django.conf import settings
 from social_core.backends.oauth import BaseOAuth2
 
 from .auth0_utils import decode_and_verify_jwt
@@ -24,7 +25,7 @@ class Auth0(BaseOAuth2):
 
     def get_user_details(self, response):
         id_token = response.get("id_token")
-        payload = decode_and_verify_jwt(id_token)
+        payload = decode_and_verify_jwt(id_token, settings.VIAL_JWT_AUDIENCE)
         # Example payload:
         # {
         #     "https://help.vaccinateca.com/roles": [

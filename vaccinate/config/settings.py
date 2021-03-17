@@ -39,6 +39,16 @@ SOCIAL_AUTH_AUTH0_KEY = os.environ.get(
 SOCIAL_AUTH_AUTH0_SECRET = os.environ["SOCIAL_AUTH_AUTH0_SECRET"]
 SOCIAL_AUTH_AUTH0_SCOPE = ["openid", "profile", "email"]
 
+# These are used when decoding JWT tokens, see
+# https://github.com/CAVaccineInventory/vial/issues/131
+# First is for SSO to the VIAL Django admin and relate tools:
+# https://manage.auth0.com/dashboard/us/vaccinateca/applications/VGYR75OQiRSm9zK9TGtkrQ8t5FvHrfZR/settings
+VIAL_JWT_AUDIENCE = SOCIAL_AUTH_AUTH0_KEY
+# Second is for the JWT tokens used by the help.vaccinate SPA and passed
+# to VIAL in fetch() API calls from that application
+# https://manage.auth0.com/dashboard/us/vaccinateca/applications/ZnpcUDelsgbXXXMTayxzdPWTX8wikGi5/settings
+HELP_JWT_AUDIENCE = "https://help.vaccinateca.com"
+
 SOCIAL_AUTH_PIPELINE = (
     # Get the information we can about the user and return it in a simple
     # format to create the user instance later. On some cases the details are
