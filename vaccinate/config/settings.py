@@ -63,7 +63,10 @@ SOCIAL_AUTH_PIPELINE = (
     # defined).
     "social_core.pipeline.social_auth.auth_allowed",
     # Checks if the current social-account is already associated in the site.
-    "social_core.pipeline.social_auth.social_user",
+    # CUSTOM: Logs user out if already associated, see
+    # https://github.com/CAVaccineInventory/vial/issues/136
+    "auth0login.pipeline.social_user_or_logout",
+    # Original was: "social_core.pipeline.social_auth.social_user",
     # Make up a username for this person, appends a random string at the end if
     # there's any collision.
     "social_core.pipeline.user.get_username",
