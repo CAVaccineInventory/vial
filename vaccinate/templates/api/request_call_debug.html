@@ -103,22 +103,26 @@
           },
           body: '{}'
         });
-        const data = await response.json();
         apiResponse.style.display = "block";
-        if (data.admin_url) {
-          adminUrl.innerHTML = `<a href="${
-            data.admin_url
-          }">View report "${htmlEscape(data.report)}" in admin</a>`;
-        } else {
-          adminUrl.innerHTML = "";
-        }
         responseStatus.innerText = response.status;
         responseHeaders.innerText = JSON.stringify(
           Array.from(response.headers.entries()),
           null,
           4
         );
-        responseBody.innerText = JSON.stringify(data, null, 4);
+        try {
+          const data = await response.clone().json();
+          responseBody.innerText = JSON.stringify(data, null, 4);
+          if (data.admin_url) {
+            adminUrl.innerHTML = `<a href="${
+              data.admin_url
+            }">View report "${htmlEscape(data.report)}" in admin</a>`;
+          } else {
+            adminUrl.innerHTML = "";
+          }
+        } catch {
+          responseBody.innerText = await response.text();
+        }
       });
       const htmlEscape = (s) =>
         s
