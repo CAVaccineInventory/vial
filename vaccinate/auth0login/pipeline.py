@@ -1,5 +1,5 @@
-from django.contrib.auth.models import Group
 from django.contrib.auth import logout
+from django.contrib.auth.models import Group
 
 
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
