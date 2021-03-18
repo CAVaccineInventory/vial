@@ -90,9 +90,15 @@ def reporter_from_request(request, allow_test=False):
                 None,
             )
     external_id = "auth0:{}".format(jwt_payload["sub"])
-    reporter_exists = Reporter.objects.filter(external_id=external_id).exists()
+    try:
+        reporter = Reporter.objects.get(external_id=external_id)
+        if reporter.name and reporter.email:
+            return reporter, jwt_payload
+    except Reporter.DoesNotExist:
+        pass
+
     # If name is missing we need to fetch userdetails
-    if "name" not in jwt_payload or "email" not in jwt_payload and not reporter_exists:
+    if "name" not in jwt_payload or "email" not in jwt_payload:
         with beeline.tracer(name="get user_info"):
             user_info_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
