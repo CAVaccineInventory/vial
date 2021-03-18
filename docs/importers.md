@@ -28,13 +28,13 @@ This will output a preview of the data, transformed into our API format.
 
 You can add `--derive-counties` to make an API call for each location to derive the county for it based on its latitude and longitude.
 
-To run the actual import, add the `--token` argument with as API Key (created at https://vaccinateca-preview.herokuapp.com/admin/api/apikey/) and use the `--url` argument to specify the API endpoint to send the data to (it defaults to `http://localhost:3000/api/importLocations` for testing).
+To run the actual import, add the `--token` argument with as API Key (created at https://vial.calltheshots.us/admin/api/apikey/) and use the `--url` argument to specify the API endpoint to send the data to (it defaults to `http://localhost:3000/api/importLocations` for testing).
 
-Here's the comand-line recipe to import every Rhode Island location to our Heroku staging server:
+Here's the comand-line recipe to import every Rhode Island location to our staging server:
 
     python -m importers.vaccinefinder \
         ../raw-feed-data/vaccine-finder/RI/locations \
-        --url 'https://vaccinateca-preview.herokuapp.com/api/importLocations' \
+        --url 'https://vial-staging.calltheshots.us/api/importLocations' \
         --token '1:e6c5e05637fdb6718d0c40efb3dfc98f' \
         --derive-counties
 
@@ -48,4 +48,4 @@ Run like so:
         admin_site_and_county_map_site_no_info_with_places_data.json \
         --token 'xxx' --url 'http://0.0.0.0:3000/api/importLocations'
 
-Leave off the `--url` argument to defalt to sending to Heroku.
+Leave off the `--url` argument to defalt to sending production.

@@ -72,7 +72,7 @@ def test_import_location_with_counties(httpx_mock):
     )
     httpx_mock.add_response(
         method="POST",
-        url="https://vaccinateca-preview.herokuapp.com/api/importLocations",
+        url="https://vial.calltheshots.us/api/importLocations",
         json={"ok": True},
     )
     with runner.isolated_filesystem():

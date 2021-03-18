@@ -11,8 +11,7 @@ django
 # Server
 gunicorn
 
-# Serve static files from wsgi; used in development and heroku, not in
-# production
+# Serve static files from wsgi; used in development, not production
 whitenoise
 
 # PostgreSQL backend
