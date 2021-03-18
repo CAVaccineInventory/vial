@@ -97,6 +97,7 @@ def reporter_from_request(request, allow_test=False):
             user_info_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
                 headers={"Authorization": "Bearer {}".format(jwt_id_token)},
+                timeout=5,
             )
             beeline.add_context({"status": user_info_response.status_code})
             user_info_response.raise_for_status()
