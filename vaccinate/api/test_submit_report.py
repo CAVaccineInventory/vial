@@ -116,7 +116,7 @@ def test_submit_report_api_example(
         "location_name": "A location",
         "location_full_address": None,
         "location_state": "OR",
-        "reporter_name": "swillison+auth0-test-user@gmail.com",
+        "reporter_name": "swillison test",
         "reporter_id": "auth0:auth0|6036cd942c0b2a007093cbf0",
         "reporter_role": "",
         "availability_tags": list(

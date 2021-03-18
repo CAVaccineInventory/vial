@@ -34,9 +34,12 @@ MOCK_JWKS = {
 
 
 @pytest.fixture
-def jwt_id_token(time_machine, mock_well_known_jwts):
-    time_machine.move_to(datetime.datetime(2021, 2, 24, 10, 0, 0))
-    return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZydGlQYXhnX2UyV29NMXhUb1IwRyJ9.eyJodHRwczovL2hlbHAudmFjY2luYXRlY2EuY29tL3JvbGVzIjpbXSwibmlja25hbWUiOiJzd2lsbGlzb24rYXV0aDAtdGVzdC11c2VyIiwibmFtZSI6InN3aWxsaXNvbithdXRoMC10ZXN0LXVzZXJAZ21haWwuY29tIiwicGljdHVyZSI6Imh0dHBzOi8vcy5ncmF2YXRhci5jb20vYXZhdGFyL2RiZTBkYmE5MzVjNzgxOWVmOTMyMTZhODc5ODhjZGY5P3M9NDgwJnI9cGcmZD1odHRwcyUzQSUyRiUyRmNkbi5hdXRoMC5jb20lMkZhdmF0YXJzJTJGc3cucG5nIiwidXBkYXRlZF9hdCI6IjIwMjEtMDItMjRUMjI6MDU6MDguODM4WiIsImVtYWlsIjoic3dpbGxpc29uK2F1dGgwLXRlc3QtdXNlckBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImlzcyI6Imh0dHBzOi8vdmFjY2luYXRlY2EudXMuYXV0aDAuY29tLyIsInN1YiI6ImF1dGgwfDYwMzZjZDk0MmMwYjJhMDA3MDkzY2JmMCIsImF1ZCI6IjdKTU00YmIxZUM3dGFHTjFPbGFMQklYSk4xdzQydmFjIiwiaWF0IjoxNjE0MjA0MzA5LCJleHAiOjE2MTQyNDAzMDl9.d-KbGqjMRmMg8jjZsqBVQxmJ9X_yhNkSqgwE09y6dhwMzd4QJBlTqPE4tM22zddkyaxTFF50y_-kdNdEvRQppGeg1NLEz-UqzPSKuAiSB4m2l-OIK465lFBpzKbFL01lnPpm0xMypi27tSQEXQFaPRXzS3hbew9dmfmcrq29lQIoUTLwLWexlmkzJZSJOD3C2O3d9XwXcum5FtAv8OAMKYyis7gJQQnmYq0MYnHqCTTxppYK4UFJPlfFrWoNPc75FrKcjx2zDmux_Ln-EOm8RSSy-4Uul_bh3_zVcdzeT-D9nHaXkRcBHLAClN2HQhgxCGpU4zrEgjxb4KkTxm7dfw"
+def jwt_id_token(time_machine, mock_well_known_jwts, mock_auth0_userinfo):
+    time_machine.move_to(datetime.datetime(2021, 3, 17, 10, 0, 0))
+    # This token created for auth0 user swillison+auth0-test-user@gmail.com
+    # by signing into https://help.calltheshots.us/call/ and sniffing
+    # network traffic on 17th March 2021
+    return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZydGlQYXhnX2UyV29NMXhUb1IwRyJ9.eyJodHRwczovL2hlbHAudmFjY2luYXRlY2EuY29tL3JvbGVzIjpbXSwiaXNzIjoiaHR0cHM6Ly92YWNjaW5hdGVjYS51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjAzNmNkOTQyYzBiMmEwMDcwOTNjYmYwIiwiYXVkIjpbImh0dHBzOi8vaGVscC52YWNjaW5hdGVjYS5jb20iLCJodHRwczovL3ZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2MTYwMTgzMjIsImV4cCI6MTYxNjEwNDcyMiwiYXpwIjoiWm5wY1VEZWxzZ2JYWFhNVGF5eHpkUFdUWDh3aWtHaTUiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOltdfQ.JAcWaIjhKmVWaivlF3IIhm6S1_vQz3Imgod6zoahqS2v5wIhjSuFFB1GaKlOWNlOVvE7Q5oVSwLl3JeBxIQObKln5pWvN-O5dBKtfF8K71k6MUKj4IHFVfEWZMEn0EC6rnsCWwlzIIJSM1-VedawbStd8C07KPnBGlTaO6DdS40aaWD1rxu664dsF_bfeOMXlSH5ayqcVSt3HcaTDRr27_cOVCA06ovIKq8uerSj6NNhBOd2ui9v_G-8xvyHbNukCKV-s-Knwlm9-WQOLxXznMQR5PdAl0VprpaL886wY-F2Ewrw6BLId4hZNDC6DubSkYlwoodsEDuh5o5cDsv_Lw"
 
 
 @pytest.fixture
@@ -44,4 +47,21 @@ def mock_well_known_jwts(requests_mock):
     requests_mock.get(
         "https://vaccinateca.us.auth0.com/.well-known/jwks.json",
         json=MOCK_JWKS,
+    )
+
+
+@pytest.fixture
+def mock_auth0_userinfo(requests_mock):
+    requests_mock.get(
+        "https://vaccinateca.us.auth0.com/userinfo",
+        json={
+            "sub": "auth0|6036cd942c0b2a007093cbf0",
+            "nickname": "swillison+auth0-test-user",
+            "name": "swillison test",
+            "picture": "https://s.gravatar.com/avatar/dbe0dba935c7819ef93216a87988cdf9?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsw.png",
+            "updated_at": "2021-03-17T21:58:41.450Z",
+            "email": "swillison+auth0-test-user@gmail.com",
+            "email_verified": True,
+            "https://help.vaccinateca.com/roles": [],
+        },
     )

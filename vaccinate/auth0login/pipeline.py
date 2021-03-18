@@ -1,3 +1,4 @@
+from django.contrib.auth import logout
 from django.contrib.auth.models import Group
 
 
@@ -23,3 +24,19 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
             group.user_set.remove(user)
         # Stash the id_token as 'jwt' in the session
         kwargs["request"].session["jwt"] = response["id_token"]
+
+
+def social_user_or_logout(backend, uid, user=None, *args, **kwargs):
+    provider = backend.name
+    social = backend.strategy.storage.user.get_social_auth(provider, uid)
+    if social:
+        if user and social.user != user:
+            logout(backend.strategy.request)
+        elif not user:
+            user = social.user
+    return {
+        "social": social,
+        "user": user,
+        "is_new": user is None,
+        "new_association": False,
+    }
