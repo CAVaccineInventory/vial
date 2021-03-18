@@ -75,12 +75,20 @@ def reporter_from_request(request, allow_test=False):
     try:
         jwt_payload = decode_and_verify_jwt(jwt_id_token, settings.HELP_JWT_AUDIENCE)
     except Exception as e:
-        return (
-            JsonResponse(
-                {"error": "Could not decode JWT", "details": str(e)}, status=403
-            ),
-            None,
-        )
+        try:
+            # We _also_ try to decode as the VIAL audience, since the
+            # /api/requestCall/debug endpoint passes in _our_ JWT, not
+            # help's.
+            jwt_payload = decode_and_verify_jwt(
+                jwt_id_token, settings.VIAL_JWT_AUDIENCE
+            )
+        except Exception:
+            return (
+                JsonResponse(
+                    {"error": "Could not decode JWT", "details": str(e)}, status=403
+                ),
+                None,
+            )
     external_id = "auth0:{}".format(jwt_payload["sub"])
     reporter_exists = Reporter.objects.filter(external_id=external_id).exists()
     # If name is missing we need to fetch userdetails
