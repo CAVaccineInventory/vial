@@ -172,6 +172,10 @@ defusedxml==0.7.0 \
     # via
     #   python3-openid
     #   social-auth-core
+diff-match-patch==20200713 \
+    --hash=sha256:8bf9d9c4e059d917b5c6312bac0c137971a32815ddbda9c682b949f2986b4d34 \
+    --hash=sha256:da6f5a01aa586df23dfc89f3827e1cafbb5420be9d87769eeb079ddfd9477a18
+    # via django-reversion-compare
 dj-database-url==0.5.0 \
     --hash=sha256:4aeaeb1f573c74835b0686a2b46b85990571159ffc21aa57ecd4d1e1cb334163 \
     --hash=sha256:851785365761ebe4994a921b433062309eb882fedd318e1b0fcecc607ed02da9
@@ -188,6 +192,16 @@ django-migration-linter==2.5.1 \
     --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
     --hash=sha256:e4209e74393ddb86f31e8b7a13555fcecd1def506a04e1fe16b470248661dec7
     # via -r requirements.in
+django-reversion-compare==0.14.0 \
+    --hash=sha256:72609a2e6bdc4e0e7116081cd2b3711103dff7897cc2bbe78386639413c90c9b \
+    --hash=sha256:d0981c3a0c8dc8fdd6964432e4397f2fe33d521aee29cb1f232b37e6a71c61bf
+    # via -r requirements.in
+django-reversion==3.0.9 \
+    --hash=sha256:1b57127a136b969f4b843a915c72af271febe7f336469db6c27121f8adcad35c \
+    --hash=sha256:a5af55f086a3f9c38be2f049c251e06005b9ed48ba7a109473736b1fc95a066f
+    # via
+    #   -r requirements.in
+    #   django-reversion-compare
 django-sql-dashboard==0.3a1 \
     --hash=sha256:c62b582e46dd931431ad1dfe5c7656101ac7aef5e231933001aed55c83c08417 \
     --hash=sha256:dbbb3b88d1e1e1efecf25aebae7edd7dd0238c503a34a9ed4015506e1a7b3471
@@ -200,6 +214,7 @@ django==3.1.7 \
     #   django-cors-headers
     #   django-debug-toolbar
     #   django-migration-linter
+    #   django-reversion
     #   django-sql-dashboard
 docutils==0.16 \
     --hash=sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af \

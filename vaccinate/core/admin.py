@@ -3,6 +3,7 @@ from django.db.models import Count, Exists, Max, OuterRef
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
 
 from .models import (
     AppointmentTag,
@@ -41,7 +42,7 @@ class ProviderAdmin(admin.ModelAdmin):
 
 
 @admin.register(County)
-class CountyAdmin(admin.ModelAdmin):
+class CountyAdmin(VersionAdmin):
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)

@@ -54,6 +54,10 @@ docutils
 # SQL dashboard at /dashboard/
 django-sql-dashboard==0.3a1
 
+# Version history in Django admin
+django-reversion
+django-reversion-compare
+
 ### Development
 
 # Debug toolbar (dev only, not production)
