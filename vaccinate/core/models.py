@@ -393,7 +393,7 @@ class Report(models.Model):
         return ", ".join(self.availability_tags.values_list("name", flat=True))
 
     class Meta:
-        db_table = "reports"
+        db_table = "report"
 
     def __str__(self):
         return "Call to {} by {} at {}".format(
