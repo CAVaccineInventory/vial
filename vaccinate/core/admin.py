@@ -95,6 +95,40 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
+class LocationDeletedFilter(admin.SimpleListFilter):
+    title = "soft deleted"
+
+    parameter_name = "soft_deleted"
+
+    def lookups(self, request, model_admin):
+        return (
+            (None, "Not deleted"),
+            ("deleted", "Deleted"),
+            ("all", "All"),
+        )
+
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == lookup,
+                "query_string": cl.get_query_string(
+                    {
+                        self.parameter_name: lookup,
+                    },
+                    [],
+                ),
+                "display": title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset.filter(soft_deleted=False)
+        elif self.value() == "all":
+            return queryset
+        elif self.value() == "deleted":
+            return queryset.filter(soft_deleted=True)
+
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     def get_actions(self, request):
@@ -130,10 +164,10 @@ class LocationAdmin(admin.ModelAdmin):
     )
     list_filter = (
         LocationInQueueFilter,
+        LocationDeletedFilter,
         "location_type",
         "state",
         "provider",
-        "soft_deleted",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("public_id", "airtable_id", "import_json")
