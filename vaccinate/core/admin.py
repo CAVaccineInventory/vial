@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
+from reversion.models import Revision, Version
 
 from .models import (
     AppointmentTag,
@@ -338,3 +339,32 @@ class PublishedReportAdmin(admin.ModelAdmin):
         "reports",
         "eva_reports",
     )
+
+
+class RevisionAdmin(admin.ModelAdmin):
+    list_display = ("id", "date_created", "user", "comment")
+    list_display_links = ("date_created",)
+    list_select_related = ("user",)
+    date_hierarchy = "date_created"
+    ordering = ("-date_created",)
+    list_filter = ("user", "comment")
+    search_fields = ("user", "comment")
+    raw_id_fields = ("user",)
+
+
+admin.site.register(Revision, RevisionAdmin)
+
+
+class VersionAdmin(admin.ModelAdmin):
+    def comment(self, obj):
+        return obj.revision.comment
+
+    list_display = ("object_repr", "comment", "object_id", "content_type", "format")
+    list_display_links = ("object_repr", "object_id")
+    list_filter = ("content_type", "format")
+    list_select_related = ("revision", "content_type")
+    search_fields = ("object_repr", "serialized_data")
+    raw_id_fields = ("revision",)
+
+
+admin.site.register(Version, VersionAdmin)
