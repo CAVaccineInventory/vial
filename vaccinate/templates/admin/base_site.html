@@ -1,5 +1,16 @@
 {% extends "admin/base.html" %}
 
+{% block extrastyle %}
+<style type="text/css">
+/* Hide scary red soft-deleted icon
+   https://github.com/CAVaccineInventory/vial/issues/144
+*/
+td.field-soft_deleted img[src$="icon-no.svg"] {
+    opacity: 0;
+}
+</style>
+{% endblock %}
+
 {% block branding %}
 <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
 {% if is_staging %}
