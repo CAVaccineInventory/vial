@@ -252,7 +252,6 @@ class AppointmentTagAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
-        "test",
         "state",
         "created_at",
         "availability",
@@ -261,12 +260,11 @@ class ReportAdmin(admin.ModelAdmin):
         "reported_by",
         "created_at_utc",
     )
-    list_display_links = ("test", "created_at")
+    list_display_links = ("created_at",)
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "created_at",
         "appointment_tag",
-        "is_test_data",
         "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
@@ -281,13 +279,8 @@ class ReportAdmin(admin.ModelAdmin):
     def state(self, instance):
         return instance.location.state.abbreviation
 
-    def test(self, instance):
-        return instance.is_test_data
-
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("location__state")
-
-    test.boolean = True
 
     def lookup_allowed(self, lookup, value):
         return True

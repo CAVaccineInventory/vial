@@ -61,7 +61,6 @@ def test_import_vaccinefinder_location():
     ).exists()
     assert location.name == "Walgreens Co. #15927"
     assert location.phone_number == "503-653-1526"
-    assert not location.is_test_data
     assert location.full_address == "11995 SE Sunnyside Rd, Clackamas, OR, 97015"
     assert location.street_address == "11995 SE Sunnyside Rd"
     assert location.city == "Clackamas"

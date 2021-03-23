@@ -76,9 +76,9 @@ It currently returns other debugging data (as exposed in the API explorer) but y
 
 A tool for trying out this API is available at https://vial.calltheshots.us/api/submitReport/debug - if you have previously signed into the tool at https://vial.calltheshots.us/ the interface will be pre-populated with a valid JWT token. If that token has expired you can get a new one by signing in and out again.
 
-Anything submitted using that tool will have `is_test_data` set to True in the database.
+This tool will support real, live reports. If you just want to try it out you should use the staging instance instead:
 
-You can view test reports here: https://vial.calltheshots.us/admin/core/report/?is_test_data__exact=1
+https://vial-staging.calltheshots.us/api/submitReport/debug
 
 ## POST /api/requestCall
 

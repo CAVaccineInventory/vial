@@ -152,7 +152,6 @@ def submit_report(request, on_request_logged):
     )
     availability_tags = resolve_availability_tags(report_data["availability"])
     kwargs = dict(
-        is_test_data=bool(request.GET.get("test")),
         location=report_data["location"],
         # Currently hard-coded to caller app:
         report_source="ca",
