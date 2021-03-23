@@ -3,8 +3,8 @@ from django.db.models import Count, Exists, Max, OuterRef
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
 from reversion.models import Revision, Version
+from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
 
 from .models import (
     AppointmentTag,
