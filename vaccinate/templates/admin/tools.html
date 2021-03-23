@@ -1,18 +1,8 @@
 {% extends "admin/base_site.html" %}
-{% block title %}Run admin commands{% endblock %}
+{% block title %}Administrative tools (super-user only){% endblock %}
 {% block content %}
-<h1>Run admin commands (super-user only)</h1>
+<h1>Administrative tools (super-user only)</h1>
 
-<h2>Import counties</h2>
-<p>Import the full list of 3,000+ counties from <a href="https://us-counties.datasette.io/counties/county_fips">us-counties.datasette.io/counties/county_fips</a> - see <a href="https://github.com/CAVaccineInventory/vial/issues/88">issue 88</a></p>
-<p><strong>Warning:</strong> This command can take a long time to run!</p>
-<form action="{{ request.path }}" method="POST">
-{% csrf_token %}
-<p>
-    <input type="hidden" name="command" value="import_counties">
-    <input type="submit" value="Import counties">
-</p>
-</form>
 
 {% if error %}
     <p style="background-color: red; color: white; padding: 0.5em">
@@ -20,7 +10,37 @@
     </p>
 {% endif %}
 
-{% if message %}<p><strong>{{ message }}</strong></p>{% endif %}
+{% if message %}<p style="background-color: lightyellow; padding: 0.5em; border: 1px solid orange;"><strong>{{ message }}</strong></p>{% endif %}
 
+<h2>Import county details from Airtable backup</h2>
+
+<p>Use this tool to import manually collected data about counties from Airtable.</p>
+
+<p>Navigate to <a href="https://github.com/CAVaccineInventory/airtable-data-backup/blob/main/backups/Counties.json">https://github.com/CAVaccineInventory/airtable-data-backup/blob/main/backups/Counties.json</a> and click on the "Raw" link. This should produce a URL that looks something like this:</p>
+
+<p><code>https://raw.githubusercontent.com/CAVaccineInventory/airtable-data-backup/main/backups/Counties.json?token=...token</code></p>
+
+<form action="{{ request.path }}" method="POST">
+    {% csrf_token %}
+    <p><label for="id_airtable_counties_url">Copy and paste that URL with the token here:</p>
+    <p>
+        <input id="id_airtable_counties_url" type="text" name="airtable_counties_url" size="100">
+    </p>
+    <p>
+        <input type="submit" value="Import Airtable county details">
+    </p>
+</form>
+
+<h2>Management commands</h2>
+<h3>Import counties</h3>
+<p>Import the full list of 3,000+ counties from <a href="https://us-counties.datasette.io/counties/county_fips">us-counties.datasette.io/counties/county_fips</a> - see <a href="https://github.com/CAVaccineInventory/vial/issues/88">issue 88</a></p>
+<p><strong>Warning:</strong> This command can take a long time to run!</p>
+<form action="{{ request.path }}" method="POST">
+{% csrf_token %}
+<p>
+    <input type="hidden" name="command" value="import_counties">
+    <input type="submit" value="Import 3,000+ counties">
+</p>
+</form>
 {% if output %}<pre>{{ output }}</pre>{% endif %}
 {% endblock %}

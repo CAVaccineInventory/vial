@@ -34,6 +34,27 @@ def test_admin_tools_import_counties(admin_client, requests_mock):
     assert County.objects.filter(state__abbreviation="AK").count() == 2
 
 
+def test_import_airtable_county_details(admin_client, requests_mock):
+    requests_mock.get(
+        "https://example.com/counties.json",
+        json=[
+            {
+                "airtable_id": "rec0QOd7EXzSuZZvN",
+                "County vaccination reservations URL": "https://example.com/reservations",
+                "population": 200,
+            }
+        ],
+    )
+    response = admin_client.post(
+        "/admin/tools/", {"airtable_counties_url": "https://example.com/counties.json"}
+    )
+    assert response.status_code == 200
+    assert b"Updated details for 1 counties" in response.content
+    county = County.objects.get(airtable_id="rec0QOd7EXzSuZZvN")
+    assert county.vaccine_reservations_url == "https://example.com/reservations"
+    assert county.population == 200
+
+
 def test_command_redirects_to_tools(admin_client):
     response = admin_client.get("/admin/commands/")
     assert response.status_code == 302
