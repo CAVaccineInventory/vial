@@ -559,7 +559,7 @@ def counties(request, state_abbreviation):
                     "county_name": county.name,
                     "county_fips_code": county.fips_code,
                 }
-                for county in state.counties.all()
+                for county in state.counties.order_by("name")
             ],
         }
     )
