@@ -68,7 +68,8 @@ jobs:
             0038_county_fips_code_string_not_integer \
             0040_increase_size_location_import_ref \
             0044_lengthen_external_id \
-            0046_rename_reports_to_report
+            0046_rename_reports_to_report \
+            0049_delete_is_test_data_columns
 
     - uses: codecov/codecov-action@v1
       with:
