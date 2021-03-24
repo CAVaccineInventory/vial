@@ -149,7 +149,7 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
     )
     # Ensure they have predictable vesting_at values
     CallRequest.objects.all().update(vesting_at="2021-03-24 15:11:23")
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(9) as captured:
         response = admin_client.post(
             "/admin/core/callrequest/",
             {
@@ -160,15 +160,15 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location,vesting_at,claimed_by,claimed_until,call_request_reason,tip_type,tip_report\r\n"
-            "1,Location 10,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "2,Location 9,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "3,Location 8,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "4,Location 7,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "5,Location 6,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "6,Location 5,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "7,Location 4,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "8,Location 3,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "9,Location 2,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
-            "10,Location 1,2021-03-24 15:11:23+00:00,,,Data corrections tip,,\r\n"
+            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,tip_type,tip_report_id,tip_report\r\n"
+            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
         )
