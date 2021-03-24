@@ -149,7 +149,7 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
     )
     # Ensure they have predictable vesting_at values
     CallRequest.objects.all().update(vesting_at="2021-03-24 15:11:23")
-    with django_assert_num_queries(9) as captured:
+    with django_assert_num_queries(9):
         response = admin_client.post(
             "/admin/core/callrequest/",
             {
