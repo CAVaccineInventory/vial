@@ -1,6 +1,7 @@
 import csv
 from io import StringIO
 
+from django.db.models.fields.related import ForeignKey
 from django.http import StreamingHttpResponse
 
 
@@ -25,7 +26,12 @@ def export_as_csv_action(description="Export selected rows to CSV"):
 
             csvfile = StringIO()
             csvwriter = csv.writer(csvfile)
-            columns = [field.name for field in modeladmin.model._meta.fields]
+            columns = []
+            for field in modeladmin.model._meta.fields:
+                if isinstance(field, ForeignKey):
+                    columns.extend([field.attname, field.name])
+                else:
+                    columns.append(field.name)
 
             def read_and_flush():
                 csvfile.seek(0)

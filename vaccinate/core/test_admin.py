@@ -8,10 +8,20 @@ from django.utils import timezone
 from .models import CallRequest, Location, Reporter, State
 
 
-@pytest.fixture()
-def admin_client(client, admin_user):
-    client.force_login(admin_user)
-    return client
+@pytest.fixture
+def ten_locations(db):
+    locations = []
+    for i in range(1, 11):
+        locations.append(
+            Location.objects.create(
+                name="Location {}".format(i),
+                state_id=State.objects.get(abbreviation="OR").id,
+                location_type_id=1,
+                latitude=30,
+                longitude=40,
+            )
+        )
+    return locations
 
 
 def test_admin_create_location_sets_public_id(admin_client):
@@ -37,21 +47,10 @@ def test_admin_create_location_sets_public_id(admin_client):
     assert location.public_id == location.pid
 
 
-def test_admin_location_actions_for_queue(admin_client):
+def test_admin_location_actions_for_queue(admin_client, ten_locations):
     assert CallRequest.objects.count() == 0
-    assert Location.objects.count() == 0
-    locations = []
-    for i in range(1, 11):
-        locations.append(
-            Location.objects.create(
-                name="Location {}".format(i),
-                state_id=State.objects.get(abbreviation="OR").id,
-                location_type_id=1,
-                latitude=30,
-                longitude=40,
-            )
-        )
-    locations_to_queue = locations[:3]
+    assert Location.objects.count() == 10
+    locations_to_queue = ten_locations[:3]
     # /admin/core/location/ should have 10 locations + actions menu
     response = admin_client.get("/admin/core/location/")
     assert response.status_code == 200
@@ -135,3 +134,41 @@ def test_clear_claims_action(admin_client):
     assert len(messages) == 2
     assert messages[1].message == "Cleared claims for 2 call requests"
     assert CallRequest.available_requests().count() == 2
+
+
+# Using reset_sequences for predictable IDs in CSV output
+@pytest.mark.django_db(transaction=True, reset_sequences=True)
+def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations):
+    # Add those locations to the call queue
+    admin_client.post(
+        "/admin/core/location/",
+        {
+            "action": "add_to_call_request_queue_data_corrections_tip",
+            "_selected_action": [l.id for l in ten_locations],
+        },
+    )
+    # Ensure they have predictable vesting_at values
+    CallRequest.objects.all().update(vesting_at="2021-03-24 15:11:23")
+    with django_assert_num_queries(9):
+        response = admin_client.post(
+            "/admin/core/callrequest/",
+            {
+                "action": "export_as_csv",
+                "_selected_action": [cr.id for cr in CallRequest.objects.all()],
+            },
+        )
+        csv_bytes = b"".join(chunk for chunk in response.streaming_content)
+        csv_string = csv_bytes.decode("utf-8")
+        assert csv_string == (
+            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,tip_type,tip_report_id,tip_report\r\n"
+            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+        )
