@@ -352,12 +352,11 @@ class CallRequestAdmin(admin.ModelAdmin):
         "claimed_until",
         "call_request_reason",
     )
-    actions = [clear_claims]
     list_filter = (
         CallRequestAvailableFilter,
         "call_request_reason",
     )
-    actions = [export_as_csv_action()]
+    actions = [clear_claims, export_as_csv_action()]
     raw_id_fields = ("location", "claimed_by", "tip_report")
 
     def lookup_allowed(self, lookup, value):
