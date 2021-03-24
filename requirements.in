@@ -52,7 +52,7 @@ ipython
 docutils
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.3a1
+django-sql-dashboard==0.5a0
 
 # Version history in Django admin
 django-reversion
