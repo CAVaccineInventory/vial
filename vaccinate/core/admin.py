@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
 
+from .admin_actions import export_as_csv_action
 from .models import (
     AppointmentTag,
     AvailabilityTag,
@@ -25,7 +26,7 @@ from .models import (
 
 # Simple models first
 for model in (LocationType, ProviderType):
-    admin.site.register(model)
+    admin.site.register(model, actions=[export_as_csv_action()])
 
 
 @admin.register(State)
@@ -33,6 +34,7 @@ class StateAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "abbreviation", "fips_code")
     ordering = ("name",)
+    actions = [export_as_csv_action()]
 
 
 @admin.register(Provider)
@@ -40,6 +42,7 @@ class ProviderAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "main_url", "contact_phone_number", "provider_type")
     list_editable = ("main_url", "contact_phone_number", "provider_type")
+    actions = [export_as_csv_action()]
 
 
 @admin.register(County)
@@ -49,6 +52,7 @@ class CountyAdmin(VersionAdmin):
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
     ordering = ("name",)
+    actions = [export_as_csv_action()]
 
 
 def make_call_request_queue_action(reason):
@@ -131,6 +135,8 @@ class LocationDeletedFilter(admin.SimpleListFilter):
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
+    actions = [export_as_csv_action()]
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         actions.update(
@@ -203,6 +209,7 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 class ReporterAdmin(admin.ModelAdmin):
     list_display = ("external_id", "name", "report_count", "latest_report")
     list_filter = (ReporterProviderFilter, "auth0_role_name")
+    actions = [export_as_csv_action()]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -241,12 +248,14 @@ class AvailabilityTagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "group", "notes", "slug", "disabled")
     list_filter = ("group", "disabled")
+    actions = [export_as_csv_action()]
 
 
 @admin.register(AppointmentTag)
 class AppointmentTagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "has_details")
+    actions = [export_as_csv_action()]
 
 
 @admin.register(Report)
@@ -261,6 +270,7 @@ class ReportAdmin(admin.ModelAdmin):
         "created_at_utc",
     )
     list_display_links = ("created_at",)
+    actions = [export_as_csv_action()]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "created_at",
@@ -298,11 +308,13 @@ class EvaReportAdmin(admin.ModelAdmin):
     raw_id_fields = ("location",)
     list_filter = ("valid_at", "has_vaccines")
     readonly_fields = ("airtable_id",)
+    actions = [export_as_csv_action()]
 
 
 @admin.register(CallRequestReason)
 class CallRequestReasonAdmin(admin.ModelAdmin):
     list_display = ("short_reason", "long_reason")
+    actions = [export_as_csv_action()]
 
 
 def clear_claims(modeladmin, request, queryset):
@@ -345,6 +357,7 @@ class CallRequestAdmin(admin.ModelAdmin):
         CallRequestAvailableFilter,
         "call_request_reason",
     )
+    actions = [export_as_csv_action()]
     raw_id_fields = ("location", "claimed_by", "tip_report")
 
     def lookup_allowed(self, lookup, value):
@@ -366,6 +379,7 @@ class PublishedReportAdmin(admin.ModelAdmin):
         "reports",
         "eva_reports",
     )
+    actions = [export_as_csv_action()]
 
 
 class RevisionAdmin(admin.ModelAdmin):
