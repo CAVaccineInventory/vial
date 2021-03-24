@@ -90,6 +90,8 @@ AUTHENTICATION_BACKENDS = {
 LOGIN_URL = "/login/auth0"
 LOGIN_REDIRECT_URL = "/"
 
+REVERSION_COMPARE_IGNORE_NOT_REGISTERED = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -103,6 +105,8 @@ INSTALLED_APPS = [
     "django_migration_linter",
     "django_sql_dashboard",
     "social_django",
+    "reversion",
+    "reversion_compare",
     "corsheaders",
     "auth0login",
     "core",

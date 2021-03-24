@@ -3,7 +3,10 @@ from django.db.models import Count, Exists, Max, OuterRef
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from reversion.models import Revision, Version
+from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
 
+from .admin_actions import export_as_csv_action
 from .models import (
     AppointmentTag,
     AvailabilityTag,
@@ -23,7 +26,7 @@ from .models import (
 
 # Simple models first
 for model in (LocationType, ProviderType):
-    admin.site.register(model)
+    admin.site.register(model, actions=[export_as_csv_action()])
 
 
 @admin.register(State)
@@ -31,6 +34,7 @@ class StateAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "abbreviation", "fips_code")
     ordering = ("name",)
+    actions = [export_as_csv_action()]
 
 
 @admin.register(Provider)
@@ -38,15 +42,17 @@ class ProviderAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "main_url", "contact_phone_number", "provider_type")
     list_editable = ("main_url", "contact_phone_number", "provider_type")
+    actions = [export_as_csv_action()]
 
 
 @admin.register(County)
-class CountyAdmin(admin.ModelAdmin):
+class CountyAdmin(VersionAdmin):
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
     ordering = ("name",)
+    actions = [export_as_csv_action()]
 
 
 def make_call_request_queue_action(reason):
@@ -93,8 +99,44 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
+class LocationDeletedFilter(admin.SimpleListFilter):
+    title = "soft deleted"
+
+    parameter_name = "soft_deleted"
+
+    def lookups(self, request, model_admin):
+        return (
+            (None, "Not deleted"),
+            ("deleted", "Deleted"),
+            ("all", "All"),
+        )
+
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == lookup,
+                "query_string": cl.get_query_string(
+                    {
+                        self.parameter_name: lookup,
+                    },
+                    [],
+                ),
+                "display": title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset.filter(soft_deleted=False)
+        elif self.value() == "all":
+            return queryset
+        elif self.value() == "deleted":
+            return queryset.filter(soft_deleted=True)
+
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
+    actions = [export_as_csv_action()]
+
     def get_actions(self, request):
         actions = super().get_actions(request)
         actions.update(
@@ -128,10 +170,10 @@ class LocationAdmin(admin.ModelAdmin):
     )
     list_filter = (
         LocationInQueueFilter,
+        LocationDeletedFilter,
         "location_type",
         "state",
         "provider",
-        "soft_deleted",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("public_id", "airtable_id", "import_json")
@@ -167,6 +209,7 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 class ReporterAdmin(admin.ModelAdmin):
     list_display = ("external_id", "name", "report_count", "latest_report")
     list_filter = (ReporterProviderFilter, "auth0_role_name")
+    actions = [export_as_csv_action()]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -205,18 +248,19 @@ class AvailabilityTagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "group", "notes", "slug", "disabled")
     list_filter = ("group", "disabled")
+    actions = [export_as_csv_action()]
 
 
 @admin.register(AppointmentTag)
 class AppointmentTagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "has_details")
+    actions = [export_as_csv_action()]
 
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
-        "test",
         "state",
         "created_at",
         "availability",
@@ -225,12 +269,12 @@ class ReportAdmin(admin.ModelAdmin):
         "reported_by",
         "created_at_utc",
     )
-    list_display_links = ("test", "created_at")
+    list_display_links = ("created_at",)
+    actions = [export_as_csv_action()]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "created_at",
         "appointment_tag",
-        "is_test_data",
         "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
@@ -245,13 +289,8 @@ class ReportAdmin(admin.ModelAdmin):
     def state(self, instance):
         return instance.location.state.abbreviation
 
-    def test(self, instance):
-        return instance.is_test_data
-
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("location__state")
-
-    test.boolean = True
 
     def lookup_allowed(self, lookup, value):
         return True
@@ -269,11 +308,13 @@ class EvaReportAdmin(admin.ModelAdmin):
     raw_id_fields = ("location",)
     list_filter = ("valid_at", "has_vaccines")
     readonly_fields = ("airtable_id",)
+    actions = [export_as_csv_action()]
 
 
 @admin.register(CallRequestReason)
 class CallRequestReasonAdmin(admin.ModelAdmin):
     list_display = ("short_reason", "long_reason")
+    actions = [export_as_csv_action()]
 
 
 def clear_claims(modeladmin, request, queryset):
@@ -311,11 +352,11 @@ class CallRequestAdmin(admin.ModelAdmin):
         "claimed_until",
         "call_request_reason",
     )
-    actions = [clear_claims]
     list_filter = (
         CallRequestAvailableFilter,
         "call_request_reason",
     )
+    actions = [clear_claims, export_as_csv_action()]
     raw_id_fields = ("location", "claimed_by", "tip_report")
 
     def lookup_allowed(self, lookup, value):
@@ -337,3 +378,33 @@ class PublishedReportAdmin(admin.ModelAdmin):
         "reports",
         "eva_reports",
     )
+    actions = [export_as_csv_action()]
+
+
+class RevisionAdmin(admin.ModelAdmin):
+    list_display = ("id", "date_created", "user", "comment")
+    list_display_links = ("date_created",)
+    list_select_related = ("user",)
+    date_hierarchy = "date_created"
+    ordering = ("-date_created",)
+    list_filter = ("user", "comment")
+    search_fields = ("user", "comment")
+    raw_id_fields = ("user",)
+
+
+admin.site.register(Revision, RevisionAdmin)
+
+
+class VersionAdmin(admin.ModelAdmin):
+    def comment(self, obj):
+        return obj.revision.comment
+
+    list_display = ("object_repr", "comment", "object_id", "content_type", "format")
+    list_display_links = ("object_repr", "object_id")
+    list_filter = ("content_type", "format")
+    list_select_related = ("revision", "content_type")
+    search_fields = ("object_repr", "serialized_data")
+    raw_id_fields = ("revision",)
+
+
+admin.site.register(Version, VersionAdmin)

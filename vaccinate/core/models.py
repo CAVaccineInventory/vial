@@ -122,10 +122,6 @@ class County(models.Model):
 
 class Location(models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
-    is_test_data = models.BooleanField(
-        default=False,
-        help_text="Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.",
-    )
     name = CharTextField()
     phone_number = CharTextField(null=True, blank=True)
     full_address = CharTextField(
@@ -204,7 +200,7 @@ class Location(models.Model):
         blank=True,
         help_text="Original JSON if this record was imported from elsewhere",
     )
-    import_ref = models.SlugField(
+    import_ref = models.CharField(
         max_length=100,
         db_index=True,
         null=True,
@@ -321,11 +317,6 @@ class Report(models.Model):
         CALLER_APP = "ca", "Caller app"
         DATA_CORRECTIONS = "dc", "Data corrections"
 
-    is_test_data = models.BooleanField(
-        default=False,
-        help_text="Lets us submit test data to our production systems. Facebook apparently use this pattern all the time.",
-    )
-
     location = models.ForeignKey(
         Location,
         related_name="reports",
@@ -393,7 +384,7 @@ class Report(models.Model):
         return ", ".join(self.availability_tags.values_list("name", flat=True))
 
     class Meta:
-        db_table = "reports"
+        db_table = "report"
 
     def __str__(self):
         return "Call to {} by {} at {}".format(

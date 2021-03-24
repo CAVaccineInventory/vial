@@ -11,8 +11,7 @@ django
 # Server
 gunicorn
 
-# Serve static files from wsgi; used in development and heroku, not in
-# production
+# Serve static files from wsgi; used in development, not production
 whitenoise
 
 # PostgreSQL backend
@@ -53,7 +52,11 @@ ipython
 docutils
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.3a1
+django-sql-dashboard==0.5a0
+
+# Version history in Django admin
+django-reversion
+django-reversion-compare
 
 ### Development
 

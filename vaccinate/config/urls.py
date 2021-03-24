@@ -2,6 +2,7 @@ import debug_toolbar
 import django_sql_dashboard
 from api import views as api_views
 from auth0login.views import logout
+from core import tool_views
 from core import views as core_views
 from django.conf import settings
 from django.contrib import admin
@@ -40,7 +41,8 @@ urlpatterns = [
             "/admin/core/report/{}/change/".format(id)
         ),
     ),
-    path("admin/commands/", core_views.admin_commands),
+    path("admin/commands/", lambda r: redirect("/admin/tools/")),
+    path("admin/tools/", tool_views.admin_tools),
     # Over-ride Django admin default login/logout
     path("admin/login/", lambda r: redirect("/login/auth0", permanent=False)),
     path("admin/logout/", lambda r: redirect("/logout", permanent=False)),

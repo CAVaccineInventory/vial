@@ -11,8 +11,6 @@ def test_healthcheck(client, monkeypatch):
     assert data["postgresql_version"].startswith("PostgreSQL ")
     assert data["python_version"].startswith("3.")
     # Monkey-patch in some environment variables
-    monkeypatch.setenv("HEROKU_SLUG_COMMIT", "heroku")
-    assert json.loads(client.get("/healthcheck").content)["deployed_sha"] == "heroku"
     monkeypatch.setenv("COMMIT_SHA", "COMMIT_SHA")
     assert (
         json.loads(client.get("/healthcheck").content)["deployed_sha"] == "COMMIT_SHA"

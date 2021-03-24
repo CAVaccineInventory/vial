@@ -16,7 +16,7 @@ from .import_utils import derive_county
 )
 @click.option(
     "--url",
-    default="https://vaccinateca-preview.herokuapp.com/api/importLocations",
+    default="https://vial.calltheshots.us/api/importLocations",
     help="API URL to send locations to",
 )
 @click.option("--token", help="API token to use", envvar="IMPORT_API_TOKEN")

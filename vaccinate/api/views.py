@@ -152,7 +152,6 @@ def submit_report(request, on_request_logged):
     )
     availability_tags = resolve_availability_tags(report_data["availability"])
     kwargs = dict(
-        is_test_data=bool(request.GET.get("test")),
         location=report_data["location"],
         # Currently hard-coded to caller app:
         report_source="ca",
@@ -559,7 +558,7 @@ def counties(request, state_abbreviation):
                     "county_name": county.name,
                     "county_fips_code": county.fips_code,
                 }
-                for county in state.counties.all()
+                for county in state.counties.order_by("name")
             ],
         }
     )
