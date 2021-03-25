@@ -5,6 +5,7 @@ import dj_database_url
 import sentry_sdk
 from django.conf.locale.en import formats as en_formats
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import ignore_logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +30,23 @@ if SENTRY_DSN:
         environment=os.environ.get("DEPLOY", "unknown"),
         release=os.environ.get("COMMIT_SHA", None),
     )
+    # Ignore all of the loggers from django.security that are for user
+    # errors; see https://docs.djangoproject.com/en/3.1/ref/exceptions/#suspiciousoperation
+    IGNORE_LOGGERS = [
+        "django.security.SuspiciousOperation",
+        "django.security.DisallowedHost",
+        "django.security.DisallowedModelAdminLookup",
+        "django.security.DisallowedModelAdminToField",
+        "django.security.DisallowedRedirect",
+        "django.security.InvalidSessionKey",
+        "django.security.RequestDataTooBig",
+        "django.security.SuspiciousFileOperation",
+        "django.security.SuspiciousMultipartForm",
+        "django.security.SuspiciousSession",
+        "django.security.TooManyFieldsSent",
+    ]
+    for logger in IGNORE_LOGGERS:
+        ignore_logger(logger)
 
 # Auth0
 SOCIAL_AUTH_TRAILING_SLASH = False
