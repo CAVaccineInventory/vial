@@ -1,3 +1,4 @@
+timeout: 30m
 steps:
   # We need to unshallow the clone so Sentry can get the history; except that
   # this is a private repository, and the FETCH step has thrown the keys away
