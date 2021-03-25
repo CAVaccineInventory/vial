@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("core", "0049_delete_is_test_data_columns"),
+        ("reversion", "0001_squashed_0004_auto_20160611_1202"),
     ]
 
     operations = [
