@@ -134,7 +134,7 @@ class LocationDeletedFilter(admin.SimpleListFilter):
 
 
 @admin.register(Location)
-class LocationAdmin(admin.ModelAdmin):
+class LocationAdmin(VersionAdmin):
     actions = [export_as_csv_action()]
 
     def get_actions(self, request):
