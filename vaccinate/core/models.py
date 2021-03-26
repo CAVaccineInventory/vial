@@ -140,7 +140,7 @@ class Location(models.Model):
         null=True,
         help_text="can accomodate ZIP+4 in standard formatting if needed",
     )
-    hours = CharTextField(blank=True, null=True)
+    hours = models.TextField(blank=True, null=True)
     website = CharTextField(blank=True, null=True)
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
