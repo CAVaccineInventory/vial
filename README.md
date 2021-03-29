@@ -34,6 +34,7 @@ As a result, hosting this (or moving this to a different host) should be as easy
 ## What this does so far
 
 - SSO using Auth0 to sign users in with a Django user account
+- Allows users to make changes to locations and other entities through the Django admin. These changes are tracked using [django-reversion](https://django-reversion.readthedocs.io/)
 - Run tests in GitHub Actions CI using pytest-django
 - Enforce Black code style in GitHub Actions
 - Django ORM models for the new schema currently under discussion
@@ -51,11 +52,6 @@ As a result, hosting this (or moving this to a different host) should be as easy
   - `GET /api/counties/CA` - list counties in a state - accepts two letter state codes
 
 For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
-
-## What this will do
-
-- Export options matching the public APIs we currently generate from Airtable
-- I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
 The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo closely track upcoming work.
 
