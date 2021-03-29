@@ -1,0 +1,68 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Merge locations{% endblock %}
+{% block extrastyle %}
+<style>
+.card {
+    border: 1px solid #666;
+    border-radius: 10px;
+    padding: 0.5em 1em;
+    margin: 1em 0;
+}
+</style>
+{% endblock %}
+{% block content %}
+<h1>Merge locations</h1>
+
+{% if winner %}
+<div class="card">
+    <h3>Winner</h3>
+    <p><strong><a href="/admin/core/location/{{ winner.pk }}/change/">{{ winner }}</a></strong></p>
+    <p>{{ winner.full_address }}</p>
+    <p><a href="/admin/core/report/?location={{ winner.pk }}">{{ winner.reports.count }} reports</a></p>
+    {% if winner.soft_deleted %}
+        <p><strong>Soft deleted</strong> - so you cannot merge this</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if loser %}
+<div class="card">
+    <h3>Loser</h3>
+    <p><strong><a href="/admin/core/location/{{ loser.pk }}/change/">{{ loser }}</a></strong></p>
+    <p>{{ loser.full_address }}</p>
+    <p><a href="/admin/core/report/?location={{ loser.pk }}">{{ loser.reports.count }} reports</a> (will be merged into winner)</p>
+    {% if loser.soft_deleted %}
+        <p><strong>Soft deleted</strong> - so you cannot merge this</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if winner and loser %}
+    {% if winner.pk == loser.pk %}
+        <p><strong>Cannot merge the same location</strong></p>
+    {% elif winner.soft_deleted or loser.soft_deleted %}
+        <p><strong>Cannot merge these because one of them is soft-deleted</strong></p>
+    {% else %}
+        <form action="{{ request.path }}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="winner" value="{{ winner.public_id }}">
+            <input type="hidden" name="loser" value="{{ loser.public_id }}">
+            <input type="submit" value="Merge these two locations">
+        </form>
+    {% endif %}
+    <h3>Pick different winner and loser</h3>
+    <form action="{{ request.path }}" method="GET">
+        <p><label>Winner: <input name="winner" type="text" value="{{ winner.public_id }}"></label></p>
+        <p><label>Loser: <input name="loser" type="text" value="{{ loser.public_id }}"></label></p>
+        <input type="submit" value="Preview merge">
+    </form>
+{% else %}
+    <form action="{{ request.path }}" method="GET">
+        <p><label>Winner: <input name="winner" type="text" value="{{ winner.public_id }}"></label></p>
+        <p><label>Loser: <input name="loser" type="text" value="{{ loser.public_id }}"></label></p>
+        <input type="submit" value="Preview merge">
+    </form>
+{% endif %}
+
+
+{% endblock %}

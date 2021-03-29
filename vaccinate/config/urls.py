@@ -43,6 +43,7 @@ urlpatterns = [
     ),
     path("admin/commands/", lambda r: redirect("/admin/tools/")),
     path("admin/tools/", tool_views.admin_tools),
+    path("admin/merge-locations/", tool_views.merge_locations),
     # Over-ride Django admin default login/logout
     path("admin/login/", lambda r: redirect("/login/auth0", permanent=False)),
     path("admin/logout/", lambda r: redirect("/logout", permanent=False)),

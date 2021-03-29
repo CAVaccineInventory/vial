@@ -1,12 +1,14 @@
 from io import StringIO
+from django.http.response import HttpResponseRedirect
 
 import requests
 import reversion
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core import management
 from django.shortcuts import render
 
-from .models import County
+from .models import County, Location
 
 
 @login_required
@@ -78,3 +80,55 @@ def import_airtable_counties(airtable_counties, user):
             "Imported airtable county information using /admin/tools/"
         )
     return updated
+
+
+def get_winner_loser(d):
+    try:
+        winner = Location.objects.get(public_id=d.get("winner"))
+    except Location.DoesNotExist:
+        winner = None
+    try:
+        loser = Location.objects.get(public_id=d.get("loser"))
+    except Location.DoesNotExist:
+        loser = None
+    return winner, loser
+
+
+@login_required
+@user_passes_test(lambda user: user.has_perm("core.merge_locations"))
+def merge_locations(request):
+    if request.method == "POST":
+        winner, loser = get_winner_loser(request.POST)
+        if (
+            winner
+            and loser
+            and (winner.pk != loser.pk)
+            and not (winner.soft_deleted or loser.soft_deleted)
+        ):
+            # Merge them
+            with reversion.create_revision():
+                loser.reports.update(location=winner.pk)
+                loser.soft_deleted = True
+                loser.soft_deleted_because = "Merged into location {}".format(
+                    winner.public_id
+                )
+                loser.duplicate_of = winner
+                loser.save()
+                reversion.set_user(request.user)
+                reversion.set_comment(
+                    "Merged locations, winner = {}, loser = {}".format(
+                        winner.public_id, loser.public_id
+                    )
+                )
+            messages.success(request, "Locations merged")
+            return HttpResponseRedirect(f"/admin/core/location/{winner.pk}/change/")
+    else:
+        winner, loser = get_winner_loser(request.GET)
+    return render(
+        request,
+        "admin/merge_locations.html",
+        {
+            "winner": winner,
+            "loser": loser,
+        },
+    )

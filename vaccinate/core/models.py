@@ -213,6 +213,9 @@ class Location(models.Model):
 
     class Meta:
         db_table = "location"
+        permissions = [
+            ("merge_locations", "Can merge two locations"),
+        ]
 
     @property
     def pid(self):
