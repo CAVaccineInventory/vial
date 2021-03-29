@@ -114,7 +114,7 @@ def reporter_from_request(request, allow_test=False):
         name = jwt_payload["name"]
         email = jwt_payload["email"]
     defaults = {
-        "auth0_role_name": ", ".join(
+        "auth0_role_names": ", ".join(
             sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
         ),
     }
@@ -221,7 +221,7 @@ def submit_report(request, on_request_logged):
                         "location_state": report.location.state.abbreviation,
                         "reporter_name": report.reported_by.name,
                         "reporter_id": report.reported_by.external_id,
-                        "reporter_role": report.reported_by.auth0_role_name,
+                        "reporter_role": report.reported_by.auth0_role_names,
                         "availability_tags": list(
                             report.availability_tags.values_list("name", flat=True)
                         ),

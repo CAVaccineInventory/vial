@@ -189,7 +189,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     assert report.internal_notes == "Essential workers start March 1st\n"
     assert report.public_notes == "Jan 23: Has vaccine but no appointments available."
     assert report.reported_by.external_id == "auth0:auth0|6037"
-    assert report.reported_by.auth0_role_name == "Volunteer Caller"
+    assert report.reported_by.auth0_role_names == "Volunteer Caller"
     assert str(report.created_at) == "2021-02-25T23:54:04.000Z"
     assert report.airtable_id == "recXBlDw9Zr7bB84O"
     assert report.public_id == "recXBlDw9Zr7bB84O"
