@@ -160,6 +160,7 @@ class LocationAdmin(VersionAdmin):
     search_fields = ("name", "full_address")
     list_display = (
         "name",
+        "public_id",
         "times_reported",
         "full_address",
         "state",
