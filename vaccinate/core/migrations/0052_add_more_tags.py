@@ -22,7 +22,7 @@ def add_availability_tags(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0050_run_createinitialrevisions_for_locations"),
+        ("core", "0051_locations_hours_textarea"),
     ]
 
     operations = [
