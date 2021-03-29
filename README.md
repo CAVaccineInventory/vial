@@ -9,6 +9,18 @@ Project background: [Spinning up a new Django app to act as a backend for Vaccin
 - https://vial.calltheshots.us/ is production - manually deployed using `scripts/deploy.sh`
 - https://vial-staging.calltheshots.us/ is our Google Cloud Run staging server - code is automatically deployed there on every commit
 
+## Auth0 user permissions
+
+This app is built around the Django admin, but uses Auth0 for authentication.
+
+User permissions are controlled using Auth0 roles. Users can be assigned these roles in the Auth0 interface at https://manage.auth0.com/dashboard/us/vaccinateca/roles
+
+The following three roles are used:
+
+- `VIAL admin`. Any user with this role in Auth0 will have permission to sign into the https://vial.calltheshots.us/admin/ interface. They will then be assigned to a Django group called `default-view-core` - this group has permission to access a number of core models within the application.
+- `VIAL data corrections`. This role is for volunteers who are allowed to edit and update our location data.
+- `VIAL super-user`. This role grants super-user access within the Django admin. Users with this role will be able to edit permissions for other groups, and will have add/update/delete access to every object available through the admin.
+
 ## Architectural principles for this app
 
 - Write code (and issue comments and commit messages) with the expectation that the entire repository will be open to the public some day. So keep secrets out of the code, and don't be uncouth!
@@ -22,6 +34,7 @@ As a result, hosting this (or moving this to a different host) should be as easy
 ## What this does so far
 
 - SSO using Auth0 to sign users in with a Django user account
+- Allows users to make changes to locations and other entities through the Django admin. These changes are tracked using [django-reversion](https://django-reversion.readthedocs.io/)
 - Run tests in GitHub Actions CI using pytest-django
 - Enforce Black code style in GitHub Actions
 - Django ORM models for the new schema currently under discussion
@@ -39,11 +52,6 @@ As a result, hosting this (or moving this to a different host) should be as easy
   - `GET /api/counties/CA` - list counties in a state - accepts two letter state codes
 
 For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
-
-## What this will do
-
-- Export options matching the public APIs we currently generate from Airtable
-- I'm going to try setting up [django-reversion](https://github.com/etianen/django-reversion) to get full change history for those items
 
 The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo closely track upcoming work.
 

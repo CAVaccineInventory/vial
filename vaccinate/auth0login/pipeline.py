@@ -5,9 +5,14 @@ from django.contrib.auth.models import Group
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
     if backend.name == "auth0":
         roles = kwargs.get("details", {}).get("roles", {}) or []
-        should_be_staff = "Vaccinate CA Staff" in roles
+        vial_admin_group = Group.objects.get_or_create(name="default-view-core")[0]
+        data_corrections_group = Group.objects.get_or_create(name="data-corrections")[0]
+        should_be_staff = (
+            "Vaccinate CA Staff" in roles
+            or "VIAL admin" in roles
+            or "VIAL data corrections" in roles
+        )
         should_be_superuser = "VIAL super-user" in roles
-        group = Group.objects.get_or_create(name="default-view-core")[0]
         needs_save = False
         if should_be_staff != user.is_staff:
             user.is_staff = should_be_staff
@@ -17,11 +22,16 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
             needs_save = True
         if needs_save:
             user.save()
-        # Ensure user has membership of group (or not)
-        if should_be_staff:
-            group.user_set.add(user)
-        else:
-            group.user_set.remove(user)
+        # Add user to groups if necessary:
+
+        for allowed_roles, group in (
+            (("VIAL data corrections",), data_corrections_group),
+            (("Vaccinate CA Staff", "VIAL admin"), vial_admin_group),
+        ):
+            if any(r in roles for r in allowed_roles):
+                group.user_set.add(user)
+            else:
+                group.user_set.remove(user)
         # Stash the id_token as 'jwt' in the session
         kwargs["request"].session["jwt"] = response["id_token"]
 

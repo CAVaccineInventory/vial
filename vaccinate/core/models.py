@@ -241,7 +241,7 @@ class Reporter(models.Model):
     external_id = models.SlugField(unique=True, max_length=400)
     name = CharTextField(null=True, blank=True)
     email = CharTextField(null=True, blank=True)
-    auth0_role_name = CharTextField(null=True, blank=True)
+    auth0_role_names = CharTextField(null=True, blank=True)
 
     def __str__(self):
         return self.name or self.external_id

@@ -95,7 +95,7 @@ def import_airtable_report(report, availability_tags=None):
             external_id="auth0:{}".format(report["auth0_reporter_id"]),
             defaults={
                 "name": report["auth0_reporter_name"],
-                "auth0_role_name": report["auth0_reporter_roles"],
+                "auth0_role_names": report["auth0_reporter_roles"],
             },
         )[0]
     else:
