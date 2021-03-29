@@ -9,6 +9,18 @@ Project background: [Spinning up a new Django app to act as a backend for Vaccin
 - https://vial.calltheshots.us/ is production - manually deployed using `scripts/deploy.sh`
 - https://vial-staging.calltheshots.us/ is our Google Cloud Run staging server - code is automatically deployed there on every commit
 
+## Auth0 user permissions
+
+This app is built around the Django admin, but uses Auth0 for authentication.
+
+User permissions are controlled using Auth0 roles. Users can be assigned these roles in the Auth0 interface at https://manage.auth0.com/dashboard/us/vaccinateca/roles
+
+The following three roles are used:
+
+- `VIAL admin`. Any user with this role in Auth0 will have permission to sign into the https://vial.calltheshots.us/admin/ interface. They will then be assigned to a Django group called `default-view-core` - this group has permission to access a number of core models within the application.
+- `VIAL data corrections`. This role is for volunteers who are allowed to edit and update our location data.
+- `VIAL super-user`. This role grants super-user access within the Django admin. Users with this role will be able to edit permissions for other groups, and will have add/update/delete access to every object available through the admin.
+
 ## Architectural principles for this app
 
 - Write code (and issue comments and commit messages) with the expectation that the entire repository will be open to the public some day. So keep secrets out of the code, and don't be uncouth!
