@@ -1,5 +1,6 @@
-from .models import County, Location, LocationType, State, Reporter, AppointmentTag
 from reversion.models import Revision
+
+from .models import AppointmentTag, County, Location, LocationType, Reporter, State
 
 
 def test_admin_tools_superuser_only(client, django_user_model):

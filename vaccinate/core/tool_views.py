@@ -1,11 +1,11 @@
 from io import StringIO
-from django.http.response import HttpResponseRedirect
 
 import requests
 import reversion
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core import management
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 
 from .models import County, Location
