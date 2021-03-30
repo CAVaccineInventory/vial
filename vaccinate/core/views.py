@@ -4,6 +4,7 @@ import sys
 from django.db import connection
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
+from reversion import get_registered_models
 
 
 def index(request):
@@ -22,5 +23,6 @@ def healthcheck(request):
             "deployed_sha": os.environ.get("COMMIT_SHA"),
             "postgresql_version": cursor.fetchone()[0],
             "python_version": sys.version,
+            "reversion_models": [m._meta.label for m in get_registered_models()],
         }
     )
