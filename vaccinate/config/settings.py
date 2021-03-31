@@ -171,9 +171,9 @@ TEMPLATES = [
         "DIRS": [os.path.join(BASE_DIR, "templates")],
         "OPTIONS": {
             "loaders": [
-                "admin_tools.template_loaders.Loader",  # admin_tools templates
-                "django.template.loaders.app_directories.Loader",  # templates from app dirs
                 "django.template.loaders.filesystem.Loader",  # BASE_DIR/templates templates
+                "django.template.loaders.app_directories.Loader",  # templates from app dirs
+                "admin_tools.template_loaders.Loader",  # admin_tools templates
             ],
             "context_processors": [
                 "django.template.context_processors.debug",
