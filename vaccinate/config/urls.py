@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/counties/<state_abbreviation>", api_views.counties),
     path("", include("django.contrib.auth.urls")),
     path("", include("social_django.urls")),
+    path("admin_tools/", include("admin_tools.urls")),
     path("admin/docs/", lambda r: redirect("/admin/docs/models/", permanent=False)),
     path("admin/docs/", include("django.contrib.admindocs.urls")),
     path(
