@@ -10,6 +10,9 @@ from django.http.response import HttpResponsePermanentRedirect
 from django.shortcuts import redirect
 from django.urls import include, path
 
+admin.site.site_title = "VIAL admin"
+admin.site.index_title = "VIAL: Vaccine Information Archive and Library"
+
 urlpatterns = [
     path("", core_views.index),
     path("healthcheck", core_views.healthcheck),
