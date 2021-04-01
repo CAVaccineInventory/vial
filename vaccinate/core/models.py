@@ -384,7 +384,7 @@ class Report(models.Model):
 
     def availability(self):
         # Used by the admin list view
-        return ", ".join(self.availability_tags.values_list("name", flat=True))
+        return ", ".join(t.name for t in self.availability_tags.all())
 
     class Meta:
         db_table = "report"

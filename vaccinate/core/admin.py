@@ -291,7 +291,12 @@ class ReportAdmin(admin.ModelAdmin):
         return instance.location.state.abbreviation
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("location__state")
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("location__state", "reported_by", "appointment_tag")
+            .prefetch_related("availability_tags")
+        )
 
     def lookup_allowed(self, lookup, value):
         return True
