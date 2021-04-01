@@ -1,0 +1,11 @@
+{% extends "admin:admin/base_site.html" %}
+{% block title %}Permission denied{% endblock %}
+
+{% block content %}
+<h1>Access denied for user {{ request.user }}</h1>
+
+<p>Ask someone to add your account to the Auth0 "VIAL admin" or "VIAL data corrections" roles.</p>
+
+<p><a href="/logout">Log out</a></p>
+
+{% endblock %}
