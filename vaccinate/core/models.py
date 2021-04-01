@@ -410,6 +410,33 @@ class Report(models.Model):
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
+class ReportReviewTag(models.Model):
+    tag = models.CharField(unique=True, max_length=64)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.tag
+
+
+class ReportReviewNote(models.Model):
+    report = models.ForeignKey(
+        Report, related_name="review_notes", on_delete=models.PROTECT
+    )
+    author = models.ForeignKey(
+        "auth.User", related_name="review_notes", on_delete=models.PROTECT
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    note = models.TextField(blank=True)
+    tags = models.ManyToManyField(
+        ReportReviewTag,
+        related_name="review_notes",
+        blank=True,
+    )
+
+    def __str__(self):
+        return "{} review note on {}".format(self.author, self.report)
+
+
 class EvaReport(models.Model):
     """
     A report obtained by our robotic assistant Eva. Eva only gathers a subset of the data that we would normally gather.

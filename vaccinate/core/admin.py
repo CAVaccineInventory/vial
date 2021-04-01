@@ -21,6 +21,8 @@ from .models import (
     PublishedReport,
     Report,
     Reporter,
+    ReportReviewNote,
+    ReportReviewTag,
     State,
 )
 
@@ -259,6 +261,19 @@ class AppointmentTagAdmin(admin.ModelAdmin):
     actions = [export_as_csv_action()]
 
 
+class ReportReviewNoteInline(admin.StackedInline):
+    model = ReportReviewNote
+    extra = 1
+    readonly_fields = ("created_at", "author")
+    autocomplete_fields = ("tags",)
+
+    def has_add_permission(self, request, obj):
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
@@ -285,7 +300,13 @@ class ReportAdmin(admin.ModelAdmin):
         "airtable_id",
         "airtable_json",
     )
+    inlines = [ReportReviewNoteInline]
     ordering = ("-created_at",)
+
+    def save_formset(self, request, form, formset, change):
+        for form in formset.forms:
+            form.instance.author = request.user
+        formset.save()
 
     def state(self, instance):
         return instance.location.state.abbreviation
@@ -300,6 +321,11 @@ class ReportAdmin(admin.ModelAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+
+@admin.register(ReportReviewTag)
+class ReportReviewTagAdmin(admin.ModelAdmin):
+    search_fields = ("tag",)
 
 
 @admin.register(EvaReport)
