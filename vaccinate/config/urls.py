@@ -22,6 +22,8 @@ urlpatterns = [
     path("api/submitReport/debug", api_views.submit_report_debug),
     path("api/requestCall", api_views.request_call),
     path("api/requestCall/debug", api_views.request_call_debug),
+    path("api/callerStats", api_views.caller_stats),
+    path("api/callerStats/debug", api_views.caller_stats_debug),
     path("api/verifyToken", api_views.verify_token),
     path("api/importLocations", api_views.import_locations),
     path("api/locationTypes", api_views.location_types),

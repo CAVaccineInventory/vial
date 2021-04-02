@@ -65,6 +65,15 @@ def test_submit_report_api_example(
             "county_id": 1,
         },
     )[0]
+    # Check user stats before
+    assert client.post(
+        "/api/callerStats",
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    ).json() == {
+        "total": 0,
+        "today": 0,
+    }
     # Create a call request for this location
     location.call_requests.create(
         call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
@@ -104,6 +113,16 @@ def test_submit_report_api_example(
 
     # Should no longer be available
     assert CallRequest.available_requests().count() == 0
+
+    # Check user stats after
+    assert client.post(
+        "/api/callerStats",
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    ).json() == {
+        "total": 1,
+        "today": 1,
+    }
 
     # Should have posted to Zapier
     assert mocked_zapier.called_once

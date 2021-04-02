@@ -28,6 +28,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
 
@@ -561,4 +562,26 @@ def counties(request, state_abbreviation):
                 for county in state.counties.order_by("name")
             ],
         }
+    )
+
+
+@csrf_exempt
+@beeline.traced(name="request_call")
+def caller_stats(request):
+    reporter, user_info = reporter_from_request(request)
+    if isinstance(reporter, JsonResponse):
+        return reporter
+    return JsonResponse(
+        {
+            "total": reporter.reports.count(),
+            "today": reporter.reports.filter(created_at__date=localdate()).count(),
+        }
+    )
+
+
+def caller_stats_debug(request):
+    return render(
+        request,
+        "api/caller_stats_debug.html",
+        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
     )

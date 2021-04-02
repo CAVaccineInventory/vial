@@ -139,6 +139,24 @@ Returns status 302 and an `{"error": "message"}` if the API key is invalid, othe
 }
 ```
 
+
+## POST /api/callerStats
+
+Returns stats for the authenticated user.
+
+HTTP POST, sending an empty `{}` JSON object as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
+
+You can use `GET` here too.
+
+The response currently looks like this:
+
+```json
+{
+  "total": 23,
+  "today": 3
+}
+```
+
 ## POST /api/importLocations
 
 Private API for us to import new locations into the database - or update existing locations.
