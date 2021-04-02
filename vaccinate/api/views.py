@@ -566,7 +566,7 @@ def counties(request, state_abbreviation):
 
 
 @csrf_exempt
-@beeline.traced(name="request_call")
+@beeline.traced(name="caller_stats")
 def caller_stats(request):
     reporter, user_info = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
