@@ -18,6 +18,7 @@ urlpatterns = [
     path("healthcheck", core_views.healthcheck),
     path("logout", logout),
     path("dashboard/", include(django_sql_dashboard.urls)),
+    path("api/docs", api_views.api_docs),
     path("api/submitReport", api_views.submit_report),
     path("api/submitReport/debug", api_views.submit_report_debug),
     path("api/requestCall", api_views.request_call),

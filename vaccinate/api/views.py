@@ -1,9 +1,12 @@
 import json
 import os
+import pathlib
+import re
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 import beeline
+import markdown
 import pytz
 import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
@@ -584,4 +587,23 @@ def caller_stats_debug(request):
         request,
         "api/caller_stats_debug.html",
         {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
+    )
+
+
+def api_docs(request):
+    content = (
+        pathlib.Path(__file__).parent.parent.parent / "docs" / "api.md"
+    ).read_text()
+    # Remove first line (header)
+    lines = content.split("\n")
+    content = "\n".join(lines[1:]).strip()
+    md = markdown.Markdown(extensions=["toc", "fenced_code"], output_format="html5")
+    html = md.convert(content)
+    return render(
+        request,
+        "api/api_docs.html",
+        {
+            "content": html,
+            "toc": md.toc,
+        },
     )

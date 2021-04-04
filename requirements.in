@@ -51,6 +51,9 @@ ipython
 # Django automatic model documentation
 docutils
 
+# Markdown documentation
+Markdown
+
 # SQL dashboard at /dashboard/
 django-sql-dashboard==0.5a0
 
