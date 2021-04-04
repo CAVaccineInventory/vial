@@ -78,7 +78,7 @@ A tool for exercising this API is available at https://vial-staging.calltheshots
 
 ## POST /api/requestCall
 
-Request a new location to call. This record will pick a location from the upcoming call queue and "lock" that record for twenty minutes, assigning it to your authenticated user.
+Request a new location to call. This record will pick the request from the call queue with the highest priority and "lock" that record for twenty minutes, assigning it to your authenticated user.
 
 HTTP POST, sending an empty `{}` JSON object as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
 

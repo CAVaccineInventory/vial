@@ -567,6 +567,7 @@ class CallRequest(models.Model):
                     timezone.now() - datetime.timedelta(days=1)
                 )
             )
+            .order_by("-priority", "-id")
         )
 
 

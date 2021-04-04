@@ -275,11 +275,11 @@ def request_call(request, on_request_logged):
             )
     else:
         now = timezone.now()
-        # Pick a random location from the call list
+        # Pick the next item from the call list
         available_requests = CallRequest.available_requests()
-        # We need to lock the record we randomly select so we can update
+        # We need to lock the record we select so we can update
         # it marking that we have claimed it
-        call_requests = available_requests.select_for_update().order_by("?")[:1]
+        call_requests = available_requests.select_for_update()[:1]
         with transaction.atomic():
             try:
                 request = call_requests[0]

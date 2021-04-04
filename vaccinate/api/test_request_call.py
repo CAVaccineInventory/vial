@@ -24,24 +24,29 @@ def test_request_call(client, jwt_id_token):
     assert response1.json() == {"error": "Couldn't find somewhere to call"}
     # Queue up a request and try again
     county = County.objects.get(fips_code="06079")  # San Luis Obispo
-    location = Location.objects.create(
-        county=county,
-        state=State.objects.get(abbreviation="OR"),
-        name="SLO Pharmacy",
-        phone_number="555 555-5555",
-        full_address="5 5th Street",
-        location_type=LocationType.objects.get(name="Pharmacy"),
-        latitude=35.279,
-        longitude=-120.664,
-    )
-    # Ensure location.public_id is correct:
-    location.refresh_from_db()
-    call_request = location.call_requests.create(
-        call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
-        vesting_at=timezone.now(),
-    )
-    assert call_request.claimed_by is None
-    assert call_request.claimed_until is None
+    locations = []
+    for i in range(3):
+        location = Location.objects.create(
+            county=county,
+            state=State.objects.get(abbreviation="OR"),
+            name="SLO Pharmacy {}".format(i),
+            phone_number="555 555-5555",
+            full_address="5 5th Street",
+            location_type=LocationType.objects.get(name="Pharmacy"),
+            latitude=35.279,
+            longitude=-120.664,
+        )
+        # Ensure location.public_id is correct:
+        location.refresh_from_db()
+        locations.append(location)
+    # Add several call requests so we can test we get the highest priority
+    reason = CallRequestReason.objects.get(short_reason="New location")
+    for location in locations:
+        call_request = location.call_requests.create(
+            call_request_reason=reason, vesting_at=timezone.now(), priority=i
+        )
+        assert call_request.claimed_by is None
+        assert call_request.claimed_until is None
     response2 = client.post(
         "/api/requestCall",
         {},
@@ -50,13 +55,13 @@ def test_request_call(client, jwt_id_token):
     )
     assert response2.status_code == 200
     data = response2.json()
-    # This should have claimed the report
-    call_request.refresh_from_db()
+    # This should have claimed the report with the highest priority
+    call_request = CallRequest.objects.order_by("-priority")[0]
     assert call_request.claimed_by is not None
     assert call_request.claimed_until is not None
     assert data == {
-        "id": location.public_id,
-        "Name": "SLO Pharmacy",
+        "id": call_request.location.public_id,
+        "Name": "SLO Pharmacy 2",
         "Phone number": "555 555-5555",
         "Address": "5 5th Street",
         "Internal notes": None,
