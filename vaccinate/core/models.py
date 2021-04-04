@@ -523,6 +523,11 @@ class CallRequest(models.Model):
     completed_at = models.DateTimeField(
         blank=True, null=True, help_text="When this call was marked as completed"
     )
+    priority = models.IntegerField(
+        default=0,
+        db_index=True,
+        help_text="Priority for call queue - higher number means higher priority",
+    )
 
     tip_type = CharTextField(
         choices=TipType.choices,
@@ -544,6 +549,7 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
+        ordering = ("-priority", "-id")
 
     @classmethod
     def available_requests(cls, qs=None):
