@@ -60,7 +60,7 @@ jobs:
         SOCIAL_AUTH_AUTH0_SECRET: auth0-secret-would-go-here
         DATABASE_URL: postgres://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/vaccinate
       run: |
-        scripts/lint-migrations.sh
+        scripts/lint-migrations
     - uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
