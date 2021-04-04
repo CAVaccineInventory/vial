@@ -161,7 +161,7 @@ def test_claim_bump_to_top_bottom_actions(admin_client):
         (cr1, 0),
     ]
     # Bump number 1 to the top
-    response = admin_client.post(
+    admin_client.post(
         "/admin/core/callrequest/",
         {
             "action": "bump_to_top",
@@ -174,7 +174,7 @@ def test_claim_bump_to_top_bottom_actions(admin_client):
         (cr2, 0),
     ]
     # And bump number 3 to the bottom
-    response = admin_client.post(
+    admin_client.post(
         "/admin/core/callrequest/",
         {
             "action": "bump_to_bottom",
