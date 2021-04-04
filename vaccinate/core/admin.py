@@ -2,6 +2,7 @@ from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
@@ -160,8 +161,9 @@ class LocationAdmin(VersionAdmin):
         return actions
 
     search_fields = ("name", "full_address")
+    list_display_links = None
     list_display = (
-        "name",
+        "summary",
         "public_id",
         "times_reported",
         "full_address",
@@ -180,6 +182,21 @@ class LocationAdmin(VersionAdmin):
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = ("public_id", "airtable_id", "import_json")
+
+    def summary(self, obj):
+        html = (
+            '<a href="/admin/core/location/{}/change/"><strong>{}</strong></a>'.format(
+                obj.id,
+                escape(obj.name),
+            )
+        )
+        if obj.do_not_call:
+            html += "<br><strong>Do not call</strong>"
+        if obj.do_not_call_reason:
+            html += " " + obj.do_not_call_reason
+        return mark_safe(html)
+
+    summary.admin_order_field = "name"
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
