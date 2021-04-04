@@ -1,0 +1,12 @@
+#!/bin/bash
+./vaccinate/manage.py lintmigrations \
+  7aefb8cb6c19968ba7b97fdd099ccdd224e756f1 \
+  --project-root-path ./vaccinate \
+  --ignore-name \
+    0038_county_fips_code_string_not_integer \
+    0040_increase_size_location_import_ref \
+    0044_lengthen_external_id \
+    0046_rename_reports_to_report \
+    0049_delete_is_test_data_columns \
+    0053_rename_auth0_role_name \
+    0056_completed_completed_at
