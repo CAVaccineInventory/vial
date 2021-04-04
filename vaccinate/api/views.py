@@ -1,7 +1,6 @@
 import json
 import os
 import pathlib
-import re
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -33,6 +32,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
+from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, Field, ValidationError, validator
 
 from .utils import log_api_requests, require_api_key
@@ -597,7 +597,9 @@ def api_docs(request):
     # Remove first line (header)
     lines = content.split("\n")
     content = "\n".join(lines[1:]).strip()
-    md = markdown.Markdown(extensions=["toc", "fenced_code"], output_format="html5")
+    md = markdown.Markdown(
+        extensions=["toc", "fenced_code", UrlizeExtension()], output_format="html5"
+    )
     html = md.convert(content)
     return render(
         request,
