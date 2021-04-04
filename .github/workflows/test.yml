@@ -70,7 +70,8 @@ jobs:
             0044_lengthen_external_id \
             0046_rename_reports_to_report \
             0049_delete_is_test_data_columns \
-            0053_rename_auth0_role_name
+            0053_rename_auth0_role_name \
+            0056_completed_completed_at
 
     - uses: codecov/codecov-action@v1
       with:
