@@ -2,7 +2,7 @@
 
 The goal is to update this documentation as part of any commit that modifies how the API works in any way.
   
-The base URL for every API is https://vial.calltheshots.us/
+The base URL for every API is https://vial-staging.calltheshots.us/
   
 ## POST /api/submitReport
   
@@ -42,7 +42,7 @@ Ideally you would use the slug for a tag, for example `only_staff` for only vacc
 
 You can alternatively use the tag's full name, or one of the names contained in the "previous names" array.
 
-A list of valid tags with their slugs, names and previous_names can be found at https://vial.calltheshots.us/api/availabilityTags
+A list of valid tags with their slugs, names and previous_names can be found at https://vial-staging.calltheshots.us/api/availabilityTags
 
 ### Skip requests
 
@@ -74,7 +74,7 @@ It currently returns other debugging data (as exposed in the API explorer) but y
 
 ### Debug mode
 
-A tool for trying out this API is available at https://vial.calltheshots.us/api/submitReport/debug - if you have previously signed into the tool at https://vial.calltheshots.us/ the interface will be pre-populated with a valid JWT token. If that token has expired you can get a new one by signing in and out again.
+A tool for trying out this API is available at https://vial-staging.calltheshots.us/api/submitReport/debug - if you have previously signed into the tool at https://vial-staging.calltheshots.us/ the interface will be pre-populated with a valid JWT token. If that token has expired you can get a new one by signing in and out again.
 
 This tool will support real, live reports. If you just want to try it out you should use the staging instance instead:
 
@@ -163,7 +163,7 @@ Private API for us to import new locations into the database - or update existin
 
 Accepts a POST with a JSON document with either a single location object or a list of location objects.
 
-You'll need an API key, which you pass in the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header. API keys can be created in the Django admin at https://vial.calltheshots.us/admin/api/apikey/
+You'll need an API key, which you pass in the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header. API keys can be created in the Django admin at https://vial-staging.calltheshots.us/admin/api/apikey/
 
 Each location should look like this:
 
@@ -182,7 +182,7 @@ The `state` value should be the two letter acronym for a state (or `AS` for Amer
 
 The latitude and longitude should be floating point values.
 
-The `location_type` should be one of the values shown on https://vial.calltheshots.us/api/locationTypes
+The `location_type` should be one of the values shown on https://vial-staging.calltheshots.us/api/locationTypes
 
 There is also an optional `import_ref` key, described below.
 
@@ -351,7 +351,7 @@ Example output:
 
 ## GET /api/counties/&lt;state&gt;
 
-Unauthenticated. Returns a list of counties for the two-letter state code. For example: https://vial.calltheshots.us/api/counties/RI
+Unauthenticated. Returns a list of counties for the two-letter state code. For example: https://vial-staging.calltheshots.us/api/counties/RI
 
 ```json
 {

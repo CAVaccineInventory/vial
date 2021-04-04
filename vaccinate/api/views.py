@@ -597,6 +597,10 @@ def api_docs(request):
     # Remove first line (header)
     lines = content.split("\n")
     content = "\n".join(lines[1:]).strip()
+    # Replace https://vial-staging.calltheshots.us/ with our current hostname
+    content = content.replace(
+        "https://vial-staging.calltheshots.us/", request.build_absolute_uri("/")
+    )
     md = markdown.Markdown(
         extensions=["toc", "fenced_code", UrlizeExtension()], output_format="html5"
     )
