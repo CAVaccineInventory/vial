@@ -517,6 +517,12 @@ class CallRequest(models.Model):
         on_delete=models.PROTECT,
         help_text="a tag indicating why the call was added to the queue",
     )
+    completed = models.BooleanField(
+        default=False, help_text="Has this call been completed"
+    )
+    completed_at = models.DateTimeField(
+        blank=True, null=True, help_text="When this call was marked as completed"
+    )
 
     tip_type = CharTextField(
         choices=TipType.choices,

@@ -160,15 +160,15 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,tip_type,tip_report_id,tip_report\r\n"
-            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
-            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,,,\r\n"
+            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,completed,completed_at,tip_type,tip_report_id,tip_report\r\n"
+            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
+            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,,,\r\n"
         )
