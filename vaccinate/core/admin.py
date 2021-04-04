@@ -183,7 +183,9 @@ class LocationAdmin(VersionAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.annotate(times_reported_count=Count("reports"))
+        return qs.select_related(
+            "county", "state", "provider", "location_type"
+        ).annotate(times_reported_count=Count("reports"))
 
     def times_reported(self, inst):
         return inst.times_reported_count
