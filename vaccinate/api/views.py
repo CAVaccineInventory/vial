@@ -248,22 +248,6 @@ def submit_report(request, on_request_logged):
     )
 
 
-def submit_report_debug(request):
-    return render(
-        request,
-        "api/submit_report_debug.html",
-        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
-    )
-
-
-def request_call_debug(request):
-    return render(
-        request,
-        "api/request_call_debug.html",
-        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
-    )
-
-
 @csrf_exempt
 @log_api_requests
 @beeline.traced(name="request_call")
@@ -582,12 +566,21 @@ def caller_stats(request):
     )
 
 
-def caller_stats_debug(request):
-    return render(
-        request,
-        "api/caller_stats_debug.html",
-        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
-    )
+def api_debug_view(api_path, body_textarea=False, docs=None, default_body=None):
+    def debug_view(request):
+        return render(
+            request,
+            "api/api_debug.html",
+            {
+                "jwt": request.session["jwt"] if "jwt" in request.session else "",
+                "api_path": api_path,
+                "body_textarea": body_textarea,
+                "default_body": default_body,
+                "docs": docs,
+            },
+        )
+
+    return debug_view
 
 
 def api_docs(request):

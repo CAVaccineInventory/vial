@@ -20,11 +20,31 @@ urlpatterns = [
     path("dashboard/", include(django_sql_dashboard.urls)),
     path("api/docs", api_views.api_docs),
     path("api/submitReport", api_views.submit_report),
-    path("api/submitReport/debug", api_views.submit_report_debug),
+    path(
+        "api/submitReport/debug",
+        api_views.api_debug_view(
+            "api/submitReport",
+            body_textarea=True,
+            docs="/api/docs#post-apisubmitreport",
+        ),
+    ),
     path("api/requestCall", api_views.request_call),
-    path("api/requestCall/debug", api_views.request_call_debug),
+    path(
+        "api/requestCall/debug",
+        api_views.api_debug_view(
+            "api/requestCall",
+            body_textarea=True,
+            default_body="{}",
+            docs="/api/docs#post-apirequestcall",
+        ),
+    ),
     path("api/callerStats", api_views.caller_stats),
-    path("api/callerStats/debug", api_views.caller_stats_debug),
+    path(
+        "api/callerStats/debug",
+        api_views.api_debug_view(
+            "api/callerStats", body_textarea=False, docs="/api/docs#post-apicallerstats"
+        ),
+    ),
     path("api/verifyToken", api_views.verify_token),
     path("api/importLocations", api_views.import_locations),
     path("api/locationTypes", api_views.location_types),
