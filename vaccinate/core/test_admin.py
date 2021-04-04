@@ -136,6 +136,58 @@ def test_clear_claims_action(admin_client):
     assert CallRequest.available_requests().count() == 2
 
 
+def test_claim_bump_to_top_bottom_actions(admin_client):
+    locations = [
+        Location.objects.create(
+            name="Location {}".format(i),
+            state_id=State.objects.get(abbreviation="OR").id,
+            location_type_id=1,
+            latitude=30,
+            longitude=40,
+        )
+        for i in range(1, 4)
+    ]
+    admin_client.post(
+        "/admin/core/location/",
+        {
+            "action": "add_to_call_request_queue_data_corrections_tip",
+            "_selected_action": [l.id for l in locations],
+        },
+    )
+    cr3, cr2, cr1 = CallRequest.objects.values_list("pk", flat=True)
+    assert list(CallRequest.objects.values_list("pk", "priority")) == [
+        (cr3, 0),
+        (cr2, 0),
+        (cr1, 0),
+    ]
+    # Bump number 1 to the top
+    response = admin_client.post(
+        "/admin/core/callrequest/",
+        {
+            "action": "bump_to_top",
+            "_selected_action": [cr1],
+        },
+    )
+    assert list(CallRequest.objects.values_list("pk", "priority")) == [
+        (cr1, 1),
+        (cr3, 0),
+        (cr2, 0),
+    ]
+    # And bump number 3 to the bottom
+    response = admin_client.post(
+        "/admin/core/callrequest/",
+        {
+            "action": "bump_to_bottom",
+            "_selected_action": [cr3],
+        },
+    )
+    assert list(CallRequest.objects.values_list("pk", "priority")) == [
+        (cr1, 1),
+        (cr2, 0),
+        (cr3, -1),
+    ]
+
+
 # Using reset_sequences for predictable IDs in CSV output
 @pytest.mark.django_db(transaction=True, reset_sequences=True)
 def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations):

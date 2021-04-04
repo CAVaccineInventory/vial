@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from django.db.models import Count, Exists, Max, OuterRef
+from django.db.models import Count, Exists, Max, Min, OuterRef
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -375,6 +375,27 @@ class CallRequestAvailableFilter(admin.SimpleListFilter):
             return queryset
 
 
+def make_call_request_bump_action(top_or_bottom):
+    def modify_call_request_order(modeladmin, request, queryset):
+        if top_or_bottom == "top":
+            priority = CallRequest.objects.all().aggregate(m=Max("priority"))["m"] + 1
+        elif top_or_bottom == "bottom":
+            priority = CallRequest.objects.all().aggregate(m=Min("priority"))["m"] - 1
+        else:
+            assert False, "Must be 'top' or 'bottom'"
+        num_affected = queryset.update(priority=priority)
+        messages.success(
+            request,
+            "Updated priority on {}".format(num_affected),
+        )
+
+    modify_call_request_order.short_description = "Bump to {} of the queue".format(
+        top_or_bottom
+    )
+    modify_call_request_order.__name__ = "bump_to_{}".format(top_or_bottom)
+    return modify_call_request_order
+
+
 @admin.register(CallRequest)
 class CallRequestAdmin(admin.ModelAdmin):
     list_display = (
@@ -383,12 +404,18 @@ class CallRequestAdmin(admin.ModelAdmin):
         "claimed_by",
         "claimed_until",
         "call_request_reason",
+        "priority",
     )
     list_filter = (
         CallRequestAvailableFilter,
         "call_request_reason",
     )
-    actions = [clear_claims, export_as_csv_action()]
+    actions = [
+        clear_claims,
+        export_as_csv_action(),
+        make_call_request_bump_action("top"),
+        make_call_request_bump_action("bottom"),
+    ]
     raw_id_fields = ("location", "claimed_by", "tip_report")
 
     def lookup_allowed(self, lookup, value):
