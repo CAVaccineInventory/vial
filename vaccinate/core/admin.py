@@ -176,6 +176,7 @@ class LocationAdmin(VersionAdmin):
     list_filter = (
         LocationInQueueFilter,
         LocationDeletedFilter,
+        "do_not_call",
         "location_type",
         "state",
         "provider",
