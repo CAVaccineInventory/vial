@@ -51,6 +51,10 @@ def test_admin_location_actions_for_queue(admin_client, ten_locations):
     assert CallRequest.objects.count() == 0
     assert Location.objects.count() == 10
     locations_to_queue = ten_locations[:3]
+    # Make one of those locations 'do not call'
+    do_not_call_location = locations_to_queue[0]
+    do_not_call_location.do_not_call = True
+    do_not_call_location.save()
     # /admin/core/location/ should have 10 locations + actions menu
     response = admin_client.get("/admin/core/location/")
     assert response.status_code == 200
@@ -76,12 +80,12 @@ def test_admin_location_actions_for_queue(admin_client, ten_locations):
     assert len(messages) == 1
     assert (
         messages[0].message
-        == "Added 3 location to queue with reason: Data corrections tip"
+        == 'Added 2 location to queue with reason: Data corrections tip. Skipped 1 location marked "do not call"'
     )
     # Call requests should have been created
-    assert CallRequest.objects.count() == 3
+    assert CallRequest.objects.count() == 2
     assert set(CallRequest.objects.values_list("location_id", flat=True)) == set(
-        location.id for location in locations_to_queue
+        location.id for location in locations_to_queue[1:]
     )
     # If we filter locations by "?currently_queued=yes" we should see them
     response3 = admin_client.get("/admin/core/location/?currently_queued=yes")
@@ -89,7 +93,7 @@ def test_admin_location_actions_for_queue(admin_client, ten_locations):
     listed_locations = set(
         re.compile(r">(Location \d+)<").findall(response3.content.decode("utf-8"))
     )
-    assert listed_locations == {"Location 3", "Location 2", "Location 1"}
+    assert listed_locations == {"Location 3", "Location 2"}
 
 
 def test_clear_claims_action(admin_client):

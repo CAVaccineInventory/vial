@@ -60,7 +60,8 @@ class CountyAdmin(VersionAdmin):
 
 def make_call_request_queue_action(reason):
     def add_to_call_request_queue(modeladmin, request, queryset):
-        locations = list(queryset.all())
+        locations = list(queryset.exclude(do_not_call=True))
+        num_do_not_call_locations = queryset.filter(do_not_call=True).count()
         now = timezone.now()
         reason_obj = CallRequestReason.objects.get(short_reason=reason)
         CallRequest.objects.bulk_create(
@@ -71,12 +72,14 @@ def make_call_request_queue_action(reason):
                 for location in locations
             ]
         )
-        messages.success(
-            request,
-            "Added {} location{} to queue with reason: {}".format(
-                len(locations), "s" if len(locations) == 1 else "", reason
-            ),
+        message = "Added {} location{} to queue with reason: {}".format(
+            len(locations), "s" if len(locations) == 1 else "", reason
         )
+        if num_do_not_call_locations:
+            message += '. Skipped {} location{} marked "do not call"'.format(
+                num_do_not_call_locations, "s" if num_do_not_call_locations != 1 else ""
+            )
+        messages.success(request, message)
 
     return add_to_call_request_queue
 
