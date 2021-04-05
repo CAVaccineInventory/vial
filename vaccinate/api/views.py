@@ -179,6 +179,11 @@ def submit_report(request, on_request_logged):
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
 
+    # Mark any calls to this location claimed by this user as complete
+    report.location.call_requests.filter(claimed_by=reporter).update(
+        completed=True, completed_at=timezone.now()
+    )
+
     # Handle skip requests
     # Only check if "Do not call until is set"
     if report_data["do_not_call_until"] is not None:

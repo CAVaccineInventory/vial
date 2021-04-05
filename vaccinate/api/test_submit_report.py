@@ -75,11 +75,31 @@ def test_submit_report_api_example(
         "today": 0,
     }
     # Create a call request for this location
-    location.call_requests.create(
+    call_request = location.call_requests.create(
         call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
         vesting_at=timezone.now(),
     )
+    assert not call_request.completed
+    assert call_request.completed_at is None
+    assert not call_request.claimed_by
+    assert call_request.claimed_until is None
     assert CallRequest.available_requests().count() == 1
+
+    # Claim that call request
+    call_request_response = client.post(
+        "/api/requestCall",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert call_request_response.status_code == 200
+    claimed_location = call_request_response.json()
+    assert claimed_location["id"] == location.public_id
+    call_request.refresh_from_db()
+    assert call_request.claimed_by
+    assert call_request.claimed_until is not None
+
+    # Submit the report
     response = client.post(
         "/api/submitReport",
         fixture["input"],
@@ -87,6 +107,12 @@ def test_submit_report_api_example(
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
     )
     assert response.status_code == fixture["expected_status"]
+
+    # Call request should have been marked as complete
+    call_request.refresh_from_db()
+    assert call_request.completed
+    assert call_request.completed_at is not None
+
     # Load new report from DB and check it
     report = Report.objects.order_by("-id")[0]
     assert response.json()["created"] == [report.public_id]
