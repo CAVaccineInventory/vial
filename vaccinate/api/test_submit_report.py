@@ -136,9 +136,9 @@ def test_submit_report_api_example(
             *list(fixture["expected_call_request"].keys())
         )[0]
         assert field_values == fixture["expected_call_request"]
-
-    # Should no longer be available
-    assert CallRequest.available_requests().count() == 0
+    else:
+        # There should be no available call requests
+        assert CallRequest.available_requests().count() == 0
 
     # Check user stats after
     assert client.post(

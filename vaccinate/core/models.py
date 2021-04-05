@@ -1,4 +1,3 @@
-import datetime
 import uuid
 
 import pytz
@@ -556,19 +555,10 @@ class CallRequest(models.Model):
         if qs is None:
             qs = cls.objects
         now = timezone.now()
-        return (
-            qs.filter(
-                Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
-                | Q(claimed_until__lte=now)
-            )
-            .filter(location__state__abbreviation="OR")
-            .exclude(
-                location__reports__created_at__gte=(
-                    timezone.now() - datetime.timedelta(days=1)
-                )
-            )
-            .order_by("-priority", "-id")
-        )
+        return qs.filter(
+            Q(completed=False) & Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
+            | Q(claimed_until__lte=now)
+        ).order_by("-priority", "-id")
 
 
 class PublishedReport(models.Model):
