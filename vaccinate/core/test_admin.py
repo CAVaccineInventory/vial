@@ -8,22 +8,6 @@ from django.utils import timezone
 from .models import CallRequest, CallRequestReason, Location, Reporter, State
 
 
-@pytest.fixture
-def ten_locations(db):
-    locations = []
-    for i in range(1, 11):
-        locations.append(
-            Location.objects.create(
-                name="Location {}".format(i),
-                state_id=State.objects.get(abbreviation="OR").id,
-                location_type_id=1,
-                latitude=30,
-                longitude=40,
-            )
-        )
-    return locations
-
-
 def test_admin_create_location_sets_public_id(admin_client):
     assert Location.objects.count() == 0
     response = admin_client.post(

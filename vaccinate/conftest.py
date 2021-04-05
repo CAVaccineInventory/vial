@@ -65,3 +65,21 @@ def mock_auth0_userinfo(requests_mock):
             "https://help.vaccinateca.com/roles": [],
         },
     )
+
+
+@pytest.fixture
+def ten_locations(db):
+    from core.models import Location, State
+
+    locations = []
+    for i in range(1, 11):
+        locations.append(
+            Location.objects.create(
+                name="Location {}".format(i),
+                state_id=State.objects.get(abbreviation="OR").id,
+                location_type_id=1,
+                latitude=30,
+                longitude=40,
+            )
+        )
+    return locations

@@ -19,6 +19,9 @@ INTERNAL_IPS = ["127.0.0.1"]
 
 ALLOWED_HOSTS = ["*"]
 
+# Call request queue is backfilled if this minimum is reached
+MIN_CALL_REQUEST_QUEUE_ITEMS = 20
+
 # Sentry
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 if SENTRY_DSN:

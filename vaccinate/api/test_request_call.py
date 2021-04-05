@@ -1,10 +1,12 @@
 import pytest
 from core.models import (
+    AppointmentTag,
     CallRequest,
     CallRequestReason,
     County,
     Location,
     LocationType,
+    Reporter,
     State,
 )
 from django.utils import timezone
@@ -85,3 +87,39 @@ def test_request_call(client, jwt_id_token):
         },
         "provider_record": {},
     }
+
+
+@pytest.mark.django_db()
+def test_backfill_queue(client, jwt_id_token, settings, ten_locations):
+    settings.MIN_CALL_REQUEST_QUEUE_ITEMS = 3
+    assert CallRequest.available_requests().count() == 0
+    response = client.post(
+        "/api/requestCall",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert response.status_code == 200
+    assert CallRequest.available_requests().count() == 2
+    # Try again but mark some of the locations as 'called'
+    CallRequest.objects.all().delete()
+    reporter = Reporter.objects.get_or_create(external_id="test:1")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    for location in ten_locations[:8]:
+        location.reports.create(
+            reported_by=reporter,
+            report_source="ca",
+            appointment_tag=web,
+        )
+    response = client.post(
+        "/api/requestCall",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert response.status_code == 200
+    assert CallRequest.available_requests().count() == 2
+    call_requests = CallRequest.available_requests()
+    # These should be to the locations with no reports
+    for call_request in call_requests:
+        assert call_request.location.reports.count() == 0

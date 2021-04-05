@@ -1,8 +1,10 @@
 import uuid
 
 import pytz
-from django.db import models
-from django.db.models import Q
+from django.conf import settings
+from django.db import models, transaction
+from django.db.models import Max, Q
+from django.db.utils import DatabaseError
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
@@ -559,6 +561,55 @@ class CallRequest(models.Model):
             Q(completed=False) & Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
             | Q(claimed_until__lte=now)
         ).order_by("-priority", "-id")
+
+    @classmethod
+    def backfill_queue(cls, minimum=None):
+        if minimum is None:
+            minimum = settings.MIN_CALL_REQUEST_QUEUE_ITEMS
+        num_to_create = max(0, minimum - cls.available_requests().count())
+        now = timezone.now()
+        print("backfilling {}".format(num_to_create))
+        # Queue up that many locations, by never-called or longest-ago-called
+        # We use .select_for_update(nowait=True) to try to avoid race conditions
+        # where multiple calls to /api/requestCall attempt to backfill at
+        # the same time.
+        if num_to_create:
+            backfill_reason = CallRequestReason.objects.get_or_create(
+                short_reason="Automatic backfill"
+            )[0]
+            # Try for never-called
+            never_called_qs = Location.objects.filter(
+                reports__isnull=True,
+                do_not_call=False,
+            )[:num_to_create]
+            never_called = list(never_called_qs)
+            print("never_called = ", never_called)
+            for location in never_called:
+                cls.objects.create(
+                    location=location,
+                    vesting_at=now,
+                    call_request_reason=backfill_reason,
+                )
+            num_to_create = max(0, num_to_create - len(never_called))
+        # Do we need to create any more? If so do longest-ago-called
+        if num_to_create:
+            Location.objects.select_for_update(nowait=True)
+            # Called longest ago
+            called_longest_ago_qs = (
+                Location.objects.filter(
+                    do_not_call=False,
+                )
+                .annotate(most_recent_report=Max("reports__created_at"))
+                .order_by("most_recent_report")[:num_to_create]
+            )
+            called_longest_ago = list(called_longest_ago_qs)
+            print("called_longest_ago = ", called_longest_ago)
+            for location in called_longest_ago:
+                cls.objects.create(
+                    location=location,
+                    vesting_at=now,
+                    call_request_reason=backfill_reason,
+                )
 
 
 class PublishedReport(models.Model):

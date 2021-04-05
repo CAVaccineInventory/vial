@@ -265,6 +265,8 @@ def request_call(request, on_request_logged):
     reporter, user_info = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
         return reporter
+    # Ensure there are at least MIN_QUEUE items in the queue
+    CallRequest.backfill_queue()
     # Override location selection: pass the public_id of a rocation to
     # skip the normal view selection code and return that ID specifically
     location_id = request.GET.get("location_id") or None
