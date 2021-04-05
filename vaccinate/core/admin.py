@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from django.db.models import Count, Exists, Max, Min, OuterRef
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import escape
@@ -384,17 +384,47 @@ def clear_claims(modeladmin, request, queryset):
     )
 
 
-class CallRequestAvailableFilter(admin.SimpleListFilter):
-    title = "Available in queue"
-    parameter_name = "available"
+class CallRequestQueueStatus(admin.SimpleListFilter):
+    title = "Queue status"
+    parameter_name = "status"
 
     def lookups(self, request, model_admin):
-        return (("yes", "In queue"), ("all", "Show all"))
+        return (
+            (None, "Ready to be assigned"),
+            ("claimed", "Currently assigned"),
+            ("scheduled", "Scheduled for future"),
+            ("completed", "Completed"),
+            ("all", "All"),
+        )
+
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == lookup,
+                "query_string": cl.get_query_string(
+                    {
+                        self.parameter_name: lookup,
+                    },
+                    [],
+                ),
+                "display": title,
+            }
 
     def queryset(self, request, queryset):
-        if self.value() == "yes":
-            return CallRequest.available_requests(queryset)
-        else:
+        now = timezone.now()
+        if self.value() is None:
+            return queryset.filter(
+                Q(vesting_at__lte=now)
+                & Q(completed=False)
+                & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
+            )
+        elif self.value() == "claimed":
+            return queryset.filter(claimed_until__gt=now, completed=False)
+        elif self.value() == "scheduled":
+            return queryset.filter(vesting_at__gt=now, completed=False)
+        elif self.value() == "completed":
+            return queryset.filter(completed=True)
+        elif self.value() == "all":
             return queryset
 
 
@@ -430,7 +460,7 @@ class CallRequestAdmin(admin.ModelAdmin):
         "priority",
     )
     list_filter = (
-        CallRequestAvailableFilter,
+        CallRequestQueueStatus,
         "call_request_reason",
     )
     actions = [

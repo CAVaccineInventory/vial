@@ -5,7 +5,7 @@ import pytest
 from django.contrib.messages import get_messages
 from django.utils import timezone
 
-from .models import CallRequest, Location, Reporter, State
+from .models import CallRequest, CallRequestReason, Location, Reporter, State
 
 
 @pytest.fixture
@@ -128,7 +128,7 @@ def test_clear_claims_action(admin_client):
     assert CallRequest.available_requests().count() == 0
     # Now clear two of them
     response = admin_client.post(
-        "/admin/core/callrequest/",
+        "/admin/core/callrequest/?status=all",
         {
             "action": "clear_claims",
             "_selected_action": [cr.id for cr in CallRequest.objects.all()[:2]],
@@ -190,6 +190,93 @@ def test_claim_bump_to_top_bottom_actions(admin_client):
         (cr2, 0),
         (cr3, -1),
     ]
+
+
+@pytest.mark.parametrize(
+    "query_string,expected",
+    [
+        ("", [1, 2, 3]),
+        ("?status=claimed", [4, 5]),
+        ("?status=scheduled", [6, 7]),
+        ("?status=completed", [8, 9, 10]),
+        ("?status=all", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+    ],
+)
+def test_call_request_filters(admin_client, ten_locations, query_string, expected):
+    # Create call requests with various characteristics
+    now = timezone.now()
+    reason = CallRequestReason.objects.get(short_reason="New location")
+    reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
+    ready_1 = CallRequest.objects.create(
+        location=ten_locations[0], call_request_reason=reason, vesting_at=now
+    )
+    ready_2 = CallRequest.objects.create(
+        location=ten_locations[1], call_request_reason=reason, vesting_at=now
+    )
+    ready_3 = CallRequest.objects.create(
+        location=ten_locations[2], call_request_reason=reason, vesting_at=now
+    )
+    claimed_4 = CallRequest.objects.create(
+        location=ten_locations[3],
+        call_request_reason=reason,
+        vesting_at=now,
+        claimed_by=reporter,
+        claimed_until=now + datetime.timedelta(minutes=20),
+    )
+    claimed_5 = CallRequest.objects.create(
+        location=ten_locations[4],
+        call_request_reason=reason,
+        vesting_at=now,
+        claimed_by=reporter,
+        claimed_until=now + datetime.timedelta(minutes=20),
+    )
+    scheduled_6 = CallRequest.objects.create(
+        location=ten_locations[5],
+        call_request_reason=reason,
+        vesting_at=now + datetime.timedelta(hours=1),
+    )
+    scheduled_7 = CallRequest.objects.create(
+        location=ten_locations[6],
+        call_request_reason=reason,
+        vesting_at=now + datetime.timedelta(hours=1),
+    )
+    completed_8 = CallRequest.objects.create(
+        location=ten_locations[7],
+        call_request_reason=reason,
+        vesting_at=now,
+        completed=True,
+    )
+    completed_9 = CallRequest.objects.create(
+        location=ten_locations[8],
+        call_request_reason=reason,
+        vesting_at=now,
+        completed=True,
+    )
+    completed_10 = CallRequest.objects.create(
+        location=ten_locations[9],
+        call_request_reason=reason,
+        vesting_at=now,
+        completed=True,
+    )
+    lookups = {
+        1: ready_1,
+        2: ready_2,
+        3: ready_3,
+        4: claimed_4,
+        5: claimed_5,
+        6: scheduled_6,
+        7: scheduled_7,
+        8: completed_8,
+        9: completed_9,
+        10: completed_10,
+    }
+    response = admin_client.get("/admin/core/callrequest/{}".format(query_string))
+    call_request_ids = {
+        int(r[1].split('<a href="/admin/core/callrequest/')[1].split("/change/")[0])
+        for r in response.context["results"]
+    }
+    expected_ids = {lookups[e].pk for e in expected}
+    assert call_request_ids == expected_ids
 
 
 # Using reset_sequences for predictable IDs in CSV output
