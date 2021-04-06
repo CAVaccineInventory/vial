@@ -32,6 +32,17 @@ for model in (LocationType, ProviderType):
     admin.site.register(model, actions=[export_as_csv_action()])
 
 
+class DynamicListDisplayMixin:
+    def get_list_display(self, request):
+        list_display = list(self.list_display)
+        if "_extra" in request.GET:
+            request.GET = request.GET.copy()
+            extras = request.GET.getlist("_extra")
+            list_display += extras
+            request.GET.pop("_extra")
+        return list_display
+
+
 @admin.register(State)
 class StateAdmin(admin.ModelAdmin):
     search_fields = ("name",)
@@ -41,7 +52,7 @@ class StateAdmin(admin.ModelAdmin):
 
 
 @admin.register(Provider)
-class ProviderAdmin(admin.ModelAdmin):
+class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "main_url", "contact_phone_number", "provider_type")
     list_editable = ("main_url", "contact_phone_number", "provider_type")
@@ -49,7 +60,7 @@ class ProviderAdmin(admin.ModelAdmin):
 
 
 @admin.register(County)
-class CountyAdmin(VersionAdmin):
+class CountyAdmin(DynamicListDisplayMixin, VersionAdmin):
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)
@@ -140,7 +151,7 @@ class LocationDeletedFilter(admin.SimpleListFilter):
 
 
 @admin.register(Location)
-class LocationAdmin(VersionAdmin):
+class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
     actions = [export_as_csv_action()]
 
     def get_actions(self, request):
@@ -270,7 +281,7 @@ class ReporterAdmin(admin.ModelAdmin):
 
 
 @admin.register(AvailabilityTag)
-class AvailabilityTagAdmin(admin.ModelAdmin):
+class AvailabilityTagAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "group", "notes", "slug", "disabled")
     list_filter = ("group", "disabled")
@@ -298,7 +309,7 @@ class ReportReviewNoteInline(admin.StackedInline):
 
 
 @admin.register(Report)
-class ReportAdmin(admin.ModelAdmin):
+class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_display = (
         "state",
         "created_at",
@@ -450,7 +461,7 @@ def make_call_request_bump_action(top_or_bottom):
 
 
 @admin.register(CallRequest)
-class CallRequestAdmin(admin.ModelAdmin):
+class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_display = (
         "location",
         "vesting_at",
