@@ -310,6 +310,11 @@ class ReportReviewNoteInline(admin.StackedInline):
 
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+    search_fields = (
+        "location__public_id",
+        "location__name",
+        "reported_by__external_id",
+    )
     list_display = (
         "state",
         "created_at",
