@@ -315,6 +315,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "location__public_id",
         "location__name",
         "reported_by__external_id",
+        "reported_by__email",
     )
     list_display = (
         "state",
