@@ -311,6 +311,7 @@ class ReportReviewNoteInline(admin.StackedInline):
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = (
+        "public_id",
         "location__public_id",
         "location__name",
         "reported_by__external_id",
@@ -318,13 +319,14 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_display = (
         "state",
         "created_at",
+        "public_id",
         "availability",
         "location",
         "appointment_tag",
         "reported_by",
         "created_at_utc",
     )
-    list_display_links = ("created_at",)
+    list_display_links = ("created_at", "public_id")
     actions = [export_as_csv_action()]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (

@@ -2,9 +2,8 @@ import uuid
 
 import pytz
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Max, Q
-from django.db.utils import DatabaseError
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
