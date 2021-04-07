@@ -4,8 +4,6 @@ import click
 import httpx
 from click.exceptions import ClickException
 
-from .import_utils import extract_city_and_zip_code
-
 
 @click.command()
 @click.argument(
@@ -76,14 +74,13 @@ def convert_airtable(location):
     import_ref = "vca-airtable:{}".format(location["airtable_id"])
     address = location["Address"]
     address_bits = [s.strip() for s in address.split(",")]
-    city, zip_code = extract_city_and_zip_code(address)
     info = {
         "name": location["Name"],
         "full_address": ", ".join(address_bits),
         "street_address": address_bits[0],
-        "city": city,
+        "city": None,
         "phone_number": location.get("Phone number"),
-        "zip_code": zip_code,
+        "zip_code": None,
         "website": location.get("Website"),
         "hours": location.get("Hours"),
         "county": location["County"].replace(" County", "").strip(),
