@@ -98,6 +98,7 @@ class County(models.Model):
     vaccine_locations_url = CharTextField(null=True, blank=True)
     official_volunteering_url = CharTextField(null=True, blank=True)
     public_notes = models.TextField(null=True, blank=True)
+    internal_notes = models.TextField(null=True, blank=True)
     facebook_page = CharTextField(null=True, blank=True)
     twitter_page = CharTextField(null=True, blank=True)
     vaccine_reservations_url = CharTextField(null=True, blank=True)
@@ -105,6 +106,7 @@ class County(models.Model):
     vaccine_dashboard_url = CharTextField(null=True, blank=True)
     vaccine_data_url = CharTextField(null=True, blank=True)
     vaccine_arcgis_url = CharTextField(null=True, blank=True)
+    age_floor_without_restrictions = models.IntegerField(null=True, blank=True)
     airtable_id = models.CharField(
         max_length=20,
         null=True,

@@ -60,12 +60,13 @@ def import_airtable_counties(airtable_counties, user):
                 "County vaccination reservations URL": "vaccine_reservations_url",
                 "Facebook Page": "facebook_page",
                 # "Worked on By": "",
-                # "Internal notes": "",
+                "Internal notes": "internal_notes",
                 "Notes": "public_notes",
                 "Twitter Page": "twitter_page",
                 "Vaccine info URL": "vaccine_info_url",
                 "Vaccine locations URL": "vaccine_locations_url",
                 "population": "population",
+                "age_floor_without_restrictions": "age_floor_without_restrictions",
             }.items():
                 new_value = airtable_county.get(airtable_key) or ""
                 old_value = getattr(county, django_key, "")

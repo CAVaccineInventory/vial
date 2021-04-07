@@ -44,6 +44,9 @@ def test_import_airtable_county_details(admin_client, requests_mock):
                 "airtable_id": "rec0QOd7EXzSuZZvN",
                 "County vaccination reservations URL": "https://example.com/reservations",
                 "population": 200,
+                "age_floor_without_restrictions": 50,
+                "Internal notes": "These are internal notes",
+                "Notes": "These are public notes",
             }
         ],
     )
@@ -55,6 +58,9 @@ def test_import_airtable_county_details(admin_client, requests_mock):
     county = County.objects.get(airtable_id="rec0QOd7EXzSuZZvN")
     assert county.vaccine_reservations_url == "https://example.com/reservations"
     assert county.population == 200
+    assert county.age_floor_without_restrictions == 50
+    assert county.internal_notes == "These are internal notes"
+    assert county.public_notes == "These are public notes"
 
 
 def test_command_redirects_to_tools(admin_client):
