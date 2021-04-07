@@ -1,6 +1,4 @@
 from django.db import migrations
-from django.db.models import F, Value
-from django.db.models.functions import Concat
 
 
 def update_location_types(apps, schema_editor):
