@@ -1,4 +1,6 @@
 import httpx
+import probableparsing
+import usaddress
 
 
 def derive_county(latitude, longitude):
@@ -8,3 +10,13 @@ def derive_county(latitude, longitude):
     if len(results) != 1:
         return None
     return results[0]
+
+
+def extract_city_and_zip_code(address):
+    try:
+        address_components = usaddress.tag(address)[0]
+        city = address_components.get("PlaceName") or None
+        zip = address_components.get("ZipCode") or None
+        return city, zip
+    except probableparsing.RepeatedLabelError:
+        return None, None

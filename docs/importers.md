@@ -4,6 +4,26 @@ Importers are scripts that live in the `importers/` directory in this repository
 
 You can run the tests for the importers by changing into the top level directory (`vial`) and running `pytest importers`
 
+## importers.airtable_locations
+
+Import location data from our Airtable backups. This command accepts a path to a `Locations.json` file or a URL - for the URL, visit https://github.com/CAVaccineInventory/airtable-data-backup/blob/main/backups/Locations.json and click on the "Raw" link to get a URL with a token in it, which should look something like `https://raw.githubusercontent.com/CAVaccineInventory/airtable-data-backup/main/backups/Locations.json?token=AAACK7...`
+
+Run this commands in the top-level `vail` folder:
+
+    python -m importers.airtable_locations Locations.json --dry-run
+
+This will execute a "dry run" and show you the transformed data.
+
+To run the import, use:
+
+    python -m importers.airtable_locations Locations.json \
+        --url 'https://vial-staging.calltheshots.us/api/importLocations' \
+        --token 3:xxxxx
+
+Pass a valid API key (created at https://vial-staging.calltheshots.us/admin/api/apikey/).
+
+In local development use `--url 'http://localhost:8000/api/importLocations`.
+
 ## importers.vaccinefinder
 
 Run this importer from the top-level `vial` folder like so:
