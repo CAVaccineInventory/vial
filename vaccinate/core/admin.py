@@ -196,7 +196,7 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "provider",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
-    readonly_fields = ("public_id", "airtable_id", "import_json")
+    readonly_fields = ("public_id", "airtable_id", "import_json", "reports_history")
 
     def summary(self, obj):
         html = (
@@ -226,6 +226,23 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+    def reports_history(self, instance):
+        return mark_safe(
+            render_to_string(
+                "admin/_reports_history.html",
+                {
+                    "location_id": instance.pk,
+                    "reports_datetimes": [
+                        d.isoformat()
+                        for d in instance.reports.values_list("created_at", flat=True)
+                    ],
+                    "reports": instance.reports.select_related("reported_by")
+                    .prefetch_related("availability_tags")
+                    .order_by("-created_at"),
+                },
+            )
+        )
 
 
 class ReporterProviderFilter(admin.SimpleListFilter):
