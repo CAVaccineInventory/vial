@@ -309,6 +309,7 @@ def request_call(request, on_request_logged):
         latest_report = None
 
     county_record = {}
+    county_age_floor_without_restrictions = []
     if location.county:
         county_record = {
             "id": location.county.airtable_id
@@ -319,6 +320,9 @@ def request_call(request, on_request_logged):
             "Vaccine locations URL": location.county.vaccine_locations_url,
             "Notes": location.county.public_notes,
         }
+        county_age_floor_without_restrictions = [
+            location.county.age_floor_without_restrictions
+        ]
 
     provider_record = {}
     if location.provider:
@@ -368,6 +372,7 @@ def request_call(request, on_request_logged):
             "Number of Reports": location.reports.count(),
             "county_record": county_record,
             "provider_record": provider_record,
+            "county_age_floor_without_restrictions": county_age_floor_without_restrictions,
         },
         status=200,
     )

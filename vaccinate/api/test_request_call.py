@@ -26,6 +26,8 @@ def test_request_call(client, jwt_id_token):
     assert response1.json() == {"error": "Couldn't find somewhere to call"}
     # Queue up a request and try again
     county = County.objects.get(fips_code="06079")  # San Luis Obispo
+    county.age_floor_without_restrictions = 50
+    county.save()
     locations = []
     for i in range(3):
         location = Location.objects.create(
@@ -85,6 +87,7 @@ def test_request_call(client, jwt_id_token):
             "Vaccine locations URL": None,
             "Notes": None,
         },
+        "county_age_floor_without_restrictions": [50],
         "provider_record": {},
     }
 
