@@ -551,6 +551,10 @@ def qa_summary(reporter):
                 "recent_reports": reporter.reports.select_related("location")
                 .prefetch_related("availability_tags")
                 .order_by("-created_at")[:20],
+                "recent_report_datetimes": [
+                    d.isoformat()
+                    for d in reporter.reports.values_list("created_at", flat=True)[:100]
+                ],
                 "report_count": reporter.reports.count(),
             },
         )
