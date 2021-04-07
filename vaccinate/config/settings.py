@@ -259,6 +259,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-en_formats.DATETIME_FORMAT = "jS M Y fA e"
+en_formats.DATETIME_FORMAT = "jS M Y g:i:s A e"
 
 TEST_RUNNER = "test_runner.PytestTestRunner"
