@@ -244,6 +244,7 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
+    search_fields = ("external_id", "name", "email")
     list_display = ("external_id", "name", "report_count", "latest_report")
     list_filter = (ReporterProviderFilter, "auth0_role_names")
     actions = [export_as_csv_action()]
