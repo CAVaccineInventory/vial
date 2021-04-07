@@ -17,6 +17,10 @@ class ToolsMenu(items.MenuItem):
             self.children.append(
                 items.MenuItem("Merge locations", "/admin/merge-locations/"),
             )
+        if user.is_superuser:
+            self.children.append(
+                items.MenuItem("Data import tools", "/admin/tools/"),
+            )
 
     def is_empty(self):
         return not bool(self.children)
