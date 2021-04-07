@@ -53,6 +53,7 @@ class StateAdmin(admin.ModelAdmin):
 
 @admin.register(Provider)
 class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+    save_on_top = True
     search_fields = ("name",)
     list_display = ("name", "main_url", "contact_phone_number", "provider_type")
     list_editable = ("main_url", "contact_phone_number", "provider_type")
@@ -61,6 +62,7 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
 @admin.register(County)
 class CountyAdmin(DynamicListDisplayMixin, VersionAdmin):
+    save_on_top = True
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
     list_filter = ("state",)
@@ -152,6 +154,7 @@ class LocationDeletedFilter(admin.SimpleListFilter):
 
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
+    save_on_top = True
     actions = [export_as_csv_action()]
 
     def get_actions(self, request):
@@ -321,6 +324,7 @@ class ReportReviewNoteInline(admin.StackedInline):
 
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+    save_on_top = True
     search_fields = (
         "public_id",
         "location__public_id",
