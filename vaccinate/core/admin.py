@@ -177,7 +177,7 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         )
         return actions
 
-    search_fields = ("name", "full_address")
+    search_fields = ("name", "full_address", "public_id")
     list_display_links = None
     list_display = (
         "summary",
