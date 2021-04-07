@@ -8,6 +8,7 @@ import beeline
 import markdown
 import pytz
 import requests
+import reversion
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
@@ -464,50 +465,56 @@ def import_locations(request, on_request_logged):
     errors = []
     if isinstance(post_data, dict):
         post_data = [post_data]
-    for location_json in post_data:
-        try:
-            location_data = LocationValidator(**location_json).dict()
-            kwargs = dict(
-                name=location_data["name"],
-                latitude=location_data["latitude"],
-                longitude=location_data["longitude"],
-                state=location_data["state"],
-                location_type=location_data["location_type"],
-                import_json=location_data.get("import_json") or None,
-            )
-            if location_data.get("provider_type"):
-                kwargs["provider"] = Provider.objects.update_or_create(
-                    name=location_data["provider_name"],
-                    defaults={"provider_type": location_data["provider_type"]},
-                )[0]
-            for key in (
-                "phone_number",
-                "full_address",
-                "city",
-                "county",
-                "google_places_id",
-                "zip_code",
-                "hours",
-                "website",
-                "latitude",
-                "longitude",
-                "airtable_id",
-            ):
-                kwargs[key] = location_data.get(key)
-            kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
-            if location_json.get("import_ref"):
-                location, created = Location.objects.update_or_create(
-                    import_ref=location_json["import_ref"], defaults=kwargs
+    with reversion.create_revision():
+        for location_json in post_data:
+            try:
+                location_data = LocationValidator(**location_json).dict()
+                kwargs = dict(
+                    name=location_data["name"],
+                    latitude=location_data["latitude"],
+                    longitude=location_data["longitude"],
+                    state=location_data["state"],
+                    location_type=location_data["location_type"],
+                    import_json=location_data.get("import_json") or None,
                 )
-                if created:
-                    added_locations.append(location)
+                if location_data.get("provider_type"):
+                    kwargs["provider"] = Provider.objects.update_or_create(
+                        name=location_data["provider_name"],
+                        defaults={"provider_type": location_data["provider_type"]},
+                    )[0]
+                for key in (
+                    "phone_number",
+                    "full_address",
+                    "city",
+                    "county",
+                    "google_places_id",
+                    "zip_code",
+                    "hours",
+                    "website",
+                    "latitude",
+                    "longitude",
+                    "airtable_id",
+                ):
+                    kwargs[key] = location_data.get(key)
+                kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
+                if location_json.get("import_ref"):
+                    location, created = Location.objects.update_or_create(
+                        import_ref=location_json["import_ref"], defaults=kwargs
+                    )
+                    if created:
+                        added_locations.append(location)
+                    else:
+                        updated_locations.append(location)
                 else:
-                    updated_locations.append(location)
-            else:
-                location = Location.objects.create(**kwargs)
-                added_locations.append(location)
-        except ValidationError as e:
-            errors.append((location_json, e.errors()))
+                    location = Location.objects.create(**kwargs)
+                    added_locations.append(location)
+            except ValidationError as e:
+                errors.append((location_json, e.errors()))
+            reversion.set_comment(
+                "/api/importLocations called with API key {}".format(
+                    str(request.api_key)
+                )
+            )
     for location in added_locations:
         location.refresh_from_db()
     return JsonResponse(
