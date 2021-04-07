@@ -1,7 +1,0 @@
-<h2>{{ reporter }} has made {{ report_count }} report{{ report_count|pluralize }}</h2>
-
-<p><strong>Recent reports</strong> (<a href="/admin/core/report/?reported_by__exact={{ reporter.id }}">view all</a>)</p>
-
-{% for report in recent_reports %}
-    <p><a href="/admin/core/location/{{ report.location.id }}/change/">{{ report.location }}</a> on {{ report.created_at }}</p>
-{% endfor %}

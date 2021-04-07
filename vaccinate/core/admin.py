@@ -265,19 +265,12 @@ class ReporterAdmin(admin.ModelAdmin):
 
     latest_report.admin_order_field = "reporter_latest_report"
 
-    readonly_fields = ("recent_calls",)
+    readonly_fields = ("qa_summary",)
 
-    def recent_calls(self, instance):
-        return mark_safe(
-            render_to_string(
-                "admin/_reporter_recent_calls.html",
-                {
-                    "reporter": instance,
-                    "recent_reports": instance.reports.order_by("-created_at")[:20],
-                    "report_count": instance.reports.count(),
-                },
-            )
-        )
+    def qa_summary(self, instance):
+        return qa_summary(instance)
+
+    qa_summary.short_description = "QA summary"
 
 
 @admin.register(AvailabilityTag)
@@ -336,11 +329,13 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
+
     readonly_fields = (
         "created_at_utc",
         "public_id",
         "airtable_id",
         "airtable_json",
+        "qa_summary",
     )
     inlines = [ReportReviewNoteInline]
     ordering = ("-created_at",)
@@ -363,6 +358,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+    def qa_summary(self, instance):
+        return qa_summary(instance.reported_by)
+
+    qa_summary.short_description = "QA summary"
 
 
 @admin.register(ReportReviewTag)
@@ -539,3 +539,18 @@ class VersionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Version, VersionAdmin)
+
+
+def qa_summary(reporter):
+    return mark_safe(
+        render_to_string(
+            "admin/_reporter_qa_summary.html",
+            {
+                "reporter": reporter,
+                "recent_reports": reporter.reports.select_related("location")
+                .prefetch_related("availability_tags")
+                .order_by("-created_at")[:20],
+                "report_count": reporter.reports.count(),
+            },
+        )
+    )

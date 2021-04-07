@@ -1,0 +1,12 @@
+<h2>{{ reporter }} has made {{ report_count }} report{{ report_count|pluralize }}</h2>
+
+<p><strong>Recent reports</strong> (<a href="/admin/core/report/?reported_by__exact={{ reporter.id }}">view all</a>)</p>
+
+{% for report in recent_reports %}
+    <p>
+      <a href="/admin/core/location/{{ report.location.id }}/change/">{{ report.location }}</a>
+      Tagged
+      {% for tag in report.availability_tags.all %}<strong>{{ tag }}</strong>{% if not forloop.last %}, {% endif%}{% endfor %}
+      on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a>
+    </p>
+{% endfor %}
