@@ -41,7 +41,7 @@ def cli(filepath_or_url, url, token, dry_run):
 
 def yield_locations(filepath_or_url):
     if filepath_or_url.startswith("https://") or filepath_or_url.startswith("http://"):
-        yield from httpx.get(filepath_or_url)
+        yield from httpx.get(filepath_or_url).json()
     else:
         yield from json.load(open(filepath_or_url))
 
