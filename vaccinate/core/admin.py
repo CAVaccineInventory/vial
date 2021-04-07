@@ -471,6 +471,7 @@ def make_call_request_bump_action(top_or_bottom):
 
 @admin.register(CallRequest)
 class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+    search_fields = ("location__name", "location__public_id")
     list_display = (
         "location",
         "vesting_at",
