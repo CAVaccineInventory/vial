@@ -83,7 +83,15 @@ Request a new location to call. This record will pick the request from the call 
 
 HTTP POST, sending an empty `{}` JSON object as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
 
-The response currently looks like this:
+You can customize the results returned by this API by passing querystring parameters:
+
+- `location_id` - pass a public location ID (like `reczHoKmlWd3XiI63` or `ldfzg`) to force VIAL to return that specific location
+- `state` - the two-letter capitalized abbreviation for a state that you would like a call request for. If you do not provide this `CA` will be used as the default. You can pass `all` to specify calls from any states.
+- `no_claim` - set this to `1` to avoid locking this call request for twenty minutes. Useful for testing.
+
+These are querystring parameters, so you should `POST` to `/api/requestCall?state=OR` while still sending an empty `{}` JSON object as the POST body.
+
+The response from this API currently looks like this:
 
 ```json
 

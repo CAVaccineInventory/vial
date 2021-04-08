@@ -6,7 +6,7 @@
 #     ./scripts/update-requirements --upgrade
 
 # Core django
-django
+django==3.1.8
 
 # Server
 gunicorn

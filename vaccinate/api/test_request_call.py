@@ -52,7 +52,7 @@ def test_request_call(client, jwt_id_token):
         assert call_request.claimed_by is None
         assert call_request.claimed_until is None
     response2 = client.post(
-        "/api/requestCall",
+        "/api/requestCall?state=OR",
         {},
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
@@ -97,7 +97,7 @@ def test_backfill_queue(client, jwt_id_token, settings, ten_locations):
     settings.MIN_CALL_REQUEST_QUEUE_ITEMS = 3
     assert CallRequest.available_requests().count() == 0
     response = client.post(
-        "/api/requestCall",
+        "/api/requestCall?state=OR",
         {},
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
@@ -115,7 +115,7 @@ def test_backfill_queue(client, jwt_id_token, settings, ten_locations):
             appointment_tag=web,
         )
     response = client.post(
-        "/api/requestCall",
+        "/api/requestCall?state=OR",
         {},
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),

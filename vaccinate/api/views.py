@@ -297,9 +297,15 @@ def request_call(request, on_request_logged):
                 status=400,
             )
     else:
+        # Obey ?state= if present, otherwise default to California
+        state = request.GET.get("state") or "CA"
         now = timezone.now()
-        # Pick the next item from the call list
+        # Pick the next item from the call list for that state
         available_requests = CallRequest.available_requests()
+        if state != "all":
+            available_requests = available_requests.filter(
+                location__state__abbreviation=state
+            )
         # We need to lock the record we select so we can update
         # it marking that we have claimed it
         call_requests = available_requests.select_for_update()[:1]

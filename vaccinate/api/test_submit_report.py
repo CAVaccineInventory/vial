@@ -87,7 +87,7 @@ def test_submit_report_api_example(
 
     # Claim that call request
     call_request_response = client.post(
-        "/api/requestCall",
+        "/api/requestCall?state=all",
         {},
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),

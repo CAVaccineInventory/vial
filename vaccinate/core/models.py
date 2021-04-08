@@ -4,6 +4,8 @@ import pytz
 from django.conf import settings
 from django.db import models
 from django.db.models import Max, Q
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
@@ -220,6 +222,32 @@ class Location(models.Model):
         help_text="If imported, unique identifier in the system it was imported from",
     )
 
+    # Denormalized foreign keys for efficient "latest yes report" style queries
+    # https://github.com/CAVaccineInventory/vial/issues/193
+    # Latest report, NOT including is_pending_review reports:
+    dn_latest_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Latest report including is_pending_review reports:
+    dn_latest_report_including_pending = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Latest with at least one YES availability tag, NOT including is_pending_review:
+    dn_latest_yes_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Latest with at least one SKIP availability tag, NOT including is_pending_review:
+    dn_latest_skip_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Latest report that is NOT is_pending_review and does NOT have a skip tag:
+    dn_latest_non_skip_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Denormalized counts for non is_pendin_review reports:
+    dn_skip_report_count = models.IntegerField(default=0)
+    dn_yes_report_count = models.IntegerField(default=0)
+
     def __str__(self):
         return self.name
 
@@ -232,6 +260,72 @@ class Location(models.Model):
     @property
     def pid(self):
         return "l" + pid.from_int(self.pk)
+
+    def update_denormalizations(self):
+        reports = (
+            self.reports.all()
+            .prefetch_related("availability_tags")
+            .order_by("created_at")
+        )
+        try:
+            dn_latest_report = [r for r in reports if not r.is_pending_review][0]
+        except IndexError:
+            dn_latest_report = None
+        try:
+            dn_latest_report_including_pending = reports[0]
+        except IndexError:
+            dn_latest_report_including_pending = None
+        dn_latest_yes_reports = [
+            r
+            for r in reports
+            if not r.is_pending_review
+            and any(t for t in r.availability_tags.all() if t.group == "yes")
+        ]
+        dn_yes_report_count = len(dn_latest_yes_reports)
+        if dn_latest_yes_reports:
+            dn_latest_yes_report = dn_latest_yes_reports[0]
+        else:
+            dn_latest_yes_report = None
+        dn_latest_skip_reports = [
+            r
+            for r in reports
+            if not r.is_pending_review
+            and any(t for t in r.availability_tags.all() if t.group == "skip")
+        ]
+        dn_skip_report_count = len(dn_latest_skip_reports)
+        if dn_latest_skip_reports:
+            dn_latest_skip_report = dn_latest_skip_reports[0]
+        else:
+            dn_latest_skip_report = None
+        dn_latest_non_skip_reports = [
+            r
+            for r in reports
+            if not r.is_pending_review
+            and not any(t for t in r.availability_tags.all() if t.group == "skip")
+        ]
+        if dn_latest_non_skip_reports:
+            dn_latest_non_skip_report = dn_latest_non_skip_reports[0]
+        else:
+            dn_latest_non_skip_report = None
+        # Has anything changed?
+        if (
+            self.dn_latest_report != dn_latest_report
+            or self.dn_latest_report_including_pending
+            != dn_latest_report_including_pending
+            or self.dn_latest_yes_report != dn_latest_yes_report
+            or self.dn_latest_skip_report != dn_latest_skip_report
+            or self.dn_latest_non_skip_report != dn_latest_non_skip_report
+            or self.dn_skip_report_count != dn_skip_report_count
+            or self.dn_yes_report_count != dn_yes_report_count
+        ):
+            self.dn_latest_report = dn_latest_report
+            self.dn_latest_report_including_pending = dn_latest_report_including_pending
+            self.dn_latest_yes_report = dn_latest_yes_report
+            self.dn_latest_skip_report = dn_latest_skip_report
+            self.dn_latest_non_skip_report = dn_latest_non_skip_report
+            self.dn_skip_report_count = dn_skip_report_count
+            self.dn_yes_report_count = dn_yes_report_count
+            self.save()
 
     def save(self, *args, **kwargs):
         set_public_id_later = False
@@ -423,6 +517,12 @@ class Report(models.Model):
         super().save(*args, **kwargs)
         if set_public_id_later:
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
+        self.location.update_denormalizations()
+
+    def delete(self, *args, **kwargs):
+        location = self.location
+        super().delete(*args, **kwargs)
+        location.update_denormalizations()
 
 
 class ReportReviewTag(models.Model):
@@ -688,3 +788,9 @@ class PublishedReport(models.Model):
 
     class Meta:
         db_table = "published_report"
+
+
+# Signals
+@receiver(m2m_changed, sender=Report.availability_tags.through)
+def denormalize_location(sender, instance, **kwargs):
+    instance.location.update_denormalizations()

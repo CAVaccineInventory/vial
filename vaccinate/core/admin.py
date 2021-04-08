@@ -190,6 +190,8 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "location_type",
         "provider",
         "soft_deleted",
+        "latest_non_skip_report_date",
+        "dn_skip_report_count",
     )
     list_filter = (
         LocationInQueueFilter,
@@ -200,7 +202,19 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "provider",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
-    readonly_fields = ("public_id", "airtable_id", "import_json", "reports_history")
+    readonly_fields = (
+        "public_id",
+        "airtable_id",
+        "import_json",
+        "reports_history",
+        "dn_latest_report",
+        "dn_latest_report_including_pending",
+        "dn_latest_yes_report",
+        "dn_latest_skip_report",
+        "dn_latest_non_skip_report",
+        "dn_skip_report_count",
+        "dn_yes_report_count",
+    )
 
     def summary(self, obj):
         html = (
@@ -220,13 +234,21 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related(
-            "county", "state", "provider", "location_type"
+            "county", "state", "provider", "location_type", "dn_latest_non_skip_report"
         ).annotate(times_reported_count=Count("reports"))
 
     def times_reported(self, inst):
         return inst.times_reported_count
 
     times_reported.admin_order_field = "times_reported_count"
+
+    def latest_non_skip_report_date(self, inst):
+        if inst.dn_latest_non_skip_report:
+            return inst.dn_latest_non_skip_report.created_at
+
+    latest_non_skip_report_date.admin_order_field = (
+        "dn_latest_non_skip_report__created_at"
+    )
 
     def lookup_allowed(self, lookup, value):
         return True
@@ -293,6 +315,9 @@ class ReporterAdmin(admin.ModelAdmin):
         return qa_summary(instance)
 
     qa_summary.short_description = "QA summary"
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(AvailabilityTag)
@@ -386,6 +411,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj = form.instance
             obj.is_pending_review = False
             obj.save()
+            obj.location.update_denormalizations()
 
     def state(self, instance):
         return instance.location.state.abbreviation
