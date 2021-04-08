@@ -209,6 +209,9 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "dn_latest_report_including_pending",
         "dn_latest_yes_report",
         "dn_latest_skip_report",
+        "dn_latest_non_skip_report",
+        "dn_skip_report_count",
+        "dn_yes_report_count",
     )
 
     def summary(self, obj):

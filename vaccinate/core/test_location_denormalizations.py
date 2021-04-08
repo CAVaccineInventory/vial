@@ -28,6 +28,9 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_report_including_pending is None
     assert location.dn_latest_yes_report is None
     assert location.dn_latest_skip_report is None
+    assert location.dn_latest_non_skip_report is None
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 0
     # Now add an is_pending_review yes report
     reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
     web = AppointmentTag.objects.get(slug="web")
@@ -44,6 +47,9 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_report_including_pending == report
     assert location.dn_latest_yes_report is None
     assert location.dn_latest_skip_report is None
+    assert location.dn_latest_non_skip_report is None
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 0
     # Make it not pending any more
     report.is_pending_review = False
     report.save()
@@ -51,12 +57,20 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_report == report
     assert location.dn_latest_report_including_pending == report
     assert location.dn_latest_yes_report == report
+    assert location.dn_latest_skip_report is None
+    assert location.dn_latest_non_skip_report == report
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 1
     # Remove that availability tag - should no longer be a 'yes'
     report.availability_tags.remove(plus_65)
     location.refresh_from_db()
     assert location.dn_latest_report == report
     assert location.dn_latest_report_including_pending == report
     assert location.dn_latest_yes_report is None
+    assert location.dn_latest_skip_report is None
+    assert location.dn_latest_non_skip_report == report
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 0
     # Delete the report
     report.delete()
     location.refresh_from_db()
@@ -64,7 +78,10 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_report_including_pending is None
     assert location.dn_latest_yes_report is None
     assert location.dn_latest_skip_report is None
-    # Add a single skip tag
+    assert location.dn_latest_non_skip_report is None
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 0
+    # Add a single skip report
     report2 = location.reports.create(
         reported_by=reporter,
         report_source="ca",
@@ -77,3 +94,6 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_report_including_pending == report2
     assert location.dn_latest_yes_report is None
     assert location.dn_latest_skip_report == report2
+    assert location.dn_latest_non_skip_report is None
+    assert location.dn_skip_report_count == 1
+    assert location.dn_yes_report_count == 0

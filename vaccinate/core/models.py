@@ -240,6 +240,13 @@ class Location(models.Model):
     dn_latest_skip_report = models.ForeignKey(
         "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
+    # Latest report that is NOT is_pending_review and does NOT have a skip tag:
+    dn_latest_non_skip_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Denormalized counts for non is_pendin_review reports:
+    dn_skip_report_count = models.IntegerField(default=0)
+    dn_yes_report_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -268,24 +275,38 @@ class Location(models.Model):
             dn_latest_report_including_pending = reports[0]
         except IndexError:
             dn_latest_report_including_pending = None
-        try:
-            dn_latest_yes_report = [
-                r
-                for r in reports
-                if not r.is_pending_review
-                and any(t for t in r.availability_tags.all() if t.group == "yes")
-            ][0]
-        except IndexError:
+        dn_latest_yes_reports = [
+            r
+            for r in reports
+            if not r.is_pending_review
+            and any(t for t in r.availability_tags.all() if t.group == "yes")
+        ]
+        dn_yes_report_count = len(dn_latest_yes_reports)
+        if dn_latest_yes_reports:
+            dn_latest_yes_report = dn_latest_yes_reports[0]
+        else:
             dn_latest_yes_report = None
-        try:
-            dn_latest_skip_report = [
-                r
-                for r in reports
-                if not r.is_pending_review
-                and any(t for t in r.availability_tags.all() if t.group == "skip")
-            ][0]
-        except IndexError:
+        dn_latest_skip_reports = [
+            r
+            for r in reports
+            if not r.is_pending_review
+            and any(t for t in r.availability_tags.all() if t.group == "skip")
+        ]
+        dn_skip_report_count = len(dn_latest_skip_reports)
+        if dn_latest_skip_reports:
+            dn_latest_skip_report = dn_latest_skip_reports[0]
+        else:
             dn_latest_skip_report = None
+        dn_latest_non_skip_reports = [
+            r
+            for r in reports
+            if not r.is_pending_review
+            and not any(t for t in r.availability_tags.all() if t.group == "skip")
+        ]
+        if dn_latest_non_skip_reports:
+            dn_latest_non_skip_report = dn_latest_non_skip_reports[0]
+        else:
+            dn_latest_non_skip_report = None
         # Has anything changed?
         if (
             self.dn_latest_report != dn_latest_report
@@ -293,11 +314,17 @@ class Location(models.Model):
             != dn_latest_report_including_pending
             or self.dn_latest_yes_report != dn_latest_yes_report
             or self.dn_latest_skip_report != dn_latest_skip_report
+            or self.dn_latest_non_skip_report != dn_latest_non_skip_report
+            or self.dn_skip_report_count != dn_skip_report_count
+            or self.dn_yes_report_count != dn_yes_report_count
         ):
             self.dn_latest_report = dn_latest_report
             self.dn_latest_report_including_pending = dn_latest_report_including_pending
             self.dn_latest_yes_report = dn_latest_yes_report
             self.dn_latest_skip_report = dn_latest_skip_report
+            self.dn_latest_non_skip_report = dn_latest_non_skip_report
+            self.dn_skip_report_count = dn_skip_report_count
+            self.dn_yes_report_count = dn_yes_report_count
             self.save()
 
     def save(self, *args, **kwargs):
