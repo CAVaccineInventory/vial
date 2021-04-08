@@ -10,7 +10,7 @@ This API records a new "report" in our database. A report is when someone checks
   
 You call this API by HTTP POST, sending JSON as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
 
-The JSON document have the following keys:
+The JSON document should have the following keys:
 
 * **Location** (required): the ID of one of our locations, e.g. `recaQlVkkI1rNarvx`
 * **Appointment scheduling instructions**: a free text field of scheduling instructions.
@@ -19,6 +19,7 @@ The JSON document have the following keys:
 * **Notes**: A free text field of public notes
 * **Internal Notes**: A free text field of private, internal notes
 * **Do not call until**: An ISO 8601-formatted timestamp, before which this location should not be called again
+* **is_pending_review**: Optional boolean - set this to `true` to specify that this report should be reviewed by our QA team
 
 Here is an example submission:
 ```json
