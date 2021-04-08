@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.template.loader import render_to_string
@@ -354,6 +356,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
 
     readonly_fields = (
+        "created_at",
         "created_at_utc",
         "public_id",
         "airtable_id",
@@ -364,9 +367,25 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     ordering = ("-created_at",)
 
     def save_formset(self, request, form, formset, change):
-        for form in formset.forms:
-            form.instance.author = request.user
-        formset.save()
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for instance in instances:
+            instance.author = request.user
+            instance.save()
+        formset.save_m2m()
+        # Does a review posted created within last 5 seconds have the 'approved' tag?
+        recently_added_review = form.instance.review_notes.filter(
+            created_at__gte=timezone.now() - datetime.timedelta(seconds=5)
+        ).last()
+        if (
+            recently_added_review is not None
+            and recently_added_review.tags.filter(tag="Approved").exists()
+            and form.instance.is_pending_review
+        ):
+            obj = form.instance
+            obj.is_pending_review = False
+            obj.save()
 
     def state(self, instance):
         return instance.location.state.abbreviation

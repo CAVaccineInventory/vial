@@ -5,7 +5,14 @@ import pytest
 from django.contrib.messages import get_messages
 from django.utils import timezone
 
-from .models import CallRequest, CallRequestReason, Location, Reporter, State
+from .models import (
+    AppointmentTag,
+    CallRequest,
+    CallRequestReason,
+    Location,
+    Reporter,
+    State,
+)
 
 
 def test_admin_create_location_sets_public_id(admin_client):
@@ -299,3 +306,51 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
             "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
             "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
         )
+
+
+def test_adding_review_note_with_approved_tag_approves_report(
+    admin_client, ten_locations
+):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        is_pending_review=True,
+    )
+    assert report.is_pending_review
+    # Add a comment with that tag
+    response = admin_client.post(
+        "/admin/core/report/{}/change/".format(report.pk),
+        {
+            "location": location.pk,
+            "is_pending_review": "on",
+            "report_source": "ca",
+            "appointment_tag": "1",
+            "availability_tags": "2",
+            "reported_by": reporter.pk,
+            "review_notes-0-note": "",
+            "review_notes-0-tags": "1",
+            "review_notes-0-id": "",
+            "review_notes-0-report": report.pk,
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "review_notes-TOTAL_FORMS": "1",
+            "review_notes-INITIAL_FORMS": "0",
+            "review_notes-MIN_NUM_FORMS": "0",
+            "review_notes-MAX_NUM_FORMS": "1000",
+            # These are needed so that the review note is properly saved:
+            "review_notes-__prefix__-note": "",
+            "review_notes-__prefix__-id": "",
+            "review_notes-__prefix__-report": report.pk,
+        },
+    )
+    assert response.status_code == 302
+    report.refresh_from_db()
+    # Check that the report had a note added
+    review_note = report.review_notes.first()
+    assert list(review_note.tags.values_list("tag", flat=True)) == ["Approved"]
+    # is_pending_review should have been turned off
+    assert not report.is_pending_review
