@@ -190,6 +190,8 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "location_type",
         "provider",
         "soft_deleted",
+        "latest_non_skip_report_date",
+        "dn_skip_report_count",
     )
     list_filter = (
         LocationInQueueFilter,
@@ -232,13 +234,21 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related(
-            "county", "state", "provider", "location_type"
+            "county", "state", "provider", "location_type", "dn_latest_non_skip_report"
         ).annotate(times_reported_count=Count("reports"))
 
     def times_reported(self, inst):
         return inst.times_reported_count
 
     times_reported.admin_order_field = "times_reported_count"
+
+    def latest_non_skip_report_date(self, inst):
+        if inst.dn_latest_non_skip_report:
+            return inst.dn_latest_non_skip_report.created_at
+
+    latest_non_skip_report_date.admin_order_field = (
+        "dn_latest_non_skip_report__created_at"
+    )
 
     def lookup_allowed(self, lookup, value):
         return True
