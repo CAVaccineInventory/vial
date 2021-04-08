@@ -19,7 +19,6 @@ from .models import (
     LocationType,
     Provider,
     ProviderType,
-    PublishedReport,
     Report,
     Reporter,
     ReportReviewNote,
@@ -517,22 +516,25 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         return True
 
 
-@admin.register(PublishedReport)
-class PublishedReportAdmin(admin.ModelAdmin):
-    list_display = (
-        "location",
-        "appointment_tag",
-        "reported_by",
-        "valid_at",
-        "created_at",
-    )
-    raw_id_fields = (
-        "location",
-        "reported_by",
-        "reports",
-        "eva_reports",
-    )
-    actions = [export_as_csv_action()]
+# NOT CURRENTLY USED
+# See https://github.com/CAVaccineInventory/vial/issues/179#issuecomment-815353624
+#
+# @admin.register(PublishedReport)
+# class PublishedReportAdmin(admin.ModelAdmin):
+#     list_display = (
+#         "location",
+#         "appointment_tag",
+#         "reported_by",
+#         "valid_at",
+#         "created_at",
+#     )
+#     raw_id_fields = (
+#         "location",
+#         "reported_by",
+#         "reports",
+#         "eva_reports",
+#     )
+#     actions = [export_as_csv_action()]
 
 
 class RevisionAdmin(admin.ModelAdmin):

@@ -615,6 +615,9 @@ class CallRequest(models.Model):
 
 class PublishedReport(models.Model):
     """
+    NOT CURRENTLY USED
+    See https://github.com/CAVaccineInventory/vial/issues/179#issuecomment-815353624
+
     A report that should be published to our website and API feed.
     This report is generally derived from one or more other report types, and might be created automatically or manually.
     If a report is edited for publication, the published_report should be edited to maintain the integrity of our records.
