@@ -222,15 +222,19 @@ class Location(models.Model):
 
     # Denormalized foreign keys for efficient "latest yes report" style queries
     # https://github.com/CAVaccineInventory/vial/issues/193
+    # Latest report, NOT including is_pending_review reports:
     dn_latest_report = models.ForeignKey(
         "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
     )
+    # Latest report including is_pending_review reports:
     dn_latest_report_including_pending = models.ForeignKey(
         "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
     )
+    # Latest with at least one YES availability tag, NOT including is_pending_review:
     dn_latest_yes_report = models.ForeignKey(
         "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
     )
+    # Latest with at least one SKIP availability tag, NOT including is_pending_review:
     dn_latest_skip_report = models.ForeignKey(
         "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
     )
