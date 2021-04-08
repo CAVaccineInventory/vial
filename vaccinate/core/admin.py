@@ -395,6 +395,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj = form.instance
             obj.is_pending_review = False
             obj.save()
+            obj.location.update_denormalizations()
 
     def state(self, instance):
         return instance.location.state.abbreviation

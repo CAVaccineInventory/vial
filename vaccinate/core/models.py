@@ -4,6 +4,8 @@ import pytz
 from django.conf import settings
 from django.db import models
 from django.db.models import Max, Q
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
@@ -224,19 +226,19 @@ class Location(models.Model):
     # https://github.com/CAVaccineInventory/vial/issues/193
     # Latest report, NOT including is_pending_review reports:
     dn_latest_report = models.ForeignKey(
-        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
     # Latest report including is_pending_review reports:
     dn_latest_report_including_pending = models.ForeignKey(
-        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
     # Latest with at least one YES availability tag, NOT including is_pending_review:
     dn_latest_yes_report = models.ForeignKey(
-        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
     # Latest with at least one SKIP availability tag, NOT including is_pending_review:
     dn_latest_skip_report = models.ForeignKey(
-        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+        "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
 
     def __str__(self):
@@ -251,6 +253,52 @@ class Location(models.Model):
     @property
     def pid(self):
         return "l" + pid.from_int(self.pk)
+
+    def update_denormalizations(self):
+        reports = (
+            self.reports.all()
+            .prefetch_related("availability_tags")
+            .order_by("created_at")
+        )
+        try:
+            dn_latest_report = [r for r in reports if not r.is_pending_review][0]
+        except IndexError:
+            dn_latest_report = None
+        try:
+            dn_latest_report_including_pending = reports[0]
+        except IndexError:
+            dn_latest_report_including_pending = None
+        try:
+            dn_latest_yes_report = [
+                r
+                for r in reports
+                if not r.is_pending_review
+                and any(t for t in r.availability_tags.all() if t.group == "yes")
+            ][0]
+        except IndexError:
+            dn_latest_yes_report = None
+        try:
+            dn_latest_skip_report = [
+                r
+                for r in reports
+                if not r.is_pending_review
+                and any(t for t in r.availability_tags.all() if t.group == "skip")
+            ][0]
+        except IndexError:
+            dn_latest_skip_report = None
+        # Has anything changed?
+        if (
+            self.dn_latest_report != dn_latest_report
+            or self.dn_latest_report_including_pending
+            != dn_latest_report_including_pending
+            or self.dn_latest_yes_report != dn_latest_yes_report
+            or self.dn_latest_skip_report != dn_latest_skip_report
+        ):
+            self.dn_latest_report = dn_latest_report
+            self.dn_latest_report_including_pending = dn_latest_report_including_pending
+            self.dn_latest_yes_report = dn_latest_yes_report
+            self.dn_latest_skip_report = dn_latest_skip_report
+            self.save()
 
     def save(self, *args, **kwargs):
         set_public_id_later = False
@@ -442,6 +490,12 @@ class Report(models.Model):
         super().save(*args, **kwargs)
         if set_public_id_later:
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
+        self.location.update_denormalizations()
+
+    def delete(self, *args, **kwargs):
+        location = self.location
+        super().delete(*args, **kwargs)
+        location.update_denormalizations()
 
 
 class ReportReviewTag(models.Model):
@@ -707,3 +761,9 @@ class PublishedReport(models.Model):
 
     class Meta:
         db_table = "published_report"
+
+
+# Signals
+@receiver(m2m_changed, sender=Report.availability_tags.through)
+def denormalize_location(sender, instance, **kwargs):
+    instance.location.update_denormalizations()
