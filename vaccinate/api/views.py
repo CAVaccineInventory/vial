@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import random
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -136,6 +137,16 @@ def reporter_from_request(request, allow_test=False):
     return reporter, user_info
 
 
+def user_should_have_reports_reviewed(user):
+    roles = [r.strip() for r in user.auth0_role_names.split(",") if r.strip()]
+    if "Trainee" in roles:
+        return True
+    elif "Journeyman" in roles:
+        return random.random() < 0.15
+    else:
+        return False
+
+
 @csrf_exempt
 @log_api_requests
 @beeline.traced(name="submit_report")
@@ -167,7 +178,8 @@ def submit_report(request, on_request_logged):
         internal_notes=report_data["internal_notes"],
         reported_by=reporter,
     )
-    if report_data["is_pending_review"]:
+    # is_pending_review
+    if report_data["is_pending_review"] or user_should_have_reports_reviewed(reporter):
         kwargs["is_pending_review"] = True
     if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
         fake_timestamp = parser.parse(request.GET["fake_timestamp"])

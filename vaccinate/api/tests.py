@@ -1,9 +1,11 @@
+import random
 import time
 
 import pytest
-from core.models import AvailabilityTag
+from core.models import AvailabilityTag, Reporter
 
 from .models import ApiKey
+from .views import user_should_have_reports_reviewed
 
 GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
 
@@ -63,3 +65,22 @@ def test_availability_tags(client):
             "slug", "name", "group", "notes", "previous_names"
         )
     )
+
+
+@pytest.mark.django_db
+def test_user_should_have_reports_reviewed():
+    user = Reporter.objects.get_or_create(external_id="test:1")[0]
+    user.auth0_role_names = ""
+    assert not user_should_have_reports_reviewed(user)
+    # If user is Trainee, then yes
+    user.auth0_role_names = "Blah, Trainee"
+    assert user_should_have_reports_reviewed(user)
+    # If user is Journeyman, then 15% of the time
+    random.seed(1)
+    user.auth0_role_names = "Journeyman"
+    passes = 0
+    for i in range(100):
+        if user_should_have_reports_reviewed(user):
+            passes += 1
+    assert passes == 13
+    random.seed(int(time.time()))
