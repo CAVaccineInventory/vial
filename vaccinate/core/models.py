@@ -328,6 +328,9 @@ class Report(models.Model):
         on_delete=models.PROTECT,
         help_text="a report must have a location",
     )
+    is_pending_review = models.BooleanField(
+        default=False, help_text="Reports that are pending review by our QA team"
+    )
     report_source = models.CharField(
         max_length=2,
         choices=ReportSource.choices,
