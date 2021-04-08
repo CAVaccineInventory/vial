@@ -49,6 +49,7 @@ class ReportValidator(BaseModel):
     public_notes: Optional[str] = Field(alias="Notes")
     internal_notes: Optional[str] = Field(alias="Internal Notes")
     do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
+    is_pending_review: Optional[bool] = Field(alias="is_pending_review")
 
     @validator("location")
     def location_must_exist(cls, v):
@@ -166,6 +167,8 @@ def submit_report(request, on_request_logged):
         internal_notes=report_data["internal_notes"],
         reported_by=reporter,
     )
+    if report_data["is_pending_review"]:
+        kwargs["is_pending_review"] = True
     if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
         fake_timestamp = parser.parse(request.GET["fake_timestamp"])
         if fake_timestamp.tzinfo is None:

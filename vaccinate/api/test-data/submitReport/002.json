@@ -8,12 +8,14 @@
             "Vaccinating essential workers"
         ],
         "Notes": "Check the Walgreens site regularly to see when appointments open up.",
-        "Internal Notes": ""
+        "Internal Notes": "",
+        "is_pending_review": true
     },
     "expected_status": 200,
     "expected_fields": {
         "location__public_id": "recgDrq7aQMo0M5x7",
-        "public_notes": "Check the Walgreens site regularly to see when appointments open up."
+        "public_notes": "Check the Walgreens site regularly to see when appointments open up.",
+        "is_pending_review": true
     },
     "expected_availability_tags": [
         "appointment_required",
