@@ -303,6 +303,9 @@ class ReporterAdmin(admin.ModelAdmin):
 
     qa_summary.short_description = "QA summary"
 
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(AvailabilityTag)
 class AvailabilityTagAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
