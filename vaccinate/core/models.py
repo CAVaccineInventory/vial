@@ -152,6 +152,16 @@ class Location(models.Model):
         blank=True,
         help_text="an ID that associates a location with a unique entry in the Google Places ontology",
     )
+    vaccinespotter_location_id = CharTextField(
+        null=True,
+        blank=True,
+        help_text="This location's ID on vaccinespotter.org",
+    )
+    vaccinefinder_location_id = CharTextField(
+        null=True,
+        blank=True,
+        help_text="This location's ID on vaccinefinder.org",
+    )
     provider = models.ForeignKey(
         Provider,
         null=True,

@@ -243,6 +243,8 @@ The following fields are all optional strings:
 - `city`
 - `county` - special case, see below
 - `google_places_id`
+- `vaccinespotter_location_id`
+- `vaccinefinder_location_id`
 - `zip_code`
 - `hours`
 - `website`

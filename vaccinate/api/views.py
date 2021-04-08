@@ -419,6 +419,8 @@ class LocationValidator(BaseModel):
     city: Optional[str]
     county: Optional[str]
     google_places_id: Optional[str]
+    vaccinefinder_location_id: Optional[str]
+    vaccinespotter_location_id: Optional[str]
     zip_code: Optional[str]
     hours: Optional[str]
     website: Optional[str]
@@ -503,6 +505,8 @@ def import_locations(request, on_request_logged):
                     "city",
                     "county",
                     "google_places_id",
+                    "vaccinefinder_location_id",
+                    "vaccinespotter_location_id",
                     "zip_code",
                     "hours",
                     "website",

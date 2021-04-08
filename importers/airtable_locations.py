@@ -91,6 +91,8 @@ def convert_airtable(location):
         "import_ref": import_ref,
         "airtable_id": location["airtable_id"],
         "google_places_id": location.get("google_places_id"),
+        "vaccinespotter_location_id": location.get("vaccinespotter_location_id"),
+        "vaccinefinder_location_id": location.get("vaccinefinder_location_id"),
         "import_json": location,
     }
     return info

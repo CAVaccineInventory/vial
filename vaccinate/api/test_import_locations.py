@@ -25,6 +25,8 @@ def test_import_location(client, api_key, use_list):
         "state": "CA",
         "county": "San Francisco",
         "google_places_id": "google-places-1",
+        "vaccinespotter_location_id": "vaccine-spotter-1",
+        "vaccinefinder_location_id": "vaccine-finder-1",
         "zip_code": "94102",
         "hours": "Opening hours go here",
         "website": "www.example.com",
@@ -68,6 +70,8 @@ def test_import_location(client, api_key, use_list):
     assert location.website == "www.example.com"
     assert location.county.name == "San Francisco"
     assert location.google_places_id == "google-places-1"
+    assert location.vaccinespotter_location_id == "vaccine-spotter-1"
+    assert location.vaccinefinder_location_id == "vaccine-finder-1"
     assert location.airtable_id == "airtable-1"
     assert location.latitude == 37.781869
     assert location.longitude == -122.439517
