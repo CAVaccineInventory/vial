@@ -2,7 +2,7 @@
 
 The goal is to update this documentation as part of any commit that modifies how the API works in any way.
   
-The base URL for every API is https://vial.calltheshots.us/
+The base URL for every API is https://vial-staging.calltheshots.us/
   
 ## POST /api/submitReport
   
@@ -10,7 +10,7 @@ This API records a new "report" in our database. A report is when someone checks
   
 You call this API by HTTP POST, sending JSON as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
 
-The JSON document have the following keys:
+The JSON document should have the following keys:
 
 * **Location** (required): the ID of one of our locations, e.g. `recaQlVkkI1rNarvx`
 * **Appointment scheduling instructions**: a free text field of scheduling instructions.
@@ -19,6 +19,7 @@ The JSON document have the following keys:
 * **Notes**: A free text field of public notes
 * **Internal Notes**: A free text field of private, internal notes
 * **Do not call until**: An ISO 8601-formatted timestamp, before which this location should not be called again
+* **is_pending_review**: Optional boolean - set this to `true` to specify that this report should be reviewed by our QA team
 
 Here is an example submission:
 ```json
@@ -42,7 +43,7 @@ Ideally you would use the slug for a tag, for example `only_staff` for only vacc
 
 You can alternatively use the tag's full name, or one of the names contained in the "previous names" array.
 
-A list of valid tags with their slugs, names and previous_names can be found at https://vial.calltheshots.us/api/availabilityTags
+A list of valid tags with their slugs, names and previous_names can be found at https://vial-staging.calltheshots.us/api/availabilityTags
 
 ### Skip requests
 
@@ -74,15 +75,11 @@ It currently returns other debugging data (as exposed in the API explorer) but y
 
 ### Debug mode
 
-A tool for trying out this API is available at https://vial.calltheshots.us/api/submitReport/debug - if you have previously signed into the tool at https://vial.calltheshots.us/ the interface will be pre-populated with a valid JWT token. If that token has expired you can get a new one by signing in and out again.
-
-This tool will support real, live reports. If you just want to try it out you should use the staging instance instead:
-
-https://vial-staging.calltheshots.us/api/submitReport/debug
+A tool for exercising this API is available at https://vial-staging.calltheshots.us/api/submitReport/debug - if you have previously signed into the tool at https://vial-staging.calltheshots.us/ the interface will be pre-populated with a valid JWT token. If that token has expired you can get a new one by signing in and out again.
 
 ## POST /api/requestCall
 
-Request a new location to call. This record will pick a location from the upcoming call queue and "lock" that record for twenty minutes, assigning it to your authenticated user.
+Request a new location to call. This record will pick the request from the call queue with the highest priority and "lock" that record for twenty minutes, assigning it to your authenticated user.
 
 HTTP POST, sending an empty `{}` JSON object as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
 
@@ -125,6 +122,8 @@ The response currently looks like this:
 }
 ```
 
+Try this API at https://vial-staging.calltheshots.us/api/requestCall/debug
+
 ## GET /api/verifyToken
 
 Private API for testing our own API tokens (not the JWTs). Send an API key as the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header.
@@ -139,13 +138,32 @@ Returns status 302 and an `{"error": "message"}` if the API key is invalid, othe
 }
 ```
 
+## POST /api/callerStats
+
+Returns stats for the authenticated user.
+
+HTTP POST, sending an empty `{}` JSON object as the POST body. A valid Auth0 JWT should be included in a `Authorization: Bearer JWT-GOES-HERE` HTTP header.
+
+You can use `GET` here too.
+
+The response currently looks like this:
+
+```json
+{
+  "total": 23,
+  "today": 3
+}
+```
+
+Try this API at https://vial-staging.calltheshots.us/api/callerStats/debug
+
 ## POST /api/importLocations
 
 Private API for us to import new locations into the database - or update existing locations.
 
 Accepts a POST with a JSON document with either a single location object or a list of location objects.
 
-You'll need an API key, which you pass in the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header. API keys can be created in the Django admin at https://vial.calltheshots.us/admin/api/apikey/
+You'll need an API key, which you pass in the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header. API keys can be created in the Django admin at https://vial-staging.calltheshots.us/admin/api/apikey/
 
 Each location should look like this:
 
@@ -164,7 +182,7 @@ The `state` value should be the two letter acronym for a state (or `AS` for Amer
 
 The latitude and longitude should be floating point values.
 
-The `location_type` should be one of the values shown on https://vial.calltheshots.us/api/locationTypes
+The `location_type` should be one of the values shown on https://vial-staging.calltheshots.us/api/locationTypes
 
 There is also an optional `import_ref` key, described below.
 
@@ -225,6 +243,8 @@ The following fields are all optional strings:
 - `city`
 - `county` - special case, see below
 - `google_places_id`
+- `vaccinespotter_location_id`
+- `vaccinefinder_location_id`
 - `zip_code`
 - `hours`
 - `website`
@@ -258,6 +278,8 @@ Example output:
 }
 ```
 
+Try this API at https://vial-staging.calltheshots.us/api/providerTypes
+
 ## GET /api/locationTypes
 
 Unauthenticated. Returns a `"location_types"` key containing a JSON array of names of valid location types, e.g. `Pharmacy`.
@@ -290,6 +312,8 @@ Example output:
     ]
 }
 ```
+
+Try this API at https://vial-staging.calltheshots.us/api/locationTypes
 
 ## GET /api/availabilityTags
 
@@ -331,9 +355,11 @@ Example output:
 }
 ```
 
+Try this API at https://vial-staging.calltheshots.us/api/availabilityTags
+
 ## GET /api/counties/&lt;state&gt;
 
-Unauthenticated. Returns a list of counties for the two-letter state code. For example: https://vial.calltheshots.us/api/counties/RI
+Unauthenticated. Returns a list of counties for the two-letter state code.
 
 ```json
 {
@@ -364,3 +390,9 @@ Unauthenticated. Returns a list of counties for the two-letter state code. For e
   ]
 }
 ```
+
+Examples:
+
+- https://vial-staging.calltheshots.us/api/counties/CA
+- https://vial-staging.calltheshots.us/api/counties/OR
+- https://vial-staging.calltheshots.us/api/counties/RI

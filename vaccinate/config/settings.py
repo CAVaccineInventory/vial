@@ -19,6 +19,9 @@ INTERNAL_IPS = ["127.0.0.1"]
 
 ALLOWED_HOSTS = ["*"]
 
+# Call request queue is backfilled if this minimum is reached
+MIN_CALL_REQUEST_QUEUE_ITEMS = 20
+
 # Sentry
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 if SENTRY_DSN:
@@ -113,6 +116,9 @@ REVERSION_COMPARE_IGNORE_NOT_REGISTERED = True
 # Application definition
 
 INSTALLED_APPS = [
+    "admin_tools",
+    "admin_tools.theming",
+    "admin_tools.menu",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -160,13 +166,18 @@ if PRODUCTION:
 
 ROOT_URLCONF = "config.urls"
 
+ADMIN_TOOLS_MENU = "config.menu.CustomMenu"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [os.path.join(BASE_DIR, "templates")],
-        "APP_DIRS": True,
         "OPTIONS": {
+            "loaders": [
+                "django.template.loaders.filesystem.Loader",  # BASE_DIR/templates templates
+                "django.template.loaders.app_directories.Loader",  # templates from app dirs
+                "admin_tools.template_loaders.Loader",  # admin_tools templates
+            ],
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
@@ -248,6 +259,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-en_formats.DATETIME_FORMAT = "jS M Y fA e"
+en_formats.DATETIME_FORMAT = "jS M Y g:i:s A e"
 
 TEST_RUNNER = "test_runner.PytestTestRunner"

@@ -1,0 +1,96 @@
+{% extends "api/base.html" %}
+
+{% block title %}Try {{ api_path }}{% endblock %}
+
+{% block content %}
+<h1>Try {{ api_path }}</h1>
+{% if docs %}<p><a href="{{ docs }}">API documentation for {{ api_path }}</a>{% endif %}
+<form class="trySubmitReport">
+  <p>
+    <label
+      >JWT token:
+      <input type="text" name="jwt" size="40" value="{{ jwt }}"
+    /></label>
+  </p>
+  <p>
+    <label
+      >Fake user ID:
+      <input
+        type="text"
+        name="fake_user"
+        size="40"
+        value=""
+        placeholder="Optional, use this instead of a JWT"
+    /></label>
+  </p>
+  {% if body_textarea %}
+  <div>
+    <textarea
+      name="body"
+      placeholder="JSON POST body goes here"
+    >{% if default_body %}{{ default_body }}{% endif %}</textarea>
+  </div>
+  {% endif %}
+  <div><input type="submit" value="Submit" /></div>
+</form>
+<div class="apiResponse" style="display: none">
+  <p class="adminUrl"></p>
+  <h3>API response</h3>
+  <p>Status code: <strong class="responseStatus"></strong></p>
+  <h4>Body</h4>
+  <pre class="responseBody"></pre>
+  <h4>Headers</h4>
+  <pre class="responseHeaders"></pre>
+</div>
+<script>
+let form = document.querySelector(".trySubmitReport");
+let adminUrl = document.querySelector(".adminUrl");
+{% if body_textarea %}
+let bodyTextarea = form.getElementsByTagName("textarea")[0];
+{% endif %}
+let jwtInput = form.querySelector("[name=jwt]");
+let fakeUserInput = form.querySelector("[name=fake_user]");
+let apiResponse = document.querySelector(".apiResponse");
+let responseStatus = document.querySelector(".responseStatus");
+let responseHeaders = document.querySelector(".responseHeaders");
+let responseBody = document.querySelector(".responseBody");
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  let url = "/{{ api_path }}";
+  if (fakeUserInput.value) {
+    url += "&fake_user=" + encodeURIComponent(fakeUserInput.value);
+  }
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + jwtInput.value,
+    }{% if body_textarea %},
+    body: bodyTextarea.value{% endif %}
+  });
+  const data = await response.json();
+  apiResponse.style.display = "block";
+  if (data.admin_url) {
+    adminUrl.innerHTML = `<a href="${
+      data.admin_url
+    }">View report "${htmlEscape(data.report)}" in admin</a>`;
+  } else {
+    adminUrl.innerHTML = "";
+  }
+  responseStatus.innerText = response.status;
+  responseHeaders.innerText = JSON.stringify(
+    Array.from(response.headers.entries()),
+    null,
+    4
+  );
+  responseBody.innerText = JSON.stringify(data, null, 4);
+});
+const htmlEscape = (s) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/>/g, "&gt;")
+    .replace(/</g, "&lt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+</script>
+{% endblock %}

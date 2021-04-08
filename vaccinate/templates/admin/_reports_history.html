@@ -1,0 +1,51 @@
+<h2 id="reporter-h2">All past reports for this location</h2>
+
+{{ reports_datetimes|json_script:"recent_report_datetimes" }}
+
+<svg id="recent-reports"></svg>
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script>
+var reportDates = JSON.parse(
+  document.getElementById('recent_report_datetimes').textContent
+).map(d => new Date(d));
+(function() {
+  let width = document.getElementById('reporter-h2').offsetWidth;
+  var xScale = d3
+    .scaleTime()
+    .domain(d3.extent(reportDates))
+    .range([15, width - 15]);
+
+  var xAxis = d3.axisBottom(xScale);
+
+  var svg = d3.select('#recent-reports');
+
+  svg
+    .attr("width", width)
+    .attr("height", 80)
+    .append("g")
+    .attr("transform", "translate(0,40)")
+    .call(xAxis);
+
+  svg
+    .selectAll("circle")
+    .data(reportDates)
+    .enter()
+    .append("circle")
+    .attr("r", 3)
+    .attr("fill", "black")
+    .attr("opacity", 0.4)
+    .attr("cx", d => xScale(d))
+    .attr("cy", 30);
+})();
+</script>
+
+{% for report in reports %}
+    <p>
+      Report by <a href="/admin/core/reporter/{{ report.reported_by_id }}/change/">{{ report.reported_by }}</a>
+      on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a>
+      Tagged
+      {% for tag in report.availability_tags.all %}<strong>{{ tag }}</strong>{% if not forloop.last %}, {% endif%}{% endfor %}
+    </p>
+{% endfor %}
+
+<p><a href="/admin/core/report/?location={{ location_id }}">View these reports in a table</a></p>

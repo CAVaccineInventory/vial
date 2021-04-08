@@ -1,4 +1,6 @@
-from .models import County
+from reversion.models import Revision
+
+from .models import AppointmentTag, County, Location, LocationType, Reporter, State
 
 
 def test_admin_tools_superuser_only(client, django_user_model):
@@ -42,6 +44,9 @@ def test_import_airtable_county_details(admin_client, requests_mock):
                 "airtable_id": "rec0QOd7EXzSuZZvN",
                 "County vaccination reservations URL": "https://example.com/reservations",
                 "population": 200,
+                "age_floor_without_restrictions": 50,
+                "Internal notes": "These are internal notes",
+                "Notes": "These are public notes",
             }
         ],
     )
@@ -53,9 +58,77 @@ def test_import_airtable_county_details(admin_client, requests_mock):
     county = County.objects.get(airtable_id="rec0QOd7EXzSuZZvN")
     assert county.vaccine_reservations_url == "https://example.com/reservations"
     assert county.population == 200
+    assert county.age_floor_without_restrictions == 50
+    assert county.internal_notes == "These are internal notes"
+    assert county.public_notes == "These are public notes"
 
 
 def test_command_redirects_to_tools(admin_client):
     response = admin_client.get("/admin/commands/")
     assert response.status_code == 302
     assert response.url == "/admin/tools/"
+
+
+def test_merge_locations(admin_client):
+    county = County.objects.get(fips_code="06079")  # San Luis Obispo
+    ca = State.objects.get(abbreviation="CA")
+    winner = Location.objects.create(
+        county=county,
+        state=ca,
+        name="SLO Pharmacy",
+        phone_number="555 555-5555",
+        full_address="5 5th Street",
+        location_type=LocationType.objects.get(name="Pharmacy"),
+        latitude=35.279,
+        longitude=-120.664,
+    )
+    reporter = Reporter.objects.get_or_create(external_id="test:1")[0]
+    winner.reports.create(
+        report_source="ca",
+        appointment_tag=AppointmentTag.objects.get(slug="web"),
+        appointment_details="blah",
+        reported_by=reporter,
+    )
+    loser = Location.objects.create(
+        county=county,
+        state=ca,
+        name="SLO Pharmacy",
+        phone_number="555 555-5555",
+        full_address="5 5th Street",
+        location_type=LocationType.objects.get(name="Pharmacy"),
+        latitude=35.279,
+        longitude=-120.664,
+    )
+    loser.reports.create(
+        report_source="ca",
+        appointment_tag=AppointmentTag.objects.get(slug="web"),
+        appointment_details="blah",
+        reported_by=reporter,
+    )
+    assert winner.reports.count() == 1
+    assert loser.reports.count() == 1
+    assert loser.duplicate_of is None
+    assert not loser.soft_deleted
+    assert Revision.objects.count() == 0
+    # Now merge them
+    winner.refresh_from_db()  # To get correct public_id
+    loser.refresh_from_db()
+    args = {
+        "winner": winner.public_id,
+        "loser": loser.public_id,
+    }
+    response = admin_client.post("/admin/merge-locations/", args, follow=False)
+    assert response.status_code == 302
+    winner.refresh_from_db()
+    loser.refresh_from_db()
+    assert winner.reports.count() == 2
+    assert loser.reports.count() == 0
+    assert loser.duplicate_of == winner
+    assert loser.soft_deleted
+    # And a Revision should have been created
+    assert Revision.objects.count() == 1
+    revision = Revision.objects.get()
+    assert (
+        revision.comment
+        == f"Merged locations, winner = {winner.public_id}, loser = {loser.public_id}"
+    )

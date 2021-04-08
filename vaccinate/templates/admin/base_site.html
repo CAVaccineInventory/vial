@@ -1,11 +1,12 @@
-{% extends "admin/base.html" %}
+{% extends "admin/base_site.html" %}
 
 {% block extrastyle %}
 <style type="text/css">
-/* Hide scary red soft-deleted icon
+/* Hide scary red soft-deleted and pending-review icons
    https://github.com/CAVaccineInventory/vial/issues/144
 */
-td.field-soft_deleted img[src$="icon-no.svg"] {
+td.field-soft_deleted img[src$="icon-no.svg"],
+td.field-is_pending_review img[src$="icon-no.svg"] {
     opacity: 0;
 }
 /* Wrapping for diff views
@@ -15,12 +16,13 @@ pre.highlight {
     white-space: pre-wrap;
 }
 </style>
+{{ block.super }}
 {% endblock %}
 
 {% block branding %}
 <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
 {% if is_staging %}
-    <div style="margin-top: 10px; padding: 5px; background-color: red; color: white;">
+    <div style="padding: 0 15px 5px 15px; background-color: red; color: white;">
         <strong>Warning</strong>
         <p>This site is <a href="https://github.com/CAVaccineInventory/vial" style="text-decoration: underline">a staging environment</a>. Any edits you make here will not be permanently saved!</p>
     </div>

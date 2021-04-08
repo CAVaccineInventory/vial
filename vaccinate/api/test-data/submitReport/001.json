@@ -10,7 +10,8 @@
     "expected_status": 200,
     "expected_fields": {
         "location__public_id": "recaQlVkkI1rNarvx",
-        "public_notes": "March 2: recommended to check their website for new availability in a week or more"
+        "public_notes": "March 2: recommended to check their website for new availability in a week or more",
+        "is_pending_review": false
     },
     "expected_availability_tags": [
         "may_be_a_vaccination_site_in_the_future"

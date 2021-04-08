@@ -1,9 +1,9 @@
-import datetime
 import uuid
 
 import pytz
+from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import Max, Q
 from django.utils import dateformat, timezone
 
 from .baseconverter import pid
@@ -98,6 +98,7 @@ class County(models.Model):
     vaccine_locations_url = CharTextField(null=True, blank=True)
     official_volunteering_url = CharTextField(null=True, blank=True)
     public_notes = models.TextField(null=True, blank=True)
+    internal_notes = models.TextField(null=True, blank=True)
     facebook_page = CharTextField(null=True, blank=True)
     twitter_page = CharTextField(null=True, blank=True)
     vaccine_reservations_url = CharTextField(null=True, blank=True)
@@ -105,6 +106,7 @@ class County(models.Model):
     vaccine_dashboard_url = CharTextField(null=True, blank=True)
     vaccine_data_url = CharTextField(null=True, blank=True)
     vaccine_arcgis_url = CharTextField(null=True, blank=True)
+    age_floor_without_restrictions = models.IntegerField(null=True, blank=True)
     airtable_id = models.CharField(
         max_length=20,
         null=True,
@@ -149,6 +151,16 @@ class Location(models.Model):
         null=True,
         blank=True,
         help_text="an ID that associates a location with a unique entry in the Google Places ontology",
+    )
+    vaccinespotter_location_id = CharTextField(
+        null=True,
+        blank=True,
+        help_text="This location's ID on vaccinespotter.org",
+    )
+    vaccinefinder_location_id = CharTextField(
+        null=True,
+        blank=True,
+        help_text="This location's ID on vaccinefinder.org",
     )
     provider = models.ForeignKey(
         Provider,
@@ -213,6 +225,9 @@ class Location(models.Model):
 
     class Meta:
         db_table = "location"
+        permissions = [
+            ("merge_locations", "Can merge two locations"),
+        ]
 
     @property
     def pid(self):
@@ -268,7 +283,7 @@ class AvailabilityTag(models.Model):
     slug = models.SlugField(null=True)
     group = models.CharField(
         max_length=10,
-        choices=(("yes", "yes"), ("no", "no"), ("skip", "skip")),
+        choices=(("yes", "yes"), ("no", "no"), ("skip", "skip"), ("other", "other")),
         null=True,
     )
     notes = CharTextField(null=True, blank=True)
@@ -322,6 +337,9 @@ class Report(models.Model):
         related_name="reports",
         on_delete=models.PROTECT,
         help_text="a report must have a location",
+    )
+    is_pending_review = models.BooleanField(
+        default=False, help_text="Reports that are pending review by our QA team"
     )
     report_source = models.CharField(
         max_length=2,
@@ -381,7 +399,7 @@ class Report(models.Model):
 
     def availability(self):
         # Used by the admin list view
-        return ", ".join(self.availability_tags.values_list("name", flat=True))
+        return ", ".join(t.name for t in self.availability_tags.all())
 
     class Meta:
         db_table = "report"
@@ -405,6 +423,33 @@ class Report(models.Model):
         super().save(*args, **kwargs)
         if set_public_id_later:
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
+
+
+class ReportReviewTag(models.Model):
+    tag = models.CharField(unique=True, max_length=64)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.tag
+
+
+class ReportReviewNote(models.Model):
+    report = models.ForeignKey(
+        Report, related_name="review_notes", on_delete=models.PROTECT
+    )
+    author = models.ForeignKey(
+        "auth.User", related_name="review_notes", on_delete=models.PROTECT
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    note = models.TextField(blank=True)
+    tags = models.ManyToManyField(
+        ReportReviewTag,
+        related_name="review_notes",
+        blank=True,
+    )
+
+    def __str__(self):
+        return "{} review note on {}".format(self.author, self.report)
 
 
 class EvaReport(models.Model):
@@ -487,6 +532,17 @@ class CallRequest(models.Model):
         on_delete=models.PROTECT,
         help_text="a tag indicating why the call was added to the queue",
     )
+    completed = models.BooleanField(
+        default=False, help_text="Has this call been completed"
+    )
+    completed_at = models.DateTimeField(
+        blank=True, null=True, help_text="When this call was marked as completed"
+    )
+    priority = models.IntegerField(
+        default=0,
+        db_index=True,
+        help_text="Priority for call queue - higher number means higher priority",
+    )
 
     tip_type = CharTextField(
         choices=TipType.choices,
@@ -508,28 +564,73 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
+        ordering = ("-priority", "-id")
 
     @classmethod
     def available_requests(cls, qs=None):
         if qs is None:
             qs = cls.objects
         now = timezone.now()
-        return (
-            qs.filter(
-                Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
-                | Q(claimed_until__lte=now)
-            )
-            .filter(location__state__abbreviation="OR")
-            .exclude(
-                location__reports__created_at__gte=(
-                    timezone.now() - datetime.timedelta(days=1)
+        return qs.filter(
+            Q(completed=False) & Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
+            | Q(claimed_until__lte=now)
+        ).order_by("-priority", "-id")
+
+    @classmethod
+    def backfill_queue(cls, minimum=None):
+        if minimum is None:
+            minimum = settings.MIN_CALL_REQUEST_QUEUE_ITEMS
+        num_to_create = max(0, minimum - cls.available_requests().count())
+        now = timezone.now()
+        print("backfilling {}".format(num_to_create))
+        # Queue up that many locations, by never-called or longest-ago-called
+        # We use .select_for_update(nowait=True) to try to avoid race conditions
+        # where multiple calls to /api/requestCall attempt to backfill at
+        # the same time.
+        if num_to_create:
+            backfill_reason = CallRequestReason.objects.get_or_create(
+                short_reason="Automatic backfill"
+            )[0]
+            # Try for never-called
+            never_called_qs = Location.objects.filter(
+                reports__isnull=True,
+                do_not_call=False,
+            )[:num_to_create]
+            never_called = list(never_called_qs)
+            print("never_called = ", never_called)
+            for location in never_called:
+                cls.objects.create(
+                    location=location,
+                    vesting_at=now,
+                    call_request_reason=backfill_reason,
                 )
+            num_to_create = max(0, num_to_create - len(never_called))
+        # Do we need to create any more? If so do longest-ago-called
+        if num_to_create:
+            Location.objects.select_for_update(nowait=True)
+            # Called longest ago
+            called_longest_ago_qs = (
+                Location.objects.filter(
+                    do_not_call=False,
+                )
+                .annotate(most_recent_report=Max("reports__created_at"))
+                .order_by("most_recent_report")[:num_to_create]
             )
-        )
+            called_longest_ago = list(called_longest_ago_qs)
+            print("called_longest_ago = ", called_longest_ago)
+            for location in called_longest_ago:
+                cls.objects.create(
+                    location=location,
+                    vesting_at=now,
+                    call_request_reason=backfill_reason,
+                )
 
 
 class PublishedReport(models.Model):
     """
+    NOT CURRENTLY USED
+    See https://github.com/CAVaccineInventory/vial/issues/179#issuecomment-815353624
+
     A report that should be published to our website and API feed.
     This report is generally derived from one or more other report types, and might be created automatically or manually.
     If a report is edited for publication, the published_report should be edited to maintain the integrity of our records.

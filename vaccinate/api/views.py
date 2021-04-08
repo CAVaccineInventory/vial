@@ -1,11 +1,15 @@
 import json
 import os
+import pathlib
+import random
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 import beeline
+import markdown
 import pytz
 import requests
+import reversion
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
@@ -28,7 +32,9 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
+from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, Field, ValidationError, validator
 
 from .utils import log_api_requests, require_api_key
@@ -44,6 +50,7 @@ class ReportValidator(BaseModel):
     public_notes: Optional[str] = Field(alias="Notes")
     internal_notes: Optional[str] = Field(alias="Internal Notes")
     do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
+    is_pending_review: Optional[bool] = Field(alias="is_pending_review")
 
     @validator("location")
     def location_must_exist(cls, v):
@@ -130,6 +137,16 @@ def reporter_from_request(request, allow_test=False):
     return reporter, user_info
 
 
+def user_should_have_reports_reviewed(user):
+    roles = [r.strip() for r in user.auth0_role_names.split(",") if r.strip()]
+    if "Trainee" in roles:
+        return True
+    elif "Journeyman" in roles:
+        return random.random() < 0.15
+    else:
+        return False
+
+
 @csrf_exempt
 @log_api_requests
 @beeline.traced(name="submit_report")
@@ -161,6 +178,9 @@ def submit_report(request, on_request_logged):
         internal_notes=report_data["internal_notes"],
         reported_by=reporter,
     )
+    # is_pending_review
+    if report_data["is_pending_review"] or user_should_have_reports_reviewed(reporter):
+        kwargs["is_pending_review"] = True
     if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
         fake_timestamp = parser.parse(request.GET["fake_timestamp"])
         if fake_timestamp.tzinfo is None:
@@ -174,6 +194,11 @@ def submit_report(request, on_request_logged):
 
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
+
+    # Mark any calls to this location claimed by this user as complete
+    report.location.call_requests.filter(claimed_by=reporter).update(
+        completed=True, completed_at=timezone.now()
+    )
 
     # Handle skip requests
     # Only check if "Do not call until is set"
@@ -244,22 +269,6 @@ def submit_report(request, on_request_logged):
     )
 
 
-def submit_report_debug(request):
-    return render(
-        request,
-        "api/submit_report_debug.html",
-        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
-    )
-
-
-def request_call_debug(request):
-    return render(
-        request,
-        "api/request_call_debug.html",
-        {"jwt": request.session["jwt"] if "jwt" in request.session else ""},
-    )
-
-
 @csrf_exempt
 @log_api_requests
 @beeline.traced(name="request_call")
@@ -272,6 +281,8 @@ def request_call(request, on_request_logged):
     reporter, user_info = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
         return reporter
+    # Ensure there are at least MIN_QUEUE items in the queue
+    CallRequest.backfill_queue()
     # Override location selection: pass the public_id of a rocation to
     # skip the normal view selection code and return that ID specifically
     location_id = request.GET.get("location_id") or None
@@ -287,11 +298,11 @@ def request_call(request, on_request_logged):
             )
     else:
         now = timezone.now()
-        # Pick a random location from the call list
+        # Pick the next item from the call list
         available_requests = CallRequest.available_requests()
-        # We need to lock the record we randomly select so we can update
+        # We need to lock the record we select so we can update
         # it marking that we have claimed it
-        call_requests = available_requests.select_for_update().order_by("?")[:1]
+        call_requests = available_requests.select_for_update()[:1]
         with transaction.atomic():
             try:
                 request = call_requests[0]
@@ -314,6 +325,7 @@ def request_call(request, on_request_logged):
         latest_report = None
 
     county_record = {}
+    county_age_floor_without_restrictions = []
     if location.county:
         county_record = {
             "id": location.county.airtable_id
@@ -324,6 +336,9 @@ def request_call(request, on_request_logged):
             "Vaccine locations URL": location.county.vaccine_locations_url,
             "Notes": location.county.public_notes,
         }
+        county_age_floor_without_restrictions = [
+            location.county.age_floor_without_restrictions
+        ]
 
     provider_record = {}
     if location.provider:
@@ -373,6 +388,7 @@ def request_call(request, on_request_logged):
             "Number of Reports": location.reports.count(),
             "county_record": county_record,
             "provider_record": provider_record,
+            "county_age_floor_without_restrictions": county_age_floor_without_restrictions,
         },
         status=200,
     )
@@ -403,6 +419,8 @@ class LocationValidator(BaseModel):
     city: Optional[str]
     county: Optional[str]
     google_places_id: Optional[str]
+    vaccinefinder_location_id: Optional[str]
+    vaccinespotter_location_id: Optional[str]
     zip_code: Optional[str]
     hours: Optional[str]
     website: Optional[str]
@@ -464,50 +482,58 @@ def import_locations(request, on_request_logged):
     errors = []
     if isinstance(post_data, dict):
         post_data = [post_data]
-    for location_json in post_data:
-        try:
-            location_data = LocationValidator(**location_json).dict()
-            kwargs = dict(
-                name=location_data["name"],
-                latitude=location_data["latitude"],
-                longitude=location_data["longitude"],
-                state=location_data["state"],
-                location_type=location_data["location_type"],
-                import_json=location_data.get("import_json") or None,
-            )
-            if location_data.get("provider_type"):
-                kwargs["provider"] = Provider.objects.update_or_create(
-                    name=location_data["provider_name"],
-                    defaults={"provider_type": location_data["provider_type"]},
-                )[0]
-            for key in (
-                "phone_number",
-                "full_address",
-                "city",
-                "county",
-                "google_places_id",
-                "zip_code",
-                "hours",
-                "website",
-                "latitude",
-                "longitude",
-                "airtable_id",
-            ):
-                kwargs[key] = location_data.get(key)
-            kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
-            if location_json.get("import_ref"):
-                location, created = Location.objects.update_or_create(
-                    import_ref=location_json["import_ref"], defaults=kwargs
+    with reversion.create_revision():
+        for location_json in post_data:
+            try:
+                location_data = LocationValidator(**location_json).dict()
+                kwargs = dict(
+                    name=location_data["name"],
+                    latitude=location_data["latitude"],
+                    longitude=location_data["longitude"],
+                    state=location_data["state"],
+                    location_type=location_data["location_type"],
+                    import_json=location_data.get("import_json") or None,
                 )
-                if created:
-                    added_locations.append(location)
+                if location_data.get("provider_type"):
+                    kwargs["provider"] = Provider.objects.update_or_create(
+                        name=location_data["provider_name"],
+                        defaults={"provider_type": location_data["provider_type"]},
+                    )[0]
+                for key in (
+                    "phone_number",
+                    "full_address",
+                    "city",
+                    "county",
+                    "google_places_id",
+                    "vaccinefinder_location_id",
+                    "vaccinespotter_location_id",
+                    "zip_code",
+                    "hours",
+                    "website",
+                    "latitude",
+                    "longitude",
+                    "airtable_id",
+                ):
+                    kwargs[key] = location_data.get(key)
+                kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
+                if location_json.get("import_ref"):
+                    location, created = Location.objects.update_or_create(
+                        import_ref=location_json["import_ref"], defaults=kwargs
+                    )
+                    if created:
+                        added_locations.append(location)
+                    else:
+                        updated_locations.append(location)
                 else:
-                    updated_locations.append(location)
-            else:
-                location = Location.objects.create(**kwargs)
-                added_locations.append(location)
-        except ValidationError as e:
-            errors.append((location_json, e.errors()))
+                    location = Location.objects.create(**kwargs)
+                    added_locations.append(location)
+            except ValidationError as e:
+                errors.append((location_json, e.errors()))
+            reversion.set_comment(
+                "/api/importLocations called with API key {}".format(
+                    str(request.api_key)
+                )
+            )
     for location in added_locations:
         location.refresh_from_db()
     return JsonResponse(
@@ -561,4 +587,60 @@ def counties(request, state_abbreviation):
                 for county in state.counties.order_by("name")
             ],
         }
+    )
+
+
+@csrf_exempt
+@beeline.traced(name="caller_stats")
+def caller_stats(request):
+    reporter, user_info = reporter_from_request(request)
+    if isinstance(reporter, JsonResponse):
+        return reporter
+    return JsonResponse(
+        {
+            "total": reporter.reports.count(),
+            "today": reporter.reports.filter(created_at__date=localdate()).count(),
+        }
+    )
+
+
+def api_debug_view(api_path, body_textarea=False, docs=None, default_body=None):
+    def debug_view(request):
+        return render(
+            request,
+            "api/api_debug.html",
+            {
+                "jwt": request.session["jwt"] if "jwt" in request.session else "",
+                "api_path": api_path,
+                "body_textarea": body_textarea,
+                "default_body": default_body,
+                "docs": docs,
+            },
+        )
+
+    return debug_view
+
+
+def api_docs(request):
+    content = (
+        pathlib.Path(__file__).parent.parent.parent / "docs" / "api.md"
+    ).read_text()
+    # Remove first line (header)
+    lines = content.split("\n")
+    content = "\n".join(lines[1:]).strip()
+    # Replace https://vial-staging.calltheshots.us/ with our current hostname
+    content = content.replace(
+        "https://vial-staging.calltheshots.us/", request.build_absolute_uri("/")
+    )
+    md = markdown.Markdown(
+        extensions=["toc", "fenced_code", UrlizeExtension()], output_format="html5"
+    )
+    html = md.convert(content)
+    return render(
+        request,
+        "api/api_docs.html",
+        {
+            "content": html,
+            "toc": md.toc,
+        },
     )

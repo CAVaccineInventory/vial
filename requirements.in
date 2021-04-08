@@ -51,12 +51,18 @@ ipython
 # Django automatic model documentation
 docutils
 
+# Markdown documentation
+Markdown
+
 # SQL dashboard at /dashboard/
 django-sql-dashboard==0.5a0
 
 # Version history in Django admin
 django-reversion
 django-reversion-compare
+
+# Custom menus for Django admin interface
+django-admin-tools
 
 ### Development
 

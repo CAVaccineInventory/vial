@@ -1,0 +1,9 @@
+{% extends "api/base.html" %}
+
+{% block title %}VIAL API documentation{% endblock %}
+
+{% block content %}
+<h1>API documentation</h1>
+{{ toc|safe }}
+{{ content|safe }}
+{% endblock %}
