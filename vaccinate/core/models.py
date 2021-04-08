@@ -283,7 +283,7 @@ class AvailabilityTag(models.Model):
     slug = models.SlugField(null=True)
     group = models.CharField(
         max_length=10,
-        choices=(("yes", "yes"), ("no", "no"), ("skip", "skip")),
+        choices=(("yes", "yes"), ("no", "no"), ("skip", "skip"), ("other", "other")),
         null=True,
     )
     notes = CharTextField(null=True, blank=True)
