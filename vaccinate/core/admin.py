@@ -336,6 +336,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "created_at",
         "public_id",
         "availability",
+        "is_pending_review",
         "location",
         "appointment_tag",
         "reported_by",
@@ -345,6 +346,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     actions = [export_as_csv_action()]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
+        "is_pending_review",
         "created_at",
         "appointment_tag",
         "location__state__abbreviation",

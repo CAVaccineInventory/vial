@@ -2,10 +2,11 @@
 
 {% block extrastyle %}
 <style type="text/css">
-/* Hide scary red soft-deleted icon
+/* Hide scary red soft-deleted and pending-review icons
    https://github.com/CAVaccineInventory/vial/issues/144
 */
-td.field-soft_deleted img[src$="icon-no.svg"] {
+td.field-soft_deleted img[src$="icon-no.svg"],
+td.field-is_pending_review img[src$="icon-no.svg"] {
     opacity: 0;
 }
 /* Wrapping for diff views
