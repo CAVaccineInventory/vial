@@ -220,6 +220,21 @@ class Location(models.Model):
         help_text="If imported, unique identifier in the system it was imported from",
     )
 
+    # Denormalized foreign keys for efficient "latest yes report" style queries
+    # https://github.com/CAVaccineInventory/vial/issues/193
+    dn_latest_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+    )
+    dn_latest_report_including_pending = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+    )
+    dn_latest_yes_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+    )
+    dn_latest_skip_report = models.ForeignKey(
+        "Report", related_name="+", on_delete=models.PROTECT, null=True, blank=True
+    )
+
     def __str__(self):
         return self.name
 
