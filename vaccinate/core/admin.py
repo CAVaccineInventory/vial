@@ -200,7 +200,16 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "provider",
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
-    readonly_fields = ("public_id", "airtable_id", "import_json", "reports_history")
+    readonly_fields = (
+        "public_id",
+        "airtable_id",
+        "import_json",
+        "reports_history",
+        "dn_latest_report",
+        "dn_latest_report_including_pending",
+        "dn_latest_yes_report",
+        "dn_latest_skip_report",
+    )
 
     def summary(self, obj):
         html = (
