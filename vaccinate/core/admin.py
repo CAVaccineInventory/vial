@@ -1,5 +1,6 @@
 import datetime
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.template.loader import render_to_string
@@ -192,6 +193,7 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "soft_deleted",
         "latest_non_skip_report_date",
         "dn_skip_report_count",
+        "scooby_report_link",
     )
     list_filter = (
         LocationInQueueFilter,
@@ -203,6 +205,7 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = (
+        "scooby_report_link",
         "public_id",
         "airtable_id",
         "import_json",
@@ -230,6 +233,16 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         return mark_safe(html)
 
     summary.admin_order_field = "name"
+
+    def scooby_report_link(self, obj):
+        if settings.SCOOBY_URL:
+            return mark_safe(
+                '<strong><a href="{}?location_id={}">File a report using Scooby</a></strong>'.format(
+                    settings.SCOOBY_URL, obj.public_id
+                )
+            )
+        else:
+            return ""
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
