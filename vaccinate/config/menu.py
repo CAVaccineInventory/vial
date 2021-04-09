@@ -21,6 +21,9 @@ class ToolsMenu(items.MenuItem):
             self.children.append(
                 items.MenuItem("Data import tools", "/admin/tools/"),
             )
+            self.children.append(
+                items.MenuItem("Bulk delete reports", "/admin/bulk-delete-reports/"),
+            )
 
     def is_empty(self):
         return not bool(self.children)

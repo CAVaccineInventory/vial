@@ -40,12 +40,13 @@ var reportDates = JSON.parse(
 </script>
 
 {% for report in reports %}
-    <p>
-      Report by <a href="/admin/core/reporter/{{ report.reported_by_id }}/change/">{{ report.reported_by }}</a>
-      on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a>
-      Tagged
+  <div style="margin-bottom: 1em">
+    <p>Report by <strong><a href="/admin/core/reporter/{{ report.reported_by_id }}/change/">{{ report.reported_by }}</a></strong>
+    <p>Tagged
       {% for tag in report.availability_tags.all %}<strong>{{ tag }}</strong>{% if not forloop.last %}, {% endif%}{% endfor %}
     </p>
+    <p>on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a></p>
+  </div>
 {% endfor %}
 
 <p><a href="/admin/core/report/?location={{ location_id }}">View these reports in a table</a></p>
