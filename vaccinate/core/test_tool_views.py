@@ -1,6 +1,14 @@
 from reversion.models import Revision
 
-from .models import AppointmentTag, County, Location, LocationType, Reporter, State
+from .models import (
+    AppointmentTag,
+    AvailabilityTag,
+    County,
+    Location,
+    LocationType,
+    Reporter,
+    State,
+)
 
 
 def test_admin_tools_superuser_only(client, django_user_model):
@@ -132,3 +140,45 @@ def test_merge_locations(admin_client):
         revision.comment
         == f"Merged locations, winner = {winner.public_id}, loser = {loser.public_id}"
     )
+
+
+def test_bulk_delete_reports(admin_client, ten_locations):
+    county = County.objects.get(fips_code="06079")  # San Luis Obispo
+    location = Location.objects.create(
+        county=county,
+        state=State.objects.get(abbreviation="CA"),
+        name="SLO Pharmacy",
+        phone_number="555 555-5555",
+        full_address="5 5th Street",
+        location_type=LocationType.objects.get(name="Pharmacy"),
+        latitude=35.279,
+        longitude=-120.664,
+    )
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
+    reports = []
+    for _ in range(4):
+        report = location.reports.create(
+            reported_by=reporter,
+            report_source="ca",
+            appointment_tag=web,
+        )
+        report.availability_tags.add(plus_65)
+        report.refresh_from_db()  # To get public_id
+        reports.append(report)
+    assert location.reports.count() == 4
+    location.refresh_from_db()
+    assert location.dn_yes_report_count == 4
+    # Bulk delete the first two
+    response = admin_client.post(
+        "/admin/bulk-delete-reports/",
+        {"report_ids": ",".join(r.public_id for r in reports[:2])},
+    )
+    assert response.status_code == 200
+    assert (
+        b"Delete complete - 1 affected locations have been updated" in response.content
+    )
+    assert location.reports.count() == 2
+    location.refresh_from_db()
+    assert location.dn_yes_report_count == 2

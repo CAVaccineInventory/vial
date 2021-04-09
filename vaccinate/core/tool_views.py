@@ -1,3 +1,4 @@
+import re
 from io import StringIO
 
 import requests
@@ -8,7 +9,79 @@ from django.core import management
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 
-from .models import County, Location
+from .models import County, Location, Report
+
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser)
+def bulk_delete_reports(request):
+    error = None
+    message = None
+    report_ids = []
+    location_ids = []
+    if request.method == "POST":
+        report_ids = [
+            r
+            for r in re.split(
+                r"[\n\r,\s]+", request.POST.get(("report_ids") or "").replace('"', "")
+            )
+            if r
+        ]
+        if not isinstance(report_ids, list) or any(
+            not str(r).startswith("r") for r in report_ids
+        ):
+            error = (
+                "Input must be a newline or comma separated list of 'rxx' report IDs"
+            )
+        if report_ids and not error:
+            reports_qs = Report.objects.filter(public_id__in=report_ids)
+            if reports_qs.exists():
+                location_ids = list(
+                    reports_qs.values_list("location_id", flat=True).distinct()
+                )
+                # set null on any denormalized references
+                Location.objects.filter(
+                    dn_latest_report__public_id__in=report_ids
+                ).update(dn_latest_report=None)
+                Location.objects.filter(
+                    dn_latest_report_including_pending__public_id__in=report_ids
+                ).update(dn_latest_report_including_pending=None)
+                Location.objects.filter(
+                    dn_latest_yes_report__public_id__in=report_ids
+                ).update(dn_latest_yes_report=None)
+                Location.objects.filter(
+                    dn_latest_skip_report__public_id__in=report_ids
+                ).update(dn_latest_skip_report=None)
+                Location.objects.filter(
+                    dn_latest_non_skip_report__public_id__in=report_ids
+                ).update(dn_latest_non_skip_report=None)
+                # Delete the availability tags
+                report_availability_tag_qs = (
+                    Report.availability_tags.through.objects.filter(
+                        report__public_id__in=report_ids
+                    )
+                )
+                report_availability_tag_qs._raw_delete(report_availability_tag_qs.db)
+                # Delete those reports
+                reports_qs._raw_delete(reports_qs.db)
+                # Refresh the denormalized columns on those locations
+                locations_qs = Location.objects.filter(pk__in=location_ids)
+                for location in locations_qs:
+                    location.update_denormalizations()
+                message = (
+                    "Delete complete - {} affected locations have been updated".format(
+                        locations_qs.count()
+                    )
+                )
+
+    return render(
+        request,
+        "admin/bulk_delete_reports.html",
+        {
+            "error": error,
+            "message": message,
+        },
+    )
 
 
 @login_required

@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Bulk delete reports (super-user only){% endblock %}
+{% block content %}
+<h1>Bulk delete reports (super-user only)</h1>
+
+<p>We probably won't use this tool again - I needed it to bulk-delete a bunch of test reports, which needed to be done through a tool rather than directly in SQL due to the need to also update the denormalized columns on the `Location` model.</p>
+
+{% if error %}
+    <p style="background-color: red; color: white; padding: 0.5em">
+        {{ error }}
+    </p>
+{% endif %}
+
+{% if message %}
+    <p style="background-color: green; color: white; padding: 0.5em">
+        {{ message }}
+    </p>
+{% endif %}
+
+<form action="{{ request.path }}" method="POST">
+    {% csrf_token %}
+    <p><textarea name="report_ids" style="width: 80%; height: 4em" placeholder='Newline or comma separated list of report IDs here'></textarea></p>
+    <p>
+        <input type="submit" value="Delete these reports">
+    </p>
+</form>
+
+{% endblock %}
