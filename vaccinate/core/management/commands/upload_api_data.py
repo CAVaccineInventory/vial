@@ -1,42 +1,11 @@
 import os
 from argparse import ArgumentParser
-from typing import Any, Dict, List, Sequence
+from typing import Any, Sequence
 
 from core import exporter
-from core.exporter.storage import (
-    DebugWriter,
-    GoogleStorageWriter,
-    LocalWriter,
-    StorageWriter,
-)
+from core.exporter.storage import DebugWriter, GoogleStorageWriter
 from core.management.base import BeelineCommand
 from sentry_sdk import capture_exception
-
-DEPLOYS: Dict[str, List[StorageWriter]] = {
-    "testing": [
-        LocalWriter("local/legacy"),
-        LocalWriter("local/api/v1"),
-    ],
-    # TODO: These bucket names and paths have been changed to not
-    # overlap with the current production airtable exporter.  They
-    # will need to change to:
-    # "staging": [
-    #     GoogleStorageWriter("cavaccineinventory-sitedata", "airtable-sync-staging"),
-    #     GoogleStorageWriter("vaccinateca-api-staging", "v1"),
-    # ],
-    # "production": [
-    #     GoogleStorageWriter("cavaccineinventory-sitedata", "airtable-sync"),
-    #     GoogleStorageWriter("vaccinateca-api", "v1"),
-    # ]
-    "staging": [
-        GoogleStorageWriter("cavaccineinventory-sitedata", "vial-staging"),
-        GoogleStorageWriter("vaccinateca-api-vial-staging", "v1"),
-    ],
-    "production": [
-        GoogleStorageWriter("cavaccineinventory-sitedata", "vial"),
-        GoogleStorageWriter("vaccinateca-api-vial", "v1"),
-    ],
-}
 
 
 class Command(BeelineCommand):
@@ -59,7 +28,7 @@ class Command(BeelineCommand):
         )
 
     def handle(self, *args: Any, **options: Any):
-        deploy_env = DEPLOYS[os.environ.get("DEPLOY", "testing")]
+        deploy_env = exporter.DEPLOYS[os.environ.get("DEPLOY", "testing")]
 
         if options["noop"]:
             deploy_env = [

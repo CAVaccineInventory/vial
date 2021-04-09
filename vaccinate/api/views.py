@@ -11,6 +11,7 @@ import pytz
 import requests
 import reversion
 from auth0login.auth0_utils import decode_and_verify_jwt
+from core import exporter
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
@@ -650,3 +651,19 @@ def api_docs(request):
             "toc": md.toc,
         },
     )
+
+
+@csrf_exempt
+@beeline.traced(name="api_export")
+def api_export(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Must be a POST"},
+            status=400,
+        )
+    if not exporter.api_export():
+        return JsonResponse(
+            {"error": "Failed to write one or more endpoints; check Sentry"},
+            status=500,
+        )
+    return JsonResponse({"ok": 1})
