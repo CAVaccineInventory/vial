@@ -22,6 +22,10 @@ The following Auth0 roles grant access to VIAL, and place the user in a VIAL per
 - VIAL data corrections
 - VIAL super-user
 
+Membership of these groups should be controlled entirely through Auth0 role assignments. If a VIAL super-user adds or removes someone from one of these groups using the VIAL interface that user will have their membership reset next time they sign into VIAL.
+
+If you want to grant permissions to specific users within VIAL independent of their AUth0 roles you can do so by editing that user's list of permissions directly on the edit user page.
+
 ## Architectural principles for this app
 
 - Write code (and issue comments and commit messages) with the expectation that the entire repository will be open to the public some day. So keep secrets out of the code, and don't be uncouth!
