@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from reversion.models import Revision, Version
-from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
+from reversion_compare.admin import CompareVersionAdmin
 
 from .admin_actions import export_as_csv_action
 from .models import (
@@ -63,7 +63,7 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
 
 @admin.register(County)
-class CountyAdmin(DynamicListDisplayMixin, VersionAdmin):
+class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
@@ -155,7 +155,7 @@ class LocationDeletedFilter(admin.SimpleListFilter):
 
 
 @admin.register(Location)
-class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
+class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     actions = [export_as_csv_action()]
 
