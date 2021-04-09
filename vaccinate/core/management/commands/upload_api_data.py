@@ -17,13 +17,24 @@ DEPLOYS: Dict[str, List[StorageWriter]] = {
         LocalWriter("local/legacy"),
         LocalWriter("local/api/v1"),
     ],
+    # TODO: These bucket names and paths have been changed to not
+    # overlap with the current production airtable exporter.  They
+    # will need to change to:
+    # "staging": [
+    #     GoogleStorageWriter("cavaccineinventory-sitedata", "airtable-sync-staging"),
+    #     GoogleStorageWriter("vaccinateca-api-staging", "v1"),
+    # ],
+    # "production": [
+    #     GoogleStorageWriter("cavaccineinventory-sitedata", "airtable-sync"),
+    #     GoogleStorageWriter("vaccinateca-api", "v1"),
+    # ]
     "staging": [
-        GoogleStorageWriter("cavaccineinventory-sitedata", "airtable-sync-staging"),
-        GoogleStorageWriter("vaccinateca-api-staging", "v1"),
+        GoogleStorageWriter("cavaccineinventory-sitedata", "vial-staging"),
+        GoogleStorageWriter("vaccinateca-api-vial-staging", "v1"),
     ],
     "production": [
-        GoogleStorageWriter("cavaccineinventory-sitedata", "airtable-sync"),
-        GoogleStorageWriter("vaccinateca-api", "v1"),
+        GoogleStorageWriter("cavaccineinventory-sitedata", "vial"),
+        GoogleStorageWriter("vaccinateca-api-vial", "v1"),
     ],
 }
 
