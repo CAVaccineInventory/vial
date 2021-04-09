@@ -3,7 +3,11 @@
 The goal is to update this documentation as part of any commit that modifies how the API works in any way.
   
 The base URL for every API is https://vial-staging.calltheshots.us/
-  
+
+## GET /admin/edit-location/<public_id>/
+
+Not a JSON API, but this is a convenient way to link to the edit page for a specific location. You can contruct this URL with the public ID of the location and VIAL will redirect the authenticated user to the corresponding edit interface for that location.
+
 ## POST /api/submitReport
   
 This API records a new "report" in our database. A report is when someone checks with a vaccination location - usually by calling them - to find out their current status.

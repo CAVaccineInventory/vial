@@ -182,3 +182,20 @@ def test_bulk_delete_reports(admin_client, ten_locations):
     assert location.reports.count() == 2
     location.refresh_from_db()
     assert location.dn_yes_report_count == 2
+
+
+def test_location_edit_redirect(admin_client):
+    county = County.objects.get(fips_code="06079")
+    location = Location.objects.create(
+        county=county,
+        state=State.objects.get(abbreviation="CA"),
+        name="SLO Pharmacy",
+        phone_number="555 555-5555",
+        full_address="5 5th Street",
+        location_type=LocationType.objects.get(name="Pharmacy"),
+        latitude=35.279,
+        longitude=-120.664,
+    )
+    location.refresh_from_db()
+    response = admin_client.get("/admin/edit-location/{}/".format(location.public_id))
+    assert response.url == "/admin/core/location/{}/change/".format(location.pk)
