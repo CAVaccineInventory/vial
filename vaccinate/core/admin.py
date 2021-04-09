@@ -370,7 +370,15 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "created_at_utc",
     )
     list_display_links = ("created_at", "public_id")
-    actions = [export_as_csv_action()]
+    actions = [
+        export_as_csv_action(
+            customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
+            extra_columns=["availability_tags"],
+            extra_columns_factory=lambda row: [
+                ", ".join(t.name for t in row.availability_tags.all())
+            ],
+        )
+    ]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "is_pending_review",

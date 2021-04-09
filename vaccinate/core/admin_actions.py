@@ -20,10 +20,18 @@ def keyset_pagination_iterator(input_queryset, batch_size=500):
             break
 
 
-def export_as_csv_action(description="Export selected rows to CSV"):
+def export_as_csv_action(
+    description="Export selected rows to CSV",
+    customize_queryset=None,
+    extra_columns=None,
+    extra_columns_factory=None,
+):
+    extra_columns = extra_columns or []
+    customize_queryset = customize_queryset or (lambda qs: qs)
+
     def export_as_csv(modeladmin, request, queryset):
         def rows(queryset):
-
+            queryset = customize_queryset(queryset)
             csvfile = StringIO()
             csvwriter = csv.writer(csvfile)
             columns = []
@@ -32,6 +40,8 @@ def export_as_csv_action(description="Export selected rows to CSV"):
                     columns.extend([field.attname, field.name])
                 else:
                     columns.append(field.name)
+            if extra_columns:
+                columns.extend(extra_columns)
 
             def read_and_flush():
                 csvfile.seek(0)
@@ -48,7 +58,14 @@ def export_as_csv_action(description="Export selected rows to CSV"):
                 yield read_and_flush()
 
             for row in keyset_pagination_iterator(queryset):
-                csvwriter.writerow(getattr(row, column) for column in columns)
+                csv_row = [
+                    getattr(row, column)
+                    for column in columns
+                    if column not in extra_columns
+                ]
+                if extra_columns_factory:
+                    csv_row.extend(extra_columns_factory(row))
+                csvwriter.writerow(csv_row)
                 yield read_and_flush()
 
         response = StreamingHttpResponse(rows(queryset), content_type="text/csv")
