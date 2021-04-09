@@ -22,6 +22,9 @@ ALLOWED_HOSTS = ["*"]
 # Call request queue is backfilled if this minimum is reached
 MIN_CALL_REQUEST_QUEUE_ITEMS = 20
 
+# django-sql-dashboard
+DASHBOARD_ROW_LIMIT = 1000
+
 # Sentry
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 if SENTRY_DSN:
@@ -213,7 +216,7 @@ if "DATABASE_URL" in os.environ:
 if "DASHBOARD_DATABASE_URL" in os.environ:
     DATABASES["dashboard"] = dj_database_url.parse(os.environ["DASHBOARD_DATABASE_URL"])
     DATABASES["dashboard"]["OPTIONS"] = {
-        "options": "-c default_transaction_read_only=on -c statement_timeout=1000"
+        "options": "-c default_transaction_read_only=on -c statement_timeout=5000"
     }
     DATABASES["dashboard"]["HOST"] = (
         DATABASES["dashboard"]["HOST"].replace("%3a", ":").replace("%3A", ":")
