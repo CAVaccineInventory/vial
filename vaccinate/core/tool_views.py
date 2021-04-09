@@ -138,6 +138,7 @@ def import_airtable_counties(airtable_counties, user):
                 "Twitter Page": "twitter_page",
                 "Vaccine info URL": "vaccine_info_url",
                 "Vaccine locations URL": "vaccine_locations_url",
+                "Official volunteering opportunities": "official_volunteering_url",
                 "population": "population",
                 "age_floor_without_restrictions": "age_floor_without_restrictions",
             }.items():
