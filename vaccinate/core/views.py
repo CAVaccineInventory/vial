@@ -1,6 +1,7 @@
 import os
 import sys
 
+import pkg_resources
 from django.db import connection
 from django.http.response import JsonResponse
 from django.shortcuts import redirect, render
@@ -23,6 +24,12 @@ def healthcheck(request):
             "deployed_sha": os.environ.get("COMMIT_SHA"),
             "postgresql_version": cursor.fetchone()[0],
             "python_version": sys.version,
+            "package_versions": {
+                d.project_name: d.version
+                for d in sorted(
+                    pkg_resources.working_set, key=lambda d: d.project_name.lower()
+                )
+            },
             "reversion_models": [m._meta.label for m in get_registered_models()],
         }
     )
