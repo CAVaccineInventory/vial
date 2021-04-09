@@ -265,3 +265,20 @@ USE_TZ = True
 en_formats.DATETIME_FORMAT = "jS M Y g:i:s A e"
 
 TEST_RUNNER = "test_runner.PytestTestRunner"
+
+if os.environ.get("DJANGO_DEBUG_LOG_ALL_SQL", None):
+    LOGGING = {
+        "version": 1,
+        "handlers": {
+            "console": {
+                "level": "DEBUG",
+                "class": "logging.StreamHandler",
+            }
+        },
+        "loggers": {
+            "django.db.backends": {
+                "level": "DEBUG",
+                "handlers": ["console"],
+            }
+        },
+    }
