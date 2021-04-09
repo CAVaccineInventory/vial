@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any, Dict
 
 import dj_database_url
 import sentry_sdk
@@ -201,7 +202,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-DATABASES = {
+DATABASES: Dict[str, Dict[str, Any]] = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "vaccinate",
