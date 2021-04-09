@@ -173,6 +173,7 @@ class V0(APIProducer):
                     "Vaccine locations URL": county.vaccine_locations_url,
                     "Total reports": county.locations_with_reports,  # type:ignore[attr-defined]
                     "Yeses": county.locations_with_latest_yes,  # type:ignore[attr-defined]
+                    "age_floor_without_restrictions": county.age_floor_without_restrictions,
                 }
             )
         return result
