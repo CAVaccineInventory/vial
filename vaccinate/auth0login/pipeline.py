@@ -1,12 +1,11 @@
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group
 
-AUTH0_TO_DJANGO_GROUPS = {
-    # Auth0 Role -> Django Group
-    "Vaccinate CA Staff": "Staff",
-    "VIAL super-user": "Superadmin",
-    "Reports QA": "Call QA",
-    "VIAL data corrections": "data-corrections",
+AUTH0_ROLES_TO_REFLECT = {
+    "Vaccinate CA Staff",
+    "VIAL super-user",
+    "Reports QA",
+    "VIAL data corrections",
 }
 
 
@@ -15,17 +14,17 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
         users_roles = kwargs.get("details", {}).get("roles", {}) or []
         groups = {
             name: Group.objects.get_or_create(name=name)[0]
-            for name in AUTH0_TO_DJANGO_GROUPS.values()
+            for name in AUTH0_ROLES_TO_REFLECT
         }
         should_be_staff = any(
-            auth0_role in users_roles for auth0_role in AUTH0_TO_DJANGO_GROUPS
+            auth0_role in users_roles for auth0_role in AUTH0_ROLES_TO_REFLECT
         )
         if should_be_staff != user.is_staff:
             user.is_staff = should_be_staff
             user.save()
         # Add user to groups if necessary:
-        for auth0_role, group_name in AUTH0_TO_DJANGO_GROUPS.items():
-            group = groups[group_name]
+        for auth0_role in AUTH0_ROLES_TO_REFLECT:
+            group = groups[auth0_role]
             if auth0_role in users_roles:
                 group.user_set.add(user)
             else:
