@@ -42,10 +42,11 @@ var reportDates = JSON.parse(
 <p><strong>Recent reports</strong> (<a href="/admin/core/report/?reported_by__exact={{ reporter.id }}">view all</a>)</p>
 
 {% for report in recent_reports %}
-    <p>
-      <a href="/admin/core/location/{{ report.location.id }}/change/">{{ report.location }}</a>
-      Tagged
+  <div style="margin-bottom: 2em">
+    <p><strong><a href="/admin/core/location/{{ report.location.id }}/change/">{{ report.location }}</a></strong>
+    <p>Tagged
       {% for tag in report.availability_tags.all %}<strong>{{ tag }}</strong>{% if not forloop.last %}, {% endif%}{% endfor %}
-      on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a>
     </p>
+    <p>on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a></p>
+  </div>
 {% endfor %}
