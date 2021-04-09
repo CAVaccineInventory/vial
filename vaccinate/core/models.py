@@ -265,7 +265,7 @@ class Location(models.Model):
         reports = (
             self.reports.all()
             .prefetch_related("availability_tags")
-            .order_by("created_at")
+            .order_by("-created_at")
         )
         try:
             dn_latest_report = [r for r in reports if not r.is_pending_review][0]

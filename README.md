@@ -125,3 +125,9 @@ Run `black .` and `isort .` in the top-level directory to ensure your code is fo
 Run `scripts/run-pyflakes` in the top-level directory to check for missing or unused imports.
 
 Run `scripts/lint-migrations` in the top-level directory to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
+
+## Logging SQL
+
+You can set the `DJANGO_DEBUG_LOG_ALL_SQL=1` environment variable to log all SQL executed by Django to the console. This can be useful for things like understanding how complex migrations work:
+
+    DJANGO_DEBUG_LOG_ALL_SQL=1 ./manage.py migrate

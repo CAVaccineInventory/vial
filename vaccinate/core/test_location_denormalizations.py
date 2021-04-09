@@ -1,4 +1,7 @@
+import datetime
+
 import pytest
+from django.utils import timezone
 
 from .models import (
     AppointmentTag,
@@ -97,3 +100,25 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_non_skip_report is None
     assert location.dn_skip_report_count == 1
     assert location.dn_yes_report_count == 0
+    # Add two yes reports and confirm that the latest one is correct
+    report2.delete()
+    early_yes = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        created_at=timezone.now() - datetime.timedelta(days=1),
+    )
+    early_yes.availability_tags.add(plus_65)
+    later_yes = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        created_at=timezone.now(),
+    )
+    later_yes.availability_tags.add(plus_65)
+    location.refresh_from_db()
+    assert location.dn_latest_report == later_yes
+    assert location.dn_latest_report_including_pending == later_yes
+    assert location.dn_latest_yes_report == later_yes
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 2
