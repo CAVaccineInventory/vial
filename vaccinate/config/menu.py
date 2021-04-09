@@ -8,7 +8,9 @@ class ToolsMenu(items.MenuItem):
 
     def init_with_context(self, context):
         user = context["request"].user
-        self.children = []
+        self.children.append(
+            items.MenuItem("API documentation", "/api/docs"),
+        )
         if user.has_perm("django_sql_dashboard.execute_sql"):
             self.children.append(
                 items.MenuItem("SQL Dashboard", "/dashboard/"),

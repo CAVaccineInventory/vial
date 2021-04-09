@@ -4,7 +4,7 @@ The goal is to update this documentation as part of any commit that modifies how
   
 The base URL for every API is https://vial-staging.calltheshots.us/
 
-## GET /admin/edit-location/<public_id>/
+## GET /admin/edit-location/&lt;public_id&gt;/
 
 Not a JSON API, but this is a convenient way to link to the edit page for a specific location. You can contruct this URL with the public ID of the location and VIAL will redirect the authenticated user to the corresponding edit interface for that location.
 
