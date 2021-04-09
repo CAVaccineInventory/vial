@@ -15,11 +15,12 @@ This app is built around the Django admin, but uses Auth0 for authentication.
 
 User permissions are controlled using Auth0 roles. Users can be assigned these roles in the Auth0 interface at https://manage.auth0.com/dashboard/us/vaccinateca/roles
 
-The following three roles are used:
+The following Auth0 roles grant access to VIAL, and place the user in a VIAL permissions group with the same name as the Auth0 role. The permissions assigned to those groups can be seen and edited in the VIAL groups interface, by users with the `VIAL super-user` role.
 
-- `VIAL admin`. Any user with this role in Auth0 will have permission to sign into the https://vial.calltheshots.us/admin/ interface. They will then be assigned to a Django group called `default-view-core` - this group has permission to access a number of core models within the application.
-- `VIAL data corrections`. This role is for volunteers who are allowed to edit and update our location data.
-- `VIAL super-user`. This role grants super-user access within the Django admin. Users with this role will be able to edit permissions for other groups, and will have add/update/delete access to every object available through the admin.
+- Vaccinate CA Staff
+- Reports QA
+- VIAL data corrections
+- VIAL super-user
 
 ## Architectural principles for this app
 
