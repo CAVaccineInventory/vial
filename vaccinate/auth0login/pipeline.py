@@ -1,7 +1,6 @@
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group
 
-
 AUTH0_TO_DJANGO_GROUPS = {
     # Auth0 Role -> Django Group
     "Vaccinate CA Staff": "Staff",
