@@ -2,33 +2,31 @@ from django.contrib.auth import logout
 from django.contrib.auth.models import Group
 
 
+AUTH0_TO_DJANGO_GROUPS = {
+    # Auth0 Role -> Django Group
+    "Vaccinate CA Staff": "Staff",
+    "VIAL super-user": "Superadmin",
+    "Reports QA": "Call QA",
+}
+
+
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
     if backend.name == "auth0":
-        roles = kwargs.get("details", {}).get("roles", {}) or []
-        vial_admin_group = Group.objects.get_or_create(name="default-view-core")[0]
-        data_corrections_group = Group.objects.get_or_create(name="data-corrections")[0]
-        should_be_staff = (
-            "Vaccinate CA Staff" in roles
-            or "VIAL admin" in roles
-            or "VIAL data corrections" in roles
+        users_roles = kwargs.get("details", {}).get("roles", {}) or []
+        groups = {
+            name: Group.objects.get_or_create(name=name)[0]
+            for name in AUTH0_TO_DJANGO_GROUPS.values()
+        }
+        should_be_staff = any(
+            auth0_role in users_roles for auth0_role in AUTH0_TO_DJANGO_GROUPS
         )
-        should_be_superuser = "VIAL super-user" in roles
-        needs_save = False
         if should_be_staff != user.is_staff:
             user.is_staff = should_be_staff
-            needs_save = True
-        if should_be_superuser != user.is_superuser:
-            user.is_superuser = should_be_superuser
-            needs_save = True
-        if needs_save:
             user.save()
         # Add user to groups if necessary:
-
-        for allowed_roles, group in (
-            (("VIAL data corrections",), data_corrections_group),
-            (("Vaccinate CA Staff", "VIAL admin"), vial_admin_group),
-        ):
-            if any(r in roles for r in allowed_roles):
+        for auth0_role, group_name in AUTH0_TO_DJANGO_GROUPS.items():
+            group = groups[group_name]
+            if auth0_role in users_roles:
                 group.user_set.add(user)
             else:
                 group.user_set.remove(user)
