@@ -6,6 +6,7 @@ AUTH0_TO_DJANGO_GROUPS = {
     "Vaccinate CA Staff": "Staff",
     "VIAL super-user": "Superadmin",
     "Reports QA": "Call QA",
+    "VIAL data corrections": "data-corrections",
 }
 
 
