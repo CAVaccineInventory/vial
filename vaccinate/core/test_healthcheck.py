@@ -12,6 +12,7 @@ def test_healthcheck(client, monkeypatch):
         "postgresql_version",
         "python_version",
         "reversion_models",
+        "package_versions",
     }
     assert data["postgresql_version"].startswith("PostgreSQL ")
     assert data["python_version"].startswith("3.")

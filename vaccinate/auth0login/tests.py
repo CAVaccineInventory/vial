@@ -74,9 +74,9 @@ def test_login_with_auth0_complete(
     assert user.email == expected_email
     assert user.is_staff == should_be_staff
     if should_be_staff:
-        assert user.groups.filter(name="default-view-core").exists()
+        assert user.groups.filter(name="Staff").exists()
     else:
-        assert not user.groups.filter(name="default-view-core").exists()
+        assert not user.groups.filter(name="Staff").exists()
     # Should redirect to / - redirecting to /admin/ caused
     # a redirect loop for not-staff users
     assert response.url == "/"
