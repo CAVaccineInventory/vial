@@ -325,10 +325,7 @@ def request_call(request, on_request_logged):
             )
         location = request.location
 
-    try:
-        latest_report = location.reports.order_by("-created_at")[0]
-    except IndexError:
-        latest_report = None
+    latest_report = location.dn_latest_non_skip_report
 
     county_record = {}
     county_age_floor_without_restrictions = []
