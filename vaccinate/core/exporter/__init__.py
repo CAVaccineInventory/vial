@@ -22,12 +22,32 @@ def dataset() -> Generator[Dataset, None, None]:
     Serializers may further filter this list down if they wish."""
     with transaction.atomic():
         ds = Dataset()
+        # The sheer width of the number of columns being pulled out of
+        # the database is a significant fractino of the time (~5s/6s)
+        # to run the query.  Limiting the columns to just those that
+        # are necessary accalerates this significantly -- with the
+        # caveat that if any /other/ column is requested, it adds O(n)
+        # additional queries, at significant cost!
         ds.locations = (
             models.Location.objects.filter(state__abbreviation="CA")
             .select_related("dn_latest_non_skip_report")
             .select_related("county")
             .select_related("location_type")
             .prefetch_related("dn_latest_non_skip_report__availability_tags")
+        ).only(
+            "public_id",
+            "name",
+            "county__name",
+            "full_address",
+            "latitude",
+            "longitude",
+            "location_type__name",
+            "vaccinefinder_location_id",
+            "vaccinespotter_location_id",
+            "google_places_id",
+            "dn_latest_non_skip_report__appointment_details",
+            "dn_latest_non_skip_report__created_at",
+            "dn_latest_non_skip_report__public_notes",
         )
 
         ds.counties = (
