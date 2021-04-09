@@ -262,7 +262,11 @@ class V1(V0):
     def write(self, sw: StorageWriter):
         sw.write("locations.json", self.metadata_wrap(self.get_locations()))
         sw.write("counties.json", self.metadata_wrap(self.get_counties()))
-        sw.write("providers.json", self.metadata_wrap(self.get_providers()))
+        # TODO: Do not remove this until it is no longer being
+        # published from Airtable.  Ref
+        # https://github.com/CAVaccineInventory/vial/issues/219
+        #
+        # sw.write("providers.json", self.metadata_wrap(self.get_providers()))
 
 
 def api(version: int, ds: Dataset) -> APIProducer:
