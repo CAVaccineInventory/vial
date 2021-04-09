@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core import management
 from django.http.response import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from .models import County, Location, Report
 
@@ -206,3 +206,8 @@ def merge_locations(request):
             "loser": loser,
         },
     )
+
+
+def edit_location_redirect(request, public_id):
+    location = get_object_or_404(Location, public_id=public_id)
+    return HttpResponseRedirect("/admin/core/location/{}/change/".format(location.pk))
