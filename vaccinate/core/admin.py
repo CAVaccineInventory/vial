@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.template.loader import render_to_string
-from django.utils import timezone
+from django.utils import dateformat, timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from reversion.models import Revision, Version
@@ -251,14 +251,14 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             "county", "state", "provider", "location_type", "dn_latest_non_skip_report"
         ).annotate(times_reported_count=Count("reports"))
 
-    def times_reported(self, inst):
-        return inst.times_reported_count
+    def times_reported(self, obj):
+        return obj.times_reported_count
 
     times_reported.admin_order_field = "times_reported_count"
 
-    def latest_non_skip_report_date(self, inst):
-        if inst.dn_latest_non_skip_report:
-            return inst.dn_latest_non_skip_report.created_at
+    def latest_non_skip_report_date(self, obj):
+        if obj.dn_latest_non_skip_report:
+            return obj.dn_latest_non_skip_report.created_at
 
     latest_non_skip_report_date.admin_order_field = (
         "dn_latest_non_skip_report__created_at"
@@ -267,13 +267,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def lookup_allowed(self, lookup, value):
         return True
 
-    def reports_history(self, instance):
-        reports = instance.reports.exclude(soft_deleted=True)
+    def reports_history(self, obj):
+        reports = obj.reports.exclude(soft_deleted=True)
         return mark_safe(
             render_to_string(
                 "admin/_reports_history.html",
                 {
-                    "location_id": instance.pk,
+                    "location_id": obj.pk,
                     "reports_datetimes": [
                         d.isoformat()
                         for d in reports.values_list("created_at", flat=True)
@@ -314,20 +314,20 @@ class ReporterAdmin(admin.ModelAdmin):
             reporter_latest_report=Max("reports__created_at"),
         )
 
-    def report_count(self, inst):
-        return inst.reporter_report_count
+    def report_count(self, obj):
+        return obj.reporter_report_count
 
     report_count.admin_order_field = "reporter_report_count"
 
-    def latest_report(self, inst):
-        return inst.reporter_latest_report
+    def latest_report(self, obj):
+        return obj.reporter_latest_report
 
     latest_report.admin_order_field = "reporter_latest_report"
 
     readonly_fields = ("qa_summary",)
 
-    def qa_summary(self, instance):
-        return qa_summary(instance)
+    def qa_summary(self, obj):
+        return qa_summary(obj)
 
     qa_summary.short_description = "QA summary"
 
@@ -449,8 +449,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj.save()
             obj.location.update_denormalizations()
 
-    def state(self, instance):
-        return instance.location.state.abbreviation
+    def state(self, obj):
+        return obj.location.state.abbreviation
 
     def get_queryset(self, request):
         return (
@@ -463,8 +463,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     def lookup_allowed(self, lookup, value):
         return True
 
-    def qa_summary(self, instance):
-        return qa_summary(instance.reported_by)
+    def qa_summary(self, obj):
+        return qa_summary(obj.reported_by)
 
     qa_summary.short_description = "QA summary"
 
@@ -577,14 +577,14 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("location__name", "location__public_id")
     list_display = (
         "location",
-        "vesting_at",
-        "claimed_by",
-        "claimed_until",
+        "priority_group",
+        "queue_status",
         "call_request_reason",
         "priority",
     )
     list_filter = (
         CallRequestQueueStatus,
+        "priority_group",
         "call_request_reason",
     )
     actions = [
@@ -597,6 +597,27 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+    def queue_status(self, obj):
+        now = timezone.now()
+        if obj.completed:
+            return "Completed"
+        if obj.claimed_by_id and obj.claimed_until > now:
+            return "Assigned to {} until {}".format(
+                obj.claimed_by,
+                dateformat.format(
+                    timezone.localtime(obj.claimed_until), "jS M Y g:i:s A e"
+                ),
+            )
+        if obj.vesting_at > now:
+            return mark_safe(
+                "<em>Scheduled</em> for {}".format(
+                    dateformat.format(
+                        timezone.localtime(obj.vesting_at), "jS M Y g:i:s A e"
+                    ),
+                )
+            )
+        return "Available"
 
 
 # NOT CURRENTLY USED
