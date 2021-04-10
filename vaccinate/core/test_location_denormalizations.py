@@ -122,3 +122,12 @@ def test_denormalized_location_report_columns():
     assert location.dn_latest_yes_report == later_yes
     assert location.dn_skip_report_count == 0
     assert location.dn_yes_report_count == 2
+    # Soft delete the later yes report
+    later_yes.soft_deleted = True
+    later_yes.save()
+    location.refresh_from_db()
+    assert location.dn_latest_report == early_yes
+    assert location.dn_latest_report_including_pending == early_yes
+    assert location.dn_latest_yes_report == early_yes
+    assert location.dn_skip_report_count == 0
+    assert location.dn_yes_report_count == 1

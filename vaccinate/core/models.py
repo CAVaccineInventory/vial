@@ -266,6 +266,7 @@ class Location(models.Model):
     def update_denormalizations(self):
         reports = (
             self.reports.all()
+            .exclude(soft_deleted=True)
             .prefetch_related("availability_tags")
             .order_by("-created_at")
         )
