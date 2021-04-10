@@ -257,7 +257,7 @@ def test_api_v0_framing():
     # We expect to have written three endpoints
     writer.write.assert_called()
     calls = writer.write.call_args_list
-    assert len(calls) == 3
+    assert len(calls) == 2
     assert set(["Locations.json", "Counties.json"]) == set([c.args[0] for c in calls])
 
     # Verify that they have no metadata
