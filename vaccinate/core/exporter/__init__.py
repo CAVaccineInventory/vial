@@ -243,7 +243,6 @@ class V0(APIProducer):
     def write(self, sw: StorageWriter) -> None:
         sw.write("locations.json", self.get_locations())
         sw.write("counties.json", self.get_counties())
-        sw.write("providers.json", self.get_providers())
 
 
 class V1(V0):

@@ -258,9 +258,7 @@ def test_api_v0_framing():
     writer.write.assert_called()
     calls = writer.write.call_args_list
     assert len(calls) == 3
-    assert set(["locations.json", "providers.json", "counties.json"]) == set(
-        [c.args[0] for c in calls]
-    )
+    assert set(["locations.json", "counties.json"]) == set([c.args[0] for c in calls])
 
     # Verify that they have no metadata
     for c in calls:
