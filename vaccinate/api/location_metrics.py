@@ -86,6 +86,10 @@ class LocationMetricsReport:
             Location.objects.filter(dn_latest_non_skip_report_id__isnull=False)
             .select_related("dn_latest_non_skip_report")
             .prefetch_related("dn_latest_non_skip_report__availability_tags")
+        ).only(
+            "dn_latest_non_skip_report_id",
+            "dn_latest_yes_report_id",
+            "dn_latest_non_skip_report__created_at",
         )
         for loc in locations_with_reports:
             self.observe_location(loc, yeses, nos)
