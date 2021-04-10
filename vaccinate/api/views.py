@@ -645,10 +645,11 @@ def caller_stats(request):
     reporter, user_info = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
         return reporter
+    reports = reporter.reports.exclude(soft_deleted=True)
     return JsonResponse(
         {
-            "total": reporter.reports.count(),
-            "today": reporter.reports.filter(created_at__date=localdate()).count(),
+            "total": reports.count(),
+            "today": reports.filter(created_at__date=localdate()).count(),
         }
     )
 

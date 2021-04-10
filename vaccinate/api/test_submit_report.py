@@ -168,3 +168,15 @@ def test_submit_report_api_example(
             report.availability_tags.values_list("name", flat=True)
         ),
     }
+
+    # Soft delete that report and check callerStats again
+    report.soft_deleted = True
+    report.save()
+    assert client.post(
+        "/api/callerStats",
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    ).json() == {
+        "total": 0,
+        "today": 0,
+    }
