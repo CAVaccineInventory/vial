@@ -383,6 +383,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by",
         "created_at_utc",
     )
+    autocomplete_fields = ("availability_tags",)
     list_display_links = ("id", "created_at", "public_id")
     actions = [
         export_as_csv_action(
