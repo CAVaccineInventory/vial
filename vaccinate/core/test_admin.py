@@ -337,8 +337,8 @@ def test_custom_csv_export_for_reports(
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location_id,location,is_pending_review,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
-            '{},{},Location 1,True,ca,3,web,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
+            "id,location_id,location,is_pending_review,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
+            '{},{},Location 1,True,False,,ca,3,web,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
                 report.id,
                 report.location_id,
                 reporter.id,
