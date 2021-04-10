@@ -75,7 +75,7 @@ class LocationMetricsReport:
 
     def serve(self) -> HttpResponse:
         self.now = datetime.datetime.now(datetime.timezone.utc)
-        self.total_locations.set(len(Location.objects.all()))
+        self.total_locations.set(Location.objects.count())
 
         yeses: Dict[bool, Dict[str, int]] = {
             True: defaultdict(int),
@@ -114,19 +114,19 @@ class LocationMetricsReport:
     ) -> None:
         assert loc.dn_latest_non_skip_report
         is_yes = loc.dn_latest_non_skip_report_id == loc.dn_latest_yes_report_id
-        tags = loc.dn_latest_non_skip_report.availability_tags
+        tags = loc.dn_latest_non_skip_report.availability_tags.all()
         terminal_no = False
         if is_yes:
-            walkin = len(tags.filter(group="yes", name="Walk-ins accepted")) > 0
+            walkin = len([t for t in tags if t.name == "Walk-ins accepted"]) > 0
             age = "None"
-            for tag in sorted(tags.all(), key=lambda t: t.name):
+            for tag in sorted(tags, key=lambda t: t.name):
                 this_age = self.age_of_tag(tag)
                 if this_age:
                     age = this_age
                     break
             yeses[walkin][age] += 1
         else:
-            for reason in tags.filter(group="no"):
+            for reason in [t for t in tags if t.group == "no"]:
                 nos[reason.name] += 1
                 if reason in self.terminal_nos:
                     terminal_no = True
