@@ -120,7 +120,7 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
-class LocationDeletedFilter(admin.SimpleListFilter):
+class SoftDeletedFilter(admin.SimpleListFilter):
     title = "soft deleted"
 
     parameter_name = "soft_deleted"
@@ -190,14 +190,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "county",
         "location_type",
         "provider",
-        "soft_deleted",
         "latest_non_skip_report_date",
         "dn_skip_report_count",
         "scooby_report_link",
     )
     list_filter = (
         LocationInQueueFilter,
-        LocationDeletedFilter,
+        SoftDeletedFilter,
         "do_not_call",
         "location_type",
         "state",
@@ -230,6 +229,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             html += "<br><strong>Do not call</strong>"
         if obj.do_not_call_reason:
             html += " " + obj.do_not_call_reason
+        if obj.soft_deleted:
+            html += '<br><strong style="color: red">Soft deleted</strong>'
         return mark_safe(html)
 
     summary.admin_order_field = "name"
@@ -372,8 +373,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__email",
     )
     list_display = (
-        "id",
-        "state",
+        "id_and_note",
         "created_at",
         "public_id",
         "availability",
@@ -397,9 +397,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "is_pending_review",
+        SoftDeletedFilter,
         "created_at",
         "appointment_tag",
-        "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
 
@@ -413,6 +413,20 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
     inlines = [ReportReviewNoteInline]
     ordering = ("-created_at",)
+
+    def id_and_note(self, obj):
+        html = (
+            '<a href="/admin/core/location/{}/change/"><strong>{}</strong></a>'.format(
+                obj.id,
+                obj.id,
+            )
+        )
+        if obj.soft_deleted:
+            html += '<br><strong style="color: red">Soft deleted</strong>'
+        return mark_safe(html)
+
+    id_and_note.short_description = "id"
+    id_and_note.admin_order_field = "id"
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
