@@ -66,7 +66,13 @@ Check out the repository. Create a new Python virtual environment for it (I use 
 
 Set your environment variables, see *Configuration* section below.
 
-`cd vaccinate` and then run the server with `./manage.py runserver 0.0.0.0:3000`
+You'll need a PostgreSQL database called "vaccinate". On macOS I've used https://postgresapp.com/ for that.
+
+You'll need to run `./manage.py` commands from the `vaccinate` directory, so `cd vaccinate`.
+
+Then run the database migrations with `./manage.py migrate` - you'll need to run this command any time we release new migrations.
+
+Run the development server using `./manage.py runserver 0.0.0.0:3000`
 
 To enable the Django debug toolbar, run this instead:
 
