@@ -708,7 +708,7 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
-        ordering = ("-priority", "-id")
+        ordering = ("priority_group", "-priority", "-id")
 
     @classmethod
     def available_requests(cls, qs=None):
@@ -718,7 +718,7 @@ class CallRequest(models.Model):
         return qs.filter(
             Q(completed=False) & Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
             | Q(claimed_until__lte=now)
-        ).order_by("-priority", "-id")
+        ).order_by("priority_group", "-priority", "-id")
 
     @classmethod
     @beeline.traced("backfill_queue")
