@@ -581,7 +581,7 @@ def import_reports(request, on_request_logged):
                 added.append(report_obj.public_id)
             else:
                 updated.append(report_obj.public_id)
-        except AssertionError as e:
+        except (KeyError, AssertionError) as e:
             errors.append((report["airtable_id"], str(e)))
             continue
 
