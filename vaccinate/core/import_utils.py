@@ -1,5 +1,6 @@
 import json
 
+import beeline
 import httpx
 from github_contents import GithubContents
 
@@ -160,6 +161,7 @@ def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instruc
         return "other", appointment_scheduling_instructions
 
 
+@beeline.traced(name="resolve_availability_tags")
 def resolve_availability_tags(tags, availability_tags=None):
     # Given a list of string tags e.g. ["Yes: vaccinating 65+"]
     # returns matching AvailabilityTag objects, taking any

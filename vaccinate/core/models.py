@@ -1,5 +1,6 @@
 import uuid
 
+import beeline
 import pytz
 from django.conf import settings
 from django.db import models
@@ -261,6 +262,7 @@ class Location(models.Model):
     def pid(self):
         return "l" + pid.from_int(self.pk)
 
+    @beeline.traced("update_denormalizations")
     def update_denormalizations(self):
         reports = (
             self.reports.all()
@@ -324,6 +326,7 @@ class Location(models.Model):
             or self.dn_skip_report_count != dn_skip_report_count
             or self.dn_yes_report_count != dn_yes_report_count
         ):
+            beeline.add_context({"updates": True})
             self.dn_latest_report = dn_latest_report
             self.dn_latest_report_including_pending = dn_latest_report_including_pending
             self.dn_latest_yes_report = dn_latest_yes_report
@@ -342,6 +345,8 @@ class Location(models.Model):
                     "dn_yes_report_count",
                 )
             )
+        else:
+            beeline.add_context({"updates": False})
 
     def save(self, *args, **kwargs):
         set_public_id_later = False
@@ -699,12 +704,13 @@ class CallRequest(models.Model):
         ).order_by("-priority", "-id")
 
     @classmethod
+    @beeline.traced("backfill_queue")
     def backfill_queue(cls, minimum=None):
         if minimum is None:
             minimum = settings.MIN_CALL_REQUEST_QUEUE_ITEMS
         num_to_create = max(0, minimum - cls.available_requests().count())
         now = timezone.now()
-        print("backfilling {}".format(num_to_create))
+        beeline.add_context({"count": num_to_create})
         # Queue up that many locations, by never-called or longest-ago-called
         # We use .select_for_update(nowait=True) to try to avoid race conditions
         # where multiple calls to /api/requestCall attempt to backfill at
@@ -719,7 +725,6 @@ class CallRequest(models.Model):
                 do_not_call=False,
             )[:num_to_create]
             never_called = list(never_called_qs)
-            print("never_called = ", never_called)
             for location in never_called:
                 cls.objects.create(
                     location=location,
@@ -727,6 +732,7 @@ class CallRequest(models.Model):
                     call_request_reason=backfill_reason,
                 )
             num_to_create = max(0, num_to_create - len(never_called))
+            beeline.add_context({"never_called_added": len(never_called)})
         # Do we need to create any more? If so do longest-ago-called
         if num_to_create:
             Location.objects.select_for_update(nowait=True)
@@ -739,13 +745,13 @@ class CallRequest(models.Model):
                 .order_by("most_recent_report")[:num_to_create]
             )
             called_longest_ago = list(called_longest_ago_qs)
-            print("called_longest_ago = ", called_longest_ago)
             for location in called_longest_ago:
                 cls.objects.create(
                     location=location,
                     vesting_at=now,
                     call_request_reason=backfill_reason,
                 )
+            beeline.add_context({"called_longest_ago_added": len(called_longest_ago)})
 
 
 class PublishedReport(models.Model):

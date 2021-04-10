@@ -302,33 +302,34 @@ def request_call(request, on_request_logged):
                 status=400,
             )
     else:
-        # Obey ?state= if present, otherwise default to California
-        state = request.GET.get("state") or "CA"
-        now = timezone.now()
-        # Pick the next item from the call list for that state
-        available_requests = CallRequest.available_requests()
-        if state != "all":
-            available_requests = available_requests.filter(
-                location__state__abbreviation=state
-            )
-        # We need to lock the record we select so we can update
-        # it marking that we have claimed it
-        call_requests = available_requests.select_for_update()[:1]
-        with transaction.atomic():
-            try:
-                request = call_requests[0]
-            except IndexError:
-                request = None
-            if request is not None and not no_claim:
-                request.claimed_by = reporter
-                request.claimed_until = now + timedelta(minutes=20)
-                request.save()
-        if request is None:
-            return JsonResponse(
-                {"error": "Couldn't find somewhere to call"},
-                status=400,
-            )
-        location = request.location
+        with beeline.tracer(name="examine_queue"):
+            # Obey ?state= if present, otherwise default to California
+            state = request.GET.get("state") or "CA"
+            now = timezone.now()
+            # Pick the next item from the call list for that state
+            available_requests = CallRequest.available_requests()
+            if state != "all":
+                available_requests = available_requests.filter(
+                    location__state__abbreviation=state
+                )
+            # We need to lock the record we select so we can update
+            # it marking that we have claimed it
+            call_requests = available_requests.select_for_update()[:1]
+            with transaction.atomic():
+                try:
+                    request = call_requests[0]
+                except IndexError:
+                    request = None
+                if request is not None and not no_claim:
+                    request.claimed_by = reporter
+                    request.claimed_until = now + timedelta(minutes=20)
+                    request.save()
+            if request is None:
+                return JsonResponse(
+                    {"error": "Couldn't find somewhere to call"},
+                    status=400,
+                )
+            location = request.location
 
     latest_report = location.dn_latest_non_skip_report
 
