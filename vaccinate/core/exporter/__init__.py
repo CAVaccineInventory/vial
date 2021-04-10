@@ -183,7 +183,9 @@ class V0(APIProducer):
                     result[-1].update(
                         {
                             "Has Report": 1,
-                            "Appointment scheduling instructions": latest.appointment_details,
+                            "Appointment scheduling instructions": [
+                                latest.appointment_details,
+                            ],
                             "Availability Info": [
                                 t.long_name for t in latest.availability_tags.all()
                             ],
