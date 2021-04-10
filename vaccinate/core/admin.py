@@ -268,6 +268,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         return True
 
     def reports_history(self, instance):
+        reports = instance.reports.exclude(soft_deleted=True)
         return mark_safe(
             render_to_string(
                 "admin/_reports_history.html",
@@ -275,9 +276,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "location_id": instance.pk,
                     "reports_datetimes": [
                         d.isoformat()
-                        for d in instance.reports.values_list("created_at", flat=True)
+                        for d in reports.values_list("created_at", flat=True)
                     ],
-                    "reports": instance.reports.select_related("reported_by")
+                    "reports": reports.select_related("reported_by")
                     .prefetch_related("availability_tags")
                     .order_by("-created_at"),
                 },
@@ -415,11 +416,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     ordering = ("-created_at",)
 
     def id_and_note(self, obj):
-        html = (
-            '<a href="/admin/core/location/{}/change/"><strong>{}</strong></a>'.format(
-                obj.id,
-                obj.id,
-            )
+        html = '<a href="/admin/core/report/{}/change/"><strong>{}</strong></a>'.format(
+            obj.id,
+            obj.id,
         )
         if obj.soft_deleted:
             html += '<br><strong style="color: red">Soft deleted</strong>'
@@ -651,19 +650,20 @@ admin.site.register(Version, VersionAdmin)
 
 
 def qa_summary(reporter):
+    reports = reporter.reports.exclude(soft_deleted=True)
     return mark_safe(
         render_to_string(
             "admin/_reporter_qa_summary.html",
             {
                 "reporter": reporter,
-                "recent_reports": reporter.reports.select_related("location")
+                "recent_reports": reports.select_related("location")
                 .prefetch_related("availability_tags")
                 .order_by("-created_at")[:20],
                 "recent_report_datetimes": [
                     d.isoformat()
-                    for d in reporter.reports.values_list("created_at", flat=True)[:100]
+                    for d in reports.values_list("created_at", flat=True)[:100]
                 ],
-                "report_count": reporter.reports.count(),
+                "report_count": reports.count(),
             },
         )
     )
