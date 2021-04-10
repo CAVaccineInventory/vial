@@ -93,6 +93,7 @@ def test_request_call(client, jwt_id_token):
 
 
 @pytest.mark.django_db()
+@pytest.mark.django_db()
 def test_backfill_queue(client, jwt_id_token, settings, ten_locations):
     settings.MIN_CALL_REQUEST_QUEUE_ITEMS = 3
     assert CallRequest.available_requests().count() == 0
@@ -126,3 +127,19 @@ def test_backfill_queue(client, jwt_id_token, settings, ten_locations):
     # These should be to the locations with no reports
     for call_request in call_requests:
         assert call_request.location.reports.count() == 0
+
+
+def test_backfill_queue_does_not_duplicate_locations(
+    client, jwt_id_token, settings, ten_locations
+):
+    settings.MIN_CALL_REQUEST_QUEUE_ITEMS = 20
+    assert CallRequest.available_requests().count() == 0
+    response = client.post(
+        "/api/requestCall?state=OR",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert response.status_code == 200
+    assert CallRequest.available_requests().count() == 9
+    assert CallRequest.objects.count() == 10

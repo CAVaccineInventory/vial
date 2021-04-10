@@ -562,11 +562,11 @@ def make_call_request_bump_action(top_or_bottom):
         num_affected = queryset.update(priority=priority)
         messages.success(
             request,
-            "Updated priority on {}".format(num_affected),
+            "Updated priority within group on {}".format(num_affected),
         )
 
-    modify_call_request_order.short_description = "Bump to {} of the queue".format(
-        top_or_bottom
+    modify_call_request_order.short_description = (
+        "Bump to {} of their priority group".format(top_or_bottom)
     )
     modify_call_request_order.__name__ = "bump_to_{}".format(top_or_bottom)
     return modify_call_request_order
