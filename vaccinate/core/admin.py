@@ -193,6 +193,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "latest_non_skip_report_date",
         "dn_skip_report_count",
         "scooby_report_link",
+        "request_a_call",
     )
     list_filter = (
         LocationInQueueFilter,
@@ -205,6 +206,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = (
         "scooby_report_link",
+        "request_a_call",
         "public_id",
         "airtable_id",
         "import_json",
@@ -244,6 +246,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             )
         else:
             return ""
+
+    def request_a_call(self, obj):
+        return mark_safe(
+            '<strong><a href="/admin/core/callrequest/add/?location={}">Request a call</a></strong>'.format(
+                obj.id
+            )
+        )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
