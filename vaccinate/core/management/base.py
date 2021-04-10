@@ -3,14 +3,12 @@ from typing import Any
 
 import beeline
 from beeline.middleware.django import HoneyDBWrapper
-from config.gunicorn import post_worker_init
 from django.core.management.base import BaseCommand
 from django.db import connections
 
 
 class BeelineCommand(BaseCommand):
     def execute(self, *args: Any, **options: Any) -> str:
-        post_worker_init(None)
         try:
             db_wrapper = HoneyDBWrapper()
             # db instrumentation is only present in Django > 2.0
