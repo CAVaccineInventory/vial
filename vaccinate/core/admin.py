@@ -372,6 +372,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__email",
     )
     list_display = (
+        "id",
         "state",
         "created_at",
         "public_id",
@@ -382,7 +383,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by",
         "created_at_utc",
     )
-    list_display_links = ("created_at", "public_id")
+    list_display_links = ("id", "created_at", "public_id")
     actions = [
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),

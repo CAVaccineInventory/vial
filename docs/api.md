@@ -273,6 +273,14 @@ The `provider_name` will be used to either create a new provider or associate yo
 
 If you provide the `import_json` dictionary it should be the original, raw JSON data that your importer script is working against. This will be stored in the `import_json` column in the locations table, and can later be used for debugging purposes.
 
+## POST /api/importReports
+
+Private API for us to import old reports from Airtable into the VIAL database.
+
+Accepts a JSON array of items from the [airtable-data-backup/backups/Reports.json](https://github.com/CAVaccineInventory/airtable-data-backup/blob/main/backups/Reports.json) file.
+
+Try this API at https://vial-staging.calltheshots.us/api/importReports/debug
+
 ## GET /api/providerTypes
 
 Unauthenticated. Returns a `"provider_types"` key containing a JSON array of names of valid provider types, e.g. `Pharmacy`.

@@ -83,3 +83,13 @@ def ten_locations(db):
             )
         )
     return locations
+
+
+@pytest.fixture
+def api_key(db):
+    from api.models import ApiKey
+
+    api_key = ApiKey.objects.create(
+        id=1, key="1953b7a735274809f4ff230048b60a4a", description="Test"
+    )
+    return api_key.token()

@@ -129,16 +129,15 @@ def import_airtable_report(report, availability_tags=None):
         "public_id": report["airtable_id"],
     }
 
-    report_obj = Report.objects.update_or_create(
+    report_obj, created = Report.objects.update_or_create(
         airtable_id=report["airtable_id"], defaults=kwargs
-    )[0]
-
+    )
     for tag_model in resolve_availability_tags(
         report.get("Availability") or [], availability_tags=availability_tags
     ):
         report_obj.availability_tags.add(tag_model)
-
-    return report_obj
+    report_obj.refresh_from_db()
+    return report_obj, created
 
 
 def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instructions):

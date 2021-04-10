@@ -6,10 +6,11 @@
 <h1>Try {{ api_path }}</h1>
 {% if docs %}<p><a href="{{ docs }}">API documentation for {{ api_path }}</a>{% endif %}
 <form class="trySubmitReport">
+  {% if use_jwt %}
   <p>
     <label
       >JWT token:
-      <input type="text" name="jwt" size="40" value="{{ jwt }}"
+      <input type="text" name="bearer" size="40" value="{{ jwt }}"
     /></label>
   </p>
   <p>
@@ -23,6 +24,19 @@
         placeholder="Optional, use this instead of a JWT"
     /></label>
   </p>
+  {% else %}
+  <p>
+    <label
+      >API key:
+      <input
+        type="text"
+        name="bearer"
+        size="40"
+        value=""
+    /></label>
+  </p>
+  <p><a href="/admin/api/apikey/">Manage API keys here</a></p>
+  {% endif %}
   {% if body_textarea %}
   <div>
     <textarea
@@ -48,7 +62,7 @@ let adminUrl = document.querySelector(".adminUrl");
 {% if body_textarea %}
 let bodyTextarea = form.getElementsByTagName("textarea")[0];
 {% endif %}
-let jwtInput = form.querySelector("[name=jwt]");
+let bearerInput = form.querySelector("[name=bearer]");
 let fakeUserInput = form.querySelector("[name=fake_user]");
 let apiResponse = document.querySelector(".apiResponse");
 let responseStatus = document.querySelector(".responseStatus");
@@ -57,18 +71,23 @@ let responseBody = document.querySelector(".responseBody");
 form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   let url = "/{{ api_path }}";
-  if (fakeUserInput.value) {
+  if (fakeUserInput && fakeUserInput.value) {
     url += "&fake_user=" + encodeURIComponent(fakeUserInput.value);
   }
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + jwtInput.value,
+      Authorization: "Bearer " + bearerInput.value,
     }{% if body_textarea %},
     body: bodyTextarea.value{% endif %}
   });
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    data = {"error": "" + e};
+  }
   apiResponse.style.display = "block";
   if (data.admin_url) {
     adminUrl.innerHTML = `<a href="${
