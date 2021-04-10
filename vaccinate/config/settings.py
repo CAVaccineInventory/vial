@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any, Dict
 
 import dj_database_url
 import sentry_sdk
@@ -162,10 +163,16 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Swap this out later for CORS_ALLOWED_ORIGINS = ["https://example.com", ...]
 CORS_ALLOW_ALL_ORIGINS = True
 
-
 if PRODUCTION:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
+
+
+SCOOBY_URL = None
+if PRODUCTION:
+    SCOOBY_URL = "https://help.vaccinateca.com/call/"
+elif STAGING:
+    SCOOBY_URL = "https://ca-vial--staging-help-vaccinateca.netlify.app/"
 
 ROOT_URLCONF = "config.urls"
 
@@ -195,7 +202,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-DATABASES = {
+DATABASES: Dict[str, Dict[str, Any]] = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "vaccinate",

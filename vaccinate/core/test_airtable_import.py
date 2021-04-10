@@ -116,7 +116,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
     # The location would have been created already
     import_airtable_location(location_json)
 
-    report = import_airtable_report(report_json)
+    report, created = import_airtable_report(report_json)
 
     assert report.report_source == "ca"
     assert report.appointment_tag.slug == "other"
@@ -126,7 +126,7 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
         == "The automotive mentioned that riteaid.com will have all the information they're looking for. As soon as they get the vaccines, based on eligibility they are going to deliver it to the public\n"
     )
     assert report.reported_by.external_id == "airtable:usrsCexDQt6GmdDm0"
-    assert str(report.created_at) == "2021-01-28T03:19:51.000Z"
+    assert str(report.created_at) == "2021-01-28 03:19:51+00:00"
     assert report.airtable_id == "reczzhVUpoBQb6CUA"
     assert report.public_id == "reczzhVUpoBQb6CUA"
     assert list(report.availability_tags.values_list("name", flat=True)) == [
@@ -134,55 +134,68 @@ def test_import_airtable_report_pre_help_vaccinate_launch():
     ]
 
 
-@pytest.mark.django_db
-def test_import_airtable_report_post_help_vaccinate_launch():
-    # This report is from AFTER help.vaccinateca app launched
-    report_json = {
-        "ID": 26383,
-        "Hour": 23,
-        "time": "2021-02-25T23:54:04.000Z",
-        "Location": ["rec00NpJzUnVDpLaQ"],
-        "report_id": "recXBlDw9Zr7bB84O",
-        "Report Type": "Volunteer",
-        "Reported by": {
-            "id": "usr3nFXwxJnpVjv4i",
-            "name": "Help.vaccinateCA RW Role account for API token",
-            "email": "jesse+role-rw-help-vaccinateca@vaccinateca.com",
-        },
-        "Notes": "Jan 23: Has vaccine but no appointments available.",
-        "airtable_id": "recXBlDw9Zr7bB84O",
-        "location_id": ["rec00NpJzUnVDpLaQ"],
-        "Availability": [
-            "Yes: vaccinating 65+",
-            "Yes: appointment required",
-            "Yes: appointment calendar currently full",
-        ],
-        "tmp_eva_flips": [None],
-        "Internal Notes": "Essential workers start March 1st\n",
-        "Do not call until": "2021-02-26T00:49:34.606Z",
-        "auth0_reporter_id": "auth0|6037",
-        "auth0_reporter_name": "S B",
-        "Name (from Location)": ["RITE AID PHARMACY 05537"],
-        "airtable_createdTime": "2021-02-25T23:54:04.000Z",
-        "auth0_reporter_roles": "Volunteer Caller",
-        "Appointments by phone?": True,
-        "County (from Location)": ["Los Angeles County"],
-        "location_latest_report_id": [26383],
-        "Affiliation (from Location)": ["Rite-Aid"],
-        "location_latest_report_time": ["2021-02-25T23:54:04.000Z"],
-        "Location Type (from Location)": ["Pharmacy"],
-        "is_latest_report_for_location": 1,
-        "location_latest_eva_report_time": ["2021-02-24T05:16:09.000Z"],
-        "Number of Reports (from Location)": [3],
-        "Appointment scheduling instructions": "Uses county scheduling system",
-    }
-    assert not Report.objects.filter(airtable_id="rec00NpJzUnVDpLaQ").exists()
+POST_HELP_LAUNCH_REPORT = {
+    "ID": 26383,
+    "Hour": 23,
+    "time": "2021-02-25T23:54:04.000Z",
+    "Location": ["rec00NpJzUnVDpLaQ"],
+    "report_id": "recXBlDw9Zr7bB84O",
+    "Report Type": "Volunteer",
+    "Reported by": {
+        "id": "usr3nFXwxJnpVjv4i",
+        "name": "Help.vaccinateCA RW Role account for API token",
+        "email": "jesse+role-rw-help-vaccinateca@vaccinateca.com",
+    },
+    "Notes": "Jan 23: Has vaccine but no appointments available.",
+    "airtable_id": "recXBlDw9Zr7bB84O",
+    "location_id": ["rec00NpJzUnVDpLaQ"],
+    "Availability": [
+        "Yes: vaccinating 65+",
+        "Yes: appointment required",
+        "Yes: appointment calendar currently full",
+    ],
+    "tmp_eva_flips": [None],
+    "Internal Notes": "Essential workers start March 1st\n",
+    "Do not call until": "2021-02-26T00:49:34.606Z",
+    "auth0_reporter_id": "auth0|6037",
+    "auth0_reporter_name": "S B",
+    "Name (from Location)": ["RITE AID PHARMACY 05537"],
+    "airtable_createdTime": "2021-02-25T23:54:04.000Z",
+    "auth0_reporter_roles": "Volunteer Caller",
+    "Appointments by phone?": True,
+    "County (from Location)": ["Los Angeles County"],
+    "location_latest_report_id": [26383],
+    "Affiliation (from Location)": ["Rite-Aid"],
+    "location_latest_report_time": ["2021-02-25T23:54:04.000Z"],
+    "Location Type (from Location)": ["Pharmacy"],
+    "is_latest_report_for_location": 1,
+    "location_latest_eva_report_time": ["2021-02-24T05:16:09.000Z"],
+    "Number of Reports (from Location)": [3],
+    "Appointment scheduling instructions": "Uses county scheduling system",
+}
 
-    # The location would have been created already
+
+@pytest.mark.django_db
+def test_import_airtable_report_post_help_vaccinate_launch_using_api(client, api_key):
+    # This report is from AFTER help.vaccinateca app launched
+    assert not Report.objects.filter(airtable_id="recXBlDw9Zr7bB84O").exists()
+
     import_airtable_location(location_json)
 
-    report = import_airtable_report(report_json)
+    # Do this one with the API
+    response = client.post(
+        "/api/importReports",
+        [POST_HELP_LAUNCH_REPORT],
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response.json() == {
+        "added": ["recXBlDw9Zr7bB84O"],
+        "updated": [],
+        "errors": [],
+    }
 
+    report = Report.objects.get(airtable_id="recXBlDw9Zr7bB84O")
     assert report.report_source == "ca"
     assert report.appointment_tag.slug == "county_website"
     assert report.location.name == "Kaiser Permanente Pharmacy #568"
@@ -190,7 +203,7 @@ def test_import_airtable_report_post_help_vaccinate_launch():
     assert report.public_notes == "Jan 23: Has vaccine but no appointments available."
     assert report.reported_by.external_id == "auth0:auth0|6037"
     assert report.reported_by.auth0_role_names == "Volunteer Caller"
-    assert str(report.created_at) == "2021-02-25T23:54:04.000Z"
+    assert str(report.created_at) == "2021-02-25 23:54:04+00:00"
     assert report.airtable_id == "recXBlDw9Zr7bB84O"
     assert report.public_id == "recXBlDw9Zr7bB84O"
     assert set(report.availability_tags.values_list("name", flat=True)) == {

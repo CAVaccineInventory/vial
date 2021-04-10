@@ -10,8 +10,14 @@ import markdown
 import pytz
 import requests
 import reversion
+from api.location_metrics import LocationMetricsReport
 from auth0login.auth0_utils import decode_and_verify_jwt
-from core.import_utils import derive_appointment_tag, resolve_availability_tags
+from core import exporter
+from core.import_utils import (
+    derive_appointment_tag,
+    import_airtable_report,
+    resolve_availability_tags,
+)
 from core.models import (
     AppointmentTag,
     AvailabilityTag,
@@ -297,38 +303,36 @@ def request_call(request, on_request_logged):
                 status=400,
             )
     else:
-        # Obey ?state= if present, otherwise default to California
-        state = request.GET.get("state") or "CA"
-        now = timezone.now()
-        # Pick the next item from the call list for that state
-        available_requests = CallRequest.available_requests()
-        if state != "all":
-            available_requests = available_requests.filter(
-                location__state__abbreviation=state
-            )
-        # We need to lock the record we select so we can update
-        # it marking that we have claimed it
-        call_requests = available_requests.select_for_update()[:1]
-        with transaction.atomic():
-            try:
-                request = call_requests[0]
-            except IndexError:
-                request = None
-            if request is not None and not no_claim:
-                request.claimed_by = reporter
-                request.claimed_until = now + timedelta(minutes=20)
-                request.save()
-        if request is None:
-            return JsonResponse(
-                {"error": "Couldn't find somewhere to call"},
-                status=400,
-            )
-        location = request.location
+        with beeline.tracer(name="examine_queue"):
+            # Obey ?state= if present, otherwise default to California
+            state = request.GET.get("state") or "CA"
+            now = timezone.now()
+            # Pick the next item from the call list for that state
+            available_requests = CallRequest.available_requests()
+            if state != "all":
+                available_requests = available_requests.filter(
+                    location__state__abbreviation=state
+                )
+            # We need to lock the record we select so we can update
+            # it marking that we have claimed it
+            call_requests = available_requests.select_for_update()[:1]
+            with transaction.atomic():
+                try:
+                    request = call_requests[0]
+                except IndexError:
+                    request = None
+                if request is not None and not no_claim:
+                    request.claimed_by = reporter
+                    request.claimed_until = now + timedelta(minutes=20)
+                    request.save()
+            if request is None:
+                return JsonResponse(
+                    {"error": "Couldn't find somewhere to call"},
+                    status=400,
+                )
+            location = request.location
 
-    try:
-        latest_report = location.reports.order_by("-created_at")[0]
-    except IndexError:
-        latest_report = None
+    latest_report = location.dn_latest_non_skip_report
 
     county_record = {}
     county_age_floor_without_restrictions = []
@@ -551,6 +555,45 @@ def import_locations(request, on_request_logged):
     )
 
 
+@csrf_exempt
+@log_api_requests
+@require_api_key
+def import_reports(request, on_request_logged):
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    if not isinstance(post_data, list) or any(
+        not isinstance(p, dict) for p in post_data
+    ):
+        return JsonResponse(
+            {"error": "POST body should be a JSON list of dictionaries"}, status=400
+        )
+    availability_tags = AvailabilityTag.objects.all()
+    added = []
+    updated = []
+    errors = []
+
+    for report in post_data:
+        try:
+            report_obj, created = import_airtable_report(report, availability_tags)
+            if created:
+                added.append(report_obj.public_id)
+            else:
+                updated.append(report_obj.public_id)
+        except (KeyError, AssertionError) as e:
+            errors.append((report["airtable_id"], str(e)))
+            continue
+
+    return JsonResponse(
+        {
+            "added": added,
+            "updated": updated,
+            "errors": errors,
+        }
+    )
+
+
 def location_types(request):
     return JsonResponse(
         {"location_types": list(LocationType.objects.values_list("name", flat=True))}
@@ -602,20 +645,24 @@ def caller_stats(request):
     reporter, user_info = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
         return reporter
+    reports = reporter.reports.exclude(soft_deleted=True)
     return JsonResponse(
         {
-            "total": reporter.reports.count(),
-            "today": reporter.reports.filter(created_at__date=localdate()).count(),
+            "total": reports.count(),
+            "today": reports.filter(created_at__date=localdate()).count(),
         }
     )
 
 
-def api_debug_view(api_path, body_textarea=False, docs=None, default_body=None):
+def api_debug_view(
+    api_path, use_jwt=True, body_textarea=False, docs=None, default_body=None
+):
     def debug_view(request):
         return render(
             request,
             "api/api_debug.html",
             {
+                "use_jwt": use_jwt,
                 "jwt": request.session["jwt"] if "jwt" in request.session else "",
                 "api_path": api_path,
                 "body_textarea": body_textarea,
@@ -650,3 +697,25 @@ def api_docs(request):
             "toc": md.toc,
         },
     )
+
+
+@csrf_exempt
+@beeline.traced(name="api_export")
+def api_export(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Must be a POST"},
+            status=400,
+        )
+    if not exporter.api_export():
+        return JsonResponse(
+            {"error": "Failed to write one or more endpoints; check Sentry"},
+            status=500,
+        )
+    return JsonResponse({"ok": 1})
+
+
+@csrf_exempt
+@beeline.traced(name="location_metrics")
+def location_metrics(request):
+    return LocationMetricsReport().serve()

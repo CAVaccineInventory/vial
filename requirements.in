@@ -92,3 +92,9 @@ github-contents
 click
 httpx
 python-dateutil
+
+# To upload the API export to GCS
+google-cloud-storage
+
+# Metrics reporting
+prometheus_client

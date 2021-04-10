@@ -1,5 +1,6 @@
 import json
 
+import beeline
 import httpx
 from github_contents import GithubContents
 
@@ -129,16 +130,15 @@ def import_airtable_report(report, availability_tags=None):
         "public_id": report["airtable_id"],
     }
 
-    report_obj = Report.objects.update_or_create(
+    report_obj, created = Report.objects.update_or_create(
         airtable_id=report["airtable_id"], defaults=kwargs
-    )[0]
-
+    )
     for tag_model in resolve_availability_tags(
         report.get("Availability") or [], availability_tags=availability_tags
     ):
         report_obj.availability_tags.add(tag_model)
-
-    return report_obj
+    report_obj.refresh_from_db()
+    return report_obj, created
 
 
 def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instructions):
@@ -161,6 +161,7 @@ def derive_appointment_tag(appointments_by_phone, appointment_scheduling_instruc
         return "other", appointment_scheduling_instructions
 
 
+@beeline.traced(name="resolve_availability_tags")
 def resolve_availability_tags(tags, availability_tags=None):
     # Given a list of string tags e.g. ["Yes: vaccinating 65+"]
     # returns matching AvailabilityTag objects, taking any

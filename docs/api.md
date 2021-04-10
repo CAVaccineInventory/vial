@@ -4,7 +4,7 @@ The goal is to update this documentation as part of any commit that modifies how
   
 The base URL for every API is https://vial-staging.calltheshots.us/
 
-## GET /admin/edit-location/<public_id>/
+## GET /admin/edit-location/&lt;public_id&gt;/
 
 Not a JSON API, but this is a convenient way to link to the edit page for a specific location. You can contruct this URL with the public ID of the location and VIAL will redirect the authenticated user to the corresponding edit interface for that location.
 
@@ -272,6 +272,14 @@ The `provider_type` must be one of the list of types from `/api/providerTypes`.
 The `provider_name` will be used to either create a new provider or associate your location with an existing provider with that name.
 
 If you provide the `import_json` dictionary it should be the original, raw JSON data that your importer script is working against. This will be stored in the `import_json` column in the locations table, and can later be used for debugging purposes.
+
+## POST /api/importReports
+
+Private API for us to import old reports from Airtable into the VIAL database.
+
+Accepts a JSON array of items from the [airtable-data-backup/backups/Reports.json](https://github.com/CAVaccineInventory/airtable-data-backup/blob/main/backups/Reports.json) file.
+
+Try this API at https://vial-staging.calltheshots.us/api/importReports/debug
 
 ## GET /api/providerTypes
 

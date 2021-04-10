@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from .models import (
     AppointmentTag,
+    AvailabilityTag,
     CallRequest,
     CallRequestReason,
     Location,
@@ -294,17 +295,56 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,completed,completed_at,priority,tip_type,tip_report_id,tip_report\r\n"
-            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
-            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,0,,,\r\n"
+            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,completed,completed_at,priority_group,priority,tip_type,tip_report_id,tip_report\r\n"
+            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+        )
+
+
+def test_custom_csv_export_for_reports(
+    admin_client, ten_locations, django_assert_num_queries
+):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        is_pending_review=True,
+    )
+    plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
+    plus_50 = AvailabilityTag.objects.get(slug="vaccinating_50_plus")
+    report.availability_tags.add(plus_65)
+    report.availability_tags.add(plus_50)
+    report.refresh_from_db()
+    with django_assert_num_queries(9):
+        response = admin_client.post(
+            "/admin/core/report/",
+            {
+                "action": "export_as_csv",
+                "_selected_action": [report.id],
+            },
+        )
+        csv_bytes = b"".join(chunk for chunk in response.streaming_content)
+        csv_string = csv_bytes.decode("utf-8")
+        assert csv_string == (
+            "id,location_id,location,is_pending_review,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
+            '{},{},Location 1,True,False,,ca,3,web,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
+                report.id,
+                report.location_id,
+                reporter.id,
+                str(report.created_at),
+                report.public_id,
+            )
         )
 
 

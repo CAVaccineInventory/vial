@@ -1,13 +1,14 @@
 import datetime
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.template.loader import render_to_string
-from django.utils import timezone
+from django.utils import dateformat, timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from reversion.models import Revision, Version
-from reversion_compare.admin import CompareVersionAdmin as VersionAdmin
+from reversion_compare.admin import CompareVersionAdmin
 
 from .admin_actions import export_as_csv_action
 from .models import (
@@ -62,7 +63,7 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
 
 @admin.register(County)
-class CountyAdmin(DynamicListDisplayMixin, VersionAdmin):
+class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
     list_display = ("name", "state", "fips_code")
@@ -119,7 +120,7 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
-class LocationDeletedFilter(admin.SimpleListFilter):
+class SoftDeletedFilter(admin.SimpleListFilter):
     title = "soft deleted"
 
     parameter_name = "soft_deleted"
@@ -154,7 +155,7 @@ class LocationDeletedFilter(admin.SimpleListFilter):
 
 
 @admin.register(Location)
-class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
+class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     actions = [export_as_csv_action()]
 
@@ -189,13 +190,13 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
         "county",
         "location_type",
         "provider",
-        "soft_deleted",
         "latest_non_skip_report_date",
         "dn_skip_report_count",
+        "scooby_report_link",
     )
     list_filter = (
         LocationInQueueFilter,
-        LocationDeletedFilter,
+        SoftDeletedFilter,
         "do_not_call",
         "location_type",
         "state",
@@ -203,6 +204,7 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
     )
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = (
+        "scooby_report_link",
         "public_id",
         "airtable_id",
         "import_json",
@@ -227,9 +229,21 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
             html += "<br><strong>Do not call</strong>"
         if obj.do_not_call_reason:
             html += " " + obj.do_not_call_reason
+        if obj.soft_deleted:
+            html += '<br><strong style="color: red">Soft deleted</strong>'
         return mark_safe(html)
 
     summary.admin_order_field = "name"
+
+    def scooby_report_link(self, obj):
+        if settings.SCOOBY_URL:
+            return mark_safe(
+                '<strong><a href="{}?location_id={}">File a report using Scooby</a></strong>'.format(
+                    settings.SCOOBY_URL, obj.public_id
+                )
+            )
+        else:
+            return ""
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -237,14 +251,14 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
             "county", "state", "provider", "location_type", "dn_latest_non_skip_report"
         ).annotate(times_reported_count=Count("reports"))
 
-    def times_reported(self, inst):
-        return inst.times_reported_count
+    def times_reported(self, obj):
+        return obj.times_reported_count
 
     times_reported.admin_order_field = "times_reported_count"
 
-    def latest_non_skip_report_date(self, inst):
-        if inst.dn_latest_non_skip_report:
-            return inst.dn_latest_non_skip_report.created_at
+    def latest_non_skip_report_date(self, obj):
+        if obj.dn_latest_non_skip_report:
+            return obj.dn_latest_non_skip_report.created_at
 
     latest_non_skip_report_date.admin_order_field = (
         "dn_latest_non_skip_report__created_at"
@@ -253,17 +267,18 @@ class LocationAdmin(DynamicListDisplayMixin, VersionAdmin):
     def lookup_allowed(self, lookup, value):
         return True
 
-    def reports_history(self, instance):
+    def reports_history(self, obj):
+        reports = obj.reports.exclude(soft_deleted=True)
         return mark_safe(
             render_to_string(
                 "admin/_reports_history.html",
                 {
-                    "location_id": instance.pk,
+                    "location_id": obj.pk,
                     "reports_datetimes": [
                         d.isoformat()
-                        for d in instance.reports.values_list("created_at", flat=True)
+                        for d in reports.values_list("created_at", flat=True)
                     ],
-                    "reports": instance.reports.select_related("reported_by")
+                    "reports": reports.select_related("reported_by")
                     .prefetch_related("availability_tags")
                     .order_by("-created_at"),
                 },
@@ -299,20 +314,20 @@ class ReporterAdmin(admin.ModelAdmin):
             reporter_latest_report=Max("reports__created_at"),
         )
 
-    def report_count(self, inst):
-        return inst.reporter_report_count
+    def report_count(self, obj):
+        return obj.reporter_report_count
 
     report_count.admin_order_field = "reporter_report_count"
 
-    def latest_report(self, inst):
-        return inst.reporter_latest_report
+    def latest_report(self, obj):
+        return obj.reporter_latest_report
 
     latest_report.admin_order_field = "reporter_latest_report"
 
     readonly_fields = ("qa_summary",)
 
-    def qa_summary(self, instance):
-        return qa_summary(instance)
+    def qa_summary(self, obj):
+        return qa_summary(obj)
 
     qa_summary.short_description = "QA summary"
 
@@ -359,7 +374,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__email",
     )
     list_display = (
-        "state",
+        "id_and_note",
         "created_at",
         "public_id",
         "availability",
@@ -369,14 +384,23 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by",
         "created_at_utc",
     )
-    list_display_links = ("created_at", "public_id")
-    actions = [export_as_csv_action()]
+    autocomplete_fields = ("availability_tags",)
+    list_display_links = ("id", "created_at", "public_id")
+    actions = [
+        export_as_csv_action(
+            customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
+            extra_columns=["availability_tags"],
+            extra_columns_factory=lambda row: [
+                ", ".join(t.name for t in row.availability_tags.all())
+            ],
+        )
+    ]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "is_pending_review",
+        SoftDeletedFilter,
         "created_at",
         "appointment_tag",
-        "location__state__abbreviation",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
 
@@ -390,6 +414,18 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
     inlines = [ReportReviewNoteInline]
     ordering = ("-created_at",)
+
+    def id_and_note(self, obj):
+        html = '<a href="/admin/core/report/{}/change/"><strong>{}</strong></a>'.format(
+            obj.id,
+            obj.id,
+        )
+        if obj.soft_deleted:
+            html += '<br><strong style="color: red">Soft deleted</strong>'
+        return mark_safe(html)
+
+    id_and_note.short_description = "id"
+    id_and_note.admin_order_field = "id"
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -413,8 +449,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj.save()
             obj.location.update_denormalizations()
 
-    def state(self, instance):
-        return instance.location.state.abbreviation
+    def state(self, obj):
+        return obj.location.state.abbreviation
 
     def get_queryset(self, request):
         return (
@@ -427,8 +463,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     def lookup_allowed(self, lookup, value):
         return True
 
-    def qa_summary(self, instance):
-        return qa_summary(instance.reported_by)
+    def qa_summary(self, obj):
+        return qa_summary(obj.reported_by)
 
     qa_summary.short_description = "QA summary"
 
@@ -541,14 +577,14 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("location__name", "location__public_id")
     list_display = (
         "location",
-        "vesting_at",
-        "claimed_by",
-        "claimed_until",
+        "priority_group",
+        "queue_status",
         "call_request_reason",
         "priority",
     )
     list_filter = (
         CallRequestQueueStatus,
+        "priority_group",
         "call_request_reason",
     )
     actions = [
@@ -561,6 +597,27 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+    def queue_status(self, obj):
+        now = timezone.now()
+        if obj.completed:
+            return "Completed"
+        if obj.claimed_by_id and obj.claimed_until > now:
+            return "Assigned to {} until {}".format(
+                obj.claimed_by,
+                dateformat.format(
+                    timezone.localtime(obj.claimed_until), "jS M Y g:i:s A e"
+                ),
+            )
+        if obj.vesting_at > now:
+            return mark_safe(
+                "<em>Scheduled</em> for {}".format(
+                    dateformat.format(
+                        timezone.localtime(obj.vesting_at), "jS M Y g:i:s A e"
+                    ),
+                )
+            )
+        return "Available"
 
 
 # NOT CURRENTLY USED
@@ -614,19 +671,20 @@ admin.site.register(Version, VersionAdmin)
 
 
 def qa_summary(reporter):
+    reports = reporter.reports.exclude(soft_deleted=True)
     return mark_safe(
         render_to_string(
             "admin/_reporter_qa_summary.html",
             {
                 "reporter": reporter,
-                "recent_reports": reporter.reports.select_related("location")
+                "recent_reports": reports.select_related("location")
                 .prefetch_related("availability_tags")
                 .order_by("-created_at")[:20],
                 "recent_report_datetimes": [
                     d.isoformat()
-                    for d in reporter.reports.values_list("created_at", flat=True)[:100]
+                    for d in reports.values_list("created_at", flat=True)[:100]
                 ],
-                "report_count": reporter.reports.count(),
+                "report_count": reports.count(),
             },
         )
     )

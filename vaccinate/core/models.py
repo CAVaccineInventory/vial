@@ -1,5 +1,6 @@
 import uuid
 
+import beeline
 import pytz
 from django.conf import settings
 from django.db import models
@@ -261,9 +262,11 @@ class Location(models.Model):
     def pid(self):
         return "l" + pid.from_int(self.pk)
 
+    @beeline.traced("update_denormalizations")
     def update_denormalizations(self):
         reports = (
             self.reports.all()
+            .exclude(soft_deleted=True)
             .prefetch_related("availability_tags")
             .order_by("-created_at")
         )
@@ -324,6 +327,7 @@ class Location(models.Model):
             or self.dn_skip_report_count != dn_skip_report_count
             or self.dn_yes_report_count != dn_yes_report_count
         ):
+            beeline.add_context({"updates": True})
             self.dn_latest_report = dn_latest_report
             self.dn_latest_report_including_pending = dn_latest_report_including_pending
             self.dn_latest_yes_report = dn_latest_yes_report
@@ -331,7 +335,19 @@ class Location(models.Model):
             self.dn_latest_non_skip_report = dn_latest_non_skip_report
             self.dn_skip_report_count = dn_skip_report_count
             self.dn_yes_report_count = dn_yes_report_count
-            self.save()
+            self.save(
+                update_fields=(
+                    "dn_latest_report",
+                    "dn_latest_report_including_pending",
+                    "dn_latest_yes_report",
+                    "dn_latest_skip_report",
+                    "dn_latest_non_skip_report",
+                    "dn_skip_report_count",
+                    "dn_yes_report_count",
+                )
+            )
+        else:
+            beeline.add_context({"updates": False})
 
     def save(self, *args, **kwargs):
         set_public_id_later = False
@@ -397,6 +413,12 @@ class AvailabilityTag(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def long_name(self):
+        if self.group in ("yes", "no"):
+            return self.group.capitalize() + ": " + self.name[0].lower() + self.name[1:]
+        return self.name
+
     class Meta:
         db_table = "availability_tag"
 
@@ -441,6 +463,11 @@ class Report(models.Model):
     is_pending_review = models.BooleanField(
         default=False, help_text="Reports that are pending review by our QA team"
     )
+    soft_deleted = models.BooleanField(
+        default=False,
+        help_text="we never delete rows from this table; all deletes are soft",
+    )
+    soft_deleted_because = CharTextField(null=True, blank=True)
     report_source = models.CharField(
         max_length=2,
         choices=ReportSource.choices,
@@ -608,6 +635,13 @@ class CallRequest(models.Model):
     For example, if a bug in an app has us call a location repeatedly, we have the full record of why those calls were made.
     """
 
+    class PriorityGroup(models.IntegerChoices):
+        CRITICAL_1 = 1, "1-critical"
+        IMPORTANT_2 = 2, "2-important"
+        NORMAL_3 = 3, "3-normal"
+        LOW_4 = 4, "4-low"
+        NOT_PRIORITIZED_99 = 99, "99-not_prioritized"
+
     class TipType(models.TextChoices):
         EVA = "eva_report", "Eva report"
         SCOOBY = "scooby_report", "Scooby report"
@@ -644,6 +678,10 @@ class CallRequest(models.Model):
     completed_at = models.DateTimeField(
         blank=True, null=True, help_text="When this call was marked as completed"
     )
+    priority_group = models.IntegerField(
+        choices=PriorityGroup.choices,
+        default=PriorityGroup.NOT_PRIORITIZED_99,
+    )
     priority = models.IntegerField(
         default=0,
         db_index=True,
@@ -670,7 +708,7 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
-        ordering = ("-priority", "-id")
+        ordering = ("priority_group", "-priority", "-id")
 
     @classmethod
     def available_requests(cls, qs=None):
@@ -680,15 +718,16 @@ class CallRequest(models.Model):
         return qs.filter(
             Q(completed=False) & Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
             | Q(claimed_until__lte=now)
-        ).order_by("-priority", "-id")
+        ).order_by("priority_group", "-priority", "-id")
 
     @classmethod
+    @beeline.traced("backfill_queue")
     def backfill_queue(cls, minimum=None):
         if minimum is None:
             minimum = settings.MIN_CALL_REQUEST_QUEUE_ITEMS
         num_to_create = max(0, minimum - cls.available_requests().count())
         now = timezone.now()
-        print("backfilling {}".format(num_to_create))
+        beeline.add_context({"count": num_to_create})
         # Queue up that many locations, by never-called or longest-ago-called
         # We use .select_for_update(nowait=True) to try to avoid race conditions
         # where multiple calls to /api/requestCall attempt to backfill at
@@ -703,7 +742,6 @@ class CallRequest(models.Model):
                 do_not_call=False,
             )[:num_to_create]
             never_called = list(never_called_qs)
-            print("never_called = ", never_called)
             for location in never_called:
                 cls.objects.create(
                     location=location,
@@ -711,6 +749,7 @@ class CallRequest(models.Model):
                     call_request_reason=backfill_reason,
                 )
             num_to_create = max(0, num_to_create - len(never_called))
+            beeline.add_context({"never_called_added": len(never_called)})
         # Do we need to create any more? If so do longest-ago-called
         if num_to_create:
             Location.objects.select_for_update(nowait=True)
@@ -723,13 +762,13 @@ class CallRequest(models.Model):
                 .order_by("most_recent_report")[:num_to_create]
             )
             called_longest_ago = list(called_longest_ago_qs)
-            print("called_longest_ago = ", called_longest_ago)
             for location in called_longest_ago:
                 cls.objects.create(
                     location=location,
                     vesting_at=now,
                     call_request_reason=backfill_reason,
                 )
+            beeline.add_context({"called_longest_ago_added": len(called_longest_ago)})
 
 
 class PublishedReport(models.Model):
