@@ -331,7 +331,17 @@ class Location(models.Model):
             self.dn_latest_non_skip_report = dn_latest_non_skip_report
             self.dn_skip_report_count = dn_skip_report_count
             self.dn_yes_report_count = dn_yes_report_count
-            self.save()
+            self.save(
+                update_fields=(
+                    "dn_latest_report",
+                    "dn_latest_report_including_pending",
+                    "dn_latest_yes_report",
+                    "dn_latest_skip_report",
+                    "dn_latest_non_skip_report",
+                    "dn_skip_report_count",
+                    "dn_yes_report_count",
+                )
+            )
 
     def save(self, *args, **kwargs):
         set_public_id_later = False
