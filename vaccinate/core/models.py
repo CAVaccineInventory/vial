@@ -635,6 +635,13 @@ class CallRequest(models.Model):
     For example, if a bug in an app has us call a location repeatedly, we have the full record of why those calls were made.
     """
 
+    class PriorityGroup(models.IntegerChoices):
+        CRITICAL_1 = 1, "1-critical"
+        IMPORTANT_2 = 2, "2-important"
+        NORMAL_3 = 3, "3-normal"
+        LOW_4 = 4, "4-low"
+        NOT_PRIORITIZED_99 = 99, "99-not_prioritized"
+
     class TipType(models.TextChoices):
         EVA = "eva_report", "Eva report"
         SCOOBY = "scooby_report", "Scooby report"
@@ -670,6 +677,10 @@ class CallRequest(models.Model):
     )
     completed_at = models.DateTimeField(
         blank=True, null=True, help_text="When this call was marked as completed"
+    )
+    priority_group = models.IntegerField(
+        choices=PriorityGroup.choices,
+        default=PriorityGroup.NOT_PRIORITIZED_99,
     )
     priority = models.IntegerField(
         default=0,

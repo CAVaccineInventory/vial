@@ -13,4 +13,5 @@
     0057_callrequest_priority \
     0061_report_is_pending_review \
     0069_more_location_denormalizations \
-    0072_soft_deleted_on_reports
+    0072_soft_deleted_on_reports \
+    0073_callrequest_priority_group
