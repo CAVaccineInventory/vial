@@ -223,6 +223,17 @@ class Location(models.Model):
         help_text="If imported, unique identifier in the system it was imported from",
     )
 
+    preferred_contact_method = models.CharField(
+        max_length=32,
+        choices=(
+            ("research_online", "research_online"),
+            ("outbound_call", "outbound_call"),
+        ),
+        blank=True,
+        null=True,
+        help_text="Preferred method of collecting status about this location",
+    )
+
     # Denormalized foreign keys for efficient "latest yes report" style queries
     # https://github.com/CAVaccineInventory/vial/issues/193
     # Latest report, NOT including is_pending_review reports:

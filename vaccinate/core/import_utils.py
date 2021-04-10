@@ -69,6 +69,7 @@ def import_airtable_location(location):
         "latitude": location["Latitude"],
         "longitude": location["Longitude"],
         "public_id": location["airtable_id"],
+        "preferred_contact_method": location["preferred_contact_method"],
     }
     return Location.objects.update_or_create(
         airtable_id=location["airtable_id"], defaults=kwargs

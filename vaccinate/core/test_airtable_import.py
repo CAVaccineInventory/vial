@@ -50,6 +50,7 @@ location_json = {
     "reported_not_a_vaccination_site_count": 0,
     "reported_permanently_closed_count": 0,
     "tmp_latest_report_eva_or_stale": 1,
+    "preferred_contact_method": "research_online",
 }
 
 
