@@ -708,6 +708,9 @@ class CallRequest(models.Model):
 
     class Meta:
         db_table = "call_request"
+        # Group 1 comes before group 2 comes before group 3
+        # Within those groups, lower priority scores come before higher
+        # Finally we tie-break on ID optimizing for mostl recently created first
         ordering = ("priority_group", "-priority", "-id")
 
     @classmethod
@@ -716,9 +719,10 @@ class CallRequest(models.Model):
             qs = cls.objects
         now = timezone.now()
         return qs.filter(
-            Q(completed=False) & Q(vesting_at__lte=now) & Q(claimed_until__isnull=True)
+            # Unclaimed
+            Q(claimed_until__isnull=True)
             | Q(claimed_until__lte=now)
-        ).order_by("priority_group", "-priority", "-id")
+        ).filter(completed=False, vesting_at__lte=now)
 
     @classmethod
     @beeline.traced("backfill_queue")
@@ -732,12 +736,19 @@ class CallRequest(models.Model):
         # We use .select_for_update(nowait=True) to try to avoid race conditions
         # where multiple calls to /api/requestCall attempt to backfill at
         # the same time.
+        # Only consider existing locations that are not currently queued
+        location_options = Location.objects.exclude(
+            id__in=cls.available_requests().values("location_id"),
+        ).filter(
+            soft_deleted=False,
+            do_not_call=False,
+        )
         if num_to_create:
             backfill_reason = CallRequestReason.objects.get_or_create(
                 short_reason="Automatic backfill"
             )[0]
             # Try for never-called
-            never_called_qs = Location.objects.filter(
+            never_called_qs = location_options.filter(
                 reports__isnull=True,
                 do_not_call=False,
             )[:num_to_create]
@@ -752,15 +763,11 @@ class CallRequest(models.Model):
             beeline.add_context({"never_called_added": len(never_called)})
         # Do we need to create any more? If so do longest-ago-called
         if num_to_create:
-            Location.objects.select_for_update(nowait=True)
+            location_options.select_for_update(nowait=True)
             # Called longest ago
-            called_longest_ago_qs = (
-                Location.objects.filter(
-                    do_not_call=False,
-                )
-                .annotate(most_recent_report=Max("reports__created_at"))
-                .order_by("most_recent_report")[:num_to_create]
-            )
+            called_longest_ago_qs = location_options.annotate(
+                most_recent_report=Max("reports__created_at")
+            ).order_by("most_recent_report")[:num_to_create]
             called_longest_ago = list(called_longest_ago_qs)
             for location in called_longest_ago:
                 cls.objects.create(

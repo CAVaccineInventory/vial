@@ -141,6 +141,13 @@ class APIProducer:
 
 
 class V0(APIProducer):
+    def county_name(self, county: models.County) -> str:
+        if not county:
+            return ""
+        if county.name == "San Francisco":
+            return county.name
+        return county.name + " County"
+
     @beeline.traced(name="core.exporter.V0.get_locations")
     def get_locations(self) -> List[Dict[str, object]]:
         result = []
@@ -151,14 +158,13 @@ class V0(APIProducer):
                 # We remove the nulls only here, and not as a decorator,
                 # because Airtable does not remove empty values from
                 # rollups, only from fields naturally on the record. (!)
-                county = location.county.name + " County" if location.county else ""
                 result.append(
                     nonnull_row(
                         {
                             "id": location.public_id,
                             "Name": location.name,
                             "Affiliation": None,  # ???
-                            "County": county,
+                            "County": self.county_name(location.county),
                             "Address": location.full_address,
                             "Latitude": location.latitude,
                             "Longitude": location.longitude,
@@ -177,7 +183,9 @@ class V0(APIProducer):
                     result[-1].update(
                         {
                             "Has Report": 1,
-                            "Appointment scheduling instructions": latest.appointment_details,
+                            "Appointment scheduling instructions": [
+                                latest.appointment_details,
+                            ],
                             "Availability Info": [
                                 t.long_name for t in latest.availability_tags.all()
                             ],
@@ -204,7 +212,7 @@ class V0(APIProducer):
             result.append(
                 {
                     "id": county.airtable_id,
-                    "County": county.name + " County",
+                    "County": self.county_name(county),
                     "Notes": county.public_notes,
                     "Twitter Page": county.twitter_page,
                     "Facebook Page": county.facebook_page,

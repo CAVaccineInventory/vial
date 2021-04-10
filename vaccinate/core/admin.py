@@ -562,14 +562,31 @@ def make_call_request_bump_action(top_or_bottom):
         num_affected = queryset.update(priority=priority)
         messages.success(
             request,
-            "Updated priority on {}".format(num_affected),
+            "Updated priority within group on {}".format(num_affected),
         )
 
-    modify_call_request_order.short_description = "Bump to {} of the queue".format(
-        top_or_bottom
+    modify_call_request_order.short_description = (
+        "Bump to {} of their priority group".format(top_or_bottom)
     )
     modify_call_request_order.__name__ = "bump_to_{}".format(top_or_bottom)
     return modify_call_request_order
+
+
+def make_call_request_move_to_priority_group(priority_group):
+    group_id, group_name = priority_group
+
+    def modify_group_action(modeladmin, request, queryset):
+        num_affected = queryset.update(priority_group=group_id)
+        messages.success(
+            request,
+            "Moved {} items to group {}".format(num_affected, group_name),
+        )
+
+    modify_group_action.short_description = "Move to priority group {}".format(
+        group_name
+    )
+    modify_group_action.__name__ = "move_to_group_{}".format(group_id)
+    return modify_group_action
 
 
 @admin.register(CallRequest)
@@ -577,10 +594,10 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("location__name", "location__public_id")
     list_display = (
         "location",
+        "state",
         "priority_group",
         "queue_status",
         "call_request_reason",
-        "priority",
     )
     list_filter = (
         CallRequestQueueStatus,
@@ -592,8 +609,14 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         export_as_csv_action(),
         make_call_request_bump_action("top"),
         make_call_request_bump_action("bottom"),
+    ] + [
+        make_call_request_move_to_priority_group(priority_group)
+        for priority_group in CallRequest.PriorityGroup.choices
     ]
     raw_id_fields = ("location", "claimed_by", "tip_report")
+
+    def state(self, obj):
+        return obj.location.state.abbreviation
 
     def lookup_allowed(self, lookup, value):
         return True
