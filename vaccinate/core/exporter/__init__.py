@@ -241,8 +241,8 @@ class V0(APIProducer):
 
     @beeline.traced(name="core.exporter.V0.write")
     def write(self, sw: StorageWriter) -> None:
-        sw.write("locations.json", self.get_locations())
-        sw.write("counties.json", self.get_counties())
+        sw.write("Locations.json", self.get_locations())
+        sw.write("Counties.json", self.get_counties())
 
 
 class V1(V0):
