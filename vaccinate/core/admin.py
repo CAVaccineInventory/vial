@@ -577,6 +577,7 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("location__name", "location__public_id")
     list_display = (
         "location",
+        "state",
         "priority_group",
         "queue_status",
         "call_request_reason",
@@ -594,6 +595,9 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         make_call_request_bump_action("bottom"),
     ]
     raw_id_fields = ("location", "claimed_by", "tip_report")
+
+    def state(self, obj):
+        return obj.location.state.abbreviation
 
     def lookup_allowed(self, lookup, value):
         return True
