@@ -10,6 +10,7 @@ import markdown
 import pytz
 import requests
 import reversion
+from api.location_metrics import LocationMetricsReport
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core import exporter
 from core.import_utils import (
@@ -711,3 +712,9 @@ def api_export(request):
             status=500,
         )
     return JsonResponse({"ok": 1})
+
+
+@csrf_exempt
+@beeline.traced(name="location_metrics")
+def location_metrics(request):
+    return LocationMetricsReport().serve()

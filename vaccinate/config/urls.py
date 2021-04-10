@@ -62,6 +62,7 @@ urlpatterns = [
     path("api/providerTypes", api_views.provider_types),
     path("api/availabilityTags", api_views.availability_tags),
     path("api/export", api_views.api_export),
+    path("api/location_metrics", api_views.location_metrics),
     path("api/counties/<state_abbreviation>", api_views.counties),
     path("", include("django.contrib.auth.urls")),
     path("", include("social_django.urls")),
