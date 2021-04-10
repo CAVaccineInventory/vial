@@ -462,6 +462,11 @@ class Report(models.Model):
     is_pending_review = models.BooleanField(
         default=False, help_text="Reports that are pending review by our QA team"
     )
+    soft_deleted = models.BooleanField(
+        default=False,
+        help_text="we never delete rows from this table; all deletes are soft",
+    )
+    soft_deleted_because = CharTextField(null=True, blank=True)
     report_source = models.CharField(
         max_length=2,
         choices=ReportSource.choices,

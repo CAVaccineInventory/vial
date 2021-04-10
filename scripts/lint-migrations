@@ -12,4 +12,5 @@
     0056_completed_completed_at \
     0057_callrequest_priority \
     0061_report_is_pending_review \
-    0069_more_location_denormalizations
+    0069_more_location_denormalizations \
+    0072_soft_deleted_on_reports
