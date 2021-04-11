@@ -83,6 +83,7 @@ def test_import_location_with_import_json(client, api_key):
         "state": "CA",
         "latitude": 37.781869,
         "longitude": -122.439517,
+        "preferred_contact_method": "research_online",
     }
     assert Location.objects.count() == 0
     response = client.post(
@@ -96,6 +97,7 @@ def test_import_location_with_import_json(client, api_key):
     assert Location.objects.count() == 1
     location = Location.objects.get()
     assert location.name == "Walgreens San Francisco II"
+    assert location.preferred_contact_method == "research_online"
     assert location.import_json == {"This is import json": True}
 
 
@@ -119,6 +121,7 @@ def test_import_location_with_import_ref(client, api_key):
     assert Location.objects.count() == 1
     location = Location.objects.get()
     assert location.name == "Walgreens San Francisco II"
+    assert not location.soft_deleted
     # Now do it again with the same import ref
     response2 = client.post(
         "/api/importLocations",
@@ -142,6 +145,53 @@ def test_import_location_with_import_ref(client, api_key):
         "updated": [location2.public_id],
         "added": [],
     }
+
+
+@pytest.mark.django_db
+def test_import_soft_deleted_location(client, api_key):
+    assert Location.objects.count() == 0
+    response = client.post(
+        "/api/importLocations",
+        {
+            "name": "Walgreens San Francisco II",
+            "state": "CA",
+            "latitude": 37.781869,
+            "longitude": -122.439517,
+            "location_type": "Pharmacy",
+            "import_ref": "my-import-ref",
+            "soft_deleted": True,
+        },
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response.status_code == 200
+    assert Location.objects.count() == 1
+    location = Location.objects.get()
+    assert location.soft_deleted
+
+
+@pytest.mark.django_db
+def test_import_duplicate_location(client, api_key, ten_locations):
+    other = ten_locations[0]
+    response = client.post(
+        "/api/importLocations",
+        {
+            "name": "Walgreens San Francisco II",
+            "state": "CA",
+            "latitude": 37.781869,
+            "longitude": -122.439517,
+            "location_type": "Pharmacy",
+            "import_ref": "my-import-ref",
+            "soft_deleted": True,
+            "duplicate_of": other.public_id,
+        },
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response.status_code == 200
+    assert Location.objects.count() == 11
+    location = Location.objects.get(soft_deleted=True)
+    assert location.duplicate_of == other
 
 
 @pytest.mark.django_db

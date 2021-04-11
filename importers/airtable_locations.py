@@ -82,6 +82,7 @@ def convert_airtable(location):
         "phone_number": location.get("Phone number"),
         "zip_code": None,
         "website": location.get("Website"),
+        "preferred_contact_method": location.get("preferred_contact_method"),
         "hours": location.get("Hours"),
         "county": location["County"].replace(" County", "").strip(),
         "state": "CA",
@@ -94,7 +95,11 @@ def convert_airtable(location):
         "vaccinespotter_location_id": location.get("vaccinespotter_location_id"),
         "vaccinefinder_location_id": location.get("vaccinefinder_location_id"),
         "import_json": location,
+        "soft_deleted": bool(location.get("is_soft_deleted")),
     }
+    if location.get("duplicate_of"):
+        info["duplicate_of"] = location["duplicate_of"][0]
+
     return info
 
 

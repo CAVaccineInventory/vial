@@ -238,3 +238,26 @@ def test_derive_appointment_tag(
     )
     assert actual_tag == expected_tag
     assert actual_instructions == expected_instructions
+
+
+@pytest.mark.django_db
+def test_import_soft_deleted_location():
+    location_json_copy = dict(location_json)
+    location_json_copy["is_soft_deleted"] = True
+
+    location = import_airtable_location(location_json_copy)
+
+    assert location.soft_deleted
+
+
+@pytest.mark.django_db
+def test_import_duplicate_location(ten_locations):
+    other = ten_locations[0]
+    location_json_copy = dict(location_json)
+    location_json_copy["is_soft_deleted"] = True
+    location_json_copy["duplicate_of"] = [other.public_id]
+
+    location = import_airtable_location(location_json_copy)
+
+    assert location.soft_deleted
+    assert location.duplicate_of == other

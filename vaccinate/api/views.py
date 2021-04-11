@@ -435,6 +435,9 @@ class LocationValidator(BaseModel):
     hours: Optional[str]
     website: Optional[str]
     airtable_id: Optional[str]
+    soft_deleted: Optional[bool]
+    duplicate_of: Optional[str]
+    preferred_contact_method: Optional[str]
     # Provider
     provider_type: Optional[str]
     provider_name: Optional[str]
@@ -520,12 +523,32 @@ def import_locations(request, on_request_logged):
                     "zip_code",
                     "hours",
                     "website",
+                    "preferred_contact_method",
                     "latitude",
                     "longitude",
                     "airtable_id",
                 ):
                     kwargs[key] = location_data.get(key)
                 kwargs["street_address"] = (kwargs["full_address"] or "").split(",")[0]
+                # Handle lted and duplicate_of
+                if location_data.get("soft_deleted"):
+                    kwargs["soft_deleted"] = True
+                if location_data.get("duplicate_of"):
+                    try:
+                        duplicate_location = Location.objects.get(
+                            public_id=location_data["duplicate_of"]
+                        )
+                        kwargs["duplicate_of"] = duplicate_location
+                    except Location.DoesNotExist:
+                        errors.append(
+                            (
+                                location_json,
+                                "Marked as duplicate of {} which does not exist".format(
+                                    location_data["duplicate_of"]
+                                ),
+                            )
+                        )
+                        continue
                 if location_json.get("import_ref"):
                     location, created = Location.objects.update_or_create(
                         import_ref=location_json["import_ref"], defaults=kwargs

@@ -73,15 +73,16 @@ def ten_locations(db):
 
     locations = []
     for i in range(1, 11):
-        locations.append(
-            Location.objects.create(
-                name="Location {}".format(i),
-                state_id=State.objects.get(abbreviation="OR").id,
-                location_type_id=1,
-                latitude=30,
-                longitude=40,
-            )
+        location = Location.objects.create(
+            name="Location {}".format(i),
+            state_id=State.objects.get(abbreviation="OR").id,
+            location_type_id=1,
+            latitude=30,
+            longitude=40,
         )
+        location.refresh_from_db()
+        locations.append(location)
+
     return locations
 
 
