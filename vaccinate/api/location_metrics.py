@@ -29,8 +29,8 @@ class LocationMetricsReport:
     def __init__(self) -> None:
         # We want to make sure we never export the real metric names
         # except in production, Just In Case
-        prefix = os.environ.get("DEPLOY", "unknown")
-        if prefix == "production":
+        prefix = os.environ.get("DEPLOY", "unknown") + "_"
+        if prefix == "production_":
             prefix = ""
 
         self.registry = CollectorRegistry()
