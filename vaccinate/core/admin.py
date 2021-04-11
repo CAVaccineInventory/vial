@@ -184,20 +184,29 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         ),
         ("Actions", {"fields": ("request_a_call", "scooby_report_link")}),
         (
-            "Advanced",
+            "Advanced Actions",
             {
+                "classes": ("collapse",),
                 "fields": (
-                    "provenance",
                     "do_not_call",
                     "do_not_call_reason",
                     "soft_deleted",
                     "soft_deleted_because",
                     "duplicate_of",
+                ),
+            },
+        ),
+        (
+            "Data Fields",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "provenance",
                     "public_id",
                     "airtable_id",
                     "import_ref",
                     "import_json",
-                )
+                ),
             },
         ),
     )
