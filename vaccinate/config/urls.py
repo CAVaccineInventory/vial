@@ -47,6 +47,16 @@ urlpatterns = [
     ),
     path("api/verifyToken", api_views.verify_token),
     path("api/importLocations", api_views.import_locations),
+    path(
+        "api/importLocations/debug",
+        api_views.api_debug_view(
+            "api/importLocations",
+            use_jwt=False,
+            body_textarea=True,
+            default_body="[]",
+            docs="/api/docs#post-apiimportlocations",
+        ),
+    ),
     path("api/importReports", api_views.import_reports),
     path(
         "api/importReports/debug",
