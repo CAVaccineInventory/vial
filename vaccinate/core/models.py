@@ -109,13 +109,25 @@ class County(models.Model):
     vaccine_dashboard_url = CharTextField(null=True, blank=True)
     vaccine_data_url = CharTextField(null=True, blank=True)
     vaccine_arcgis_url = CharTextField(null=True, blank=True)
-    age_floor_without_restrictions = models.IntegerField(null=True, blank=True)
+    age_floor_without_restrictions = models.IntegerField(
+        null=True, blank=True, verbose_name="Age Floor"
+    )
     airtable_id = models.CharField(
         max_length=20,
         null=True,
         unique=True,
         help_text="Airtable record ID, if this has one",
     )
+
+    @property
+    def short_public_notes(obj):
+        return (
+            obj.public_notes
+            if (obj.public_notes == None or len(obj.public_notes) < 50)
+            else (obj.public_notes[:47] + "..")
+        )
+
+    short_public_notes.fget.short_description = "Public Notes"
 
     def __str__(self):
         return self.name

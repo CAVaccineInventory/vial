@@ -66,7 +66,14 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
-    list_display = ("name", "state", "fips_code")
+    list_display = (
+        "name",
+        "state",
+        "vaccine_info_url",
+        "short_public_notes",
+        "age_floor_without_restrictions",
+        "fips_code",
+    )
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
     ordering = ("name",)
