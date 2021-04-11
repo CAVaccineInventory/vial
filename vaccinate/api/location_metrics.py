@@ -85,7 +85,7 @@ class LocationMetricsReport:
         nos: Dict[str, int] = defaultdict(int)
         locations_with_reports = (
             Location.objects.filter(
-                dn_latest_non_skip_report_id__isnull=False, state__git diabbreviation="CA"
+                dn_latest_non_skip_report_id__isnull=False, state__abbreviation="CA"
             )
             .select_related("dn_latest_non_skip_report")
             .prefetch_related("dn_latest_non_skip_report__availability_tags")
