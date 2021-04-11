@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+import os
 import re
 from collections import defaultdict
 from typing import Dict, Optional
@@ -26,7 +27,12 @@ class LocationMetricsReport:
     now: datetime.datetime
 
     def __init__(self) -> None:
-        prefix = "vial_"
+        # We want to make sure we never export the real metric names
+        # except in production, Just In Case
+        prefix = os.environ.get("DEPLOY", "unknown") + "_"
+        if prefix == "production_":
+            prefix = ""
+
         self.registry = CollectorRegistry()
         self.total_locations = Gauge(
             f"{prefix}locations_total_total",
