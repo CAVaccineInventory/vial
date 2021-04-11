@@ -158,6 +158,49 @@ class SoftDeletedFilter(admin.SimpleListFilter):
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     actions = [export_as_csv_action()]
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "location_type",
+                    "phone_number",
+                    "full_address",
+                    "street_address",
+                    "city",
+                    "state",
+                    "zip_code",
+                    "county",
+                    "latitude",
+                    "longitude",
+                    "hours",
+                    "website",
+                    "preferred_contact_method",
+                    "provider",
+                    "internal_notes",
+                )
+            },
+        ),
+        ("Actions", {"fields": ("request_a_call", "scooby_report_link")}),
+        (
+            "Advanced",
+            {
+                "fields": (
+                    "provenance",
+                    "do_not_call",
+                    "do_not_call_reason",
+                    "soft_deleted",
+                    "soft_deleted_because",
+                    "duplicate_of",
+                    "public_id",
+                    "airtable_id",
+                    "import_ref",
+                    "import_json",
+                )
+            },
+        ),
+    )
 
     def get_actions(self, request):
         actions = super().get_actions(request)
