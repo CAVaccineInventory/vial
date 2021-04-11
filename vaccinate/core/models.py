@@ -419,6 +419,7 @@ class AvailabilityTag(models.Model):
     previous_names = models.JSONField(
         default=list,
         help_text="Any previous names used for this tag, used for keeping import scripts working",
+        blank=True,
     )
 
     def __str__(self):
