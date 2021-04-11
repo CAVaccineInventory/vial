@@ -1,6 +1,8 @@
 # VIAL
 
-VIAL = Vaccine Information Archive and Library. This is the Django application that powers (or will power) calltheshots.us
+VIAL = Vaccine Information Archive and Library.
+
+This is the Django application that powers https://help.vaccinateca.com/ and provides the backend data for https://www.vaccinateca.com/
 
 Project background: [Spinning up a new Django app to act as a backend for VaccinateCA](https://github.com/CAVaccineInventory/simonw-internal-blog/blob/main/2021-02/2021-02-23.md)
 
@@ -47,14 +49,7 @@ As a result, hosting this (or moving this to a different host) should be as easy
 - Configures Django Admin to run against those new models
 - Continuous Deployment to a staging environment
 - Imports existing location and reports data from Airtable
-- Provides a number of [fully documented](docs/api.md) APIs:
-  - `POST /api/submitReport` that imitates the Netlify/Airtable one for submitting a call report
-  - `POST /api/requestCall` (again imitating Netlify) for getting a new location to call
-  - `GET /api/verifyToken` to verify an API token
-  - `POST /api/importLocations` to import new locations
-  - `GET /api/providerTypes` - see valid provider types
-  - `GET /api/locationTypes` - see valid location types
-  - `GET /api/counties/CA` - list counties in a state - accepts two letter state codes
+- Provides a number of [fully documented](docs/api.md) APIs
 
 For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
 
