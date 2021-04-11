@@ -83,6 +83,7 @@ def test_import_location_with_import_json(client, api_key):
         "state": "CA",
         "latitude": 37.781869,
         "longitude": -122.439517,
+        "preferred_contact_method": "research_online",
     }
     assert Location.objects.count() == 0
     response = client.post(
@@ -96,6 +97,7 @@ def test_import_location_with_import_json(client, api_key):
     assert Location.objects.count() == 1
     location = Location.objects.get()
     assert location.name == "Walgreens San Francisco II"
+    assert location.preferred_contact_method == "research_online"
     assert location.import_json == {"This is import json": True}
 
 

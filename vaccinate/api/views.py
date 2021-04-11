@@ -437,6 +437,7 @@ class LocationValidator(BaseModel):
     airtable_id: Optional[str]
     soft_deleted: Optional[bool]
     duplicate_of: Optional[str]
+    preferred_contact_method: Optional[str]
     # Provider
     provider_type: Optional[str]
     provider_name: Optional[str]
@@ -522,6 +523,7 @@ def import_locations(request, on_request_logged):
                     "zip_code",
                     "hours",
                     "website",
+                    "preferred_contact_method",
                     "latitude",
                     "longitude",
                     "airtable_id",

@@ -82,6 +82,7 @@ def convert_airtable(location):
         "phone_number": location.get("Phone number"),
         "zip_code": None,
         "website": location.get("Website"),
+        "preferred_contact_method": location.get("preferred_contact_method"),
         "hours": location.get("Hours"),
         "county": location["County"].replace(" County", "").strip(),
         "state": "CA",
