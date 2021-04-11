@@ -194,11 +194,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_skip_report_count",
         "scooby_report_link",
         "request_a_call",
+        "preferred_contact_method",
     )
     list_filter = (
         LocationInQueueFilter,
         SoftDeletedFilter,
         "do_not_call",
+        "preferred_contact_method",
         "location_type",
         "state",
         "provider",

@@ -19,6 +19,10 @@ class ToolsMenu(items.MenuItem):
             self.children.append(
                 items.MenuItem("Merge locations", "/admin/merge-locations/"),
             )
+        if user.has_perm("core.add_call_request"):
+            self.children.append(
+                items.MenuItem("Import call requests", "/admin/import-call-requests/"),
+            )
         if user.is_superuser:
             self.children.append(
                 items.MenuItem("Data import tools", "/admin/tools/"),

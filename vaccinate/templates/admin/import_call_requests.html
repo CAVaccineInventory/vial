@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Bulk import call reports{% endblock %}
+{% block content %}
+<h1>Bulk import call reports</h1>
+
+<p>Paste location IDs into the relevant box</p>
+
+{% if error %}
+    <p style="background-color: red; color: white; padding: 0.5em">
+        {{ error }}
+    </p>
+{% endif %}
+
+{% if message %}
+    <p style="background-color: green; color: white; padding: 0.5em">
+        {{ message|linebreaksbr }}
+    </p>
+{% endif %}
+
+<form action="{{ request.path }}" method="POST">
+    {% csrf_token %}
+    {% for id, name in choices %}
+      <h3>{{ name }}</h3>
+      <p><textarea name="location_ids_group_{{ id }}" style="width: 80%; height: 4em" placeholder='Newline or comma separated list of location IDs here'></textarea></p>
+    {% endfor %}<p>
+    <p>
+      <input type="submit" value="Delete these reports">
+    </p>
+</form>
+
+{% endblock %}

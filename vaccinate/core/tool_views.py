@@ -8,8 +8,59 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core import management
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 
-from .models import County, Location, Report
+from .models import CallRequest, CallRequestReason, County, Location, Report
+
+
+def extract_ids(s):
+    return re.split(
+        r"[\n\r,\s]+", (s or "").replace('"', "").replace("[", "".replace("]", ""))
+    )
+
+
+@login_required
+@user_passes_test(lambda user: user.has_perm("core.add_callrequest"))
+def import_call_requests(request):
+    error = None
+    messages = []
+    priority_groups = CallRequest.PriorityGroup.choices
+    if request.method == "POST":
+        for group_id, group_name in priority_groups:
+            field = "location_ids_group_{}".format(group_id)
+            location_ids = extract_ids(request.POST.get(field))
+            locations = list(Location.objects.filter(public_id__in=location_ids))
+            # For the moment we assume they are not yet in the call queue
+            reason_obj = CallRequestReason.objects.get_or_create(
+                short_reason="Imported"
+            )[0]
+            now = timezone.now()
+            CallRequest.objects.bulk_create(
+                [
+                    CallRequest(
+                        location=location,
+                        vesting_at=now,
+                        call_request_reason=reason_obj,
+                        priority_group=group_id,
+                    )
+                    for location in locations
+                ]
+            )
+            if len(locations):
+                messages.append(
+                    "Added {} locations to priority {}".format(
+                        len(locations), group_name
+                    )
+                )
+    return render(
+        request,
+        "admin/import_call_requests.html",
+        {
+            "choices": priority_groups,
+            "error": error,
+            "message": "\n".join(messages),
+        },
+    )
 
 
 @login_required
@@ -20,13 +71,7 @@ def bulk_delete_reports(request):
     report_ids = []
     location_ids = []
     if request.method == "POST":
-        report_ids = [
-            r
-            for r in re.split(
-                r"[\n\r,\s]+", request.POST.get(("report_ids") or "").replace('"', "")
-            )
-            if r
-        ]
+        report_ids = [r for r in extract_ids(request.POST.get("report_ids")) if r]
         if not isinstance(report_ids, list) or any(
             not str(r).startswith("r") for r in report_ids
         ):
