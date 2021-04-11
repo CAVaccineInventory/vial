@@ -75,7 +75,8 @@ class LocationMetricsReport:
 
     def serve(self) -> HttpResponse:
         self.now = datetime.datetime.now(datetime.timezone.utc)
-        self.total_locations.set(Location.objects.count())
+        locations = Location.objects.filter(state__abbreviation="CA")
+        self.total_locations.set(locations.count())
 
         yeses: Dict[bool, Dict[str, int]] = {
             True: defaultdict(int),
@@ -83,7 +84,9 @@ class LocationMetricsReport:
         }
         nos: Dict[str, int] = defaultdict(int)
         locations_with_reports = (
-            Location.objects.filter(dn_latest_non_skip_report_id__isnull=False)
+            Location.objects.filter(
+                dn_latest_non_skip_report_id__isnull=False, state__abbreviation="CA"
+            )
             .select_related("dn_latest_non_skip_report")
             .prefetch_related("dn_latest_non_skip_report__availability_tags")
         ).only(
