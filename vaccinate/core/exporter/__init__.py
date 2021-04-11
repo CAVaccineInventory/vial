@@ -1,6 +1,6 @@
 import os
 from contextlib import contextmanager
-from typing import Callable, Dict, Generator, List
+from typing import Callable, Dict, Generator, List, Optional
 
 import beeline
 from core import models
@@ -141,7 +141,7 @@ class APIProducer:
 
 
 class V0(APIProducer):
-    def county_name(self, county: models.County) -> str:
+    def county_name(self, county: Optional[models.County]) -> str:
         if not county:
             return ""
         if county.name == "San Francisco":
