@@ -71,6 +71,17 @@ def import_airtable_location(location):
         "public_id": location["airtable_id"],
         "preferred_contact_method": location.get("preferred_contact_method") or None,
     }
+    # Handle soft deletion and merges
+    if location.get("is_soft_deleted"):
+        kwargs["soft_deleted"] = True
+    if location.get("duplicate_of"):
+        try:
+            duplicate_location = Location.objects.get(
+                public_id=location["duplicate_of"][0]
+            )
+            kwargs["duplicate_of"] = duplicate_location
+        except Location.DoesNotExist:
+            kwargs["soft_deleted"] = True
     return Location.objects.update_or_create(
         airtable_id=location["airtable_id"], defaults=kwargs
     )[0]
