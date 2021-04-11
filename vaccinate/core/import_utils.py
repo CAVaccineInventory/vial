@@ -107,8 +107,8 @@ def import_airtable_report(report, availability_tags=None):
         reported_by = Reporter.objects.update_or_create(
             external_id="auth0:{}".format(report["auth0_reporter_id"]),
             defaults={
-                "name": report["auth0_reporter_name"],
-                "auth0_role_names": report["auth0_reporter_roles"],
+                "name": report.get("auth0_reporter_name"),
+                "auth0_role_names": report.get("auth0_reporter_roles"),
             },
         )[0]
     else:
