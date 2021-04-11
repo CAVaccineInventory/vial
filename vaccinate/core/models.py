@@ -425,12 +425,6 @@ class AvailabilityTag(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def long_name(self):
-        if self.group in ("yes", "no"):
-            return self.group.capitalize() + ": " + self.name[0].lower() + self.name[1:]
-        return self.name
-
     class Meta:
         db_table = "availability_tag"
 
