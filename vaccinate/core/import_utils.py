@@ -140,6 +140,7 @@ def import_airtable_report(report, availability_tags=None):
         # "call_request" isn't a concept that exists in Airtable
         "airtable_json": report,
         "public_id": report["airtable_id"],
+        "is_pending_review": bool(report.get("is_pending_review")),
     }
 
     report_obj, created = Report.objects.update_or_create(

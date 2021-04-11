@@ -173,6 +173,7 @@ POST_HELP_LAUNCH_REPORT = {
     "location_latest_eva_report_time": ["2021-02-24T05:16:09.000Z"],
     "Number of Reports (from Location)": [3],
     "Appointment scheduling instructions": "Uses county scheduling system",
+    "is_pending_review": True,
 }
 
 
@@ -212,6 +213,7 @@ def test_import_airtable_report_post_help_vaccinate_launch_using_api(client, api
         "Appointment required",
         "Appointment calendar currently full",
     }
+    assert report.is_pending_review
 
 
 @pytest.mark.parametrize(
