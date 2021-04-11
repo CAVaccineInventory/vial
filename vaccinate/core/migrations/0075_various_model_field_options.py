@@ -6,22 +6,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0074_location_preferred_contact_method'),
+        ("core", "0074_location_preferred_contact_method"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='callrequest',
-            options={'ordering': ('priority_group', '-priority', '-id')},
+            name="callrequest",
+            options={"ordering": ("priority_group", "-priority", "-id")},
         ),
         migrations.AlterField(
-            model_name='availabilitytag',
-            name='previous_names',
-            field=models.JSONField(blank=True, default=list, help_text='Any previous names used for this tag, used for keeping import scripts working'),
+            model_name="availabilitytag",
+            name="previous_names",
+            field=models.JSONField(
+                blank=True,
+                default=list,
+                help_text="Any previous names used for this tag, used for keeping import scripts working",
+            ),
         ),
         migrations.AlterField(
-            model_name='location',
-            name='preferred_contact_method',
-            field=models.CharField(blank=True, choices=[('research_online', 'research_online'), ('outbound_call', 'outbound_call')], help_text='Preferred method of collecting status about this location', max_length=32, null=True),
+            model_name="location",
+            name="preferred_contact_method",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("research_online", "research_online"),
+                    ("outbound_call", "outbound_call"),
+                ],
+                help_text="Preferred method of collecting status about this location",
+                max_length=32,
+                null=True,
+            ),
         ),
     ]

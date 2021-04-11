@@ -181,15 +181,17 @@ class V0(APIProducer):
                         [t for t in latest.availability_tags.all() if t.group == "yes"]
                     )
                     public_notes = [latest.public_notes or None] if is_yes else ""
+                    tags = [
+                        t.previous_names[0] if t.previous_names else t.name
+                        for t in latest.availability_tags.all()
+                    ]
                     result[-1].update(
                         {
                             "Has Report": 1,
                             "Appointment scheduling instructions": [
                                 latest.appointment_details,
                             ],
-                            "Availability Info": [
-                                t.long_name for t in latest.availability_tags.all()
-                            ],
+                            "Availability Info": tags,
                             "Latest report": latest.created_at.strftime(
                                 "%Y-%m-%dT%H:%M:%S.000Z"
                             ),
