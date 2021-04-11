@@ -542,7 +542,7 @@ def import_locations(request, on_request_logged):
                             (
                                 location_json,
                                 "Marked as duplicate of {} which does not exist".format(
-                                    location["duplicate_of"]
+                                    location_data["duplicate_of"]
                                 ),
                             )
                         )
