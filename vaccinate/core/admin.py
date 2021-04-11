@@ -242,7 +242,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def scooby_report_link(self, obj):
         if settings.SCOOBY_URL:
             return mark_safe(
-                '<strong><a href="{}?location_id={}">File a report using Scooby</a></strong>'.format(
+                '<strong><a href="{}?location_id={}" target="_blank">File a report using Scooby</a></strong>'.format(
                     settings.SCOOBY_URL, obj.public_id
                 )
             )
@@ -251,7 +251,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     def request_a_call(self, obj):
         return mark_safe(
-            '<strong><a href="/admin/core/callrequest/add/?location={}">Request a call</a></strong>'.format(
+            '<strong><a href="/admin/core/callrequest/add/?location={}" target="_blank">Request a call</a></strong>'.format(
                 obj.id
             )
         )
