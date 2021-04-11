@@ -180,6 +180,7 @@ class V0(APIProducer):
                     is_yes = any(
                         [t for t in latest.availability_tags.all() if t.group == "yes"]
                     )
+                    public_notes = [latest.public_notes or None] if is_yes else ""
                     result[-1].update(
                         {
                             "Has Report": 1,
@@ -192,7 +193,7 @@ class V0(APIProducer):
                             "Latest report": latest.created_at.strftime(
                                 "%Y-%m-%dT%H:%M:%S.000Z"
                             ),
-                            "Latest report notes": [latest.public_notes or None],
+                            "Latest report notes": public_notes,
                             "Latest report yes?": 1 if is_yes else 0,
                         }
                     )
