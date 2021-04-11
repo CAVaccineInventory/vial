@@ -1,6 +1,6 @@
 import os
 from contextlib import contextmanager
-from typing import Callable, Dict, Generator, List
+from typing import Callable, Dict, Generator, List, Optional
 
 import beeline
 from core import models
@@ -70,7 +70,7 @@ def dataset() -> Generator[Dataset, None, None]:
         # caveat that if any /other/ column is requested, it adds O(n)
         # additional queries, at significant cost!
         ds.locations = (
-            models.Location.objects.filter(state__abbreviation="CA")
+            models.Location.objects.filter(state__abbreviation="CA", soft_deleted=False)
             .select_related("dn_latest_non_skip_report")
             .select_related("county")
             .select_related("location_type")
@@ -141,7 +141,7 @@ class APIProducer:
 
 
 class V0(APIProducer):
-    def county_name(self, county: models.County) -> str:
+    def county_name(self, county: Optional[models.County]) -> str:
         if not county:
             return ""
         if county.name == "San Francisco":
@@ -180,6 +180,7 @@ class V0(APIProducer):
                     is_yes = any(
                         [t for t in latest.availability_tags.all() if t.group == "yes"]
                     )
+                    public_notes = [latest.public_notes or None] if is_yes else ""
                     result[-1].update(
                         {
                             "Has Report": 1,
@@ -192,7 +193,7 @@ class V0(APIProducer):
                             "Latest report": latest.created_at.strftime(
                                 "%Y-%m-%dT%H:%M:%S.000Z"
                             ),
-                            "Latest report notes": [latest.public_notes or None],
+                            "Latest report notes": public_notes,
                             "Latest report yes?": 1 if is_yes else 0,
                         }
                     )
