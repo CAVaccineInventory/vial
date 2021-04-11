@@ -70,7 +70,7 @@ def dataset() -> Generator[Dataset, None, None]:
         # caveat that if any /other/ column is requested, it adds O(n)
         # additional queries, at significant cost!
         ds.locations = (
-            models.Location.objects.filter(state__abbreviation="CA")
+            models.Location.objects.filter(state__abbreviation="CA", soft_deleted=False)
             .select_related("dn_latest_non_skip_report")
             .select_related("county")
             .select_related("location_type")
