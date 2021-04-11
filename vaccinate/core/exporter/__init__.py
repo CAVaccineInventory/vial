@@ -189,7 +189,9 @@ class V0(APIProducer):
                             "Availability Info": [
                                 t.long_name for t in latest.availability_tags.all()
                             ],
-                            "Latest report": latest.created_at.isoformat() + "Z",
+                            "Latest report": latest.created_at.strftime(
+                                "%Y-%m-%dT%H:%M:%S.000Z"
+                            ),
                             "Latest report notes": [latest.public_notes or None],
                             "Latest report yes?": 1 if is_yes else 0,
                         }
