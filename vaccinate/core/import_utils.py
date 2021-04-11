@@ -141,6 +141,7 @@ def import_airtable_report(report, availability_tags=None):
         "airtable_json": report,
         "public_id": report["airtable_id"],
         "is_pending_review": bool(report.get("is_pending_review")),
+        "soft_deleted": bool(report.get("is_soft_deleted")),
     }
 
     report_obj, created = Report.objects.update_or_create(
