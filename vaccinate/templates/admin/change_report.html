@@ -1,10 +1,21 @@
 {% extends "admin/change_form.html" %}
 
 {% block field_sets %}
-{% if original and original.is_pending_review %}
+{% if original.is_pending_review %}
   <p style="background-color: red; color: white; padding: 0.5em">
     This report is <strong>pending review</strong>
   </p>
 {% endif %}
+{% if original.claimed_by %}
+  <p style="background-color: {% if original.claimed_by == request.user %}green{% else %}red{% endif %}; color: white; padding: 0.5em">
+    {% if original.claimed_by == request.user %}
+      You claimed this report for review
+    {% else %}
+      <strong>{{ original.claimed_by }}</strong> has claimed this report for review
+    {% endif %}
+    ({{ original.claimed_at|timesince }} ago)
+  </p>
+{% endif %}
+
 {{ block.super }}
 {% endblock %}

@@ -375,6 +375,14 @@ class ReportReviewNoteInline(admin.StackedInline):
         return False
 
 
+def claim_reports(modeladmin, request, queryset):
+    count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
+    messages.success(
+        request,
+        "You clamed {} report{}".format(count, "s" if count != 1 else ""),
+    )
+
+
 def bulk_approve_reports(modeladmin, request, queryset):
     pending_review = queryset.filter(is_pending_review=True)
     # Add a comment to them all
@@ -388,6 +396,27 @@ def bulk_approve_reports(modeladmin, request, queryset):
         request,
         "Approved {} report{}".format(count, "s" if count != 1 else ""),
     )
+
+
+class ClaimFilter(admin.SimpleListFilter):
+    title = "Claim status"
+
+    parameter_name = "claim_status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("you", "Claimed by you"),
+            ("anyone", "Claimed by anyone"),
+            ("unclaimed", "Unclaimed"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "you":
+            return queryset.filter(claimed_by=request.user)
+        elif self.value() == "anyone":
+            return queryset.exclude(claimed_by=None)
+        elif self.value() == "unclaimed":
+            return queryset.filter(claimed_by=None)
 
 
 @admin.register(Report)
@@ -408,14 +437,16 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "public_id",
         "availability",
         "is_pending_review",
+        "claimed_by",
         "location",
         "appointment_tag",
         "reporter",
         "created_at_utc",
     )
-    autocomplete_fields = ("availability_tags",)
+    autocomplete_fields = ("availability_tags", "claimed_by")
     list_display_links = ("id", "created_at", "public_id")
     actions = [
+        claim_reports,
         bulk_approve_reports,
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
@@ -428,6 +459,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "is_pending_review",
+        ClaimFilter,
         SoftDeletedFilter,
         ("created_at", DateYesterdayFieldListFilter),
         "availability_tags",
@@ -438,6 +470,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     readonly_fields = (
         "created_at",
+        "claimed_at",
         "created_at_utc",
         "originally_pending_review",
         "public_id",
@@ -516,6 +549,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj.is_pending_review = False
             obj.save()
             obj.location.update_denormalizations()
+
+    def save_model(self, request, obj, form, change):
+        if obj.claimed_by and "claimed_by" in form.changed_data:
+            obj.claimed_at = timezone.now()
+        super().save_model(request, obj, form, change)
 
     def state(self, obj):
         return obj.location.state.abbreviation

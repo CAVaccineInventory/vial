@@ -473,6 +473,19 @@ class Report(models.Model):
         null=True,
         help_text="Reports that were originally flagged as pending review",
     )
+    claimed_by = models.ForeignKey(
+        "auth.User",
+        related_name="claimed_reports",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        help_text="QA reviewer who has claimed this report",
+    )
+    claimed_at = models.DateTimeField(
+        help_text="When the QA reviewer clamed this report",
+        blank=True,
+        null=True,
+    )
     soft_deleted = models.BooleanField(
         default=False,
         help_text="we never delete rows from this table; all deletes are soft",
