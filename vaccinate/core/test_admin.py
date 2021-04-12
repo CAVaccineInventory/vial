@@ -327,7 +327,7 @@ def test_custom_csv_export_for_reports(
     report.availability_tags.add(plus_65)
     report.availability_tags.add(plus_50)
     report.refresh_from_db()
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(11):
         response = admin_client.post(
             "/admin/core/report/",
             {

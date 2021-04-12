@@ -383,10 +383,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "location__name",
         "reported_by__external_id",
         "reported_by__email",
+        "reported_by__name",
     )
     list_display = (
         "id_and_note",
-        "created_at",
+        "created_at_short",
         "public_id",
         "availability",
         "is_pending_review",
@@ -439,6 +440,17 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     id_and_note.short_description = "id"
     id_and_note.admin_order_field = "id"
+
+    def created_at_short(self, obj):
+        return mark_safe(
+            dateformat.format(timezone.localtime(obj.created_at), "j M g:iA e")
+            .replace("PM", "pm")
+            .replace("AM", "am")
+            .replace(" ", "&nbsp;")
+        )
+
+    created_at_short.short_description = "created"
+    created_at_short.admin_order_field = "created_at"
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
