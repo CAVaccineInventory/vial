@@ -103,10 +103,16 @@ def reporter_from_request(request, allow_test=False):
                 None,
             )
     external_id = "auth0:{}".format(jwt_payload["sub"])
+    jwt_auth0_role_names = ", ".join(
+        sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
+    )
     try:
         reporter = Reporter.objects.get(external_id=external_id)
-        if reporter.name and reporter.email:
-            return reporter, jwt_payload
+        # Have their auth0 roles changed?
+        if reporter.auth0_role_names != jwt_auth0_role_names:
+            reporter.auth0_role_names = jwt_auth0_role_names
+            reporter.save()
+        return reporter, jwt_payload
     except Reporter.DoesNotExist:
         pass
 
@@ -126,11 +132,7 @@ def reporter_from_request(request, allow_test=False):
     else:
         name = jwt_payload["name"]
         email = jwt_payload["email"]
-    defaults = {
-        "auth0_role_names": ", ".join(
-            sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
-        ),
-    }
+    defaults = {"auth0_role_names": jwt_auth0_role_names}
     if name is not None:
         defaults["name"] = name
     if email is not None:
