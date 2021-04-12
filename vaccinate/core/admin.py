@@ -418,6 +418,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     readonly_fields = (
         "created_at",
         "created_at_utc",
+        "originally_pending_review",
         "public_id",
         "airtable_id",
         "airtable_json",
