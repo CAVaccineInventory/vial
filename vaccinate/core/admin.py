@@ -464,6 +464,16 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     reporter.admin_order_field = "reported_by"
 
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["show_save_and_add_another"] = False
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for obj in formset.deleted_objects:
