@@ -22,3 +22,11 @@
 
 {{ block.super }}
 {% endblock %}
+
+{% block submit_buttons_bottom %}
+{% load admin_modify %}
+{% if your_pending_claimed_reports > 1 %}
+  <input type="submit" value="Save and review next pending report ({{ your_pending_claimed_reports|add:"-1" }} remaining)" name="_review_next">
+{% endif %}
+{% submit_row %}
+{% endblock %}

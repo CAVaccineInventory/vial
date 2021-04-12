@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.utils import dateformat, timezone
 from django.utils.html import escape
@@ -521,9 +522,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
         extra_context["show_save_and_add_another"] = False
-        extra_context["your_pending_claimed_reports"] = request.user.claimed_reports.filter(
-            is_pending_review=True,
-            soft_deleted=False
+        extra_context[
+            "your_pending_claimed_reports"
+        ] = request.user.claimed_reports.filter(
+            is_pending_review=True, soft_deleted=False
         ).count()
         return super().change_view(
             request,
@@ -531,6 +533,19 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             form_url,
             extra_context=extra_context,
         )
+
+    def response_change(self, request, obj):
+        res = super().response_change(request, obj)
+        if "_review_next" in request.POST:
+            next_to_review = request.user.claimed_reports.filter(
+                is_pending_review=True, soft_deleted=False
+            ).first()
+            if next_to_review:
+                return HttpResponseRedirect(
+                    "/admin/core/report/{}/change/".format(next_to_review.pk)
+                )
+        else:
+            return res
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
