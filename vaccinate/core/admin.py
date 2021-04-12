@@ -481,6 +481,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     reporter.admin_order_field = "reported_by"
 
+    def has_delete_permission(self, request, obj=None):
+        # Soft delete only
+        return False
+
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
         extra_context["show_save_and_add_another"] = False
