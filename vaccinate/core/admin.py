@@ -413,6 +413,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         SoftDeletedFilter,
         "created_at",
         "availability_tags",
+        "reported_by__auth0_role_names",
         "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
