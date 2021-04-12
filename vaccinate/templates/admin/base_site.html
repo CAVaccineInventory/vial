@@ -34,3 +34,24 @@ body.app-core.model-report #result_list .nowrap {
     </div>
 {% endif %}
 {% endblock %}
+
+{% block footer %}
+<div id="footer"></div>
+<script>
+window.addEventListener("load", () => {
+    let changelistFilter = jQuery('#changelist-filter');
+    let x = jQuery('<a href="#">X</a>');
+    x.css({
+        display: "inline",
+        position: "absolute",
+        right: '25px',
+        color: 'white'
+    });
+    x.click(() => {
+        changelistFilter.remove();
+        return false;
+    });
+    changelistFilter.find("h2").append(x);
+});
+</script>
+{% endblock %}
