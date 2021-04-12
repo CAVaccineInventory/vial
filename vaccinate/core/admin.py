@@ -375,6 +375,21 @@ class ReportReviewNoteInline(admin.StackedInline):
         return False
 
 
+def bulk_approve_reports(modeladmin, request, queryset):
+    pending_review = queryset.filter(is_pending_review=True)
+    # Add a comment to them all
+    approved = ReportReviewTag.objects.get(tag="Approved")
+    for report in pending_review:
+        note = report.review_notes.create(author=request.user)
+        note.tags.add(approved)
+    count = pending_review.count()
+    pending_review.update(is_pending_review=False)
+    messages.success(
+        request,
+        "Approved {} report{}".format(count, "s" if count != 1 else ""),
+    )
+
+
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     save_on_top = True
@@ -401,13 +416,14 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     autocomplete_fields = ("availability_tags",)
     list_display_links = ("id", "created_at", "public_id")
     actions = [
+        bulk_approve_reports,
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
             extra_columns=["availability_tags"],
             extra_columns_factory=lambda row: [
                 ", ".join(t.name for t in row.availability_tags.all())
             ],
-        )
+        ),
     ]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
@@ -520,6 +536,39 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 @admin.register(ReportReviewTag)
 class ReportReviewTagAdmin(admin.ModelAdmin):
     search_fields = ("tag",)
+
+
+@admin.register(ReportReviewNote)
+class ReportReviewNoteAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "author",
+        "reporter",
+        "location",
+        "note_tags",
+    )
+    readonly_fields = ("created_at", "author", "tags")
+    ordering = ("-created_at",)
+
+    def queryset(self, request, queryset):
+        return queryset.select_related(
+            "report__reported_by", "report__location"
+        )
+
+    def reporter(self, obj):
+        return obj.report.reported_by
+
+    def location(self, obj):
+        return obj.report.location.name
+
+    def note_tags(self, obj):
+        return ", ".join([t.tag for t in obj.tags.all()])
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(EvaReport)

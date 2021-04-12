@@ -395,3 +395,35 @@ def test_adding_review_note_with_approved_tag_approves_report(
     assert list(review_note.tags.values_list("tag", flat=True)) == ["Approved"]
     # is_pending_review should have been turned off
     assert not report.is_pending_review
+
+
+def test_bulk_approve_reports_action(admin_client, ten_locations):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        is_pending_review=True,
+        originally_pending_review=True,
+    )
+    plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
+    plus_50 = AvailabilityTag.objects.get(slug="vaccinating_50_plus")
+    report.availability_tags.add(plus_65)
+    report.availability_tags.add(plus_50)
+    report.refresh_from_db()
+    assert report.review_notes.count() == 0
+    # Now bulk-approve it
+    admin_client.post(
+        "/admin/core/report/",
+        {
+            "action": "bulk_approve_reports",
+            "_selected_action": [report.id],
+        },
+    )
+
+    report.refresh_from_db()
+    assert report.review_notes.count() == 1
+    note = report.review_notes.first()
+    assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]
