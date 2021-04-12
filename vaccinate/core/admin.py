@@ -540,26 +540,37 @@ class ReportReviewTagAdmin(admin.ModelAdmin):
 
 @admin.register(ReportReviewNote)
 class ReportReviewNoteAdmin(admin.ModelAdmin):
+    list_display_links = None
     list_display = (
         "created_at",
         "author",
-        "reporter",
-        "location",
+        "report_summary",
         "note_tags",
+        "note",
     )
     readonly_fields = ("created_at", "author", "tags")
     ordering = ("-created_at",)
 
+    def get_actions(self, request):
+        return []
+
     def queryset(self, request, queryset):
-        return queryset.select_related(
-            "report__reported_by", "report__location"
+        return queryset.select_related("report__reported_by", "report__location")
+
+    def report_summary(self, obj):
+        return mark_safe(
+            '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
+                obj.report_id,
+                obj.report.public_id,
+                escape(obj.report.reported_by.name),
+                dateformat.format(
+                    timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
+                ),
+            )
+            + '<br>On <a href="/admin/core/location/{}/change/">{}</a>'.format(
+                obj.report.location_id, escape(obj.report.location.name)
+            )
         )
-
-    def reporter(self, obj):
-        return obj.report.reported_by
-
-    def location(self, obj):
-        return obj.report.location.name
 
     def note_tags(self, obj):
         return ", ".join([t.tag for t in obj.tags.all()])
