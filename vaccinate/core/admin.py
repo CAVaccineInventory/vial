@@ -11,6 +11,7 @@ from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin
 
 from .admin_actions import export_as_csv_action
+from .admin_filters import DateYesterdayFieldListFilter
 from .models import (
     AppointmentTag,
     AvailabilityTag,
@@ -393,7 +394,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "is_pending_review",
         "location",
         "appointment_tag",
-        "reported_by",
+        "reporter",
         "created_at_utc",
     )
     autocomplete_fields = ("availability_tags",)
@@ -411,8 +412,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_filter = (
         "is_pending_review",
         SoftDeletedFilter,
-        "created_at",
+        ("created_at", DateYesterdayFieldListFilter),
         "availability_tags",
+        "reported_by__auth0_role_names",
         "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
@@ -451,6 +453,16 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     created_at_short.short_description = "created"
     created_at_short.admin_order_field = "created_at"
+
+    def reporter(self, obj):
+        return mark_safe(
+            "<strong>{}</strong><br>{}".format(
+                escape(obj.reported_by.name),
+                escape(obj.reported_by.auth0_role_names or ""),
+            )
+        )
+
+    reporter.admin_order_field = "reported_by"
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
