@@ -187,6 +187,13 @@ def submit_report(request, on_request_logged):
     # is_pending_review
     if report_data["is_pending_review"] or user_should_have_reports_reviewed(reporter):
         kwargs["is_pending_review"] = True
+        kwargs["originally_pending_review"] = True
+    else:
+        # Explicitly set as False, since the originally_pending_review
+        # field is nullable, so we know which reports were before we
+        # started logging.
+        kwargs["originally_pending_review"] = False
+
     if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
         fake_timestamp = parser.parse(request.GET["fake_timestamp"])
         if fake_timestamp.tzinfo is None:
