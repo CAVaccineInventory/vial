@@ -15,6 +15,12 @@ td.field-is_pending_review img[src$="icon-no.svg"] {
 pre.highlight {
     white-space: pre-wrap;
 }
+/* No text wrapping in reports table
+   https://github.com/CAVaccineInventory/vial/issues/239
+*/
+body.app-core.model-report #result_list .nowrap {
+    white-space: normal;
+}
 </style>
 {{ block.super }}
 {% endblock %}
