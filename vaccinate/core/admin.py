@@ -411,6 +411,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "is_pending_review",
         SoftDeletedFilter,
         "created_at",
+        "availability_tags",
         "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
