@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+
+{% block field_sets %}
+{% if original and original.is_pending_review %}
+  <p style="background-color: red; color: white; padding: 0.5em">
+    This report is <strong>pending review</strong>
+  </p>
+{% endif %}
+{{ block.super }}
+{% endblock %}

@@ -378,6 +378,7 @@ class ReportReviewNoteInline(admin.StackedInline):
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     save_on_top = True
+    change_form_template = "admin/change_report.html"
     search_fields = (
         "public_id",
         "location__public_id",
