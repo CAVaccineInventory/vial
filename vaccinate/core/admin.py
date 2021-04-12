@@ -11,6 +11,7 @@ from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin
 
 from .admin_actions import export_as_csv_action
+from .admin_filters import DateYesterdayFieldListFilter
 from .models import (
     AppointmentTag,
     AvailabilityTag,
@@ -411,7 +412,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_filter = (
         "is_pending_review",
         SoftDeletedFilter,
-        "created_at",
+        ("created_at", DateYesterdayFieldListFilter),
         "availability_tags",
         "reported_by__auth0_role_names",
         "appointment_tag",
