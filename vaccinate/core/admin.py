@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.contrib import admin, messages
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.utils import dateformat, timezone
 from django.utils.html import escape
@@ -375,9 +376,54 @@ class ReportReviewNoteInline(admin.StackedInline):
         return False
 
 
+def claim_reports(modeladmin, request, queryset):
+    count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
+    messages.success(
+        request,
+        "You clamed {} report{}".format(count, "s" if count != 1 else ""),
+    )
+
+
+def bulk_approve_reports(modeladmin, request, queryset):
+    pending_review = queryset.filter(is_pending_review=True)
+    # Add a comment to them all
+    approved = ReportReviewTag.objects.get(tag="Approved")
+    for report in pending_review:
+        note = report.review_notes.create(author=request.user)
+        note.tags.add(approved)
+    count = pending_review.count()
+    pending_review.update(is_pending_review=False)
+    messages.success(
+        request,
+        "Approved {} report{}".format(count, "s" if count != 1 else ""),
+    )
+
+
+class ClaimFilter(admin.SimpleListFilter):
+    title = "Claim status"
+
+    parameter_name = "claim_status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("you", "Claimed by you"),
+            ("anyone", "Claimed by anyone"),
+            ("unclaimed", "Unclaimed"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "you":
+            return queryset.filter(claimed_by=request.user)
+        elif self.value() == "anyone":
+            return queryset.exclude(claimed_by=None)
+        elif self.value() == "unclaimed":
+            return queryset.filter(claimed_by=None)
+
+
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     save_on_top = True
+    change_form_template = "admin/change_report.html"
     search_fields = (
         "public_id",
         "location__public_id",
@@ -392,25 +438,29 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "public_id",
         "availability",
         "is_pending_review",
+        "claimed_by",
         "location",
         "appointment_tag",
         "reporter",
         "created_at_utc",
     )
-    autocomplete_fields = ("availability_tags",)
+    autocomplete_fields = ("availability_tags", "claimed_by")
     list_display_links = ("id", "created_at", "public_id")
     actions = [
+        claim_reports,
+        bulk_approve_reports,
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
             extra_columns=["availability_tags"],
             extra_columns_factory=lambda row: [
                 ", ".join(t.name for t in row.availability_tags.all())
             ],
-        )
+        ),
     ]
     raw_id_fields = ("location", "reported_by", "call_request")
     list_filter = (
         "is_pending_review",
+        ClaimFilter,
         SoftDeletedFilter,
         ("created_at", DateYesterdayFieldListFilter),
         "availability_tags",
@@ -421,6 +471,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     readonly_fields = (
         "created_at",
+        "claimed_at",
         "created_at_utc",
         "originally_pending_review",
         "public_id",
@@ -464,6 +515,38 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     reporter.admin_order_field = "reported_by"
 
+    def has_delete_permission(self, request, obj=None):
+        # Soft delete only
+        return False
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["show_save_and_add_another"] = False
+        extra_context[
+            "your_pending_claimed_reports"
+        ] = request.user.claimed_reports.filter(
+            is_pending_review=True, soft_deleted=False
+        ).count()
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
+    def response_change(self, request, obj):
+        res = super().response_change(request, obj)
+        if "_review_next" in request.POST:
+            next_to_review = request.user.claimed_reports.filter(
+                is_pending_review=True, soft_deleted=False
+            ).first()
+            if next_to_review:
+                return HttpResponseRedirect(
+                    "/admin/core/report/{}/change/".format(next_to_review.pk)
+                )
+        else:
+            return res
+
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for obj in formset.deleted_objects:
@@ -485,6 +568,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj.is_pending_review = False
             obj.save()
             obj.location.update_denormalizations()
+
+    def save_model(self, request, obj, form, change):
+        if obj.claimed_by and "claimed_by" in form.changed_data:
+            obj.claimed_at = timezone.now()
+        super().save_model(request, obj, form, change)
 
     def state(self, obj):
         return obj.location.state.abbreviation
@@ -509,6 +597,50 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 @admin.register(ReportReviewTag)
 class ReportReviewTagAdmin(admin.ModelAdmin):
     search_fields = ("tag",)
+
+
+@admin.register(ReportReviewNote)
+class ReportReviewNoteAdmin(admin.ModelAdmin):
+    list_display_links = None
+    list_display = (
+        "created_at",
+        "author",
+        "report_summary",
+        "note_tags",
+        "note",
+    )
+    readonly_fields = ("created_at", "author", "tags")
+    ordering = ("-created_at",)
+
+    def get_actions(self, request):
+        return []
+
+    def queryset(self, request, queryset):
+        return queryset.select_related("report__reported_by", "report__location")
+
+    def report_summary(self, obj):
+        return mark_safe(
+            '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
+                obj.report_id,
+                obj.report.public_id,
+                escape(obj.report.reported_by.name),
+                dateformat.format(
+                    timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
+                ),
+            )
+            + '<br>On <a href="/admin/core/location/{}/change/">{}</a>'.format(
+                obj.report.location_id, escape(obj.report.location.name)
+            )
+        )
+
+    def note_tags(self, obj):
+        return ", ".join([t.tag for t in obj.tags.all()])
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(EvaReport)

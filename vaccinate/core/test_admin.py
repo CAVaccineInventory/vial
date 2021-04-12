@@ -338,8 +338,8 @@ def test_custom_csv_export_for_reports(
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location_id,location,is_pending_review,originally_pending_review,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
-            '{},{},Location 1,True,True,False,,ca,3,web,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
+            "id,location_id,location,is_pending_review,originally_pending_review,claimed_by_id,claimed_by,claimed_at,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
+            '{},{},Location 1,True,True,,,,False,,ca,3,web,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
                 report.id,
                 report.location_id,
                 reporter.id,
@@ -395,3 +395,35 @@ def test_adding_review_note_with_approved_tag_approves_report(
     assert list(review_note.tags.values_list("tag", flat=True)) == ["Approved"]
     # is_pending_review should have been turned off
     assert not report.is_pending_review
+
+
+def test_bulk_approve_reports_action(admin_client, ten_locations):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        is_pending_review=True,
+        originally_pending_review=True,
+    )
+    plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
+    plus_50 = AvailabilityTag.objects.get(slug="vaccinating_50_plus")
+    report.availability_tags.add(plus_65)
+    report.availability_tags.add(plus_50)
+    report.refresh_from_db()
+    assert report.review_notes.count() == 0
+    # Now bulk-approve it
+    admin_client.post(
+        "/admin/core/report/",
+        {
+            "action": "bulk_approve_reports",
+            "_selected_action": [report.id],
+        },
+    )
+
+    report.refresh_from_db()
+    assert report.review_notes.count() == 1
+    note = report.review_notes.first()
+    assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]

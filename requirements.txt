@@ -208,9 +208,9 @@ django-reversion==3.0.9 \
     # via
     #   -r requirements.in
     #   django-reversion-compare
-django-sql-dashboard==0.6a0 \
-    --hash=sha256:04823bc6ba4777efd7bf22789381529d0083e25d590959243f4d459d05495df1 \
-    --hash=sha256:cee6cd1c2af0fc10d292e883125066ca90dbd63a068526733e38cfa4d22cf145
+django-sql-dashboard==0.7a0 \
+    --hash=sha256:2c8dc78832d77e9cf1cea436d08f02a778a3e991e60899acadaaa9ce26297cce \
+    --hash=sha256:ff3b52d25a2816e19c18730ce5e158336613daadad7eb0f936b29fdd0e325179
     # via -r requirements.in
 django==3.1.8 \
     --hash=sha256:c348b3ddc452bf4b62361f0752f71a339140c777ebea3cdaaaa8fdb7f417a862 \
