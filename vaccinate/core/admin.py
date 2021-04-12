@@ -521,6 +521,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
         extra_context["show_save_and_add_another"] = False
+        extra_context["your_pending_claimed_reports"] = request.user.claimed_reports.filter(
+            is_pending_review=True,
+            soft_deleted=False
+        ).count()
         return super().change_view(
             request,
             object_id,
