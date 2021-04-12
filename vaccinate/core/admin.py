@@ -383,6 +383,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "location__name",
         "reported_by__external_id",
         "reported_by__email",
+        "reported_by__name",
     )
     list_display = (
         "id_and_note",
