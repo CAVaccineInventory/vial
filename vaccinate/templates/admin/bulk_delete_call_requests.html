@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Bulk delete call requests{% endblock %}
+{% block content %}
+<h1>Bulk delete call requests</h1>
+
+{% if error %}
+    <p style="background-color: red; color: white; padding: 0.5em">
+        {{ error }}
+    </p>
+{% endif %}
+
+{% if message %}
+    <p style="background-color: green; color: white; padding: 0.5em">
+        {{ message }}
+    </p>
+{% endif %}
+
+<form action="{{ request.path }}" method="POST">
+    {% csrf_token %}
+    <p><textarea name="call_request_ids" style="width: 80%; height: 4em" placeholder="Newline or comma separated list of numeric call request IDs"></textarea></p>
+    <p>
+        <input type="submit" value="Delete these call requests">
+    </p>
+</form>
+
+{% endblock %}
