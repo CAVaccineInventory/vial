@@ -160,6 +160,58 @@ class SoftDeletedFilter(admin.SimpleListFilter):
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     actions = [export_as_csv_action()]
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "location_type",
+                    "phone_number",
+                    "full_address",
+                    "street_address",
+                    "city",
+                    "state",
+                    "zip_code",
+                    "county",
+                    "latitude",
+                    "longitude",
+                    "hours",
+                    "website",
+                    "preferred_contact_method",
+                    "provider",
+                    "internal_notes",
+                )
+            },
+        ),
+        ("Actions", {"fields": ("request_a_call", "scooby_report_link")}),
+        (
+            "Advanced Actions",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "do_not_call",
+                    "do_not_call_reason",
+                    "soft_deleted",
+                    "soft_deleted_because",
+                    "duplicate_of",
+                ),
+            },
+        ),
+        (
+            "Data Fields",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "provenance",
+                    "public_id",
+                    "airtable_id",
+                    "import_ref",
+                    "import_json",
+                ),
+            },
+        ),
+    )
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -187,16 +239,16 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "summary",
         "public_id",
         "times_reported",
+        "scooby_report_link",
+        "request_a_call",
         "full_address",
         "state",
         "county",
+        "preferred_contact_method",
         "location_type",
         "provider",
         "latest_non_skip_report_date",
         "dn_skip_report_count",
-        "scooby_report_link",
-        "request_a_call",
-        "preferred_contact_method",
     )
     list_filter = (
         LocationInQueueFilter,
