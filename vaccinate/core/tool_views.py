@@ -265,7 +265,6 @@ def bulk_delete_call_requests(request):
     error = None
     message = None
     call_request_ids = []
-    location_ids = []
     if request.method == "POST":
         call_request_ids = [
             r for r in extract_ids(request.POST.get("call_request_ids")) if r
