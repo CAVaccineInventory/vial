@@ -534,6 +534,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
 
     readonly_fields = (
+        "county_summary",
         "created_at",
         "claimed_at",
         "created_at_utc",
@@ -651,6 +652,16 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+    def county_summary(self, obj):
+        return mark_safe(
+            render_to_string(
+                "admin/_county_summary.html",
+                {
+                    "county": obj.location.county,
+                },
+            )
+        )
 
     def qa_summary(self, obj):
         return qa_summary(obj.reported_by)
