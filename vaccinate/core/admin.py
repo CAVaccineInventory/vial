@@ -68,11 +68,27 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
-    list_display = ("name", "state", "fips_code")
+    list_display = (
+        "name",
+        "state",
+        "vaccine_info_url",
+        "short_public_notes",
+        "age_floor_without_restrictions",
+        "fips_code",
+    )
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
     ordering = ("name",)
     actions = [export_as_csv_action()]
+
+    def short_public_notes(self, obj):
+        return (
+            obj.public_notes
+            if (obj.public_notes is None or len(obj.public_notes) < 50)
+            else (obj.public_notes[:47] + "..")
+        )
+
+    short_public_notes.short_description = "Public Notes"
 
 
 def make_call_request_queue_action(reason):
