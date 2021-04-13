@@ -484,7 +484,7 @@ class Report(models.Model):
         help_text="QA reviewer who has claimed this report",
     )
     claimed_at = models.DateTimeField(
-        help_text="When the QA reviewer clamed this report",
+        help_text="When the QA reviewer claimed this report",
         blank=True,
         null=True,
     )
