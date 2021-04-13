@@ -197,6 +197,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             },
         ),
         ("Actions", {"fields": ("request_a_call", "scooby_report_link")}),
+        ("Reports", {"fields": ("reports_history",)}),
         (
             "Advanced Actions",
             {
@@ -220,6 +221,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "airtable_id",
                     "import_ref",
                     "import_json",
+                    "dn_latest_report",
+                    "dn_latest_report_including_pending",
+                    "dn_latest_yes_report",
+                    "dn_latest_skip_report",
+                    "dn_latest_non_skip_report",
+                    "dn_skip_report_count",
+                    "dn_yes_report_count",
                 ),
             },
         ),
