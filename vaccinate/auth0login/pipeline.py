@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group
-from django.conf import settings
 
 AUTH0_ROLES_TO_REFLECT = {
     "Vaccinate CA Staff",
