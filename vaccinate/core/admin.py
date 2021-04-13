@@ -82,7 +82,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def short_public_notes(self, obj):
         return (
             obj.public_notes
-            if (obj.public_notes == None or len(obj.public_notes) < 50)
+            if (obj.public_notes is None or len(obj.public_notes) < 50)
             else (obj.public_notes[:47] + "..")
         )
 
