@@ -1,0 +1,24 @@
+<h2>{{ county }} (<a style="color: white" href="/admin/core/county/{{ county.pk }}/change/">edit county</a>)</h2>
+{% if county.hotline_phone_number %}
+  <p><strong>Hotline phone number</strong>: {{ county.hotline_phone_number }}</p>
+{% endif %}
+{% if county.vaccine_info_url %}
+  <p><strong>Vaccine info URL</strong>: {{ county.vaccine_info_url|urlize }}</p>
+{% endif %}
+{% if county.vaccine_locations_url %}
+  <p><strong>Vaccine locations URL</strong>: {{ county.vaccine_locations_url|urlize }}</p>
+{% endif %}
+{% if county.official_volunteering_url %}
+  <p><strong>Official volunteering URL</strong>: {{ county.official_volunteering_url|urlize }}</p>
+{% endif %}
+{% if county.vaccine_reservations_url %}
+  <p><strong>Vaccine reservations URL</strong>: {{ county.vaccine_reservations_url|urlize }}</p>
+{% endif %}
+{% if county.public_notes %}
+  <p><strong>Public notes:</strong></p>
+  <p>{{ county.public_notes|linebreaksbr }}</p>
+{% endif %}
+{% if county.internal_notes %}
+  <p><strong>internal notes:</strong></p>
+  <p>{{ county.internal_notes|linebreaksbr }}</p>
+{% endif %}

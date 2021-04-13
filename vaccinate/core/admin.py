@@ -68,11 +68,27 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
-    list_display = ("name", "state", "fips_code")
+    list_display = (
+        "name",
+        "state",
+        "vaccine_info_url",
+        "short_public_notes",
+        "age_floor_without_restrictions",
+        "fips_code",
+    )
     list_filter = ("state",)
     readonly_fields = ("airtable_id",)
     ordering = ("name",)
     actions = [export_as_csv_action()]
+
+    def short_public_notes(self, obj):
+        return (
+            obj.public_notes
+            if (obj.public_notes is None or len(obj.public_notes) < 50)
+            else (obj.public_notes[:47] + "..")
+        )
+
+    short_public_notes.short_description = "Public Notes"
 
 
 def make_call_request_queue_action(reason):
@@ -197,6 +213,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             },
         ),
         ("Actions", {"fields": ("request_a_call", "scooby_report_link")}),
+        ("Reports", {"fields": ("reports_history",)}),
         (
             "Advanced Actions",
             {
@@ -220,6 +237,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "airtable_id",
                     "import_ref",
                     "import_json",
+                    "dn_latest_report",
+                    "dn_latest_report_including_pending",
+                    "dn_latest_yes_report",
+                    "dn_latest_skip_report",
+                    "dn_latest_non_skip_report",
+                    "dn_skip_report_count",
+                    "dn_yes_report_count",
                 ),
             },
         ),
@@ -308,7 +332,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def scooby_report_link(self, obj):
         if settings.SCOOBY_URL:
             return mark_safe(
-                '<strong><a href="{}?location_id={}">File a report using Scooby</a></strong>'.format(
+                '<strong><a href="{}?location_id={}" target="_blank">File a report using Scooby</a></strong>'.format(
                     settings.SCOOBY_URL, obj.public_id
                 )
             )
@@ -317,7 +341,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     def request_a_call(self, obj):
         return mark_safe(
-            '<strong><a href="/admin/core/callrequest/add/?location={}">Request a call</a></strong>'.format(
+            '<strong><a href="/admin/core/callrequest/add/?location={}" target="_blank">Request a call</a></strong>'.format(
                 obj.id
             )
         )
@@ -534,6 +558,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
 
     readonly_fields = (
+        "county_summary",
         "created_at",
         "claimed_at",
         "created_at_utc",
@@ -651,6 +676,16 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def lookup_allowed(self, lookup, value):
         return True
+
+    def county_summary(self, obj):
+        return mark_safe(
+            render_to_string(
+                "admin/_county_summary.html",
+                {
+                    "county": obj.location.county,
+                },
+            )
+        )
 
     def qa_summary(self, obj):
         return qa_summary(obj.reported_by)
