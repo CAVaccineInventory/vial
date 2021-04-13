@@ -79,6 +79,15 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     ordering = ("name",)
     actions = [export_as_csv_action()]
 
+    def short_public_notes(self, obj):
+        return (
+            obj.public_notes
+            if (obj.public_notes == None or len(obj.public_notes) < 50)
+            else (obj.public_notes[:47] + "..")
+        )
+
+    short_public_notes.short_description = "Public Notes"
+
 
 def make_call_request_queue_action(reason):
     def add_to_call_request_queue(modeladmin, request, queryset):

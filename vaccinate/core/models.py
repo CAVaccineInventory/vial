@@ -119,16 +119,6 @@ class County(models.Model):
         help_text="Airtable record ID, if this has one",
     )
 
-    @property
-    def short_public_notes(obj):
-        return (
-            obj.public_notes
-            if (obj.public_notes == None or len(obj.public_notes) < 50)
-            else (obj.public_notes[:47] + "..")
-        )
-
-    short_public_notes.fget.short_description = "Public Notes"
-
     def __str__(self):
         return self.name
 
