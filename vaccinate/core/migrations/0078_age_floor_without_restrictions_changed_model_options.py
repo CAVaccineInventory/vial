@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0077_report_claimed_by'),
+        ("core", "0077_report_claimed_by"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='county',
-            name='age_floor_without_restrictions',
-            field=models.IntegerField(blank=True, null=True, verbose_name='Age Floor'),
+            model_name="county",
+            name="age_floor_without_restrictions",
+            field=models.IntegerField(blank=True, null=True, verbose_name="Age Floor"),
         ),
     ]
