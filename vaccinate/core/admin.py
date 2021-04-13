@@ -157,7 +157,19 @@ class SoftDeletedFilter(admin.SimpleListFilter):
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
-    actions = [export_as_csv_action()]
+    actions = [
+        export_as_csv_action(),
+        export_as_csv_action(
+            specific_columns={
+                "Name": "name",
+                "Phone number": "phone_number",
+                "Website": "website",
+                "Location ID": "public_id",
+            },
+            suffix="phone_website",
+            description="Export CSV with phone and website info",
+        ),
+    ]
     fieldsets = (
         (
             None,

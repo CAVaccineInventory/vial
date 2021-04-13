@@ -348,6 +348,37 @@ def test_custom_csv_export_for_reports(
         )
 
 
+def test_csv_export_for_locations_with_phone_and_website(admin_client, ten_locations):
+    for location in ten_locations:
+        i = location.name.split(" ")[1]
+        location.website = "https://example.com/{}".format(i)
+        location.phone_number = "(555) 555-555{}".format(i)
+        location.save()
+    response = admin_client.post(
+        "/admin/core/location/",
+        {
+            "action": "export_as_csv_phone_website",
+            "_selected_action": [location.id for location in ten_locations],
+        },
+    )
+    csv_bytes = b"".join(chunk for chunk in response.streaming_content)
+    csv_string = csv_bytes.decode("utf-8")
+    expected_public_ids = [l.public_id for l in ten_locations]
+    assert csv_string == (
+        "Name,Phone number,Website,Location ID\r\n"
+        "Location 1,(555) 555-5551,https://example.com/1,{}\r\n"
+        "Location 2,(555) 555-5552,https://example.com/2,{}\r\n"
+        "Location 3,(555) 555-5553,https://example.com/3,{}\r\n"
+        "Location 4,(555) 555-5554,https://example.com/4,{}\r\n"
+        "Location 5,(555) 555-5555,https://example.com/5,{}\r\n"
+        "Location 6,(555) 555-5556,https://example.com/6,{}\r\n"
+        "Location 7,(555) 555-5557,https://example.com/7,{}\r\n"
+        "Location 8,(555) 555-5558,https://example.com/8,{}\r\n"
+        "Location 9,(555) 555-5559,https://example.com/9,{}\r\n"
+        "Location 10,(555) 555-55510,https://example.com/10,{}\r\n"
+    ).format(*expected_public_ids)
+
+
 def test_adding_review_note_with_approved_tag_approves_report(
     admin_client, ten_locations
 ):
