@@ -257,3 +257,32 @@ def merge_locations(request):
 def edit_location_redirect(request, public_id):
     location = get_object_or_404(Location, public_id=public_id)
     return HttpResponseRedirect("/admin/core/location/{}/change/".format(location.pk))
+
+
+@login_required
+@user_passes_test(lambda user: user.has_perm("core.delete_callrequest"))
+def bulk_delete_call_requests(request):
+    error = None
+    message = None
+    call_request_ids = []
+    location_ids = []
+    if request.method == "POST":
+        call_request_ids = [
+            r for r in extract_ids(request.POST.get("call_request_ids")) if r
+        ]
+        if any(not r.isdigit() for r in call_request_ids):
+            error = "Input must be a newline or comma separated list of integer call request IDs"
+        if call_request_ids and not error:
+            call_requests = CallRequest.objects.filter(id__in=call_request_ids)
+            if call_requests.exists():
+                deleted = call_requests.delete()
+                message = "Deleted {} call requests".format(deleted[0])
+
+    return render(
+        request,
+        "admin/bulk_delete_call_requests.html",
+        {
+            "error": error,
+            "message": message,
+        },
+    )

@@ -1,8 +1,11 @@
+from django.utils import timezone
 from reversion.models import Revision
 
 from .models import (
     AppointmentTag,
     AvailabilityTag,
+    CallRequest,
+    CallRequestReason,
     County,
     Location,
     LocationType,
@@ -182,6 +185,21 @@ def test_bulk_delete_reports(admin_client, ten_locations):
     assert location.reports.count() == 2
     location.refresh_from_db()
     assert location.dn_yes_report_count == 2
+
+
+def test_bulk_call_requests(admin_client, ten_locations):
+    location = ten_locations[0]
+    call_request = location.call_requests.create(
+        call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
+        vesting_at=timezone.now(),
+    )
+    assert CallRequest.objects.count() == 1
+    response = admin_client.post(
+        "/admin/bulk-delete-call-requests/", {"call_request_ids": call_request.id}
+    )
+    assert response.status_code == 200
+    assert b"Deleted 1 call request" in response.content
+    assert CallRequest.objects.count() == 0
 
 
 def test_location_edit_redirect(admin_client):

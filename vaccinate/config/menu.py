@@ -23,6 +23,12 @@ class ToolsMenu(items.MenuItem):
             self.children.append(
                 items.MenuItem("Import call requests", "/admin/import-call-requests/"),
             )
+        if user.has_perm("core.delete_call_request"):
+            self.children.append(
+                items.MenuItem(
+                    "Bulk delete call requests", "/admin/bulk-delete-call-requests/"
+                ),
+            )
         if user.is_superuser:
             self.children.append(
                 items.MenuItem("Data import tools", "/admin/tools/"),
