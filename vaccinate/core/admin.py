@@ -891,6 +891,7 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "priority_group",
         "queue_status",
         "call_request_reason",
+        "completed_at",
     )
     list_filter = (
         CallRequestQueueStatus,
