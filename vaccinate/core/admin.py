@@ -474,6 +474,16 @@ def claim_reports(modeladmin, request, queryset):
     )
 
 
+def unclaim_reports_you_have_claimed(modeladmin, request, queryset):
+    count = queryset.filter(claimed_by=request.user).update(
+        claimed_by=None, claimed_at=None
+    )
+    messages.success(
+        request,
+        "You unclaimed {} report{}".format(count, "s" if count != 1 else ""),
+    )
+
+
 def bulk_approve_reports(modeladmin, request, queryset):
     pending_review = queryset.filter(is_pending_review=True)
     # Add a comment to them all
@@ -538,6 +548,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_display_links = ("id", "created_at", "public_id")
     actions = [
         claim_reports,
+        unclaim_reports_you_have_claimed,
         bulk_approve_reports,
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
