@@ -206,6 +206,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "longitude",
                     "hours",
                     "website",
+                    "vaccinespotter_location_id",
+                    "vaccinefinder_location_id",
                     "preferred_contact_method",
                     "provider",
                     "internal_notes",
