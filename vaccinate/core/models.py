@@ -41,6 +41,17 @@ class ProviderType(models.Model):
         db_table = "provider_type"
 
 
+class ProviderPhase(models.Model):
+    "Current phase, e.g. 'Not currently vaccinating'"
+    name = CharTextField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = "provider_phase"
+
+
 class Provider(models.Model):
     """
     A provider is a larger entity that encompasses several vaccination sites. A provider will generally have its own
@@ -77,6 +88,12 @@ class Provider(models.Model):
         null=True,
         blank=True,
         help_text="Original JSON if this record was imported from elsewhere",
+    )
+    phases = models.ManyToManyField(
+        ProviderPhase,
+        blank=True,
+        related_name="providers",
+        db_table="provider_provider_phase",
     )
 
     def __str__(self):

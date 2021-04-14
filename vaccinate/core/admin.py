@@ -24,6 +24,7 @@ from .models import (
     Location,
     LocationType,
     Provider,
+    ProviderPhase,
     ProviderType,
     Report,
     Reporter,
@@ -33,8 +34,10 @@ from .models import (
 )
 
 # Simple models first
-for model in (LocationType, ProviderType):
-    admin.site.register(model, actions=[export_as_csv_action()])
+for model in (LocationType, ProviderType, ProviderPhase):
+    admin.site.register(
+        model, actions=[export_as_csv_action()], search_fields=("name",)
+    )
 
 
 class DynamicListDisplayMixin:
@@ -62,6 +65,7 @@ class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "main_url", "contact_phone_number", "provider_type")
     actions = [export_as_csv_action()]
+    autocomplete_fields = ("phases",)
 
 
 @admin.register(County)
