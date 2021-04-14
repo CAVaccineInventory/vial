@@ -77,7 +77,7 @@ class Provider(models.Model):
     airtable_id = models.CharField(
         max_length=20,
         null=True,
-        unique=True,
+        blank=True,
         help_text="Airtable record ID, if this has one",
     )
     public_id = models.SlugField(
