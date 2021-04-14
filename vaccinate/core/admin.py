@@ -2,6 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
@@ -979,3 +980,79 @@ def qa_summary(reporter):
             },
         )
     )
+
+
+class LogEntryAdmin(admin.ModelAdmin):
+    # Derived from https://github.com/radwon/django-admin-logs
+    # MIT licensed
+    fields = (
+        "action_time",
+        "user",
+        "content_type",
+        "object_id",
+        "object_repr",
+        "action_flag",
+        "change_message",
+    )
+    list_display = (
+        "action_time",
+        "user",
+        "action_message",
+        "content_type",
+        "object_link",
+    )
+    list_filter = (
+        "action_time",
+        ("user", admin.RelatedOnlyFieldListFilter),
+        "action_flag",
+        "content_type",
+    )
+    search_fields = (
+        "object_repr",
+        "change_message",
+    )
+
+    def object_link(self, obj):
+        admin_url = None if obj.is_deletion() else obj.get_admin_url()
+        if admin_url:
+            return mark_safe(
+                '<a href="{}">{}</a>'.format(escape(admin_url), escape(obj.object_repr))
+            )
+        else:
+            return obj.object_repr
+
+    object_link.short_description = "object"
+
+    def action_message(self, obj):
+        change_message = obj.get_change_message()
+        # If there is no change message then use the action flag label
+        if not change_message:
+            change_message = "{}.".format(obj.get_action_flag_display())
+        return change_message
+
+    action_message.short_description = "action"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("content_type")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    # Prevent changes to log entries creating their own log entries!
+    def log_addition(self, request, object, message):
+        pass
+
+    def log_change(self, request, object, message):
+        pass
+
+    def log_deletion(self, request, object, object_repr):
+        pass
+
+
+admin.site.register(LogEntry, LogEntryAdmin)
