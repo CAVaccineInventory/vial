@@ -73,7 +73,7 @@ class Provider(models.Model):
         ProviderType, related_name="providers", on_delete=models.PROTECT
     )
     internal_contact_instructions = models.TextField(null=True, blank=True)
-    last_updated = models.DateTimeField(null=True, blank=True)
+    last_updated = models.DateField(null=True, blank=True)
     airtable_id = models.CharField(
         max_length=20,
         null=True,
