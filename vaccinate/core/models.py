@@ -131,7 +131,7 @@ class Location(models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
     name = CharTextField()
     phone_number = CharTextField(null=True, blank=True)
-    full_address = CharTextField(
+    full_address = models.TextField(
         null=True,
         blank=True,
         help_text="the entire address, including city and zip code",
@@ -484,7 +484,7 @@ class Report(models.Model):
         help_text="QA reviewer who has claimed this report",
     )
     claimed_at = models.DateTimeField(
-        help_text="When the QA reviewer clamed this report",
+        help_text="When the QA reviewer claimed this report",
         blank=True,
         null=True,
     )

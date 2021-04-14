@@ -468,7 +468,7 @@ def claim_reports(modeladmin, request, queryset):
     count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
     messages.success(
         request,
-        "You clamed {} report{}".format(count, "s" if count != 1 else ""),
+        "You claimed {} report{}".format(count, "s" if count != 1 else ""),
     )
 
 

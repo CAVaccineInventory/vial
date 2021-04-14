@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group
 
@@ -7,6 +8,8 @@ AUTH0_ROLES_TO_REFLECT = {
     "Reports QA",
     "VIAL data corrections",
 }
+if settings.STAGING:
+    AUTH0_ROLES_TO_REFLECT = {name + " STAGING" for name in AUTH0_ROLES_TO_REFLECT}
 
 
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
