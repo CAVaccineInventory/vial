@@ -211,6 +211,9 @@ def submit_report(request, on_request_logged):
     report.refresh_from_db()
 
     # Mark any calls to this location claimed by this user as complete
+    existing_call_request = report.location.call_requests.filter(
+        claimed_by=reporter, completed=False
+    ).first()
     report.location.call_requests.filter(claimed_by=reporter).update(
         completed=True, completed_at=timezone.now()
     )
@@ -232,13 +235,16 @@ def submit_report(request, on_request_logged):
                 {"error": "Report set do not call time but did not request a skip."},
                 status=400,
             )
-
+        # Priority should match that of the original call request
         CallRequest.objects.create(
             location=report_data["location"],
             vesting_at=report_data["do_not_call_until"],
             call_request_reason=skip_reason,
             tip_type=CallRequest.TipType.SCOOBY,
             tip_report=report,
+            priority_group=existing_call_request.priority_group
+            if existing_call_request
+            else 99,
         )
 
     def log_created_report(log):

@@ -78,6 +78,7 @@ def test_submit_report_api_example(
     call_request = location.call_requests.create(
         call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
         vesting_at=timezone.now(),
+        priority_group=2,
     )
     assert not call_request.completed
     assert call_request.completed_at is None
