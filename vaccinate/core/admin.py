@@ -60,7 +60,7 @@ class StateAdmin(admin.ModelAdmin):
 
 
 @admin.register(Provider)
-class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
     list_display = ("name", "main_url", "contact_phone_number", "provider_type")
