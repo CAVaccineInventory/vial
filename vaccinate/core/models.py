@@ -131,7 +131,7 @@ class Location(models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
     name = CharTextField()
     phone_number = CharTextField(null=True, blank=True)
-    full_address = CharTextField(
+    full_address = models.TextField(
         null=True,
         blank=True,
         help_text="the entire address, including city and zip code",
