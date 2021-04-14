@@ -41,6 +41,17 @@ class ProviderType(models.Model):
         db_table = "provider_type"
 
 
+class ProviderPhase(models.Model):
+    "Current phase, e.g. 'Not currently vaccinating'"
+    name = CharTextField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = "provider_phase"
+
+
 class Provider(models.Model):
     """
     A provider is a larger entity that encompasses several vaccination sites. A provider will generally have its own
@@ -62,12 +73,49 @@ class Provider(models.Model):
         ProviderType, related_name="providers", on_delete=models.PROTECT
     )
     internal_contact_instructions = models.TextField(null=True, blank=True)
+    last_updated = models.DateField(null=True, blank=True)
+    airtable_id = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text="Airtable record ID, if this has one",
+    )
+    public_id = models.SlugField(
+        unique=True,
+        help_text="ID that we expose outside of the application",
+    )
+    import_json = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Original JSON if this record was imported from elsewhere",
+    )
+    phases = models.ManyToManyField(
+        ProviderPhase,
+        blank=True,
+        related_name="providers",
+        db_table="provider_provider_phase",
+    )
 
     def __str__(self):
         return self.name
 
     class Meta:
         db_table = "provider"
+
+    @property
+    def pid(self):
+        return "p" + pid.from_int(self.pk)
+
+    def save(self, *args, **kwargs):
+        set_public_id_later = False
+        if (not self.public_id) and self.airtable_id:
+            self.public_id = self.airtable_id
+        elif not self.public_id:
+            set_public_id_later = True
+            self.public_id = "tmp:{}".format(uuid.uuid4())
+        super().save(*args, **kwargs)
+        if set_public_id_later:
+            Provider.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
 class State(models.Model):

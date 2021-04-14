@@ -24,6 +24,7 @@ from .models import (
     Location,
     LocationType,
     Provider,
+    ProviderPhase,
     ProviderType,
     Report,
     Reporter,
@@ -33,8 +34,10 @@ from .models import (
 )
 
 # Simple models first
-for model in (LocationType, ProviderType):
-    admin.site.register(model, actions=[export_as_csv_action()])
+for model in (LocationType, ProviderType, ProviderPhase):
+    admin.site.register(
+        model, actions=[export_as_csv_action()], search_fields=("name",)
+    )
 
 
 class DynamicListDisplayMixin:
@@ -57,11 +60,20 @@ class StateAdmin(admin.ModelAdmin):
 
 
 @admin.register(Provider)
-class ProviderAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     save_on_top = True
     search_fields = ("name",)
-    list_display = ("name", "main_url", "contact_phone_number", "provider_type")
+    list_display = (
+        "public_id",
+        "name",
+        "main_url",
+        "contact_phone_number",
+        "provider_type",
+    )
+    list_display_links = ("public_id", "name")
     actions = [export_as_csv_action()]
+    autocomplete_fields = ("phases",)
+    # readonly_fields = ("airtable_id", "public_id", "import_json")
 
 
 @admin.register(County)

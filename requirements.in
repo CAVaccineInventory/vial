@@ -67,7 +67,7 @@ django-admin-tools
 ### Development
 
 # Debug toolbar (dev only, not production)
-django-debug-toolbar
+django-debug-toolbar>=3.2.1
 
 # Testing
 pytest-django

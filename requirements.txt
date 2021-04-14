@@ -190,9 +190,9 @@ django-cors-headers==3.7.0 \
     --hash=sha256:1ac2b1213de75a251e2ba04448da15f99bcfcbe164288ae6b5ff929dc49b372f \
     --hash=sha256:96069c4aaacace786a34ee7894ff680780ec2644e4268b31181044410fecd12e
     # via -r requirements.in
-django-debug-toolbar==3.2 \
-    --hash=sha256:84e2607d900dbd571df0a2acf380b47c088efb787dce9805aefeb407341961d2 \
-    --hash=sha256:9e5a25d0c965f7e686f6a8ba23613ca9ca30184daa26487706d4829f5cfb697a
+django-debug-toolbar==3.2.1 \
+    --hash=sha256:a5ff2a54f24bf88286f9872836081078f4baa843dc3735ee88524e89f8821e33 \
+    --hash=sha256:e759e63e3fe2d3110e0e519639c166816368701eab4a47fed75d7de7018467b9
     # via -r requirements.in
 django-migration-linter==2.5.1 \
     --hash=sha256:32f552b09e122c278acbef84d92c2f01ecf03dfa0c72b4918762b7e39f598691 \
