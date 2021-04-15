@@ -57,9 +57,13 @@ The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo clo
 
 ## Setting up a development environment
 
+If you run into issues during environment setup, start with the [1][faq] for troubleshooting.
+
+** if you encounter any issues in setup, please document them and add them to the FAQ. **
+
 Check out the repository. Create a new Python virtual environment for it (I use `pipenv shell` to do this). Install the dependencies with `pip install -r requirements.txt`.
 
-Set your environment variables, see *Configuration* section below.
+Set your environment variables, see _Configuration_ section below.
 
 You'll need a PostgreSQL database called "vaccinate". On macOS I've used https://postgresapp.com/ for that.
 
@@ -97,9 +101,9 @@ To get the `/dashboard/` interface working in your local development environment
 Running this requires some secrets in environment variables:
 
 - `SOCIAL_AUTH_AUTH0_SECRET` can be found in the [Auth0 application configuration page](https://manage.auth0.com/dashboard/us/vaccinateca/applications/7JMM4bb1eC7taGN1OlaLBIXJN1w42vac/settings).
-- `DJANGO_SECRET_KEY` can be any random string.  One way to generate one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
+- `DJANGO_SECRET_KEY` can be any random string. One way to generate one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
 
-Create a file like this named  `.env`, which is loaded by Django:
+Create a file like this named `.env`, which is loaded by Django:
 
     SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
     DJANGO_SECRET_KEY="just a big random string"
@@ -111,7 +115,7 @@ Then create a database called `vaccinate` by running this in the terminal:
 
     createdb vaccinate
 
-If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`.  You can place this in the `.env` file.
+If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`. You can place this in the `.env` file.
 
 ## Running the tests
 
@@ -132,3 +136,5 @@ Run `scripts/lint-migrations` in the top-level directory to verify that migratio
 You can set the `DJANGO_DEBUG_LOG_ALL_SQL=1` environment variable to log all SQL executed by Django to the console. This can be useful for things like understanding how complex migrations work:
 
     DJANGO_DEBUG_LOG_ALL_SQL=1 ./manage.py migrate
+
+[1]: docs/env-setup-faq.md
