@@ -784,8 +784,12 @@ def location_metrics(request):
     return LocationMetricsReport().serve()
 
 
+def export_mapbox_ndgeojson(request):
+    return export_mapbox_geojson(request, ndgeojson=True)
+
+
 @beeline.traced(name="export_mapbox_geojson")
-def export_mapbox_geojson(request):
+def export_mapbox_geojson(request, ndgeojson=False):
     locations = Location.objects.all().select_related(
         "location_type", "dn_latest_non_skip_report"
     )
@@ -797,13 +801,13 @@ def export_mapbox_geojson(request):
     limit = None
     if request.GET.get("limit", "").isdigit():
         limit = int(request.GET["limit"])
-    start = '{"type": "FeatureCollection", "features": ['
 
     def chunks():
-        yield start
+        if not ndgeojson:
+            yield '{"type": "FeatureCollection", "features": ['
         started = False
         for location in keyset_pagination_iterator(locations, stop_after=limit):
-            if started:
+            if started and not ndgeojson:
                 yield ","
             started = True
             yield json.dumps(
@@ -830,7 +834,11 @@ def export_mapbox_geojson(request):
                         "coordinates": [location.longitude, location.latitude],
                     },
                 }
-            )
-        yield "]}"
+            ) + "\n"
+        if not ndgeojson:
+            yield "]}"
 
-    return StreamingHttpResponse(chunks(), content_type="application/json")
+    return StreamingHttpResponse(
+        chunks(),
+        content_type="text/plain; charset=utf-8" if ndgeojson else "application/json",
+    )

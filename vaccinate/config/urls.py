@@ -75,6 +75,7 @@ urlpatterns = [
     path("api/export-preview/Locations.json", api_views.api_export_preview_locations),
     path("api/export-preview/Providers.json", api_views.api_export_preview_providers),
     path("api/export-mapbox/Locations.geojson", api_views.export_mapbox_geojson),
+    path("api/export-mapbox/Locations.ndgeojson", api_views.export_mapbox_ndgeojson),
     path("api/location_metrics", api_views.location_metrics),
     path("api/counties/<state_abbreviation>", api_views.counties),
     path("", include("django.contrib.auth.urls")),

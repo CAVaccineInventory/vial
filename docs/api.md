@@ -419,7 +419,7 @@ Examples:
 - https://vial-staging.calltheshots.us/api/counties/OR
 - https://vial-staging.calltheshots.us/api/counties/RI
 
-## GET /api/export-mapbox/Locations.geojson
+## GET /api/export-mapbox/Locations.geojson (and Locations.ndgeojson)
 
 This returns a GeoJSON file for use with Mapbox. This streams out records for ALL of our locations, so it can be very large!
 
@@ -429,6 +429,8 @@ You can control which locations are returned (useful for debugging) with the fol
 - `?id=recXXX&id=lxx` - just return GeoJSON for specific location IDs (multiple allowed)
 
 Try this API at https://vial-staging.calltheshots.us/api/export-mapbox/Locations.geojson?limit=10
+
+Use the extension `.ndgeojson` to get newline-delimited GeoJSON instead, for example https://vial-staging.calltheshots.us/api/export-mapbox/Locations.ndgeojson?limit=10
 
 ## GET /api/export-preview/Locations.json
 
