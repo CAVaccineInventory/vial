@@ -193,6 +193,14 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             None,
             {
                 "fields": (
+                    "scooby_report_link",
+                )
+            },
+        ),
+        (
+            None,
+            {
+                "fields": (
                     "name",
                     "location_type",
                     "phone_number",
@@ -214,7 +222,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 )
             },
         ),
-        ("Actions", {"fields": ("request_a_call", "scooby_report_link")}),
+        ("Actions", {"fields": ("request_a_call",)}),
         ("Reports", {"fields": ("reports_history",)}),
         (
             "Advanced Actions",
@@ -331,22 +339,22 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     summary.admin_order_field = "name"
 
-    def scooby_report_link(self, obj):
-        if settings.SCOOBY_URL:
-            return mark_safe(
-                '<strong><a href="{}?location_id={}" target="_blank">File a report using Scooby</a></strong>'.format(
-                    settings.SCOOBY_URL, obj.public_id
-                )
-            )
-        else:
-            return ""
-
     def request_a_call(self, obj):
         return mark_safe(
             '<strong><a href="/admin/core/callrequest/add/?location={}" target="_blank">Request a call</a></strong>'.format(
                 obj.id
             )
         )
+
+    def scooby_report_link(self, obj):
+        if settings.SCOOBY_URL:
+            return mark_safe(
+                '<a href="{}?location_id={}" target="_blank"><button class="primary-button">File report</button></a>'.format(
+                    settings.SCOOBY_URL, obj.public_id
+                )
+            )
+        else:
+            return ""
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
