@@ -67,6 +67,8 @@ Set your environment variables, see _Configuration_ section below.
 
 You'll need a PostgreSQL database called "vaccinate". On macOS I've used https://postgresapp.com/ for that.
 
+Alternatively, you can use [Docker](docs/docker.md).
+
 You'll need to run `./manage.py` commands from the `vaccinate` directory, so `cd vaccinate`.
 
 Then run the database migrations with `./manage.py migrate` - you'll need to run this command any time we release new migrations.
@@ -109,7 +111,7 @@ Create a file like this named `.env`, which is loaded by Django:
     DJANGO_SECRET_KEY="just a big random string"
     DJANGO_DEBUG=1
 
-In development you will need to have a local PostgreSQL server running - I use PostgreSQL.app on my Mac for this.
+In development you will need to have a local PostgreSQL server running - I use PostgreSQL.app on my Mac for this. Alternatively, you can use [Docker][<docs/docker.md>]
 
 Then create a database called `vaccinate` by running this in the terminal:
 
