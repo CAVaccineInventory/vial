@@ -1,6 +1,6 @@
 # Using Docker
 
-Docker can be used for setting up Postgres for local development.
+Docker can be used for setting up Postgres for local development. Here is the recommended way to install Docker for Mac and launch the image for Postgres.
 
 1. Install Docker for Mac
 
@@ -18,6 +18,11 @@ brew install docker-completion docker-compose-completion
 
 ```
 docker-compose up
+```
+
+or
+
+```
 docker-compose up --detach
 ```
 
