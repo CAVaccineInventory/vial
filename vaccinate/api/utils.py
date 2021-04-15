@@ -7,7 +7,7 @@ from typing import Optional
 from django.http import HttpResponse, HttpResponseServerError, JsonResponse
 from django.utils import timezone
 
-from .models import ApiKey, ApiLog
+from .models import ApiKey, ApiLog, Switch
 
 
 def auth_error(message):
@@ -86,3 +86,18 @@ def log_api_requests(view_fn):
         return response
 
     return replacement_view_function
+
+
+def deny_if_api_is_disabled(view_fn):
+    @wraps(view_fn)
+    def inner(request, *args, **kwargs):
+        if Switch.objects.filter(name="disable_api", on=True).exists():
+            return JsonResponse(
+                {
+                    "error": "This application is currently disabled - please try again later"
+                },
+                status=400,
+            )
+        return view_fn(request, *args, **kwargs)
+
+    return inner

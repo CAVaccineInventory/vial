@@ -43,7 +43,7 @@ from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, Field, ValidationError, validator
 
-from .utils import log_api_requests, require_api_key
+from .utils import deny_if_api_is_disabled, log_api_requests, require_api_key
 
 
 class ReportValidator(BaseModel):
@@ -157,6 +157,7 @@ def user_should_have_reports_reviewed(user):
 
 @csrf_exempt
 @log_api_requests
+@deny_if_api_is_disabled
 @beeline.traced(name="submit_report")
 def submit_report(request, on_request_logged):
     # The ?test=1 version accepts &fake_user=external_id
@@ -292,6 +293,7 @@ def submit_report(request, on_request_logged):
 
 @csrf_exempt
 @log_api_requests
+@deny_if_api_is_disabled
 @beeline.traced(name="request_call")
 def request_call(request, on_request_logged):
     if request.method != "POST":
