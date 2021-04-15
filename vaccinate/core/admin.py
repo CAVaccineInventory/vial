@@ -73,7 +73,7 @@ class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display_links = ("public_id", "name")
     actions = [export_as_csv_action()]
     autocomplete_fields = ("phases",)
-    # readonly_fields = ("airtable_id", "public_id", "import_json")
+    readonly_fields = ("airtable_id", "public_id", "import_json")
 
 
 @admin.register(County)
