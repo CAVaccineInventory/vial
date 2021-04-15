@@ -6,11 +6,10 @@ def create_switch(apps, schema_editor):
     Switch.objects.get_or_create(name="disable_api")
 
 
-
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0005_switch_verbose_name_plural'),
+        ("api", "0005_switch_verbose_name_plural"),
     ]
 
     operations = [
