@@ -31,6 +31,7 @@ from core.models import (
     ProviderType,
     Report,
     Reporter,
+    SourceLocation,
     State,
 )
 from core.utils import keyset_pagination_iterator
@@ -608,6 +609,62 @@ def start_import_run(request, on_request_logged):
         return JsonResponse({"error": "POST required"}, status=400)
 
 
+class SourceLocationValidator(BaseModel):
+    source_uid: str
+    source_name: str
+    name: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float]
+    import_json: dict
+
+
+@csrf_exempt
+@log_api_requests
+@require_api_key
+def import_source_locations(request, on_request_logged):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+    try:
+        import_run = ImportRun.objects.get(id=request.GET.get("import_run_id", "0"))
+    except ImportRun.DoesNotExist:
+        return JsonResponse({"error": "?import_run_id=X is required"}, status=400)
+    try:
+        post_data = request.body.decode("utf-8")
+        lines = post_data.split("\n")
+        records = [json.loads(l) for l in lines if l.strip()]
+    except ValueError as e:
+        return JsonResponse({"error": "JSON error: " + str(e)}, status=400)
+    # Validate those JSON records
+    errors = []
+    for record in records:
+        try:
+            SourceLocationValidator(**record).dict()
+        except ValidationError as e:
+            errors.append((record, e.errors()))
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
+    # All are valid, record them
+    created = []
+    updated = []
+    for record in records:
+        obj, was_created = SourceLocation.objects.update_or_create(
+            source_uid=record["source_uid"],
+            defaults={
+                "source_name": record["source_name"],
+                "name": record.get("name"),
+                "latitude": record.get("latitude"),
+                "longitude": record.get("latitude"),
+                "import_json": record["import_json"],
+                "import_run": import_run,
+            },
+        )
+        if was_created:
+            created.append(obj.pk)
+        else:
+            updated.append(obj.pk)
+    return JsonResponse({"created": created, "updated": updated})
+
+
 @csrf_exempt
 @log_api_requests
 @require_api_key
@@ -708,7 +765,13 @@ def caller_stats(request):
 
 
 def api_debug_view(
-    api_path, use_jwt=True, body_textarea=False, docs=None, default_body=None
+    api_path,
+    use_jwt=True,
+    body_textarea=False,
+    docs=None,
+    default_body=None,
+    textarea_placeholder=None,
+    querystring_fields=None,
 ):
     def debug_view(request):
         return render(
@@ -719,6 +782,8 @@ def api_debug_view(
                 "jwt": request.session["jwt"] if "jwt" in request.session else "",
                 "api_path": api_path,
                 "body_textarea": body_textarea,
+                "textarea_placeholder": textarea_placeholder,
+                "querystring_fields": querystring_fields,
                 "default_body": default_body,
                 "docs": docs,
             },

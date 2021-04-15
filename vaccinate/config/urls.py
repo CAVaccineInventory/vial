@@ -67,6 +67,18 @@ urlpatterns = [
             docs="/api/docs#post-apistartimportrun",
         ),
     ),
+    path("api/importSourceLocations", api_views.import_source_locations),
+    path(
+        "api/importSourceLocations/debug",
+        api_views.api_debug_view(
+            "api/importSourceLocations",
+            use_jwt=False,
+            body_textarea=True,
+            textarea_placeholder="Newline delimited JSON records",
+            querystring_fields=["import_run_id"],
+            docs="/api/docs#post-apiimportsourcelocationsimport_run_idx",
+        ),
+    ),
     path("api/importReports", api_views.import_reports),
     path(
         "api/importReports/debug",

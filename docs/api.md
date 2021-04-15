@@ -452,7 +452,7 @@ Try it: https://vial-staging.calltheshots.us/api/export-preview/Providers.json
 
 POST an empty body to this at the beginning of a source location import run to get an import ID, needed for the calls to `/api/importSourceLocations` in order to tie everything together.
 
-Returns the following JSONQ
+Returns the following JSON:
 
 ```json
 {
@@ -461,3 +461,21 @@ Returns the following JSONQ
 ```
 
 Try it: https://vial-staging.calltheshots.us/api/startImportRun/debug
+
+
+## POST /api/importSourceLocations?import_run_id=X
+
+POST this a newline-delimited list of JSON objects. The `?import_run_id` parameter must be the ID of an import run you have previously created using `POST /api/startImportRun`.
+
+Each newline-delimited JSON object should have the following shape:
+
+- `source_uid` - the ID within that other source, UUID etc or whatever they have - it’s globally unique and it includes a prefix (a copy of the source_name)
+- `source_name` - text name of the source (e.g. `vaccinespotter`)
+- `name` - optional name of the location
+- `latitude` - optional latitude
+- `longitude` - optional longitude
+- `import_json` - the big bag of JSON (required)
+
+Returns a 400 error on errors, a 200 on success.
+
+Try it: https://vial-staging.calltheshots.us/api/importSourceLocations/debug

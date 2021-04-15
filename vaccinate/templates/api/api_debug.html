@@ -37,11 +37,16 @@
   </p>
   <p><a href="/admin/api/apikey/">Manage API keys here</a></p>
   {% endif %}
+  {% if querystring_fields %}
+    {% for field in querystring_fields %}
+      <p><label>{{ field }} <input type="text" name="{{ field }}" class="querystringField"></label></p>
+    {% endfor %}
+  {% endif %}
   {% if body_textarea %}
   <div>
     <textarea
       name="body"
-      placeholder="JSON POST body goes here"
+      placeholder="{{ textarea_placeholder|default:"JSON POST body goes here" }}"
     >{% if default_body %}{{ default_body }}{% endif %}</textarea>
   </div>
   {% endif %}
@@ -71,8 +76,18 @@ let responseBody = document.querySelector(".responseBody");
 form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   let url = "/{{ api_path }}";
+  let extraQueryStringBits = [];
   if (fakeUserInput && fakeUserInput.value) {
-    url += "&fake_user=" + encodeURIComponent(fakeUserInput.value);
+    extraQueryStringBits.push("fake_user=" + encodeURIComponent(fakeUserInput.value));
+  }
+  let querystringFields = document.querySelectorAll(".querystringField");
+  if (querystringFields) {
+    Array.from(querystringFields).forEach(f => {
+      extraQueryStringBits.push(f.name + "=" + encodeURIComponent(f.value));
+    });
+  }
+  if (extraQueryStringBits) {
+    url = url + '?' + (extraQueryStringBits.join("&"));
   }
   const response = await fetch(url, {
     method: "POST",

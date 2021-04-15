@@ -31,6 +31,7 @@ from .models import (
     Reporter,
     ReportReviewNote,
     ReportReviewTag,
+    SourceLocation,
     State,
 )
 
@@ -44,6 +45,27 @@ for model in (LocationType, ProviderType, ProviderPhase):
 @admin.register(ImportRun)
 class ImportRunAdmin(admin.ModelAdmin):
     list_display = ("created_at", "api_key")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(SourceLocation)
+class SourceLocationAdmin(admin.ModelAdmin):
+    list_display = (
+        "source_uid",
+        "source_name",
+        "name",
+        "latitude",
+        "longitude",
+        "import_run",
+    )
 
     def has_add_permission(self, request, obj=None):
         return False
