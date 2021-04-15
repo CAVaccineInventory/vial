@@ -357,7 +357,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def scooby_report_link(self, obj):
         if settings.SCOOBY_URL:
             return mark_safe(
-                '<a href="{}?location_id={}" target="_blank"><button class="primary-button">File report</button></a>'.format(
+                '<a href="{}?location_id={}" target="_blank"><button type="button" class="primary-button">File report</button></a>'.format(
                     settings.SCOOBY_URL, obj.public_id
                 )
             )
