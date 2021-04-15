@@ -755,6 +755,18 @@ def api_export(request):
     return JsonResponse({"ok": 1})
 
 
+def api_export_preview_locations(request):
+    # Show a preview of the export API for a subset of locations
+    location_ids = request.GET.getlist("id")
+    with exporter.dataset() as ds:
+        if location_ids:
+            ds.locations = ds.locations.filter(public_id__in=location_ids)
+        else:
+            ds.locations = ds.locations.exclude(dn_latest_non_skip_report=None)[:10]
+        api = exporter.V1(ds)
+        return JsonResponse(api.metadata_wrap(api.get_locations()))
+
+
 @csrf_exempt
 @beeline.traced(name="location_metrics")
 def location_metrics(request):
