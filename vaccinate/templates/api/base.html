@@ -5,6 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}VIAL API documentation{% endblock %}</title>
+{% if is_staging %}
+    <link rel="icon" href="/favicon-staging.ico">
+    {% endif %}
     <style>
       header img {
         height: 40px;
