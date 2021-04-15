@@ -2,7 +2,6 @@ import json
 import os
 import pathlib
 import random
-import textwrap
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -788,13 +787,7 @@ def export_mapbox_geojson(request):
     limit = None
     if request.GET.get("limit", "").isdigit():
         limit = int(request.GET["limit"])
-    start = textwrap.dedent(
-        """
-    {
-        "type": "FeatureCollection",
-        "features": [
-    """
-    )
+    start = '{"type": "FeatureCollection", "features": ['
 
     def chunks():
         yield start
