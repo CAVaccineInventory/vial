@@ -57,9 +57,9 @@ The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo clo
 
 ## Setting up a development environment
 
-If you run into issues during environment setup, start with the [1][faq] for troubleshooting.
+If you run into issues during environment setup, start with the [FAQ][1] for troubleshooting.
 
-** if you encounter any issues in setup, please document them and add them to the FAQ. **
+_If you encounter any issues in setup, please document them and add them to the [FAQ][1]._
 
 Check out the repository. Create a new Python virtual environment for it (I use `pipenv shell` to do this). Install the dependencies with `pip install -r requirements.txt`.
 
