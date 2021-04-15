@@ -221,6 +221,11 @@ def submit_report(request, on_request_logged):
         completed=True, completed_at=timezone.now()
     )
 
+    # If this was based on a call request, associate it with the report
+    if existing_call_request:
+        report.call_request = existing_call_request
+        report.save()
+
     # Handle skip requests
     # Only check if "Do not call until is set"
     if report_data["do_not_call_until"] is not None:

@@ -601,6 +601,9 @@ class Report(models.Model):
         # Used by the admin list view
         return ", ".join(t.name for t in self.availability_tags.all())
 
+    def based_on_call_request(self):
+        return self.call_request is not None
+
     class Meta:
         db_table = "report"
 
