@@ -768,6 +768,16 @@ def api_export_preview_locations(request):
         return JsonResponse(api.metadata_wrap(api.get_locations()))
 
 
+def api_export_preview_providers(request):
+    # Show a preview of the export API for a subset of locations
+    provider_ids = request.GET.getlist("id")
+    with exporter.dataset() as ds:
+        if provider_ids:
+            ds.providers = ds.providers.filter(public_id__in=provider_ids)
+        api = exporter.V1(ds)
+        return JsonResponse(api.metadata_wrap(api.get_providers()))
+
+
 @csrf_exempt
 @beeline.traced(name="location_metrics")
 def location_metrics(request):
