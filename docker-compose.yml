@@ -1,0 +1,14 @@
+version: "3.1"
+
+services:
+  database:
+    image: postgres:13.2-alpine
+    restart: always
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: vaccinate
+      POSTGRES_PASSWORD: postgres
