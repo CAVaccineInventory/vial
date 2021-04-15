@@ -32,4 +32,5 @@ class ApiKeyAdmin(admin.ModelAdmin):
 
 @admin.register(Switch)
 class SwitchAdmin(CompareVersionAdmin):
-    list_display = ("name", "on")
+    list_display = ("name", "on", "description")
+    readonly_fields = ("name",)
