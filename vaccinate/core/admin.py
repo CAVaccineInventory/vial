@@ -44,7 +44,18 @@ for model in (LocationType, ProviderType, ProviderPhase):
 
 @admin.register(ImportRun)
 class ImportRunAdmin(admin.ModelAdmin):
-    list_display = ("created_at", "api_key")
+    list_display = ("created_at", "api_key", "source_locations")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("api_key").annotate(
+            source_locations_count=Count("imported_source_locations")
+        )
+
+    def source_locations(self, obj):
+        return obj.source_locations_count
+
+    source_locations.admin_order_field = "source_locations_count"
 
     def has_add_permission(self, request, obj=None):
         return False
