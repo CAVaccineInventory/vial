@@ -24,6 +24,7 @@ from core.models import (
     CallRequest,
     CallRequestReason,
     County,
+    ImportRun,
     Location,
     LocationType,
     Provider,
@@ -594,6 +595,17 @@ def import_locations(request, on_request_logged):
             "errors": errors,
         }
     )
+
+
+@csrf_exempt
+@log_api_requests
+@require_api_key
+def start_import_run(request, on_request_logged):
+    if request.method == "POST":
+        import_run = ImportRun.objects.create(api_key=request.api_key)
+        return JsonResponse({"import_run_id": import_run.pk})
+    else:
+        return JsonResponse({"error": "POST required"}, status=400)
 
 
 @csrf_exempt

@@ -21,6 +21,7 @@ from .models import (
     CallRequestReason,
     County,
     EvaReport,
+    ImportRun,
     Location,
     LocationType,
     Provider,
@@ -38,6 +39,20 @@ for model in (LocationType, ProviderType, ProviderPhase):
     admin.site.register(
         model, actions=[export_as_csv_action()], search_fields=("name",)
     )
+
+
+@admin.register(ImportRun)
+class ImportRunAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "api_key")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class DynamicListDisplayMixin:
