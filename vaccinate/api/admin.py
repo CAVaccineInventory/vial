@@ -1,6 +1,7 @@
 from django.contrib import admin
+from reversion_compare.admin import CompareVersionAdmin
 
-from .models import ApiKey, ApiLog
+from .models import ApiKey, ApiLog, Switch
 
 
 @admin.register(ApiLog)
@@ -27,3 +28,8 @@ class ApiKeyAdmin(admin.ModelAdmin):
 
     def key_to_use(self, instance):
         return "{}:{}".format(instance.pk or "SAVE-TO-GET-ID", instance.key)
+
+
+@admin.register(Switch)
+class SwitchAdmin(CompareVersionAdmin):
+    list_display = ("name", "on")

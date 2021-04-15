@@ -4,7 +4,7 @@ import time
 import pytest
 from core.models import AvailabilityTag, Reporter
 
-from .models import ApiKey
+from .models import ApiKey, Switch
 from .views import user_should_have_reports_reviewed
 
 GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
@@ -84,3 +84,19 @@ def test_user_should_have_reports_reviewed():
             passes += 1
     assert passes == 13
     random.seed(int(time.time()))
+
+
+@pytest.mark.django_db
+def test_switch_api_disabled(client, jwt_id_token):
+    Switch.objects.filter(name="disable_api").update(on=True)
+    response = client.post(
+        "/api/requestCall",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert response.status_code == 400
+    assert (
+        response.content
+        == b'{"error": "This application is currently disabled - please try again later"}'
+    )
