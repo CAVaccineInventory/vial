@@ -2,7 +2,6 @@ import json
 import os
 import pathlib
 import random
-import textwrap
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -769,14 +768,28 @@ def api_export_preview_locations(request):
         return JsonResponse(api.metadata_wrap(api.get_locations()))
 
 
+def api_export_preview_providers(request):
+    # Show a preview of the export API for a subset of locations
+    provider_ids = request.GET.getlist("id")
+    with exporter.dataset() as ds:
+        if provider_ids:
+            ds.providers = ds.providers.filter(public_id__in=provider_ids)
+        api = exporter.V1(ds)
+        return JsonResponse(api.metadata_wrap(api.get_providers()))
+
+
 @csrf_exempt
 @beeline.traced(name="location_metrics")
 def location_metrics(request):
     return LocationMetricsReport().serve()
 
 
+def export_mapbox_ndgeojson(request):
+    return export_mapbox_geojson(request, ndgeojson=True)
+
+
 @beeline.traced(name="export_mapbox_geojson")
-def export_mapbox_geojson(request):
+def export_mapbox_geojson(request, ndgeojson=False):
     locations = Location.objects.all().select_related(
         "location_type", "dn_latest_non_skip_report"
     )
@@ -788,19 +801,13 @@ def export_mapbox_geojson(request):
     limit = None
     if request.GET.get("limit", "").isdigit():
         limit = int(request.GET["limit"])
-    start = textwrap.dedent(
-        """
-    {
-        "type": "FeatureCollection",
-        "features": [
-    """
-    )
 
     def chunks():
-        yield start
+        if not ndgeojson:
+            yield '{"type": "FeatureCollection", "features": ['
         started = False
         for location in keyset_pagination_iterator(locations, stop_after=limit):
-            if started:
+            if started and not ndgeojson:
                 yield ","
             started = True
             yield json.dumps(
@@ -827,7 +834,11 @@ def export_mapbox_geojson(request):
                         "coordinates": [location.longitude, location.latitude],
                     },
                 }
-            )
-        yield "]}"
+            ) + "\n"
+        if not ndgeojson:
+            yield "]}"
 
-    return StreamingHttpResponse(chunks(), content_type="application/json")
+    return StreamingHttpResponse(
+        chunks(),
+        content_type="text/plain; charset=utf-8" if ndgeojson else "application/json",
+    )
