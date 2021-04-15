@@ -783,6 +783,8 @@ def export_mapbox_geojson(request):
     location_ids = request.GET.getlist("id")
     if location_ids:
         locations = locations.filter(public_id__in=location_ids)
+    else:
+        locations = locations.exclude(soft_deleted=True)
     limit = None
     if request.GET.get("limit", "").isdigit():
         limit = int(request.GET["limit"])
