@@ -601,6 +601,9 @@ class Report(models.Model):
         # Used by the admin list view
         return ", ".join(t.name for t in self.availability_tags.all())
 
+    def based_on_call_request(self):
+        return self.call_request is not None
+
     class Meta:
         db_table = "report"
 
@@ -913,6 +916,47 @@ class PublishedReport(models.Model):
 
     class Meta:
         db_table = "published_report"
+
+
+class ImportRun(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
+    api_key = models.ForeignKey(
+        "api.ApiKey", blank=True, null=True, on_delete=models.SET_NULL
+    )
+
+    def __str__(self):
+        return str(self.created_at)
+
+    class Meta:
+        db_table = "import_run"
+
+
+class SourceLocation(models.Model):
+    "Source locations are unmodified records imported from other sources"
+    import_run = models.ForeignKey(
+        ImportRun,
+        blank=True,
+        null=True,
+        related_name="imported_source_locations",
+        on_delete=models.SET_NULL,
+    )
+    source_uid = CharTextField(
+        unique=True,
+        help_text="The ID within that other source, UUID etc or whatever they have - globally unique because it includes a prefix which is a copy of the source_name",
+    )
+    source_name = CharTextField(help_text="e.g. vaccinespotter")
+    name = CharTextField(null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    import_json = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Big bag of JSON with original data",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "source_location"
 
 
 # Signals

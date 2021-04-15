@@ -21,6 +21,7 @@ from .models import (
     CallRequestReason,
     County,
     EvaReport,
+    ImportRun,
     Location,
     LocationType,
     Provider,
@@ -30,6 +31,7 @@ from .models import (
     Reporter,
     ReportReviewNote,
     ReportReviewTag,
+    SourceLocation,
     State,
 )
 
@@ -38,6 +40,52 @@ for model in (LocationType, ProviderType, ProviderPhase):
     admin.site.register(
         model, actions=[export_as_csv_action()], search_fields=("name",)
     )
+
+
+@admin.register(ImportRun)
+class ImportRunAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "api_key", "source_locations")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("api_key").annotate(
+            source_locations_count=Count("imported_source_locations")
+        )
+
+    def source_locations(self, obj):
+        return obj.source_locations_count
+
+    source_locations.admin_order_field = "source_locations_count"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(SourceLocation)
+class SourceLocationAdmin(admin.ModelAdmin):
+    list_display = (
+        "source_uid",
+        "source_name",
+        "name",
+        "latitude",
+        "longitude",
+        "import_run",
+    )
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class DynamicListDisplayMixin:

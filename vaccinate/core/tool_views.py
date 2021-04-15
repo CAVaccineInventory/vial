@@ -30,7 +30,10 @@ def import_call_requests(request):
             field = "location_ids_group_{}".format(group_id)
             location_ids = extract_ids(request.POST.get(field))
             locations = list(Location.objects.filter(public_id__in=location_ids))
-            # For the moment we assume they are not yet in the call queue
+            # Delete any already-existing call requests for these locations
+            num_deleted = CallRequest.objects.filter(
+                location__public_id__in=location_ids
+            ).delete()[0]
             reason_obj = CallRequestReason.objects.get_or_create(
                 short_reason="Imported"
             )[0]
@@ -48,8 +51,8 @@ def import_call_requests(request):
             )
             if len(locations):
                 messages.append(
-                    "Added {} locations to priority {}".format(
-                        len(locations), group_name
+                    "Added {} locations to priority {} (deleted {} existing call requests)".format(
+                        len(locations), group_name, num_deleted
                     )
                 )
     return render(
