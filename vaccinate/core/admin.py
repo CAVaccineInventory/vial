@@ -191,11 +191,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     fieldsets = (
         (
             None,
-            {
-                "fields": (
-                    "scooby_report_link",
-                )
-            },
+            {"fields": ("scooby_report_link",)},
         ),
         (
             None,
