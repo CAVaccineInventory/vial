@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 import random
+import textwrap
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -32,10 +33,11 @@ from core.models import (
     Reporter,
     State,
 )
+from core.utils import keyset_pagination_iterator
 from dateutil import parser
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import localdate
@@ -771,3 +773,59 @@ def api_export_preview_locations(request):
 @beeline.traced(name="location_metrics")
 def location_metrics(request):
     return LocationMetricsReport().serve()
+
+
+@beeline.traced(name="export_mapbox_geojson")
+def export_mapbox_geojson(request):
+    locations = Location.objects.all().select_related(
+        "location_type", "dn_latest_non_skip_report"
+    )
+    location_ids = request.GET.getlist("id")
+    if location_ids:
+        locations = locations.filter(public_id__in=location_ids)
+    limit = None
+    if request.GET.get("limit", "").isdigit():
+        limit = int(request.GET["limit"])
+    start = textwrap.dedent(
+        """
+    {
+        "type": "FeatureCollection",
+        "features": [
+    """
+    )
+
+    def chunks():
+        yield start
+        started = False
+        for location in keyset_pagination_iterator(locations, stop_after=limit):
+            if started:
+                yield ","
+            started = True
+            yield json.dumps(
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "id": location.public_id,
+                        "name": location.name,
+                        "location_type": location.location_type.name,
+                        "website": location.website,
+                        "address": location.full_address,
+                        # "provider": "County",
+                        # "appointment_information": "",
+                        # "date_added": "2021-01-15T21:49:00.000Z",
+                        # "last_contacted_date": "2021-04-14T16:07:00.000Z",
+                        # "vaccines_offered": [],
+                        "hours": location.hours,
+                        "public_notes": location.dn_latest_non_skip_report.public_notes
+                        if location.dn_latest_non_skip_report
+                        else None,
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [location.longitude, location.latitude],
+                    },
+                }
+            )
+        yield "]}"
+
+    return StreamingHttpResponse(chunks(), content_type="application/json")
