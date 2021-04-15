@@ -118,6 +118,7 @@ def test_submit_report_api_example(
     report = Report.objects.order_by("-id")[0]
     assert response.json()["created"] == [report.public_id]
     assert report.pid == response.json()["created"][0]
+    assert report.call_request == call_request
     expected_field_values = Report.objects.filter(pk=report.pk).values(
         *list(fixture["expected_fields"].keys())
     )[0]
