@@ -967,7 +967,7 @@ def export_mapbox(request):
     with beeline.tracer(name="geojson-publish"):
         publish_resp = requests.post(
             f"https://api.mapbox.com/tilesets/v1/calltheshots.vaccinatethestates/publish?access_token={access_token}",
-            timeout=10,
+            timeout=30,
         )
         publish_resp.raise_for_status()
 
