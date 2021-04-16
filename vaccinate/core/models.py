@@ -959,6 +959,30 @@ class SourceLocation(models.Model):
         db_table = "source_location"
 
 
+class ConcordanceIdentifier(models.Model):
+    source = models.CharField(max_length=32)
+    identifier = models.CharField(max_length=128)
+
+    locations = models.ManyToManyField(
+        Location,
+        related_name="concordances",
+        blank=True,
+        db_table="concordance_location",
+    )
+    source_locations = models.ManyToManyField(
+        SourceLocation,
+        related_name="concordances",
+        blank=True,
+        db_table="concordance_source_location",
+    )
+
+    class Meta:
+        unique_together = ("source", "identifier")
+
+    def __str__(self):
+        return "{}:{}".format(self.source, self.identifier)
+
+
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
 def denormalize_location(sender, instance, **kwargs):

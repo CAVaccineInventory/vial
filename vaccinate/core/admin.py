@@ -19,6 +19,7 @@ from .models import (
     AvailabilityTag,
     CallRequest,
     CallRequestReason,
+    ConcordanceIdentifier,
     County,
     EvaReport,
     ImportRun,
@@ -59,6 +60,33 @@ class ImportRunAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ConcordanceIdentifier)
+class ConcordanceIdentifierAdmin(admin.ModelAdmin):
+    list_display = ("source", "identifier", "locations_summary")
+    list_display_links = ("source", "identifier")
+    raw_id_fields = ("locations", "source_locations")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related("locations")
+
+    def locations_summary(self, obj):
+        return mark_safe(
+            "<br>".join(
+                '<a href="/admin/core/location/{}/change/">{}</a>'.format(
+                    location.pk, escape(location.name)
+                )
+                for location in obj.locations.all()
+            )
+        )
 
     def has_change_permission(self, request, obj=None):
         return False
