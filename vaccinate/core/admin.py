@@ -88,8 +88,10 @@ class ConcordanceIdentifierAdmin(admin.ModelAdmin):
             )
         )
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    def get_readonly_fields(self, request, obj=None):
+        if obj is not None:
+            return ("source", "identifier")
+        return []
 
     def has_delete_permission(self, request, obj=None):
         return False
