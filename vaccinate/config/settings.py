@@ -176,7 +176,7 @@ SCOOBY_URL = None
 if PRODUCTION:
     SCOOBY_URL = "https://help.vaccinateca.com/call/"
 elif STAGING:
-    SCOOBY_URL = "https://https://staging-help-vaccinateca.netlify.app/call/"
+    SCOOBY_URL = "https://staging-help-vaccinateca.netlify.app/call/"
 
 ROOT_URLCONF = "config.urls"
 
