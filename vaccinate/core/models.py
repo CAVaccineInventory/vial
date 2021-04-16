@@ -1,4 +1,5 @@
 import uuid
+from typing import Optional
 
 import beeline
 import pytz
@@ -604,6 +605,23 @@ class Report(models.Model):
     def based_on_call_request(self):
         return self.call_request is not None
 
+    def full_appointment_details(self, location: Optional[Location] = None):
+        # We often call this from contexts where the report was
+        # prefetched off of a location, and fetching self.location
+        # would be another DB query within a tight loop; support
+        # passing it in as an extra arg.
+        if location is not None:
+            assert location.id == self.location_id
+        else:
+            location = self.location
+        if self.appointment_details:
+            return self.appointment_details
+        elif location.county and self.appointment_tag.slug == "county_website":
+            return location.county.vaccine_reservations_url
+        elif self.appointment_tag.slug == "myturn_ca_gov":
+            return "https://myturn.ca.gov/"
+        return None
+
     class Meta:
         db_table = "report"
 
@@ -957,6 +975,30 @@ class SourceLocation(models.Model):
 
     class Meta:
         db_table = "source_location"
+
+
+class ConcordanceIdentifier(models.Model):
+    source = models.CharField(max_length=32)
+    identifier = models.CharField(max_length=128)
+
+    locations = models.ManyToManyField(
+        Location,
+        related_name="concordances",
+        blank=True,
+        db_table="concordance_location",
+    )
+    source_locations = models.ManyToManyField(
+        SourceLocation,
+        related_name="concordances",
+        blank=True,
+        db_table="concordance_source_location",
+    )
+
+    class Meta:
+        unique_together = ("source", "identifier")
+
+    def __str__(self):
+        return "{}:{}".format(self.source, self.identifier)
 
 
 # Signals

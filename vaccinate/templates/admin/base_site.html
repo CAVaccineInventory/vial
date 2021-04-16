@@ -1,5 +1,9 @@
 {% extends "admin/base_site.html" %}
 
+{% block extrahead %}{% if is_staging %}
+<link rel="icon" href="/favicon-staging.ico">
+{% endif %}{% endblock %}
+
 {% block extrastyle %}
 <style type="text/css">
 /* Hide scary red soft-deleted and pending-review icons

@@ -81,6 +81,7 @@ def dataset() -> Generator[Dataset, None, None]:
             "county__vaccine_reservations_url",
             "dn_latest_non_skip_report__appointment_tag__slug",
             "dn_latest_non_skip_report__appointment_details",
+            "dn_latest_non_skip_report__location_id",
             "dn_latest_non_skip_report__created_at",
             "dn_latest_non_skip_report__public_notes",
         )
@@ -179,21 +180,11 @@ class V0(APIProducer):
                         t.previous_names[0] if t.previous_names else t.name
                         for t in latest.availability_tags.all()
                     ]
-                    appointment_scheduling_instructions = None
-                    if latest.appointment_details:
-                        appointment_scheduling_instructions = latest.appointment_details
-                    elif latest.appointment_tag.slug == "county_website":
-                        appointment_scheduling_instructions = (
-                            location.county.vaccine_reservations_url
-                        )
-                    elif latest.appointment_tag.slug == "myturn_ca_gov":
-                        appointment_scheduling_instructions = "https://myturn.ca.gov/"
-
                     result[-1].update(
                         {
                             "Has Report": 1,
                             "Appointment scheduling instructions": [
-                                appointment_scheduling_instructions
+                                latest.full_appointment_details(location)
                             ],
                             "Availability Info": tags,
                             "Latest report": latest.created_at.strftime(

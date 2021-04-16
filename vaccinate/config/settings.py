@@ -13,10 +13,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
-PRODUCTION = os.environ.get("PRODUCTION")
+RUNNING_IN_GCLOUD = os.environ.get("RUNNING_IN_GCLOUD")
+PRODUCTION = os.environ.get("DEPLOY") == "production"
 STAGING = os.environ.get("DEPLOY") == "staging"
 DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
 INTERNAL_IPS = ["127.0.0.1"]
+
+MAPBOX_ACCESS_TOKEN = os.environ.get("MAPBOX_ACCESS_TOKEN")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -164,7 +167,7 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Swap this out later for CORS_ALLOWED_ORIGINS = ["https://example.com", ...]
 CORS_ALLOW_ALL_ORIGINS = True
 
-if PRODUCTION:
+if RUNNING_IN_GCLOUD:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
 
@@ -173,7 +176,7 @@ SCOOBY_URL = None
 if PRODUCTION:
     SCOOBY_URL = "https://help.vaccinateca.com/call/"
 elif STAGING:
-    SCOOBY_URL = "https://ca-vial--staging-help-vaccinateca.netlify.app/"
+    SCOOBY_URL = "https://staging-help-vaccinateca.netlify.app/call/"
 
 ROOT_URLCONF = "config.urls"
 
