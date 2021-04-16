@@ -126,7 +126,7 @@ steps:
       - "--region=${_DEPLOY_REGION}"
       - "--set-env-vars=DEPLOY=${_DEPLOY}"
       - "--set-env-vars=GCLOUD_SETTINGS_NAME=${_GCLOUD_SETTINGS_NAME}"
-      - "--set-env-vars=PRODUCTION=1"
+      - "--set-env-vars=RUNNING_IN_GCLOUD=1"
       - "--set-cloudsql-instances=${_CLOUDSQL_INSTANCE}"
       - "--service-account=${_DEPLOY}@django-vaccinateca.iam.gserviceaccount.com"
     id: Deploy

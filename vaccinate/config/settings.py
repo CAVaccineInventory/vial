@@ -13,7 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
-PRODUCTION = os.environ.get("PRODUCTION")
+RUNNING_IN_GCLOUD = os.environ.get("RUNNING_IN_GCLOUD")
+PRODUCTION = os.environ.get("DEPLOY") == "production"
 STAGING = os.environ.get("DEPLOY") == "staging"
 DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
 INTERNAL_IPS = ["127.0.0.1"]
@@ -164,7 +165,7 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Swap this out later for CORS_ALLOWED_ORIGINS = ["https://example.com", ...]
 CORS_ALLOW_ALL_ORIGINS = True
 
-if PRODUCTION:
+if RUNNING_IN_GCLOUD:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
 
