@@ -19,6 +19,8 @@ STAGING = os.environ.get("DEPLOY") == "staging"
 DEBUG = bool(os.environ.get("DJANGO_DEBUG"))
 INTERNAL_IPS = ["127.0.0.1"]
 
+MAPBOX_ACCESS_TOKEN = os.environ.get("MAPBOX_ACCESS_TOKEN")
+
 ALLOWED_HOSTS = ["*"]
 
 # Call request queue is backfilled if this minimum is reached

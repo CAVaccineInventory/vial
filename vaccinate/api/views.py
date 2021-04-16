@@ -3,7 +3,7 @@ import os
 import pathlib
 import random
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 import beeline
 import markdown
@@ -34,11 +34,10 @@ from core.models import (
     SourceLocation,
     State,
 )
-from core.utils import keyset_pagination_iterator
 from dateutil import parser
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import localdate
@@ -866,61 +865,115 @@ def location_metrics(request):
     return LocationMetricsReport().serve()
 
 
-def export_mapbox_ndgeojson(request):
-    return export_mapbox_geojson(request, ndgeojson=True)
+@csrf_exempt
+def export_mapbox(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Must be a POST"},
+            status=400,
+        )
 
-
-@beeline.traced(name="export_mapbox_geojson")
-def export_mapbox_geojson(request, ndgeojson=False):
-    locations = Location.objects.all().select_related(
-        "location_type", "dn_latest_non_skip_report"
+    locations = (
+        Location.objects.all()
+        .select_related(
+            "location_type",
+            "dn_latest_non_skip_report",
+            "dn_latest_non_skip_report__appointment_tag",
+            "county",
+            "state",
+        )
+        .only(
+            "public_id",
+            "name",
+            "location_type__name",
+            "website",
+            "full_address",
+            "county__name",
+            "county__vaccine_reservations_url",
+            "state__abbreviation",
+            "phone_number",
+            "google_places_id",
+            "vaccinefinder_location_id",
+            "vaccinespotter_location_id",
+            "hours",
+            "dn_latest_non_skip_report__public_notes",
+            "dn_latest_non_skip_report__appointment_tag__slug",
+            "dn_latest_non_skip_report__appointment_tag__name",
+            "dn_latest_non_skip_report__appointment_details",
+            "dn_latest_non_skip_report__location_id",
+            "dn_latest_non_skip_report__created_at",
+            "longitude",
+            "latitude",
+        )
     )
-    location_ids = request.GET.getlist("id")
-    if location_ids:
-        locations = locations.filter(public_id__in=location_ids)
-    else:
-        locations = locations.exclude(soft_deleted=True)
-    limit = None
-    if request.GET.get("limit", "").isdigit():
-        limit = int(request.GET["limit"])
+    locations = locations.exclude(soft_deleted=True)
 
-    def chunks():
-        if not ndgeojson:
-            yield '{"type": "FeatureCollection", "features": ['
-        started = False
-        for location in keyset_pagination_iterator(locations, stop_after=limit):
-            if started and not ndgeojson:
-                yield ","
-            started = True
-            yield json.dumps(
+    post_data = ""
+    for location in locations.all():
+        properties = {
+            "id": location.public_id,
+            "name": location.name,
+            "location_type": location.location_type.name,
+            "website": location.website,
+            "address": location.full_address,
+            "county": location.county.name if location.county else None,
+            "state_abbreviation": location.state.abbreviation,
+            "phone_number": location.phone_number,
+            "google_places_id": location.google_places_id,
+            "vaccinefinder_location_id": location.vaccinefinder_location_id,
+            "vaccinespotter_location_id": location.vaccinespotter_location_id,
+            "hours": location.hours,
+        }
+        if location.dn_latest_non_skip_report:
+            report = location.dn_latest_non_skip_report
+            properties.update(
+                {
+                    "public_notes": report.public_notes,
+                    "appointment_method": report.appointment_tag.name,
+                    "appointment_details": report.full_appointment_details(location),
+                    "latest_contact": report.created_at.isoformat(),
+                }
+            )
+        post_data += (
+            json.dumps(
                 {
                     "type": "Feature",
-                    "properties": {
-                        "id": location.public_id,
-                        "name": location.name,
-                        "location_type": location.location_type.name,
-                        "website": location.website,
-                        "address": location.full_address,
-                        # "provider": "County",
-                        # "appointment_information": "",
-                        # "date_added": "2021-01-15T21:49:00.000Z",
-                        # "last_contacted_date": "2021-04-14T16:07:00.000Z",
-                        # "vaccines_offered": [],
-                        "hours": location.hours,
-                        "public_notes": location.dn_latest_non_skip_report.public_notes
-                        if location.dn_latest_non_skip_report
-                        else None,
-                    },
+                    "properties": properties,
                     "geometry": {
                         "type": "Point",
                         "coordinates": [location.longitude, location.latitude],
                     },
                 }
-            ) + "\n"
-        if not ndgeojson:
-            yield "]}"
+            )
+            + "\n"
+        )
 
-    return StreamingHttpResponse(
-        chunks(),
-        content_type="text/plain; charset=utf-8" if ndgeojson else "application/json",
+    access_token = settings.MAPBOX_ACCESS_TOKEN
+    if not access_token:
+        return JsonResponse(
+            {
+                "upload": f"Would upload {len(post_data)} bytes",
+            }
+        )
+
+    with beeline.tracer(name="geojson-upload"):
+        upload_resp = requests.put(
+            f"https://api.mapbox.com/tilesets/v1/sources/calltheshots/jesse?access_token={access_token}",
+            files={"file": post_data},
+            timeout=30,
+        )
+        upload_resp.raise_for_status()
+
+    with beeline.tracer(name="geojson-publish"):
+        publish_resp = requests.post(
+            f"https://api.mapbox.com/tilesets/v1/calltheshots.vaccinatethestates/publish?access_token={access_token}",
+            timeout=10,
+        )
+        publish_resp.raise_for_status()
+
+    return JsonResponse(
+        {
+            "upload": upload_resp.json(),
+            "publish": publish_resp.json(),
+        }
     )
