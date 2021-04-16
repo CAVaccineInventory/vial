@@ -206,9 +206,9 @@ def submit_report(request, on_request_logged):
             fake_timestamp = pytz.UTC.localize(fake_timestamp)
         kwargs["created_at"] = fake_timestamp
 
+    beeline.add_context({"availability_tag_count": len(availability_tags)})
     report = Report.objects.create(**kwargs)
-    for tag_model in availability_tags:
-        report.availability_tags.add(tag_model)
+    report.availability_tags.add(*availability_tags)
 
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
@@ -967,7 +967,7 @@ def export_mapbox(request):
     with beeline.tracer(name="geojson-publish"):
         publish_resp = requests.post(
             f"https://api.mapbox.com/tilesets/v1/calltheshots.vaccinatethestates/publish?access_token={access_token}",
-            timeout=10,
+            timeout=30,
         )
         publish_resp.raise_for_status()
 
