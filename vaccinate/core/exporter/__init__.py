@@ -182,7 +182,10 @@ class V0(APIProducer):
                     appointment_scheduling_instructions = None
                     if latest.appointment_details:
                         appointment_scheduling_instructions = latest.appointment_details
-                    elif latest.appointment_tag.slug == "county_website":
+                    elif (
+                        location.county
+                        and latest.appointment_tag.slug == "county_website"
+                    ):
                         appointment_scheduling_instructions = (
                             location.county.vaccine_reservations_url
                         )
