@@ -3,7 +3,7 @@ import os
 import pathlib
 import random
 from datetime import datetime, timedelta
-from typing import Iterator, List, Optional
+from typing import List, Optional
 
 import beeline
 import markdown
@@ -37,7 +37,7 @@ from core.models import (
 from dateutil import parser
 from django.conf import settings
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import localdate
