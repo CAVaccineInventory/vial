@@ -61,7 +61,7 @@ If you run into issues during environment setup, start with the [FAQ][1] for tro
 
 _If you encounter any issues in setup, please document them and add them to the [FAQ][1]._
 
-Check out the repository. Create a new Python virtual environment for it (I use `pipenv shell` to do this). Install the dependencies with `pip install -r requirements.txt`.
+Check out the repository. Create a new Python virtual environment for it (I use `pipenv shell` to do this); we depend on Python 3.7 or later, and only test and deploy on Python 3.9.  Install the dependencies with `pip install -r requirements.txt`.
 
 Set your environment variables, see _Configuration_ section below.
 
