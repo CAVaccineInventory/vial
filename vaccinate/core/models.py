@@ -620,6 +620,10 @@ class Report(models.Model):
             return location.county.vaccine_reservations_url
         elif self.appointment_tag.slug == "myturn_ca_gov":
             return "https://myturn.ca.gov/"
+        elif location.website:
+            return location.website
+        elif location.provider and location.provider.appointments_url:
+            return location.provider.appointments_url
         return None
 
     class Meta:
