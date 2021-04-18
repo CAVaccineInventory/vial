@@ -50,4 +50,5 @@ def test_import_location(client, api_key, json_path):
     assert source_location.id == json_response["created"][0]
 
     assert source_location.name == fixture["name"]
+    assert source_location.import_json == fixture
     # TODO add more assertions about fields later

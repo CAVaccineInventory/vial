@@ -635,19 +635,14 @@ class LinkValidator(BaseModel):
 
 
 class SourceLocationValidator(BaseModel):
-    # source_uid: str
-    # source_name: str
     name: Optional[str]
-    # latitude: Optional[float]
-    # longitude: Optional[float]
     location: Optional[LatLongValidator]
-    # import_json: dict
     match: Optional[dict]
     links: Optional[list[LinkValidator]]
     source: SourceDataValidator
 
     @validator("match")
-    def location_must_exist(cls, v):
+    def match_must_exist(cls, v):
         try:
             return Location.objects.get(public_id=v["id"])
         except Location.DoesNotExist:
@@ -685,14 +680,21 @@ def import_source_locations(request, on_request_logged):
     created = []
     updated = []
     for record in records:
+        if "location" in record:
+            latitude = record["location"].get("latitude")
+            longitude = record["location"].get("longitude")
+        else:
+            latitude = None
+            longitude = None
+
         source_location, was_created = SourceLocation.objects.update_or_create(
             source_uid=record["source"]["id"],
             defaults={
                 "source_name": record["source"]["source"],
                 "name": record.get("name"),
-                "latitude": record.get("location").get("latitude"),
-                "longitude": record.get("location").get("latitude"),
-                "import_json": record["source"]["data"],
+                "latitude": latitude,
+                "longitude": longitude,
+                "import_json": record,
                 "import_run": import_run,
                 "matched_location": record.get("match"),
             },
