@@ -614,6 +614,8 @@ class Report(models.Model):
             assert location.id == self.location_id
         else:
             location = self.location
+
+        # Do not access self.location below; use location instead.
         if self.appointment_details:
             return self.appointment_details
         elif location.county and self.appointment_tag.slug == "county_website":
