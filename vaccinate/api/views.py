@@ -905,6 +905,8 @@ def export_mapbox(request):
             "dn_latest_non_skip_report__appointment_details",
             "dn_latest_non_skip_report__location_id",
             "dn_latest_non_skip_report__created_at",
+            "website",
+            "provider__appointments_url",
             "longitude",
             "latitude",
         )
