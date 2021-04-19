@@ -23,6 +23,7 @@ from core.models import (
     AvailabilityTag,
     CallRequest,
     CallRequestReason,
+    ConcordanceIdentifier,
     County,
     ImportRun,
     Location,
@@ -614,13 +615,41 @@ def start_import_run(request, on_request_logged):
         return JsonResponse({"error": "POST required"}, status=400)
 
 
-class SourceLocationValidator(BaseModel):
-    source_uid: str
-    source_name: str
-    name: Optional[str]
+class LatLongValidator(BaseModel):
     latitude: Optional[float]
     longitude: Optional[float]
-    import_json: dict
+
+
+class SourceDataValidator(BaseModel):
+    source: str
+    id: str
+    fetched_from_uri: Optional[str]
+    fetched_at: Optional[datetime]
+    published_at: Optional[datetime]
+    data: dict
+
+
+class LinkValidator(BaseModel):
+    authority: str
+    id: str
+    uri: Optional[str]
+
+
+class SourceLocationValidator(BaseModel):
+    name: Optional[str]
+    location: Optional[LatLongValidator]
+    match: Optional[dict]
+    links: Optional[list[LinkValidator]]
+    source: SourceDataValidator
+
+    @validator("match")
+    def match_must_exist(cls, v):
+        try:
+            return Location.objects.get(public_id=v["id"])
+        except Location.DoesNotExist:
+            raise ValueError("Location '{}' does not exist".format(v))
+        except KeyError:
+            raise ValueError("Match did not have an id")
 
 
 @csrf_exempt
@@ -653,21 +682,37 @@ def import_source_locations(request, on_request_logged):
     created = []
     updated = []
     for record in records:
-        obj, was_created = SourceLocation.objects.update_or_create(
-            source_uid=record["source_uid"],
+        if "location" in record:
+            latitude = record["location"].get("latitude")
+            longitude = record["location"].get("longitude")
+        else:
+            latitude = None
+            longitude = None
+
+        source_location, was_created = SourceLocation.objects.update_or_create(
+            source_uid=record["source"]["id"],
             defaults={
-                "source_name": record["source_name"],
+                "source_name": record["source"]["source"],
                 "name": record.get("name"),
-                "latitude": record.get("latitude"),
-                "longitude": record.get("latitude"),
-                "import_json": record["import_json"],
+                "latitude": latitude,
+                "longitude": longitude,
+                "import_json": record,
                 "import_run": import_run,
+                "matched_location": record.get("match"),
             },
         )
+
+        if "links" in record:
+            for link in record["links"]:
+                identifier, _ = ConcordanceIdentifier.objects.get_or_create(
+                    source=link["authority"], identifier=link["id"]
+                )
+                identifier.source_locations.add(source_location)
+
         if was_created:
-            created.append(obj.pk)
+            created.append(source_location.pk)
         else:
-            updated.append(obj.pk)
+            updated.append(source_location.pk)
     return JsonResponse({"created": created, "updated": updated})
 
 

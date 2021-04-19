@@ -977,6 +977,13 @@ class SourceLocation(models.Model):
         blank=True,
         help_text="Big bag of JSON with original data",
     )
+    matched_location = models.ForeignKey(
+        Location,
+        blank=True,
+        null=True,
+        related_name="matched_source_locations",
+        on_delete=models.SET_NULL,
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
