@@ -217,3 +217,45 @@ def test_location_edit_redirect(admin_client):
     location.refresh_from_db()
     response = admin_client.get("/admin/edit-location/{}/".format(location.public_id))
     assert response.url == "/admin/core/location/{}/change/".format(location.pk)
+
+
+def test_import_call_requests(admin_client, ten_locations):
+    # One of these locations has a prior, completed request
+    has_prior = ten_locations[1]
+    call_request = has_prior.call_requests.create(
+        priority_group=3,
+        completed=True,
+        completed_at=timezone.now(),
+        vesting_at=timezone.now(),
+        call_request_reason=CallRequestReason.objects.get(short_reason="New location"),
+    )
+    # Create a report for that prior request
+    has_prior.reports.create(
+        reported_by=Reporter.objects.get_or_create(external_id="test:1")[0],
+        report_source="ca",
+        appointment_tag=AppointmentTag.objects.get(slug="web"),
+        call_request=call_request,
+    )
+    assert CallRequest.objects.count() == 1
+    response = admin_client.post(
+        "/admin/import-call-requests/",
+        {
+            "location_ids_group_1": ten_locations[0].public_id,
+            "location_ids_group_2": ten_locations[1].public_id,
+            "location_ids_group_3": ten_locations[2].public_id,
+            "location_ids_group_4": ten_locations[3].public_id,
+            "location_ids_group_99": ten_locations[4].public_id,
+        },
+    )
+    assert response.status_code == 200
+    assert CallRequest.objects.count() == 5
+    call_request_details = list(
+        CallRequest.objects.values_list("location__public_id", "priority_group")
+    )
+    assert call_request_details == [
+        (ten_locations[0].public_id, 1),
+        (ten_locations[1].public_id, 2),
+        (ten_locations[2].public_id, 3),
+        (ten_locations[3].public_id, 4),
+        (ten_locations[4].public_id, 99),
+    ]

@@ -572,7 +572,7 @@ class Report(models.Model):
         null=True,
         blank=True,
         related_name="reports",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         help_text="the call request that this report was based on, if any.",
     )
 
