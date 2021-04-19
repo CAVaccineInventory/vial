@@ -509,6 +509,7 @@ class LocationValidator(BaseModel):
 @csrf_exempt
 @log_api_requests
 @require_api_key
+@beeline.traced(name="import_locations")
 def import_locations(request, on_request_logged):
     try:
         post_data = json.loads(request.body.decode("utf-8"))
@@ -625,6 +626,7 @@ class SourceLocationValidator(BaseModel):
 @csrf_exempt
 @log_api_requests
 @require_api_key
+@beeline.traced(name="import_source_locations")
 def import_source_locations(request, on_request_logged):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=400)
@@ -672,6 +674,7 @@ def import_source_locations(request, on_request_logged):
 @csrf_exempt
 @log_api_requests
 @require_api_key
+@beeline.traced(name="import_reports")
 def import_reports(request, on_request_logged):
     try:
         post_data = json.loads(request.body.decode("utf-8"))
