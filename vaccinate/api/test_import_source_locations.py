@@ -2,7 +2,7 @@ import json
 import pathlib
 
 import pytest
-from core.models import ConcordanceIdentifier, ImportRun, SourceLocation
+from core.models import ConcordanceIdentifier, ImportRun, SourceLocation, Location
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "importSourceLocations"
 
@@ -12,6 +12,7 @@ tests_dir = pathlib.Path(__file__).parent / "test-data" / "importSourceLocations
 def test_import_location(client, api_key, json_path):
     fixture = json.load(json_path.open())
 
+    assert Location.objects.count() == 0
     assert ImportRun.objects.count() == 0
     assert SourceLocation.objects.count() == 0
     assert ConcordanceIdentifier.objects.count() == 0
@@ -52,3 +53,12 @@ def test_import_location(client, api_key, json_path):
     assert source_location.name == fixture["name"]
     assert source_location.import_json == fixture
     # TODO add more assertions about fields later
+
+    if "match" in fixture and "action" in fixture["match"] and fixture["match"]["action"] == "new":
+        assert Location.objects.count() == 1
+        assert source_location.matched_location is not None
+        location = source_location.matched_location
+        assert location.name == fixture["name"]
+        assert location.location_type.name == "Unknown" # all source location conversions use unknown for now
+        assert location.latitude == fixture["location"]["latitude"]
+        assert location.longitude == fixture["location"]["longitude"]

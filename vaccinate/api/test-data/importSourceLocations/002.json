@@ -7,9 +7,14 @@
     "state":"CA",
     "zip": "92675"
   },
-  "booking": {
-    "website": "https://www.riteaid.com/pharmacy/covid-qualifier"
+  "location": {
+    "latitude": 33.4962,
+    "longitude": -117.663
   },
+  "contact": [{
+    "contact_type": "booking",
+    "website": "https://www.riteaid.com/pharmacy/covid-qualifier"
+  }],
   "availability": {
     "appointments": false
   },
@@ -32,5 +37,8 @@
     "fetched_at": "2021-04-06T20:17:55.148+00:00",
     "published_at": "2021-04-06T20:17:55.148+00:00",
     "data": {"geometry":{"type":"Point","coordinates":[-117.663,33.4962]}, "id":7382088}
+  },
+  "match": {
+    "action": "new"
   }
 }

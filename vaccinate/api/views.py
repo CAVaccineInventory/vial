@@ -644,12 +644,16 @@ class SourceLocationValidator(BaseModel):
 
     @validator("match")
     def match_must_exist(cls, v):
-        try:
-            return Location.objects.get(public_id=v["id"])
-        except Location.DoesNotExist:
-            raise ValueError("Location '{}' does not exist".format(v))
-        except KeyError:
-            raise ValueError("Match did not have an id")
+        if "id" in v:
+            try:
+                return Location.objects.get(public_id=v["id"])
+            except Location.DoesNotExist:
+                raise ValueError("Location '{}' does not exist".format(v))
+        elif "action" in v:
+            if v["action"] == "new":
+                return "new"
+
+        raise ValueError("Match did not have an id or appropriate action")
 
 
 @csrf_exempt
@@ -712,7 +716,7 @@ def import_source_locations(request, on_request_logged):
                     source=link["authority"], identifier=link["id"]
                 )
                 identifier.source_locations.add(source_location)
-        if "match" in record and "action" in record['match'] and record['match']['action'] == 'new':
+        if "match" in record and "action" in record["match"] and record["match"]["action"] == "new":
             build_location_from_source_location(source_location)
 
         if was_created:
@@ -724,9 +728,10 @@ def import_source_locations(request, on_request_logged):
 
 def build_location_from_source_location(source_location: SourceLocation):
     location_kwargs = source_to_location(source_location.import_json)
-    location_kwargs['state'] = State.objects.find(abbreviation=location_kwargs['state']).get()
+    location_kwargs['state'] = State.objects.filter(abbreviation=location_kwargs['state']).get()
+    unknown_location_type = LocationType.objects.filter(name="Unknown").get()
 
-    location = Location.objects.create(**location_kwargs)
+    location = Location.objects.create(location_type=unknown_location_type, **location_kwargs)
     source_location.matched_location = location
     source_location.save()
 
