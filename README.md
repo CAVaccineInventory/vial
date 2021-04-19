@@ -102,12 +102,16 @@ To get the `/dashboard/` interface working in your local development environment
 
 Running this requires some secrets in environment variables:
 
-- `SOCIAL_AUTH_AUTH0_SECRET` can be found in the [Auth0 application configuration page](https://manage.auth0.com/dashboard/us/vaccinateca/applications/7JMM4bb1eC7taGN1OlaLBIXJN1w42vac/settings).
-- `DJANGO_SECRET_KEY` can be any random string. One way to generate one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
+- `SOCIAL_AUTH_AUTH0_SECRET` should be set to
+  `iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx`.
+  (This secret is OK to include in this README because it is only used
+  for local development)
+- `DJANGO_SECRET_KEY` can be any random string. One way to generate
+  one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
 
 Create a file like this named `.env`, which is loaded by Django:
 
-    SOCIAL_AUTH_AUTH0_SECRET="secret from the auth0 dashboard"
+    SOCIAL_AUTH_AUTH0_SECRET="iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx"
     DJANGO_SECRET_KEY="just a big random string"
     DJANGO_DEBUG=1
 

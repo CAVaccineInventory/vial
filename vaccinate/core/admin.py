@@ -144,14 +144,22 @@ class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display = (
         "public_id",
         "name",
+        "provider_type",
+        "current_phases",
         "main_url",
         "contact_phone_number",
-        "provider_type",
     )
     list_display_links = ("public_id", "name")
     actions = [export_as_csv_action()]
     autocomplete_fields = ("phases",)
     readonly_fields = ("airtable_id", "public_id", "import_json")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related("phases")
+
+    def current_phases(self, obj):
+        return [phase.name for phase in obj.phases.all()]
 
 
 @admin.register(County)
