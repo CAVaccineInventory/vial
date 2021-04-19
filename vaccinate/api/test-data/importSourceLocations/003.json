@@ -1,0 +1,44 @@
+{
+  "id": "vaccinespotter:7382088",
+  "name": "Rite Aid",
+  "address": {
+    "street1": "32121 Camino Capistrano",
+    "city": "San Juan Capistrano",
+    "state":"CA",
+    "zip": "92675"
+  },
+  "location": {
+    "latitude": 33.4962,
+    "longitude": -117.663
+  },
+  "contact": {
+    "contact_type": "booking",
+    "website": "https://www.riteaid.com/pharmacy/covid-qualifier"
+  },
+  "availability": {
+    "appointments": false
+  },
+  "parent_organization": {
+    "id": "rite_aid",
+    "name": "Rite Aid"
+  },
+  "links": [{
+    "authority": "rite_aid",
+    "id": "5751"
+  },
+    {
+      "authority": "google_places",
+      "id": "38dajsdlfajsd"
+    }],
+  "source": {
+    "source": "vaccinespotter",
+    "id": "7382088",
+    "fetched_from_uri": "https://www.vaccinespotter.org/api/v0/states/CA.json",
+    "fetched_at": "2021-04-06T20:17:55.148+00:00",
+    "published_at": "2021-04-06T20:17:55.148+00:00",
+    "data": {"geometry":{"type":"Point","coordinates":[-117.663,33.4962]}, "id":7382088}
+  },
+  "match": {
+    "action": "new"
+  }
+}

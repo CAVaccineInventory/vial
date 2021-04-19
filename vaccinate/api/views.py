@@ -47,6 +47,7 @@ from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, Field, ValidationError, validator
 
 from .utils import deny_if_api_is_disabled, log_api_requests, require_api_key
+from bigmap.transform import source_to_location
 
 
 class ReportValidator(BaseModel):
@@ -687,6 +688,11 @@ def import_source_locations(request, on_request_logged):
             latitude = None
             longitude = None
 
+        matched_location = None
+        if 'match' in record:
+            if 'id' in record['match']:
+                matched_location = Location.objects.find(id=record['match']['id'])
+
         source_location, was_created = SourceLocation.objects.update_or_create(
             source_uid=record["source"]["id"],
             defaults={
@@ -696,7 +702,7 @@ def import_source_locations(request, on_request_logged):
                 "longitude": longitude,
                 "import_json": record,
                 "import_run": import_run,
-                "matched_location": record.get("match"),
+                "matched_location": matched_location
             },
         )
 
@@ -706,12 +712,23 @@ def import_source_locations(request, on_request_logged):
                     source=link["authority"], identifier=link["id"]
                 )
                 identifier.source_locations.add(source_location)
+        if "match" in record and "action" in record['match'] and record['match']['action'] == 'new':
+            build_location_from_source_location(source_location)
 
         if was_created:
             created.append(source_location.pk)
         else:
             updated.append(source_location.pk)
     return JsonResponse({"created": created, "updated": updated})
+
+
+def build_location_from_source_location(source_location: SourceLocation):
+    location_kwargs = source_to_location(source_location.import_json)
+    location_kwargs['state'] = State.objects.find(abbreviation=location_kwargs['state']).get()
+
+    location = Location.objects.create(**location_kwargs)
+    source_location.matched_location = location
+    source_location.save()
 
 
 @csrf_exempt
