@@ -30,9 +30,10 @@ def import_call_requests(request):
             field = "location_ids_group_{}".format(group_id)
             location_ids = extract_ids(request.POST.get(field))
             locations = list(Location.objects.filter(public_id__in=location_ids))
-            # Delete any already-existing call requests for these locations
+            # Delete any already-existing incomplete call requests for these locations
             num_deleted = CallRequest.objects.filter(
-                location__public_id__in=location_ids
+                location__public_id__in=location_ids,
+                completed=False,
             ).delete()[0]
             reason_obj = CallRequestReason.objects.get_or_create(
                 short_reason="Imported"

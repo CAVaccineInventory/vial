@@ -248,14 +248,17 @@ def test_import_call_requests(admin_client, ten_locations):
         },
     )
     assert response.status_code == 200
-    assert CallRequest.objects.count() == 5
+    assert CallRequest.objects.count() == 6
     call_request_details = list(
-        CallRequest.objects.values_list("location__public_id", "priority_group")
+        CallRequest.objects.values_list(
+            "location__public_id", "priority_group", "completed"
+        ).order_by("location__public_id", "priority_group", "completed")
     )
     assert call_request_details == [
-        (ten_locations[0].public_id, 1),
-        (ten_locations[1].public_id, 2),
-        (ten_locations[2].public_id, 3),
-        (ten_locations[3].public_id, 4),
-        (ten_locations[4].public_id, 99),
+        (ten_locations[0].public_id, 1, False),
+        (has_prior.public_id, 2, False),
+        (has_prior.public_id, 3, True),
+        (ten_locations[2].public_id, 3, False),
+        (ten_locations[3].public_id, 4, False),
+        (ten_locations[4].public_id, 99, False),
     ]
