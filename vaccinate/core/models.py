@@ -614,12 +614,18 @@ class Report(models.Model):
             assert location.id == self.location_id
         else:
             location = self.location
+
+        # Do not access self.location below; use location instead.
         if self.appointment_details:
             return self.appointment_details
         elif location.county and self.appointment_tag.slug == "county_website":
             return location.county.vaccine_reservations_url
         elif self.appointment_tag.slug == "myturn_ca_gov":
             return "https://myturn.ca.gov/"
+        elif location.website:
+            return location.website
+        elif location.provider and location.provider.appointments_url:
+            return location.provider.appointments_url
         return None
 
     class Meta:

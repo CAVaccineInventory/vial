@@ -66,6 +66,7 @@ def dataset() -> Generator[Dataset, None, None]:
             .select_related("dn_latest_non_skip_report__appointment_tag")
             .select_related("county")
             .select_related("location_type")
+            .select_related("provider")
             .prefetch_related("dn_latest_non_skip_report__availability_tags")
         ).only(
             "public_id",
@@ -84,6 +85,8 @@ def dataset() -> Generator[Dataset, None, None]:
             "dn_latest_non_skip_report__location_id",
             "dn_latest_non_skip_report__created_at",
             "dn_latest_non_skip_report__public_notes",
+            "website",
+            "provider__appointments_url",
         )
 
         ds.counties = (

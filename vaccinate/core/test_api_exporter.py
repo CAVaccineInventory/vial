@@ -168,7 +168,9 @@ def test_v1_location_county_contents(django_assert_num_queries):
     # If this assert begins failing, it is likely because an
     # additional column is being accessed that is not in the .only()
     # call inside dataset(); this causes an extra query per row, with
-    # disasterous performance consequences in production.
+    # disastrous performance consequences in production.
+    #
+    # Adjusting the number of queries is almost certainly not correct.
     with django_assert_num_queries(4):
         with dataset() as ds:
             locations = api(1, ds).get_locations()
