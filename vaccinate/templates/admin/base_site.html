@@ -66,6 +66,23 @@ textarea#id_full_address {
 {% block footer %}
 <div id="footer"></div>
 <script>
+function resizeTable() {
+  /* So Windows mouse users can see the horizontal scrollbar
+     https://github.com/CAVaccineInventory/vial/issues/363 */
+  let container = document.querySelector("#changelist-form .results");
+  let paginator = document.querySelector("p.paginator");
+  if (!container || !paginator) {
+    return;
+  }
+  let height =
+    window.innerHeight -
+    container.getBoundingClientRect().top -
+    paginator.getBoundingClientRect().height -
+    10;
+  container.style.overflowY = "auto";
+  container.style.height = height + "px";
+}
+
 window.addEventListener("load", () => {
     let changelistFilter = jQuery('#changelist-filter');
     let x = jQuery('<a href="#">X</a>');
@@ -80,6 +97,8 @@ window.addEventListener("load", () => {
         return false;
     });
     changelistFilter.find("h2").append(x);
+
+    resizeTable();
 });
 </script>
 {% endblock %}
