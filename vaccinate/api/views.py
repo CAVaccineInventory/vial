@@ -348,7 +348,9 @@ def request_call(request, on_request_logged):
                     request = None
                 if request is not None and not no_claim:
                     request.claimed_by = reporter
-                    request.claimed_until = now + timedelta(minutes=20)
+                    request.claimed_until = now + timedelta(
+                        minutes=settings.CLAIM_LOCK_MINUTES
+                    )
                     request.save()
             if request is None:
                 return JsonResponse(
