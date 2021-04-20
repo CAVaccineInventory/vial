@@ -98,6 +98,7 @@ def test_clear_claims_action(admin_client):
                 location_type_id=1,
                 latitude=30,
                 longitude=40,
+                phone_number="(555) 555-5555",
             )
         )
     assert CallRequest.objects.count() == 0
@@ -140,6 +141,7 @@ def test_claim_bump_to_top_bottom_actions(admin_client):
             location_type_id=1,
             latitude=30,
             longitude=40,
+            phone_number="(555) 555-5555",
         )
         for i in range(1, 4)
     ]

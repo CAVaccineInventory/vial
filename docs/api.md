@@ -208,11 +208,34 @@ The API returns the following:
 }
 ```
 
-`errors` will contain a list of validation errors, if any.
+- `errors` will contain a list of validation errors, if any.
+- `added` returns the public IDs of any added locations.
+- `updated` returns the public IDs of locatinos that were updated using an `import_ref`.
 
-`added` returns the public IDs of any added locations.
+The following input fields are all optional strings:
 
-`updated` returns the public IDs of locatinos that were updated using an `import_ref`.
+- `phone_number`
+- `full_address`
+- `city`
+- `county` - special case, see below
+- `google_places_id`
+- `vaccinespotter_location_id`
+- `vaccinefinder_location_id`
+- `zip_code`
+- `hours`
+- `website`
+- `airtable_id`
+- `import_json` - dictionary
+
+If you are providing a `county` it must be the name of a county that exists within the provided state.
+
+You can also specify a `provider_name` and a `provider_type`, if the location belongs to a chain of locations.
+
+The `provider_type` must be one of the list of types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes).
+
+The `provider_name` will be used to either create a new provider or associate your location with an existing provider with that name.
+
+If you provide the `import_json` dictionary it should be the original, raw JSON data that your importer script is working against. This will be stored in the `import_json` column in the locations table, and can later be used for debugging purposes.
 
 ### Using import_ref to import and later update locations
 
@@ -248,32 +271,68 @@ The existing record will be updated with those altered values.
 
 Make sure you pick import refs that won't be used by anyone else: using a prefix that matches the location you are pulling from is a good idea.
 
-The following fields are all optional strings:
-
-- `phone_number`
-- `full_address`
-- `city`
-- `county` - special case, see below
-- `google_places_id`
-- `vaccinespotter_location_id`
-- `vaccinefinder_location_id`
-- `zip_code`
-- `hours`
-- `website`
-- `airtable_id`
-- `import_json` - dictionary
-
-If you are providing a `county` it must be the name of a county that exists within the provided state.
-
-You can also specify a `provider_name` and a `provider_type`, if the location belongs to a chain of locations.
-
-The `provider_type` must be one of the list of types from `/api/providerTypes`.
-
-The `provider_name` will be used to either create a new provider or associate your location with an existing provider with that name.
-
-If you provide the `import_json` dictionary it should be the original, raw JSON data that your importer script is working against. This will be stored in the `import_json` column in the locations table, and can later be used for debugging purposes.
-
 Try this API at https://vial-staging.calltheshots.us/api/importLocations/debug
+
+## POST /api/updateLocations
+
+This API can be used to update fields on one or more locations. The POSTed JSON looks like this:
+
+```json
+{
+  "update": {
+    "$location_id": {
+      "$field1": "new_value",
+      "$field2": "new_value",
+      "$field3": "..."
+    }
+  },
+  "revision_comment": "Optional comment"
+}
+```
+
+In the above example, `$location_id` is the public location ID - a string such as `rec9Zc6A08cEWyNpR` or `lgzgq`.
+
+This is a bulk API, so you can provide multiple nested location ID dictionaries.
+
+Only the fields that you provide will be updated on the record - so unlike `/api/importLocations` with an `import_ref` this API allows partial updates of just specified fields.
+
+The following example will set a new name on location `rec9Zc6A08cEWyNpR` and a new phone number on location `lgzgq`. It will also set a custom revision message (visible in the object history) of `"New details"`.
+
+```json
+{
+  "update": {
+    "rec9Zc6A08cEWyNpR": {
+      "name": "Berkeley Clinic II"
+    },
+    "lgzgq": {
+      "phone_number": "(555) 555-5551"
+    }
+  },
+  "revision_comment": "New details"
+}
+```
+The `"revision_comment"` key can be ommitted entirely, in which a default comment of `"/api/updateLocations by API_KEY"` will be used.
+
+The following fields can be updated using this API. All are optional.
+
+- `name` - string
+- `state` - e.g. `CA`
+- `latitude` - floating point
+- `longitude` - floating point
+- `location_type` - string, one of [these](https://vial-staging.calltheshots.us/api/locationTypes)
+- `phone_number` - string
+- `full_address` - string
+- `city` - string
+- `county` - string, must be the name of a county in the specified state
+- `google_places_id` - string
+- `vaccinefinder_location_id` - string
+- `vaccinespotter_location_id` - string
+- `zip_code` - string
+- `hours` - string
+- `website` - string
+- `preferred_contact_method` - string, one of `research_online` or `outbound_call`
+- `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
+- `provider_name` - the name of the provider
 
 ## POST /api/importReports
 

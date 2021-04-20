@@ -61,6 +61,7 @@ def test_submit_report_api_example(
             "latitude": 0,
             "longitude": 0,
             "location_type_id": 1,
+            "phone_number": "(555) 555-5555",
             "state": State.objects.get(abbreviation="OR"),
             "county_id": 1,
         },

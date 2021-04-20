@@ -57,6 +57,17 @@ urlpatterns = [
             docs="/api/docs#post-apiimportlocations",
         ),
     ),
+    path("api/updateLocations", api_views.update_locations),
+    path(
+        "api/updateLocations/debug",
+        api_views.api_debug_view(
+            "api/updateLocations",
+            use_jwt=False,
+            body_textarea=True,
+            default_body="{}",
+            docs="/api/docs#post-apiupdatelocations",
+        ),
+    ),
     path("api/startImportRun", api_views.start_import_run),
     path(
         "api/startImportRun/debug",

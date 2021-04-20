@@ -818,11 +818,17 @@ class CallRequest(models.Model):
         if qs is None:
             qs = cls.objects
         now = timezone.now()
-        return qs.filter(
-            # Unclaimed
-            Q(claimed_until__isnull=True)
-            | Q(claimed_until__lte=now)
-        ).filter(completed=False, vesting_at__lte=now)
+        return (
+            qs.filter(
+                # Unclaimed
+                Q(claimed_until__isnull=True)
+                | Q(claimed_until__lte=now)
+            )
+            .filter(completed=False, vesting_at__lte=now)
+            .exclude(
+                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
+            )
+        )
 
     @classmethod
     @beeline.traced("backfill_queue")
@@ -976,6 +982,13 @@ class SourceLocation(models.Model):
         null=True,
         blank=True,
         help_text="Big bag of JSON with original data",
+    )
+    matched_location = models.ForeignKey(
+        Location,
+        blank=True,
+        null=True,
+        related_name="matched_source_locations",
+        on_delete=models.SET_NULL,
     )
     created_at = models.DateTimeField(default=timezone.now)
 

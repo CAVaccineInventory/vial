@@ -75,6 +75,7 @@ def ten_locations(db):
     for i in range(1, 11):
         location = Location.objects.create(
             name="Location {}".format(i),
+            phone_number="(555) 555-55{:02}".format(i),
             state_id=State.objects.get(abbreviation="OR").id,
             location_type_id=1,
             latitude=30,
