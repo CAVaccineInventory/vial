@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>Search location results on a map</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""
+    ></script>
+    <style>
+      .leaflet-popup-content {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>{{ query_string }}</h1>
+    <div id="themap" style="width: 98%; height: 90vh"></div>
+    <script>
+      var themapdiv = document.getElementById("themap");
+      var attribution =
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+      var tilesUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+      var themap = L.map(themapdiv).setView([0, 0], 3);
+      L.tileLayer(tilesUrl, {
+        maxZoom: 18,
+        attribution: attribution,
+      }).addTo(themap);
+      fetch("?{{ query_string|safe }}")
+        .then((r) => r.json())
+        .then((d) => {
+          var layer = L.geoJSON(d, {
+            onEachFeature: (feature, layer) => {
+              layer.bindPopup(JSON.stringify(feature.properties, null, 2));
+            },
+          });
+          layer.addTo(themap);
+          themap.fitBounds(layer.getBounds(), {
+            maxZoom: 14,
+          });
+        });
+    </script>
+  </body>
+</html>
