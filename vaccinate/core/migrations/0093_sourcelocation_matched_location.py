@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0092_sourcelocation_matched_location"),
+        ("core", "0092_report_call_request_set_null"),
     ]
 
     operations = [
