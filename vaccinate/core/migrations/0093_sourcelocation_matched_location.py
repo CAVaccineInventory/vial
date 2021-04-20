@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0091_concordanceidentifier"),
+        ("core", "0092_sourcelocation_matched_location"),
     ]
 
     operations = [
