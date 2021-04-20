@@ -1021,6 +1021,18 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     int((obj.claimed_until - now).total_seconds() / 60)
                 )
             )
+        if obj.completed:
+            if obj.completed_at.date() == timezone.now().date():
+                format_string = "g:i A e"
+            else:
+                format_string = "jS M Y g:i A e"
+            bits.append(
+                '<span style="color: orange">Request completed at {}</span>'.format(
+                    dateformat.format(
+                        timezone.localtime(obj.completed_at), format_string
+                    ),
+                )
+            )
         return mark_safe("<br>".join(bits))
 
     def state(self, obj):
