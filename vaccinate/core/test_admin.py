@@ -215,14 +215,14 @@ def test_call_request_filters(admin_client, ten_locations, query_string, expecte
         call_request_reason=reason,
         vesting_at=now,
         claimed_by=reporter,
-        claimed_until=now + datetime.timedelta(minutes=20),
+        claimed_until=now + datetime.timedelta(minutes=60),
     )
     claimed_5 = CallRequest.objects.create(
         location=ten_locations[4],
         call_request_reason=reason,
         vesting_at=now,
         claimed_by=reporter,
-        claimed_until=now + datetime.timedelta(minutes=20),
+        claimed_until=now + datetime.timedelta(minutes=60),
     )
     scheduled_6 = CallRequest.objects.create(
         location=ten_locations[5],

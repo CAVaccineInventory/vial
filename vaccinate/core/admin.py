@@ -1014,6 +1014,13 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         bits = [escape(obj.location.name)]
         if not obj.location.phone_number:
             bits.append('<span style="color: red">Has no phone number</span>')
+        now = timezone.now()
+        if obj.claimed_by_id and obj.claimed_until > now:
+            bits.append(
+                '<span style="color: green">Claim locked for another {:d} minutes</span>'.format(
+                    int((obj.claimed_until - now).total_seconds() / 60)
+                )
+            )
         return mark_safe("<br>".join(bits))
 
     def state(self, obj):

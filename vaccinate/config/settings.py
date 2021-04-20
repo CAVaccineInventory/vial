@@ -25,6 +25,8 @@ ALLOWED_HOSTS = ["*"]
 
 # Call request queue is backfilled if this minimum is reached
 MIN_CALL_REQUEST_QUEUE_ITEMS = 20
+# How long should a call request be locked as "claimed"?
+CLAIM_LOCK_MINUTES = 60
 
 # django-sql-dashboard
 DASHBOARD_ROW_LIMIT = 1000
