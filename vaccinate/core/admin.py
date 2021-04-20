@@ -896,7 +896,8 @@ class CallRequestQueueStatus(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return (
-            (None, "Ready to be assigned"),
+            (None, "In queue ready to be assigned"),
+            ("nophone", "In queue BUT missing phone number"),
             ("claimed", "Currently assigned"),
             ("scheduled", "Scheduled for future"),
             ("completed", "Completed"),
@@ -923,6 +924,16 @@ class CallRequestQueueStatus(admin.SimpleListFilter):
                 Q(vesting_at__lte=now)
                 & Q(completed=False)
                 & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
+            ).exclude(
+                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
+            )
+        elif self.value() == "nophone":
+            return queryset.filter(
+                Q(vesting_at__lte=now)
+                & Q(completed=False)
+                & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
+            ).filter(
+                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
             )
         elif self.value() == "claimed":
             return queryset.filter(claimed_until__gt=now, completed=False)
@@ -976,7 +987,7 @@ def make_call_request_move_to_priority_group(priority_group):
 class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     search_fields = ("location__name", "location__public_id")
     list_display = (
-        "location",
+        "summary",
         "state",
         "priority_group",
         "queue_status",
@@ -998,6 +1009,12 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         for priority_group in CallRequest.PriorityGroup.choices
     ]
     raw_id_fields = ("location", "claimed_by", "tip_report")
+
+    def summary(self, obj):
+        bits = [escape(obj.location.name)]
+        if not obj.location.phone_number:
+            bits.append('<span style="color: red">Has no phone number</span>')
+        return mark_safe("<br>".join(bits))
 
     def state(self, obj):
         return obj.location.state.abbreviation

@@ -818,11 +818,17 @@ class CallRequest(models.Model):
         if qs is None:
             qs = cls.objects
         now = timezone.now()
-        return qs.filter(
-            # Unclaimed
-            Q(claimed_until__isnull=True)
-            | Q(claimed_until__lte=now)
-        ).filter(completed=False, vesting_at__lte=now)
+        return (
+            qs.filter(
+                # Unclaimed
+                Q(claimed_until__isnull=True)
+                | Q(claimed_until__lte=now)
+            )
+            .filter(completed=False, vesting_at__lte=now)
+            .exclude(
+                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
+            )
+        )
 
     @classmethod
     @beeline.traced("backfill_queue")

@@ -34,7 +34,7 @@ def test_request_call(client, jwt_id_token):
             county=county,
             state=State.objects.get(abbreviation="OR"),
             name="SLO Pharmacy {}".format(i),
-            phone_number="555 555-5555",
+            phone_number="555 555-5555" if i > 1 else None,
             full_address="5 5th Street",
             location_type=LocationType.objects.get(name="Pharmacy"),
             latitude=35.279,
@@ -60,7 +60,10 @@ def test_request_call(client, jwt_id_token):
     assert response2.status_code == 200
     data = response2.json()
     # This should have claimed the report with the highest priority
-    call_request = CallRequest.objects.order_by("-priority")[0]
+    # where the location has a phone number
+    call_request = CallRequest.objects.exclude(location__phone_number=None).order_by(
+        "-priority"
+    )[0]
     assert call_request.claimed_by is not None
     assert call_request.claimed_until is not None
     assert data == {
