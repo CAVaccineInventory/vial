@@ -1015,6 +1015,7 @@ class ConcordanceIdentifier(models.Model):
 
     class Meta:
         unique_together = ("source", "identifier")
+        db_table = "concordance_identifier"
 
     def __str__(self):
         return "{}:{}".format(self.source, self.identifier)
