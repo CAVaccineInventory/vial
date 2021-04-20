@@ -16,7 +16,7 @@ def populate_concordances(apps, schema_editor):
 
     for column, source in concordances:
         locations = Location.objects.exclude(**{f"{column}__isnull": True})
-        for location in locations:
+        for location in locations.only(*[p[0] for p in concordances]):
             identifier = getattr(location, column)
             concordance_identifier = ConcordanceIdentifier.objects.get_or_create(
                 source=source,
