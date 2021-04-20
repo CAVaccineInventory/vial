@@ -308,8 +308,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "longitude",
                     "hours",
                     "website",
-                    "vaccinespotter_location_id",
-                    "vaccinefinder_location_id",
                     "preferred_contact_method",
                     "provider",
                     "internal_notes",
@@ -339,6 +337,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "provenance",
                     "public_id",
                     "airtable_id",
+                    "vaccinespotter_location_id",
+                    "vaccinefinder_location_id",
+                    "google_places_id",
                     "import_ref",
                     "import_json",
                     "dn_latest_report",
@@ -405,7 +406,11 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "request_a_call",
         "public_id",
         "airtable_id",
+        "vaccinespotter_location_id",
+        "vaccinefinder_location_id",
+        "google_places_id",
         "import_json",
+        "import_ref",
         "reports_history",
         "dn_latest_report",
         "dn_latest_report_including_pending",
@@ -1021,7 +1026,7 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     int((obj.claimed_until - now).total_seconds() / 60)
                 )
             )
-        if obj.completed:
+        if obj.completed_at:
             if obj.completed_at.date() == timezone.now().date():
                 format_string = "g:i A e"
             else:

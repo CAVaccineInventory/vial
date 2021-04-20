@@ -8,6 +8,24 @@ The base URL for every API is https://vial-staging.calltheshots.us/
 
 Not a JSON API, but this is a convenient way to link to the edit page for a specific location. You can contruct this URL with the public ID of the location and VIAL will redirect the authenticated user to the corresponding edit interface for that location.
 
+## GET /api/searchLocations
+
+Under active development at the moment. This lets you search all of our locations, excluding those that have been soft-deleted.
+
+Optional query string parameters:
+
+- `q=` - a term to search for in the `name` field
+- `size=` - the number of results to return, up to 1000
+- `output=` - the output format, see below.
+
+The following output formats are supported:
+
+- `json` - the default. [Example JSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=json)
+- `geojson` - a GeoJSON Feature Collection. [Example GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=geojson)
+- `map` - a basic Leaflet map that renders that GeoJSON. [Example map](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=map)
+
+You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.
+
 ## POST /api/submitReport
   
 This API records a new "report" in our database. A report is when someone checks with a vaccination location - usually by calling them - to find out their current status.

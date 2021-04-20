@@ -1,5 +1,6 @@
 import debug_toolbar
 import django_sql_dashboard
+from api import search as search_views
 from api import views as api_views
 from auth0login.views import login, logout
 from core import tool_views
@@ -46,6 +47,7 @@ urlpatterns = [
         ),
     ),
     path("api/verifyToken", api_views.verify_token),
+    path("api/searchLocations", search_views.search_locations),
     path("api/importLocations", api_views.import_locations),
     path(
         "api/importLocations/debug",
