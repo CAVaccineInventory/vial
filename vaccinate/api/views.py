@@ -3,7 +3,7 @@ import os
 import pathlib
 import random
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import beeline
 import markdown
@@ -440,7 +440,48 @@ def verify_token(request):
     )
 
 
-class LocationValidator(BaseModel):
+class _LocationSharedValidators(BaseModel):
+    @validator("state", check_fields=False)
+    def state_must_exist(cls, value):
+        try:
+            return State.objects.get(abbreviation=value)
+        except State.DoesNotExist:
+            raise ValueError("State '{}' does not exist".format(value))
+
+    @validator("county", check_fields=False)
+    def county_must_exist(cls, value, values):
+        try:
+            return values["state"].counties.get(name=value)
+        except County.DoesNotExist:
+            raise ValueError(
+                "County '{}' does not exist in state {}".format(
+                    value, values["state"].name
+                )
+            )
+
+    @validator("location_type", check_fields=False)
+    def location_type_must_exist(cls, value):
+        try:
+            return LocationType.objects.get(name=value)
+        except LocationType.DoesNotExist:
+            raise ValueError("LocationType '{}' does not exist".format(value))
+
+    @validator("provider_type", check_fields=False)
+    def provider_type_must_exist(cls, value):
+        try:
+            return ProviderType.objects.get(name=value)
+        except ProviderType.DoesNotExist:
+            raise ValueError("ProviderType '{}' does not exist".format(value))
+
+    @validator("provider_name", check_fields=False)
+    def provider_name_requires_provider_type(cls, value, values):
+        assert values.get(
+            "provider_type"
+        ), "provider_type must be provided if provider_name is used"
+        return value
+
+
+class LocationValidator(_LocationSharedValidators):
     name: str
     state: str
     latitude: float
@@ -466,45 +507,6 @@ class LocationValidator(BaseModel):
     # Provider
     provider_type: Optional[str]
     provider_name: Optional[str]
-
-    @validator("state")
-    def state_must_exist(cls, value):
-        try:
-            return State.objects.get(abbreviation=value)
-        except State.DoesNotExist:
-            raise ValueError("State '{}' does not exist".format(value))
-
-    @validator("county")
-    def county_must_exist(cls, value, values):
-        try:
-            return values["state"].counties.get(name=value)
-        except County.DoesNotExist:
-            raise ValueError(
-                "County '{}' does not exist in state {}".format(
-                    value, values["state"].name
-                )
-            )
-
-    @validator("location_type")
-    def location_type_must_exist(cls, value):
-        try:
-            return LocationType.objects.get(name=value)
-        except LocationType.DoesNotExist:
-            raise ValueError("LocationType '{}' does not exist".format(value))
-
-    @validator("provider_type")
-    def provider_type_must_exist(cls, value):
-        try:
-            return ProviderType.objects.get(name=value)
-        except ProviderType.DoesNotExist:
-            raise ValueError("ProviderType '{}' does not exist".format(value))
-
-    @validator("provider_name")
-    def provider_name_requires_provider_type(cls, value, values):
-        assert values.get(
-            "provider_type"
-        ), "provider_type must be provided if provider_name is used"
-        return value
 
 
 @csrf_exempt
@@ -1027,3 +1029,82 @@ def export_mapbox(request):
             "publish": publish_resp.json(),
         }
     )
+
+
+class UpdateLocationsFieldsValidator(_LocationSharedValidators):
+    name: Optional[str]
+    state: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float]
+    location_type: Optional[str]
+    phone_number: Optional[str]
+    full_address: Optional[str]
+    city: Optional[str]
+    county: Optional[str]
+    google_places_id: Optional[str]
+    vaccinefinder_location_id: Optional[str]
+    vaccinespotter_location_id: Optional[str]
+    zip_code: Optional[str]
+    hours: Optional[str]
+    website: Optional[str]
+    preferred_contact_method: Optional[str]
+    provider_type: Optional[str]
+    provider_name: Optional[str]
+
+
+class UpdateLocationsValidator(BaseModel):
+    update: Dict[str, UpdateLocationsFieldsValidator]
+    revision_comment: Optional[str]
+
+    @validator("update")
+    def check_update(cls, v):
+        # Every key should correspond to an existing location
+        location_ids = set(v.keys())
+        found = set(
+            Location.objects.filter(public_id__in=location_ids).values_list(
+                "public_id", flat=True
+            )
+        )
+        assert location_ids.issubset(found), "Invalid location IDs: {}".format(
+            ", ".join(location_ids - found)
+        )
+        return v
+
+
+@csrf_exempt
+@log_api_requests
+@require_api_key
+@beeline.traced(name="update_locations")
+def update_locations(request, on_request_logged):
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    try:
+        data = UpdateLocationsValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    updates = data.dict(exclude_unset=True)["update"]
+    updated = []
+
+    with reversion.create_revision():
+        for location_id, fields in updates.items():
+            location = Location.objects.get(public_id=location_id)
+            for key, value in fields.items():
+                if key == "provider_type":
+                    continue
+                elif key == "provider_name":
+                    location.provider = Provider.objects.update_or_create(
+                        name=fields["provider_name"],
+                        defaults={"provider_type": fields["provider_type"]},
+                    )[0]
+                else:
+                    setattr(location, key, value)
+            location.save()
+            updated.append(location.public_id)
+        comment = data.revision_comment or "/api/updateLocations"
+        reversion.set_comment("{} by {}".format(comment, request.api_key))
+
+    return JsonResponse({"updated": updated}, status=200)
