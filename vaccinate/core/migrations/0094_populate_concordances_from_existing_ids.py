@@ -11,18 +11,21 @@ concordances = (
 
 
 def populate_concordances(apps, schema_editor):
-    Location = apps.get_model("core", "Location")
-    ConcordanceIdentifier = apps.get_model("core", "ConcordanceIdentifier")
+    # Migration disabled because it takes too long to run in prod
+    # https://github.com/CAVaccineInventory/vial/issues/370#issuecomment-823669731
+    return
+    # Location = apps.get_model("core", "Location")
+    # ConcordanceIdentifier = apps.get_model("core", "ConcordanceIdentifier")
 
-    for column, source in concordances:
-        locations = Location.objects.exclude(**{f"{column}__isnull": True})
-        for location in locations.only(*[p[0] for p in concordances]):
-            identifier = getattr(location, column)
-            concordance_identifier = ConcordanceIdentifier.objects.get_or_create(
-                source=source,
-                identifier=identifier,
-            )[0]
-            location.concordances.add(concordance_identifier)
+    # for column, source in concordances:
+    #     locations = Location.objects.exclude(**{f"{column}__isnull": True})
+    #     for location in locations.only(*[p[0] for p in concordances]):
+    #         identifier = getattr(location, column)
+    #         concordance_identifier = ConcordanceIdentifier.objects.get_or_create(
+    #             source=source,
+    #             identifier=identifier,
+    #         )[0]
+    #         location.concordances.add(concordance_identifier)
 
 
 class Migration(migrations.Migration):
