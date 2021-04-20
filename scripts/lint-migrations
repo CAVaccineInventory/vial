@@ -16,4 +16,5 @@
     0072_soft_deleted_on_reports \
     0073_callrequest_priority_group \
     0083_provider_public_id_now_unique \
-    0088_last_updated_is_date_not_datetime
+    0088_last_updated_is_date_not_datetime \
+    0095_rename_concordance_identifier_table

@@ -70,8 +70,10 @@ class ImportRunAdmin(admin.ModelAdmin):
 
 @admin.register(ConcordanceIdentifier)
 class ConcordanceIdentifierAdmin(admin.ModelAdmin):
+    search_fields = ("identifier",)
     list_display = ("source", "identifier", "locations_summary")
     list_display_links = ("source", "identifier")
+    list_filter = ("source",)
     raw_id_fields = ("locations", "source_locations")
 
     def get_queryset(self, request):
@@ -329,13 +331,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 ),
             },
         ),
+        ("Identifiers", {"fields": ("public_id", "concordances_summary")}),
         (
             "Data Fields",
             {
                 "classes": ("collapse",),
                 "fields": (
                     "provenance",
-                    "public_id",
                     "airtable_id",
                     "vaccinespotter_location_id",
                     "vaccinefinder_location_id",
@@ -412,6 +414,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "import_json",
         "import_ref",
         "reports_history",
+        "concordances_summary",
         "dn_latest_report",
         "dn_latest_report_including_pending",
         "dn_latest_yes_report",
@@ -494,6 +497,18 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 },
             )
         )
+
+    def concordances_summary(self, obj):
+        bits = []
+        for concordance in obj.concordances.all():
+            bits.append(
+                '{}: <a href="/admin/core/concordanceidentifier/{}/change/">{}</a>'.format(
+                    escape(concordance.source),
+                    concordance.pk,
+                    escape(concordance.identifier),
+                )
+            )
+        return mark_safe("<br>".join(bits))
 
 
 class ReporterProviderFilter(admin.SimpleListFilter):
