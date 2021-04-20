@@ -1008,7 +1008,7 @@ def export_mapbox(request):
 
     with beeline.tracer(name="geojson-upload"):
         upload_resp = requests.put(
-            f"https://api.mapbox.com/tilesets/v1/sources/calltheshots/jesse?access_token={access_token}",
+            f"https://api.mapbox.com/tilesets/v1/sources/calltheshots/vial?access_token={access_token}",
             files={"file": post_data},
             timeout=30,
         )
