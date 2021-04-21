@@ -47,6 +47,9 @@ var reportDates = JSON.parse(
     <p>Tagged
       {% for tag in report.availability_tags.all %}<strong>{{ tag }}</strong>{% if not forloop.last %}, {% endif%}{% endfor %}
     </p>
+    {% if report.is_pending_review %}
+      <p style="color: red">Pending review</p>
+    {% endif %}
     <p>on <a href="/admin/core/report/{{ report.pk }}/change/">{{ report.created_at }}</a></p>
   </div>
 {% endfor %}
