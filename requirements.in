@@ -98,3 +98,6 @@ google-cloud-storage
 
 # Metrics reporting
 prometheus_client
+
+# Reverse Geocoding for validating lat/lng
+reverse_geocoder

@@ -3,7 +3,9 @@ from typing import Optional
 
 import beeline
 import pytz
+import reverse_geocoder
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Max, Q
 from django.db.models.signals import m2m_changed
@@ -421,6 +423,17 @@ class Location(models.Model):
         super().save(*args, **kwargs)
         if set_public_id_later:
             Location.objects.filter(pk=self.pk).update(public_id=self.pid)
+
+    def clean(self):
+        results = reverse_geocoder.search((self.latitude, self.longitude))
+        if len(results) == 0:
+            raise ValidationError(
+                "Couldn't reverse lookup that latitude and longitude!"
+            )
+        elif results[0]["admin1"] != self.state.name:
+            raise ValidationError(
+                f"That latitude and longitide are not in {self.state.name}!"
+            )
 
 
 class Reporter(models.Model):
