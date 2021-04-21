@@ -14,7 +14,7 @@ from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin
 
 from .admin_actions import export_as_csv_action
-from .admin_filters import DateYesterdayFieldListFilter
+from .admin_filters import DateYesterdayFieldListFilter, make_csv_filter
 from .models import (
     AppointmentTag,
     AvailabilityTag,
@@ -529,8 +529,16 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
     search_fields = ("external_id", "name", "email")
-    list_display = ("external_id", "name", "report_count", "latest_report")
-    list_filter = (ReporterProviderFilter, "auth0_role_names")
+    list_display = ("external_id", "name", "roles", "report_count", "latest_report")
+    list_filter = (
+        ReporterProviderFilter,
+        make_csv_filter(
+            filter_title="Roles",
+            filter_parameter_name="role",
+            table="reporter",
+            column="auth0_role_names",
+        ),
+    )
     actions = [export_as_csv_action()]
 
     def get_queryset(self, request):
@@ -549,6 +557,9 @@ class ReporterAdmin(admin.ModelAdmin):
         return obj.reporter_latest_report
 
     latest_report.admin_order_field = "reporter_latest_report"
+
+    def roles(self, obj):
+        return [r.strip() for r in (obj.auth0_role_names or "").split(",")]
 
     readonly_fields = ("qa_summary",)
 
