@@ -529,7 +529,7 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
     search_fields = ("external_id", "name", "email")
-    list_display = ("external_id", "name", "report_count", "latest_report")
+    list_display = ("external_id", "name", "roles", "report_count", "latest_report")
     list_filter = (
         ReporterProviderFilter,
         make_csv_filter(
@@ -557,6 +557,9 @@ class ReporterAdmin(admin.ModelAdmin):
         return obj.reporter_latest_report
 
     latest_report.admin_order_field = "reporter_latest_report"
+
+    def roles(self, obj):
+        return [r.strip() for r in (obj.auth0_role_names or "").split(",")]
 
     readonly_fields = ("qa_summary",)
 
