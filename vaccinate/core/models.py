@@ -3,6 +3,8 @@ from typing import Optional
 
 import beeline
 import pytz
+from functools import reduce
+from operator import or_
 from django.conf import settings
 from django.db import models
 from django.db.models import Max, Q
@@ -1025,6 +1027,13 @@ class ConcordanceIdentifier(models.Model):
     def for_idref(cls, idref):
         authority, identifier = idref.split(":", 1)
         return cls.objects.get_or_create(authority=authority, identifier=identifier)[0]
+
+    @classmethod
+    def filter_for_idrefs(cls, idrefs):
+        # Returns a Q() object for use with .filter(), for example:
+        # e.g. Q(authority = 'cvs', identifier='11344') | Q(authority = 'cvs', identifier='11345')
+        pairs = [idref.split(":", 1) for idref in idrefs]
+        return reduce(or_, (Q(authority=p[0], identifier=p[1]) for p in pairs))
 
 
 # Signals

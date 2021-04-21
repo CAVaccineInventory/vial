@@ -2,7 +2,7 @@ import json
 from html import escape
 
 import beeline
-from core.models import Location, State
+from core.models import Location, State, ConcordanceIdentifier
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
@@ -34,6 +34,13 @@ def search_locations(request):
         qs = qs.filter(name__icontains=q)
     if state:
         qs = qs.filter(state__abbreviation=state)
+    idrefs = request.GET.getlist("idref")
+    if idrefs:
+        # Matching any of those idrefs
+        idref_filter = ConcordanceIdentifier.filter_for_idrefs(idrefs)
+        qs = qs.filter(
+            concordances__in=ConcordanceIdentifier.objects.filter(idref_filter)
+        )
     qs = location_json_queryset(qs)
     page_qs = qs[:size]
     json_results = lambda: {
@@ -64,7 +71,7 @@ def search_locations(request):
 def location_json_queryset(queryset):
     return queryset.select_related(
         "state", "county", "location_type", "provider__provider_type"
-    )
+    ).prefetch_related("concordances")
 
 
 def location_json(location):
@@ -93,6 +100,7 @@ def location_json(location):
         }
         if location.provider
         else None,
+        "concordances": [str(c) for c in location.concordances.all()],
     }
 
 
