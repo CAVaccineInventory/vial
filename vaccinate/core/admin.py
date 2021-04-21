@@ -657,12 +657,12 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
     list_display = (
         "created_id_deleted",
+        "location",
+        "is_pending_review",
+        "claimed_by",
         "availability",
         "public_notes",
         "internal_notes",
-        "is_pending_review",
-        "claimed_by",
-        "location",
         "appointment_tag_and_scheduling",
         "reporter",
     )
