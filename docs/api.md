@@ -17,6 +17,7 @@ Optional query string parameters:
 - `q=` - a term to search for in the `name` field
 - `size=` - the number of results to return, up to 1000
 - `output=` - the output format, see below.
+- `state=` - a state code such as `CA` or `OR`
 
 The following output formats are supported:
 

@@ -2,7 +2,7 @@ import json
 from html import escape
 
 import beeline
-from core.models import Location
+from core.models import Location, State
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
@@ -13,6 +13,12 @@ def search_locations(request):
     format = request.GET.get("format") or "json"
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
+    state = (request.GET.get("state") or "").upper()
+    if state:
+        try:
+            State.objects.get(abbreviation=state)
+        except State.DoesNotExist:
+            return JsonResponse({"error": "State does not exist"}, status=400)
     # debug wraps in HTML so we can run django-debug-toolbar
     debug = request.GET.get("debug")
     if format == "map":
@@ -26,6 +32,8 @@ def search_locations(request):
     qs = Location.objects.filter(soft_deleted=False)
     if q:
         qs = qs.filter(name__icontains=q)
+    if state:
+        qs = qs.filter(state__abbreviation=state)
     qs = location_json_queryset(qs)
     page_qs = qs[:size]
     json_results = lambda: {
