@@ -1,4 +1,4 @@
-from core.models import ConcordanceIdentifier, SourceLocation
+from core.models import ConcordanceIdentifier
 
 
 def test_update_location_concordances(client, api_key, ten_locations):
