@@ -997,6 +997,7 @@ class SourceLocation(models.Model):
 
 
 class ConcordanceIdentifier(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
     authority = models.CharField(max_length=32)
     identifier = models.CharField(max_length=128)
 

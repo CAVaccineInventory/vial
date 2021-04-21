@@ -92,8 +92,8 @@ class ConcordanceIdentifierAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj is not None:
-            return ("authority", "identifier")
-        return []
+            return ("created_at", "authority", "identifier")
+        return ["created_at"]
 
     def has_delete_permission(self, request, obj=None):
         return False
