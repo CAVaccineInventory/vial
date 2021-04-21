@@ -352,6 +352,8 @@ The following fields can be updated using this API. All are optional.
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
 
+Try this API at https://vial-staging.calltheshots.us/api/updateLocations/debug
+
 ## POST /api/updateLocationConcordances
 
 Bulk API for adding and removing concordances (IDs from other systems) to our locations.
@@ -398,6 +400,8 @@ To remove a concordance identifier, use `"remove"` instead of `"add"`:
 }
 ```
 You can pass multiple ID references to both the `"add"` and the `"remove"` action. You can send multiple location IDs to the endpoint at once.
+
+Try this API at https://vial-staging.calltheshots.us/api/updateLocationConcordances/debug
 
 ## POST /api/importReports
 
