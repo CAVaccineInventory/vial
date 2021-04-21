@@ -833,7 +833,13 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("location__state", "reported_by", "appointment_tag")
+            .select_related(
+                "location__provider",
+                "location__state",
+                "location__county",
+                "reported_by",
+                "appointment_tag",
+            )
             .prefetch_related("availability_tags")
         )
 
