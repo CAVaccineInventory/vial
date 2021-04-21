@@ -1018,7 +1018,7 @@ class ConcordanceIdentifier(models.Model):
         db_table = "concordance_identifier"
 
     def __str__(self):
-        return "{}:{}".format(self.source, self.identifier)
+        return "{}:{}".format(self.authority, self.identifier)
 
 
 # Signals
