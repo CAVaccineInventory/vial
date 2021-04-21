@@ -1,10 +1,10 @@
 import uuid
+from functools import reduce
+from operator import or_
 from typing import Optional
 
 import beeline
 import pytz
-from functools import reduce
-from operator import or_
 from django.conf import settings
 from django.db import models
 from django.db.models import Max, Q

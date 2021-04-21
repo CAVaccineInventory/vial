@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from core.models import Location, State, ConcordanceIdentifier
+from core.models import ConcordanceIdentifier, Location, State
 
 
 @pytest.mark.parametrize(

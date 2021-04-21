@@ -2,7 +2,7 @@ import json
 from html import escape
 
 import beeline
-from core.models import Location, State, ConcordanceIdentifier
+from core.models import ConcordanceIdentifier, Location, State
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
