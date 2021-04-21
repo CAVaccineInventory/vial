@@ -6,8 +6,9 @@ from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import dateformat, timezone
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin
@@ -655,16 +656,15 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__name",
     )
     list_display = (
-        "id_and_note",
-        "created_at_short",
-        "public_id",
+        "created_id_deleted",
         "availability",
+        "internal_notes",
+        "public_notes",
         "is_pending_review",
         "claimed_by",
         "location",
-        "appointment_tag",
+        "appointment_tag_and_scheduling",
         "reporter",
-        "created_at_utc",
     )
     autocomplete_fields = ("availability_tags", "claimed_by")
     list_display_links = ("id", "created_at", "public_id")
@@ -706,28 +706,26 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     inlines = [ReportReviewNoteInline]
     ordering = ("-created_at",)
 
-    def id_and_note(self, obj):
-        html = '<a href="/admin/core/report/{}/change/"><strong>{}</strong></a>'.format(
-            obj.id,
-            obj.id,
-        )
-        if obj.soft_deleted:
-            html += '<br><strong style="color: red">Soft deleted</strong>'
-        return mark_safe(html)
-
-    id_and_note.short_description = "id"
-    id_and_note.admin_order_field = "id"
-
-    def created_at_short(self, obj):
-        return mark_safe(
+    def created_id_deleted(self, obj):
+        date = (
             dateformat.format(timezone.localtime(obj.created_at), "j M g:iA e")
             .replace("PM", "pm")
             .replace("AM", "am")
-            .replace(" ", "&nbsp;")
+            .replace(" ", u"\u00a0")
+        )
+        html = format_html(
+            '{}<br><b><a href="{}">{}</a></b>',
+            date,
+            reverse("admin:core_report_change", args=(obj.id,)),
+            obj.public_id,
         )
 
-    created_at_short.short_description = "created"
-    created_at_short.admin_order_field = "created_at"
+        if obj.soft_deleted:
+            html += mark_safe('<br><strong style="color: red">Soft deleted</strong>')
+        return mark_safe(html)
+
+    created_id_deleted.short_description = "created"
+    created_id_deleted.admin_order_field = "created_at"
 
     def reporter(self, obj):
         return mark_safe(
@@ -738,6 +736,23 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         )
 
     reporter.admin_order_field = "reported_by"
+
+    def appointment_tag_and_scheduling(self, obj):
+        raw_details = obj.full_appointment_details()
+        if raw_details and (
+            raw_details.startswith("http://") or raw_details.startswith("https://")
+        ):
+            details = format_html('<a href="{}">{}</a>', raw_details, raw_details)
+        else:
+            details = escape(raw_details or "")
+        if not obj.appointment_details:
+            # If this is from fallback on the location or provider, italicize it
+            details = mark_safe("<i>{}</i>".format(details))
+
+        return mark_safe("<b>{}</b><br>{}".format(obj.appointment_tag.name, details))
+
+    appointment_tag_and_scheduling.admin_order_field = "appointment_tag"
+    appointment_tag_and_scheduling.short_description = "appointment info"
 
     def has_delete_permission(self, request, obj=None):
         # Soft delete only
