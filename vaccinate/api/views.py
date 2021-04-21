@@ -709,7 +709,7 @@ def import_source_locations(request, on_request_logged):
         if "links" in record:
             for link in record["links"]:
                 identifier, _ = ConcordanceIdentifier.objects.get_or_create(
-                    source=link["authority"], identifier=link["id"]
+                    authority=link["authority"], identifier=link["id"]
                 )
                 identifier.source_locations.add(source_location)
 

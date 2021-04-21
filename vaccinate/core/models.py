@@ -997,7 +997,7 @@ class SourceLocation(models.Model):
 
 
 class ConcordanceIdentifier(models.Model):
-    source = models.CharField(max_length=32)
+    authority = models.CharField(max_length=32)
     identifier = models.CharField(max_length=128)
 
     locations = models.ManyToManyField(
@@ -1014,7 +1014,7 @@ class ConcordanceIdentifier(models.Model):
     )
 
     class Meta:
-        unique_together = ("source", "identifier")
+        unique_together = ("authority", "identifier")
         db_table = "concordance_identifier"
 
     def __str__(self):

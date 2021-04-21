@@ -71,9 +71,9 @@ class ImportRunAdmin(admin.ModelAdmin):
 @admin.register(ConcordanceIdentifier)
 class ConcordanceIdentifierAdmin(admin.ModelAdmin):
     search_fields = ("identifier",)
-    list_display = ("source", "identifier", "locations_summary")
-    list_display_links = ("source", "identifier")
-    list_filter = ("source",)
+    list_display = ("authority", "identifier", "locations_summary")
+    list_display_links = ("authority", "identifier")
+    list_filter = ("authority",)
     raw_id_fields = ("locations", "source_locations")
 
     def get_queryset(self, request):
@@ -92,7 +92,7 @@ class ConcordanceIdentifierAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj is not None:
-            return ("source", "identifier")
+            return ("authority", "identifier")
         return []
 
     def has_delete_permission(self, request, obj=None):
@@ -503,7 +503,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         for concordance in obj.concordances.all():
             bits.append(
                 '{}: <a href="/admin/core/concordanceidentifier/{}/change/">{}</a>'.format(
-                    escape(concordance.source),
+                    escape(concordance.authority),
                     concordance.pk,
                     escape(concordance.identifier),
                 )
