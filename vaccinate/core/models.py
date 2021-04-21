@@ -997,7 +997,8 @@ class SourceLocation(models.Model):
 
 
 class ConcordanceIdentifier(models.Model):
-    source = models.CharField(max_length=32)
+    created_at = models.DateTimeField(default=timezone.now)
+    authority = models.CharField(max_length=32)
     identifier = models.CharField(max_length=128)
 
     locations = models.ManyToManyField(
@@ -1014,11 +1015,16 @@ class ConcordanceIdentifier(models.Model):
     )
 
     class Meta:
-        unique_together = ("source", "identifier")
+        unique_together = ("authority", "identifier")
         db_table = "concordance_identifier"
 
     def __str__(self):
-        return "{}:{}".format(self.source, self.identifier)
+        return "{}:{}".format(self.authority, self.identifier)
+
+    @classmethod
+    def for_idref(cls, idref):
+        authority, identifier = idref.split(":", 1)
+        return cls.objects.get_or_create(authority=authority, identifier=identifier)[0]
 
 
 # Signals

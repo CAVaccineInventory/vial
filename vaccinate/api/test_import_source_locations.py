@@ -17,7 +17,7 @@ def test_import_location(client, api_key, json_path):
     assert ConcordanceIdentifier.objects.count() == 0
 
     # First, create one of the ConcordanceIdentifiers to test that logic
-    ConcordanceIdentifier.objects.create(source="rite_aid", identifier="5751")
+    ConcordanceIdentifier.objects.create(authority="rite_aid", identifier="5751")
 
     # Initiate an import run
     start_response = client.post(

@@ -17,4 +17,6 @@
     0073_callrequest_priority_group \
     0083_provider_public_id_now_unique \
     0088_last_updated_is_date_not_datetime \
-    0095_rename_concordance_identifier_table
+    0095_rename_concordance_identifier_table \
+    0097_rename_concordanceidentifier_source_to_authority \
+    0098_concordanceidentifier_created_at

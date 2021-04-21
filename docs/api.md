@@ -352,6 +352,57 @@ The following fields can be updated using this API. All are optional.
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
 
+Try this API at https://vial-staging.calltheshots.us/api/updateLocations/debug
+
+## POST /api/updateLocationConcordances
+
+Bulk API for adding and removing concordances (IDs from other systems) to our locations.
+
+The API is similar to `/api/updateLocations`. The input looks like this:
+
+```json
+{
+  "update": {
+    "$location_id": {
+      "add": [
+        "$authority:$identifier"
+      ]
+    }
+  }
+}
+```
+To add a Google Places ID of `ChIJsb3xzpJNg4ARVC7_9DDwJnU` to the location with ID `recfwh2p1fNN7TN4C` you would send this:
+```json
+{
+  "update": {
+    "recfwh2p1fNN7TN4C": {
+      "add": [
+        "google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU"
+      ]
+    }
+  }
+}
+```
+Note that the concordance ID references used here are always `authority:identifier` - where the authority is something like `google_places` or `vaccinespotter` or `vaccinefinder`.
+
+A full list of authorities currently in use can be found on the [concordance identifier listing page](https://vial-staging.calltheshots.us/admin/core/concordanceidentifier/).
+
+To remove a concordance identifier, use `"remove"` instead of `"add"`:
+```json
+{
+  "update": {
+    "recfwh2p1fNN7TN4C": {
+      "remove": [
+        "google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU"
+      ]
+    }
+  }
+}
+```
+You can pass multiple ID references to both the `"add"` and the `"remove"` action. You can send multiple location IDs to the endpoint at once.
+
+Try this API at https://vial-staging.calltheshots.us/api/updateLocationConcordances/debug
+
 ## POST /api/importReports
 
 Private API for us to import old reports from Airtable into the VIAL database.
