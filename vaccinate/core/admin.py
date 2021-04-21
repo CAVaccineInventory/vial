@@ -742,7 +742,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         if raw_details and (
             raw_details.startswith("http://") or raw_details.startswith("https://")
         ):
-            details = format_html('<a href="{}">{}</a>', raw_details, raw_details)
+            details = format_html(
+                '<a target="_blank" href="{}">{}</a>', raw_details, raw_details
+            )
         else:
             details = escape(raw_details or "")
         if not obj.appointment_details:
