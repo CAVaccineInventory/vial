@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 import random
+import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -1110,3 +1111,76 @@ def update_locations(request, on_request_logged):
         reversion.set_comment("{} by {}".format(comment, request.api_key))
 
     return JsonResponse({"updated": updated}, status=200)
+
+
+idref_re = re.compile("[a-zA-Z0-9_]+:.*")
+
+
+class UpdateLocationConcordancesFieldsValidator(BaseModel):
+    add: Optional[List[str]]
+    remove: Optional[List[str]]
+
+    @validator("add")
+    def check_add(cls, idrefs):
+        bad = [idref for idref in idrefs if not idref_re.match(idref)]
+        assert (
+            not bad
+        ), "Invalid references: {} - should be 'authority:identifier'".format(bad)
+        return idrefs
+
+    @validator("remove")
+    def check_remove(cls, idrefs):
+        return cls.check_add(idrefs)
+
+
+class UpdateLocationConcordancesValidator(BaseModel):
+    update: Dict[str, UpdateLocationConcordancesFieldsValidator]
+
+    @validator("update")
+    def check_update(cls, v):
+        # Every key should correspond to an existing location
+        location_ids = set(v.keys())
+        found = set(
+            Location.objects.filter(public_id__in=location_ids).values_list(
+                "public_id", flat=True
+            )
+        )
+        assert location_ids.issubset(found), "Invalid location IDs: {}".format(
+            ", ".join(location_ids - found)
+        )
+        return v
+
+
+@csrf_exempt
+@log_api_requests
+@require_api_key
+@beeline.traced(name="update_location_concordances")
+def update_location_concordances(request, on_request_logged):
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    try:
+        data = UpdateLocationConcordancesValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    update = data.dict(exclude_unset=True)["update"]
+    updated = []
+    for location_id, updates in update.items():
+        location = Location.objects.get(public_id=location_id)
+        for idref in updates.get("add") or []:
+            location.concordances.add(ConcordanceIdentifier.for_idref(idref))
+        # Removing is more efficient:
+        for idref in updates.get("remove") or []:
+            authority, identifier = idref.split(":", 1)
+            ConcordanceIdentifier.locations.through.objects.filter(
+                location=location,
+                concordanceidentifier__identifier=identifier,
+                concordanceidentifier__authority=authority,
+            ).delete()
+        if updates.get("add") or updates.get("remove"):
+            updated.append(location_id)
+
+    return JsonResponse({"updated": updated})

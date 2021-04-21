@@ -1021,6 +1021,11 @@ class ConcordanceIdentifier(models.Model):
     def __str__(self):
         return "{}:{}".format(self.authority, self.identifier)
 
+    @classmethod
+    def for_idref(cls, idref):
+        authority, identifier = idref.split(":", 1)
+        return cls.objects.get_or_create(authority=authority, identifier=identifier)[0]
+
 
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
