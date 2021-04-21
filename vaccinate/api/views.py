@@ -1183,4 +1183,11 @@ def update_location_concordances(request, on_request_logged):
         if updates.get("add") or updates.get("remove"):
             updated.append(location_id)
 
-    return JsonResponse({"updated": updated})
+    # Garbage collection: delete any ConcordanceIdentifier
+    # that no loger have locations or source_locations
+    deleted_count = ConcordanceIdentifier.objects.filter(
+        locations__isnull=True, source_locations__isnull=True
+    ).delete()[0]
+    return JsonResponse(
+        {"updated": updated, "deleted_concordance_identifiers": deleted_count}
+    )

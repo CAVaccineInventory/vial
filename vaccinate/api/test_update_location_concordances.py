@@ -1,7 +1,22 @@
+from core.models import ConcordanceIdentifier, SourceLocation
+
+
 def test_update_location_concordances(client, api_key, ten_locations):
     location1, location2 = ten_locations[0], ten_locations[1]
     assert location1.concordances.count() == 0
     assert location2.concordances.count() == 0
+    # Create a concordance that will be garbage collected
+    ConcordanceIdentifier.objects.create(authority="gc_test", identifier="collect_me")
+    # And one that won't
+    ConcordanceIdentifier.objects.create(
+        authority="gc_test", identifier="leave_me"
+    ).source_locations.create(
+        source_uid="gc_test:1", source_name="gc_test", name="Blah"
+    )
+    assert [str(c) for c in ConcordanceIdentifier.objects.all()] == [
+        "gc_test:collect_me",
+        "gc_test:leave_me",
+    ]
     response = client.post(
         "/api/updateLocationConcordances",
         {
@@ -19,6 +34,12 @@ def test_update_location_concordances(client, api_key, ten_locations):
     )
     assert response.status_code == 200
     assert response.json()["updated"] == [location1.public_id, location2.public_id]
+    assert [str(c) for c in ConcordanceIdentifier.objects.all()] == [
+        "gc_test:leave_me",
+        "google_places:123",
+        "vaccinefinder:456",
+        "vaccinefinder:678",
+    ]
     assert [str(c) for c in location1.concordances.all()] == [
         "google_places:123",
         "vaccinefinder:456",
@@ -43,6 +64,12 @@ def test_update_location_concordances(client, api_key, ten_locations):
         HTTP_AUTHORIZATION="Bearer {}".format(api_key),
     )
     assert response2.status_code == 200
+    assert [str(c) for c in ConcordanceIdentifier.objects.all()] == [
+        "gc_test:leave_me",
+        "vaccinefinder:456",
+        "vaccinefinder:678",
+        "cvs:8874",
+    ]
     assert [str(c) for c in location1.concordances.all()] == ["vaccinefinder:456"]
     assert [str(c) for c in location2.concordances.all()] == [
         "vaccinefinder:678",
