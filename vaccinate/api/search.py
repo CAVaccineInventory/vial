@@ -61,6 +61,14 @@ def search_locations(request):
     if all:
         stream_qs = keyset_pagination_iterator(qs)
 
+    trace_id = None
+    parent_id = None
+    bl = beeline.get_beeline()
+    if bl:
+        trace_id = bl.tracer_impl.get_active_trace_id()
+        parent_id = bl.tracer_impl.get_active_span().id
+
+    @beeline.traced("search_locations_stream", trace_id=trace_id, parent_id=parent_id)
     def stream():
         if callable(formatter.start):
             yield formatter.start(qs)

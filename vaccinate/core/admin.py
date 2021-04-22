@@ -1,4 +1,4 @@
-import datetime
+import json
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -503,13 +503,30 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         bits = []
         for concordance in obj.concordances.all():
             bits.append(
-                '{}: <a href="/admin/core/concordanceidentifier/{}/change/">{}</a>'.format(
+                '<p data-idref="{}">{}: <a href="/admin/core/concordanceidentifier/{}/change/">{}</a></p>'.format(
+                    escape(str(concordance)),
                     escape(concordance.authority),
                     concordance.pk,
                     escape(concordance.identifier),
                 )
             )
-        return mark_safe("<br>".join(bits))
+        return mark_safe(
+            '<div data-public-id="{}" data-authorities="{}" class="edit-concordances">'.format(
+                escape(obj.public_id),
+                escape(
+                    json.dumps(
+                        list(
+                            ConcordanceIdentifier.objects.values_list(
+                                "authority", flat=True
+                            ).distinct()
+                        )
+                    )
+                ),
+            )
+            + '<div class="existing-concordances">'
+            + "\n".join(bits)
+            + "</div></div>"
+        )
 
 
 class ReporterProviderFilter(admin.SimpleListFilter):
@@ -697,7 +714,13 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         SoftDeletedFilter,
         ("created_at", DateYesterdayFieldListFilter),
         "availability_tags",
-        "reported_by__auth0_role_names",
+        make_csv_filter(
+            filter_title="Roles",
+            filter_parameter_name="role",
+            table="reporter",
+            column="auth0_role_names",
+            queryset_column="reported_by__auth0_role_names",
+        ),
         "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )

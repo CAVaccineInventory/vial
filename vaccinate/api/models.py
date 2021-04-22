@@ -33,6 +33,13 @@ class ApiLog(models.Model):
         default=timezone.now,
         db_index=True,
     )
+    user = models.ForeignKey(
+        "auth.User",
+        related_name="api_logs",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     method = CharTextField(help_text="The HTTP method")
     path = CharTextField(help_text="The path, starting with /")
     query_string = CharTextField(blank=True, help_text="The bit after the ?")

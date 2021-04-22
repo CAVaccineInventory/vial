@@ -602,3 +602,19 @@ Each newline-delimited JSON object should have the following shape:
 Returns a 400 error on errors, a 200 on success.
 
 Try it: https://vial-staging.calltheshots.us/api/importSourceLocations/debug
+
+## GET /api/location/PUBLIC_ID/concordances
+
+Retrieve the concordances (external identifiers) for a specific location.
+
+Example output:
+```json
+{
+    "concordances": [
+        "google_places:ChIJh1Vp2AhS2YAReWQls7L8uKY",
+        "vaccinespotter:798382",
+        "vaccinefinder:bdae81b3-d682-405a-b66e-50052e4a140a"
+    ]
+}
+```
+https://vial-staging.calltheshots.us/api/location/rec1wYYRF8RLX9B9y/concordances

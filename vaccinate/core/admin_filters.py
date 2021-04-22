@@ -28,7 +28,11 @@ class DateYesterdayFieldListFilter(DateFieldListFilter):
         )
 
 
-def make_csv_filter(filter_title, filter_parameter_name, table, column):
+def make_csv_filter(
+    filter_title, filter_parameter_name, table, column, queryset_column=None
+):
+    queryset_column = queryset_column or column
+
     class CommaSeparatedValuesFilter(SimpleListFilter):
         title = filter_title
         parameter_name = filter_parameter_name
@@ -54,7 +58,7 @@ def make_csv_filter(filter_title, filter_parameter_name, table, column):
                 return queryset.annotate(
                     value_array_position=Func(
                         Func(
-                            F(column),
+                            F(queryset_column),
                             Value(",\s*"),
                             function="regexp_split_to_array",
                             output_field=ArrayField(TextField()),

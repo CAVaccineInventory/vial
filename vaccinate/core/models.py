@@ -1036,6 +1036,17 @@ class ConcordanceIdentifier(models.Model):
         return reduce(or_, (Q(authority=p[0], identifier=p[1]) for p in pairs))
 
 
+ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(
+    self.concordanceidentifier, self.location.public_id
+)
+
+ConcordanceIdentifier.source_locations.through.__str__ = (
+    lambda self: "{} on source location {}".format(
+        self.concordanceidentifier, self.sourcelocation_id
+    )
+)
+
+
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
 def denormalize_location(sender, instance, action, **kwargs):
