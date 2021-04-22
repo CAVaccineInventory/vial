@@ -130,6 +130,12 @@ function addConcordanceEditors() {
     });
     container.append(select);
     var inputValue = $("<input type='text'>");
+    inputValue.on('keypress', (ev) => {
+      // Don't submit form on 'enter' in that input
+      if (ev.which == 13) {
+        ev.preventDefault();
+      }
+    });
     container.append(inputValue);
     var addButton = $("<button>Add</button>");
     container.append(addButton);
@@ -161,6 +167,8 @@ function addConcordanceEditors() {
             var p = $("<p></p>");
             p.text(idref);
             container.find(".existing-concordances").append(p);
+          } else if (d.error) {
+            alert(d.error);
           }
         });
     });
