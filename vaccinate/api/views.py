@@ -13,6 +13,8 @@ import requests
 import reversion
 from api.location_metrics import LocationMetricsReport
 from auth0login.auth0_utils import decode_and_verify_jwt
+from bigmap.schema import ImportSourceLocation
+from bigmap.transform import source_to_location
 from core import exporter
 from core.import_utils import (
     derive_appointment_tag,
@@ -620,43 +622,6 @@ def start_import_run(request, on_request_logged):
         return JsonResponse({"error": "POST required"}, status=400)
 
 
-class LatLongValidator(BaseModel):
-    latitude: Optional[float]
-    longitude: Optional[float]
-
-
-class SourceDataValidator(BaseModel):
-    source: str
-    id: str
-    fetched_from_uri: Optional[str]
-    fetched_at: Optional[datetime]
-    published_at: Optional[datetime]
-    data: dict
-
-
-class LinkValidator(BaseModel):
-    authority: str
-    id: str
-    uri: Optional[str]
-
-
-class SourceLocationValidator(BaseModel):
-    name: Optional[str]
-    location: Optional[LatLongValidator]
-    match: Optional[dict]
-    links: Optional[list[LinkValidator]]
-    source: SourceDataValidator
-
-    @validator("match")
-    def match_must_exist(cls, v):
-        try:
-            return Location.objects.get(public_id=v["id"])
-        except Location.DoesNotExist:
-            raise ValueError("Location '{}' does not exist".format(v))
-        except KeyError:
-            raise ValueError("Match did not have an id")
-
-
 @csrf_exempt
 @log_api_requests
 @require_api_key
@@ -678,7 +643,7 @@ def import_source_locations(request, on_request_logged):
     errors = []
     for record in records:
         try:
-            SourceLocationValidator(**record).dict()
+            ImportSourceLocation(**record).dict()
         except ValidationError as e:
             errors.append((record, e.errors()))
     if errors:
@@ -687,38 +652,50 @@ def import_source_locations(request, on_request_logged):
     created = []
     updated = []
     for record in records:
-        if "location" in record:
-            latitude = record["location"].get("latitude")
-            longitude = record["location"].get("longitude")
-        else:
-            latitude = None
-            longitude = None
+        matched_location = None
+        if "match" in record and record["match"]["action"] == "existing":
+            matched_location = Location.objects.get(id=record["match"]["id"])
 
         source_location, was_created = SourceLocation.objects.update_or_create(
-            source_uid=record["source"]["id"],
+            source_uid=record["source_uid"],
             defaults={
-                "source_name": record["source"]["source"],
+                "source_name": record["source_name"],
                 "name": record.get("name"),
-                "latitude": latitude,
-                "longitude": longitude,
-                "import_json": record,
+                "latitude": record.get("latitude"),
+                "longitude": record.get("longitud"),
+                "import_json": record["import_json"],
                 "import_run": import_run,
-                "matched_location": record.get("match"),
+                "matched_location": matched_location,
             },
         )
 
-        if "links" in record:
-            for link in record["links"]:
+        import_json = record["import_json"]
+        if "links" in import_json:
+            for link in import_json["links"]:
                 identifier, _ = ConcordanceIdentifier.objects.get_or_create(
                     authority=link["authority"], identifier=link["id"]
                 )
                 identifier.source_locations.add(source_location)
+        if "match" in record and record["match"]["action"] == "new":
+            build_location_from_source_location(source_location)
 
         if was_created:
             created.append(source_location.pk)
         else:
             updated.append(source_location.pk)
     return JsonResponse({"created": created, "updated": updated})
+
+
+def build_location_from_source_location(source_location: SourceLocation):
+    location_kwargs = source_to_location(source_location.import_json)
+    location_kwargs["state"] = State.objects.get(abbreviation=location_kwargs["state"])
+    unknown_location_type = LocationType.objects.get(name="Unknown")
+
+    location = Location.objects.create(
+        location_type=unknown_location_type, **location_kwargs
+    )
+    source_location.matched_location = location
+    source_location.save()
 
 
 @csrf_exempt

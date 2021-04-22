@@ -431,32 +431,45 @@ def test_adding_review_note_with_approved_tag_approves_report(
 
 
 def test_bulk_approve_reports_action(admin_client, ten_locations):
-    location = ten_locations[0]
     reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
     web = AppointmentTag.objects.get(slug="web")
-    report = location.reports.create(
-        reported_by=reporter,
-        report_source="ca",
-        appointment_tag=web,
-        is_pending_review=True,
-        originally_pending_review=True,
-    )
     plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
     plus_50 = AvailabilityTag.objects.get(slug="vaccinating_50_plus")
-    report.availability_tags.add(plus_65)
-    report.availability_tags.add(plus_50)
-    report.refresh_from_db()
-    assert report.review_notes.count() == 0
-    # Now bulk-approve it
+
+    reports = []
+    for location in ten_locations:
+        report = location.reports.create(
+            reported_by=reporter,
+            report_source="ca",
+            appointment_tag=web,
+            is_pending_review=True,
+            originally_pending_review=True,
+        )
+        report.availability_tags.add(plus_65)
+        report.availability_tags.add(plus_50)
+        report.refresh_from_db()
+        assert report.review_notes.count() == 0
+        reports.append(report)
+
+        location.refresh_from_db()
+        assert location.dn_latest_report_id is None
+        assert location.dn_latest_report_including_pending_id == report.id
+
+    # Now bulk-approve them
     admin_client.post(
         "/admin/core/report/",
         {
             "action": "bulk_approve_reports",
-            "_selected_action": [report.id],
+            "_selected_action": [report.id for report in reports],
         },
     )
 
-    report.refresh_from_db()
-    assert report.review_notes.count() == 1
-    note = report.review_notes.first()
-    assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]
+    for location, report in zip(ten_locations, reports):
+        location.refresh_from_db()
+        assert location.dn_latest_report_id == report.id
+        assert location.dn_latest_report_including_pending_id == report.id
+
+        report.refresh_from_db()
+        assert report.review_notes.count() == 1
+        note = report.review_notes.first()
+        assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]

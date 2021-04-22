@@ -16,12 +16,16 @@ Optional query string parameters:
 
 - `q=` - a term to search for in the `name` field
 - `size=` - the number of results to return, up to 1000
-- `output=` - the output format, see below.
+- `format=` - the output format, see below.
+- `state=` - a state code such as `CA` or `OR`
+- `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers
+- `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 
 The following output formats are supported:
 
 - `json` - the default. [Example JSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=json)
 - `geojson` - a GeoJSON Feature Collection. [Example GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=geojson)
+- `nlgeojson` - Newline-delimited GeoJSON. [Example nl-GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=nlgeojson)
 - `map` - a basic Leaflet map that renders that GeoJSON. [Example map](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=map)
 
 You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.

@@ -1,4 +1,6 @@
 import uuid
+from functools import reduce
+from operator import or_
 from typing import Optional
 
 import beeline
@@ -1026,8 +1028,29 @@ class ConcordanceIdentifier(models.Model):
         authority, identifier = idref.split(":", 1)
         return cls.objects.get_or_create(authority=authority, identifier=identifier)[0]
 
+    @classmethod
+    def filter_for_idrefs(cls, idrefs):
+        # Returns a Q() object for use with .filter(), for example:
+        # e.g. Q(authority = 'cvs', identifier='11344') | Q(authority = 'cvs', identifier='11345')
+        pairs = [idref.split(":", 1) for idref in idrefs]
+        return reduce(or_, (Q(authority=p[0], identifier=p[1]) for p in pairs))
+
 
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
-def denormalize_location(sender, instance, **kwargs):
-    instance.location.update_denormalizations()
+def denormalize_location(sender, instance, action, **kwargs):
+    if action in ("post_add", "post_remove", "post_clear"):
+        instance.location.update_denormalizations()
+
+
+@receiver(m2m_changed, sender=ReportReviewNote.tags.through)
+def approval_review_report_denormalize_location(sender, instance, action, **kwargs):
+    if action == "post_add" and len(instance.tags.filter(tag="Approved")):
+        instance.report.is_pending_review = False
+        instance.report.save()
+    # We don't _un-approve_ if the tag is removed because the flag can
+    # _also_ be just generally unset manually.  Imagine:
+    #  - report is flagged on creation
+    #  - is_pending_review unset by unchecking the box
+    #  - approval is made
+    #  - approval is deleted

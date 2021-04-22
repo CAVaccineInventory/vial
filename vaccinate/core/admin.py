@@ -626,7 +626,6 @@ def bulk_approve_reports(modeladmin, request, queryset):
         note = report.review_notes.create(author=request.user)
         note.tags.add(approved)
     count = pending_review.count()
-    pending_review.update(is_pending_review=False)
     messages.success(
         request,
         "Approved {} report{}".format(count, "s" if count != 1 else ""),
@@ -807,19 +806,6 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             instance.author = request.user
             instance.save()
         formset.save_m2m()
-        # Does a review posted created within last 5 seconds have the 'approved' tag?
-        recently_added_review = form.instance.review_notes.filter(
-            created_at__gte=timezone.now() - datetime.timedelta(seconds=5)
-        ).last()
-        if (
-            recently_added_review is not None
-            and recently_added_review.tags.filter(tag="Approved").exists()
-            and form.instance.is_pending_review
-        ):
-            obj = form.instance
-            obj.is_pending_review = False
-            obj.save()
-            obj.location.update_denormalizations()
 
     def save_model(self, request, obj, form, change):
         if obj.claimed_by and "claimed_by" in form.changed_data:
