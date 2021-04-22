@@ -61,6 +61,7 @@ def search_locations(request):
     if all:
         stream_qs = keyset_pagination_iterator(qs)
 
+    @beeline.traced("search_locations_stream")
     def stream():
         if callable(formatter.start):
             yield formatter.start(qs)
