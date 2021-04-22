@@ -1173,3 +1173,11 @@ def update_location_concordances(request, on_request_logged):
     return JsonResponse(
         {"updated": updated, "deleted_concordance_identifiers": deleted_count}
     )
+
+
+def location_concordances(request, public_id):
+    try:
+        location = Location.objects.filter(soft_deleted=False).get(public_id=public_id)
+    except Location.DoesNotExist:
+        return JsonResponse({"error": "Location does not exist"}, status=404)
+    return JsonResponse({"concordances": [str(c) for c in location.concordances.all()]})

@@ -1,3 +1,5 @@
+import json
+
 from core.models import ConcordanceIdentifier
 
 
@@ -110,3 +112,10 @@ def test_update_location_concordances_with_user_cookie(
         admin_user.api_logs.values("path")[0]["path"]
         == "/api/updateLocationConcordances"
     )
+
+
+def test_get_location_concordances(client, ten_locations):
+    location = ten_locations[0]
+    location.concordances.add(ConcordanceIdentifier.for_idref("foo:bar"))
+    response = client.get("/api/location/{}/concordances".format(location.public_id))
+    assert json.loads(response.content) == {"concordances": ["foo:bar"]}
