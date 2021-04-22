@@ -19,6 +19,7 @@ Optional query string parameters:
 - `format=` - the output format, see below.
 - `state=` - a state code such as `CA` or `OR`
 - `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers
+- `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 
 The following output formats are supported:
 

@@ -94,3 +94,17 @@ def test_search_locations_format_nlgeojson(client, ten_locations):
     for line in lines:
         record = json.loads(line)
         assert set(record.keys()) == {"type", "properties", "geometry"}
+
+
+def test_search_stream_all(client, two_hundred_locations):
+    # I would have used parametrize here, but that runs two_hundred_locations
+    # fixture three times and I only want to run it once
+    for format, check in (
+        ("json", lambda r: len(json.loads(r)["results"]) == 200),
+        ("geojson", lambda r: len(json.loads(r)["features"]) == 200),
+        ("nlgeojson", lambda r: len(r.split(b"\n")) == 200),
+    ):
+        response = client.get("/api/searchLocations?format={}&all=1".format(format))
+        assert response.status_code == 200
+        joined = b"".join(response.streaming_content)
+        assert check(joined)

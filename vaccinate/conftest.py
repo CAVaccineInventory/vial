@@ -67,12 +67,11 @@ def mock_auth0_userinfo(requests_mock):
     )
 
 
-@pytest.fixture
-def ten_locations(db):
+def make_locations(n):
     from core.models import Location, State
 
     locations = []
-    for i in range(1, 11):
+    for i in range(1, n + 1):
         location = Location.objects.create(
             name="Location {}".format(i),
             phone_number="(555) 555-55{:02}".format(i),
@@ -85,6 +84,16 @@ def ten_locations(db):
         locations.append(location)
 
     return locations
+
+
+@pytest.fixture
+def ten_locations(db):
+    return make_locations(10)
+
+
+@pytest.fixture
+def two_hundred_locations(db):
+    return make_locations(200)
 
 
 @pytest.fixture

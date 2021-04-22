@@ -4,6 +4,7 @@ from html import escape
 
 import beeline
 from core.models import ConcordanceIdentifier, Location, State
+from core.utils import keyset_pagination_iterator
 from django.http import JsonResponse
 from django.http.response import StreamingHttpResponse
 from django.shortcuts import render
@@ -50,12 +51,15 @@ def search_locations(request):
             concordances__in=ConcordanceIdentifier.objects.filter(idref_filter)
         )
     qs = location_json_queryset(qs)
-    page_qs = qs[:size]
 
     if format not in FORMATS:
         return JsonResponse({"error": "Invalid format"}, status=400)
 
     formatter = FORMATS[format]
+
+    stream_qs = qs[:size]
+    if all:
+        stream_qs = keyset_pagination_iterator(qs)
 
     def stream():
         if callable(formatter.start):
@@ -63,7 +67,7 @@ def search_locations(request):
         else:
             yield formatter.start
         started = False
-        for location in page_qs:
+        for location in stream_qs:
             if started and formatter.separator:
                 yield formatter.separator
             started = True
