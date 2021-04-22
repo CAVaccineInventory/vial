@@ -1,11 +1,17 @@
 import json
+from collections import namedtuple
 from html import escape
 
 import beeline
 from core.models import ConcordanceIdentifier, Location, State
 from django.http import JsonResponse
+from django.http.response import StreamingHttpResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
+
+OutputFormat = namedtuple(
+    "Format", ("start", "transform", "separator", "end", "content_type")
+)
 
 
 @beeline.traced("search_locations")
@@ -13,6 +19,7 @@ def search_locations(request):
     format = request.GET.get("format") or "json"
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
+    all = request.GET.get("all")
     state = (request.GET.get("state") or "").upper()
     if state:
         try:
@@ -29,6 +36,7 @@ def search_locations(request):
         return render(
             request, "api/search_locations_map.html", {"query_string": get.urlencode()}
         )
+
     qs = Location.objects.filter(soft_deleted=False)
     if q:
         qs = qs.filter(name__icontains=q)
@@ -43,29 +51,43 @@ def search_locations(request):
         )
     qs = location_json_queryset(qs)
     page_qs = qs[:size]
-    json_results = lambda: {
-        "results": [location_json(location) for location in page_qs],
-        "total": qs.count(),
-    }
-    output = None
-    if format == "geojson":
-        output = {
-            "type": "FeatureCollection",
-            "features": [location_geojson(location) for location in qs],
-        }
 
-    else:
-        output = json_results()
+    if format not in FORMATS:
+        return JsonResponse({"error": "Invalid format"}, status=400)
+
+    formatter = FORMATS[format]
+
+    def stream():
+        if callable(formatter.start):
+            yield formatter.start(qs)
+        else:
+            yield formatter.start
+        started = False
+        for location in page_qs:
+            if started and formatter.separator:
+                yield formatter.separator
+            started = True
+            yield formatter.transform(location)
+        if callable(formatter.end):
+            yield formatter.end(qs)
+        else:
+            yield formatter.end
+
     if debug:
+        if all:
+            return JsonResponse({"error": "Cannot use both all and debug"}, status=400)
+        output = "".join(stream())
+        if formatter.content_type == "application/json":
+            output = json.dumps(json.loads(output), indent=2)
         return render(
             request,
             "api/search_locations_debug.html",
             {
-                "json_results": mark_safe(escape(json.dumps(output, indent=2))),
+                "output": mark_safe(escape(output)),
             },
         )
-    else:
-        return JsonResponse(output)
+
+    return StreamingHttpResponse(stream(), content_type=formatter.content_type)
 
 
 def location_json_queryset(queryset):
@@ -114,3 +136,28 @@ def location_geojson(location):
             "coordinates": [location.longitude, location.latitude],
         },
     }
+
+
+FORMATS = {
+    "json": OutputFormat(
+        start='{"results": [',
+        transform=lambda l: json.dumps(location_json(l)),
+        separator=",",
+        end=lambda qs: '], "total": TOTAL}'.replace("TOTAL", str(qs.count())),
+        content_type="application/json",
+    ),
+    "geojson": OutputFormat(
+        start='{"type": "FeatureCollection", "features": [',
+        transform=lambda l: json.dumps(location_geojson(l)),
+        separator=",",
+        end=lambda qs: "]}",
+        content_type="application/json",
+    ),
+    "nlgeojson": OutputFormat(
+        start="",
+        transform=lambda l: json.dumps(location_geojson(l)),
+        separator="\n",
+        end="",
+        content_type="text/plain",
+    ),
+}
