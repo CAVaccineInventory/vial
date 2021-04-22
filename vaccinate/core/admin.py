@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
@@ -501,13 +503,30 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         bits = []
         for concordance in obj.concordances.all():
             bits.append(
-                '{}: <a href="/admin/core/concordanceidentifier/{}/change/">{}</a>'.format(
+                '<p data-idref="{}">{}: <a href="/admin/core/concordanceidentifier/{}/change/">{}</a></p>'.format(
+                    escape(str(concordance)),
                     escape(concordance.authority),
                     concordance.pk,
                     escape(concordance.identifier),
                 )
             )
-        return mark_safe("<br>".join(bits))
+        return mark_safe(
+            '<div data-public-id="{}" data-authorities="{}" class="edit-concordances">'.format(
+                escape(obj.public_id),
+                escape(
+                    json.dumps(
+                        list(
+                            ConcordanceIdentifier.objects.values_list(
+                                "authority", flat=True
+                            ).distinct()
+                        )
+                    )
+                ),
+            )
+            + '<div class="existing-concordances">'
+            + "\n".join(bits)
+            + "</div></div>"
+        )
 
 
 class ReporterProviderFilter(admin.SimpleListFilter):

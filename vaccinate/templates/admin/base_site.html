@@ -85,6 +85,90 @@ function resizeTable() {
   }
 }
 
+function addConcordanceEditors() {
+  /* Add edit location concordances widgets */
+  jQuery(".edit-concordances").each(function () {
+    var publicId = this.dataset.publicId;
+    var authorities = JSON.parse(this.dataset.authorities);
+    var container = $(this);
+    // Add remove buttons to any data-idref elements
+    $(this)
+      .find("[data-idref]")
+      .each(function () {
+        var parent = this;
+        var button = $("<button>Remove</button>");
+        button.css({ marginLeft: "10px" });
+        var idref = this.dataset.idref;
+        button.appendTo(this);
+        var update = {};
+        update[publicId] = { remove: [idref] };
+        button.on("click", (ev) => {
+          ev.preventDefault();
+          fetch("/api/updateLocationConcordances", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              update: update,
+            }),
+            credentials: "include",
+          })
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.updated) {
+                $(parent).remove();
+              }
+            });
+        });
+      });
+    // And a form for adding a new one
+    container.append("<h3>Add a new external identifier</h3>");
+    var select = $("<select>");
+    authorities.forEach((authority) => {
+      select.append(`<option value="${authority}">${authority}</option>`);
+    });
+    container.append(select);
+    var inputValue = $("<input type='text'>");
+    container.append(inputValue);
+    var addButton = $("<button>Add</button>");
+    container.append(addButton);
+    addButton.on("click", (ev) => {
+      ev.preventDefault();
+      var authority = select.val();
+      var value = $.trim(inputValue.val());
+      if (!value) {
+        alert("Value is required");
+        return;
+      }
+      var idref = authority + ":" + value;
+      var update = {};
+      update[publicId] = { add: [idref] };
+      fetch("/api/updateLocationConcordances", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          update: update,
+        }),
+        credentials: "include",
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.updated) {
+            // Add it to the list - no remove button yet
+            var p = $("<p></p>");
+            p.text(idref);
+            window.blah = p;
+            container.find(".existing-concordances").append(p);
+          }
+        });
+    });
+  });
+}
+
+
 window.addEventListener("load", () => {
     let changelistFilter = jQuery('#changelist-filter');
     let x = jQuery('<a href="#">X</a>');
@@ -101,6 +185,8 @@ window.addEventListener("load", () => {
     changelistFilter.find("h2").append(x);
 
     resizeTable();
+
+    addConcordanceEditors();
 });
 </script>
 {% endblock %}
