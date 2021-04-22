@@ -49,7 +49,7 @@ def test_search_locations_ignores_soft_deleted(client, ten_locations):
 
 def test_search_locations_format_json(client, ten_locations):
     result = search_get_json(client, "q=Location+1")
-    assert set(result.keys()) == {"results", "keys"}
+    assert set(result.keys()) == {"results", "total"}
     record = result["results"][0]
     assert set(record.keys()) == {
         "id",
