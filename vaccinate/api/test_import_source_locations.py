@@ -2,7 +2,14 @@ import json
 import pathlib
 
 import pytest
-from core.models import ConcordanceIdentifier, ImportRun, SourceLocation
+from core.models import (
+    ConcordanceIdentifier,
+    ImportRun,
+    Location,
+    LocationType,
+    SourceLocation,
+    State,
+)
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "importSourceLocations"
 
@@ -12,12 +19,25 @@ tests_dir = pathlib.Path(__file__).parent / "test-data" / "importSourceLocations
 def test_import_location(client, api_key, json_path):
     fixture = json.load(json_path.open())
 
+    assert Location.objects.count() == 0
     assert ImportRun.objects.count() == 0
     assert SourceLocation.objects.count() == 0
     assert ConcordanceIdentifier.objects.count() == 0
 
     # First, create one of the ConcordanceIdentifiers to test that logic
     ConcordanceIdentifier.objects.create(authority="rite_aid", identifier="5751")
+
+    original_location = None
+    if "match" in fixture and "id" in fixture["match"]:
+        # Create a location to match against first
+        original_location = Location.objects.create(
+            id=fixture["match"]["id"],
+            name=fixture["name"],
+            latitude=fixture["latitude"],
+            longitude=fixture["longitude"],
+            location_type=LocationType.objects.filter(name="Pharmacy").get(),
+            state=State.objects.filter(abbreviation="CA").get(),
+        )
 
     # Initiate an import run
     start_response = client.post(
@@ -50,5 +70,23 @@ def test_import_location(client, api_key, json_path):
     assert source_location.id == json_response["created"][0]
 
     assert source_location.name == fixture["name"]
-    assert source_location.import_json == fixture
+    assert source_location.import_json == fixture["import_json"]
     # TODO add more assertions about fields later
+
+    if (
+        "match" in fixture
+        and "action" in fixture["match"]
+        and fixture["match"]["action"] == "new"
+    ):
+        assert Location.objects.count() == 1
+        assert source_location.matched_location is not None
+        location = source_location.matched_location
+        assert location.name == fixture["name"]
+        assert (
+            location.location_type.name == "Unknown"
+        )  # all source location conversions use unknown for now
+        if "location" in fixture:
+            assert location.latitude == fixture["location"]["latitude"]
+            assert location.longitude == fixture["location"]["longitude"]
+    elif original_location is not None:
+        assert source_location.matched_location == original_location
