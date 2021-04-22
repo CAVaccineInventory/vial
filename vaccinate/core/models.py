@@ -1041,3 +1041,16 @@ class ConcordanceIdentifier(models.Model):
 def denormalize_location(sender, instance, action, **kwargs):
     if action in ("post_add", "post_remove", "post_clear"):
         instance.location.update_denormalizations()
+
+
+@receiver(m2m_changed, sender=ReportReviewNote.tags.through)
+def approval_review_report_denormalize_location(sender, instance, action, **kwargs):
+    if action == "post_add" and len(instance.tags.filter(tag="Approved")):
+        instance.report.is_pending_review = False
+        instance.report.save()
+    # We don't _un-approve_ if the tag is removed because the flag can
+    # _also_ be just generally unset manually.  Imagine:
+    #  - report is flagged on creation
+    #  - is_pending_review unset by unchecking the box
+    #  - approval is made
+    #  - approval is deleted
