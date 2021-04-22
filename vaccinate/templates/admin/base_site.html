@@ -118,6 +118,8 @@ function addConcordanceEditors() {
             .then((d) => {
               if (d.updated) {
                 $(parent).remove();
+              } else if (d.error) {
+                alert(d.error);
               }
             });
         });
