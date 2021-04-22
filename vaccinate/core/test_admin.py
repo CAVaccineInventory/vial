@@ -24,8 +24,8 @@ def test_admin_create_location_sets_public_id(admin_client):
             "name": "hello",
             "state": State.objects.get(abbreviation="OR").id,
             "location_type": "1",
-            "latitude": "0",
-            "longitude": "0",
+            "latitude": "45.518941976546756",
+            "longitude": "-122.70686202698961",
             "_save": "Save",
         },
     )
