@@ -1095,7 +1095,7 @@ def update_locations(request, on_request_logged):
     return JsonResponse({"updated": updated}, status=200)
 
 
-idref_re = re.compile("[a-zA-Z0-9_]+:.*")
+idref_re = re.compile("[a-zA-Z0-9_-]+:.*")
 
 
 class UpdateLocationConcordancesFieldsValidator(BaseModel):

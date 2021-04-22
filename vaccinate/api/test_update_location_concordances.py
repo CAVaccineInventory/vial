@@ -26,9 +26,7 @@ def test_update_location_concordances(client, api_key, ten_locations):
                 location1.public_id: {
                     "add": ["google_places:123", "vaccinefinder:456"]
                 },
-                location2.public_id: {
-                    "add": ["google_places:123", "vaccinefinder:678"]
-                },
+                location2.public_id: {"add": ["google_places:123", "sav-on:678"]},
             }
         },
         content_type="application/json",
@@ -40,7 +38,7 @@ def test_update_location_concordances(client, api_key, ten_locations):
         "gc_test:leave_me",
         "google_places:123",
         "vaccinefinder:456",
-        "vaccinefinder:678",
+        "sav-on:678",
     ]
     assert [str(c) for c in location1.concordances.all()] == [
         "google_places:123",
@@ -48,7 +46,7 @@ def test_update_location_concordances(client, api_key, ten_locations):
     ]
     assert [str(c) for c in location2.concordances.all()] == [
         "google_places:123",
-        "vaccinefinder:678",
+        "sav-on:678",
     ]
     # Now try the delete API (and add another at the same time)
     response2 = client.post(
@@ -69,12 +67,12 @@ def test_update_location_concordances(client, api_key, ten_locations):
     assert [str(c) for c in ConcordanceIdentifier.objects.all()] == [
         "gc_test:leave_me",
         "vaccinefinder:456",
-        "vaccinefinder:678",
+        "sav-on:678",
         "cvs:8874",
     ]
     assert [str(c) for c in location1.concordances.all()] == ["vaccinefinder:456"]
     assert [str(c) for c in location2.concordances.all()] == [
-        "vaccinefinder:678",
+        "sav-on:678",
         "cvs:8874",
     ]
 
