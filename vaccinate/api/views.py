@@ -49,7 +49,12 @@ from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, Field, ValidationError, validator
 
-from .utils import deny_if_api_is_disabled, log_api_requests, require_api_key
+from .utils import (
+    deny_if_api_is_disabled,
+    log_api_requests,
+    require_api_key,
+    require_api_key_or_cookie_user,
+)
 
 
 class ReportValidator(BaseModel):
@@ -1130,7 +1135,7 @@ class UpdateLocationConcordancesValidator(BaseModel):
 
 @csrf_exempt
 @log_api_requests
-@require_api_key
+@require_api_key_or_cookie_user
 @beeline.traced(name="update_location_concordances")
 def update_location_concordances(request, on_request_logged):
     try:

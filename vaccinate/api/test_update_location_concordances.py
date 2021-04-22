@@ -75,3 +75,38 @@ def test_update_location_concordances(client, api_key, ten_locations):
         "vaccinefinder:678",
         "cvs:8874",
     ]
+
+
+def test_update_location_concordances_with_user_cookie(
+    client, admin_client, admin_user, ten_locations
+):
+    # Without staff cookie should return error
+    location = ten_locations[0]
+    request_body = {
+        "update": {
+            location.public_id: {"add": ["google_places:127"]},
+        }
+    }
+    assert location.concordances.count() == 0
+    deny_response = client.post(
+        "/api/updateLocationConcordances",
+        request_body,
+        content_type="application/json",
+    )
+    assert deny_response.status_code == 403
+    assert location.concordances.count() == 0
+    assert admin_user.api_logs.count() == 0
+    # Should work for logged in user
+    allow_response = admin_client.post(
+        "/api/updateLocationConcordances",
+        request_body,
+        content_type="application/json",
+    )
+    assert allow_response.status_code == 200
+    assert location.concordances.count() == 1
+    assert str(location.concordances.get()) == "google_places:127"
+    # Should have created an API log
+    assert (
+        admin_user.api_logs.values("path")[0]["path"]
+        == "/api/updateLocationConcordances"
+    )

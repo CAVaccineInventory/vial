@@ -14,29 +14,51 @@ def auth_error(message):
     return JsonResponse({"error": message}, status=403)
 
 
+def require_api_key_or_cookie_user(view_fn):
+    "Allows request with an api key OR request.user from cookies"
+
+    @wraps(view_fn)
+    def protected_view_fn(request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return view_fn(request, *args, **kwargs)
+        api_key_error = check_request_for_api_key(request)
+        if api_key_error:
+            return api_key_error
+        return view_fn(request, *args, **kwargs)
+
+    return protected_view_fn
+
+
+def check_request_for_api_key(request):
+    authorization = request.META.get("HTTP_AUTHORIZATION") or ""
+    if not authorization.startswith("Bearer "):
+        return auth_error("Authorization header must start with 'Bearer'")
+    token = authorization.split("Bearer ")[1]
+    if token.count(":") != 1:
+        return auth_error("Bearer token must contain one ':'")
+    id, key = token.split(":")
+    try:
+        api_key = ApiKey.objects.get(pk=id)
+    except ApiKey.DoesNotExist:
+        return auth_error("API key does not exist")
+    if not secrets.compare_digest(api_key.key, key):
+        return auth_error("Invalid API key")
+    # update last_seen_at if not seen in last 5 minutes
+    if api_key.last_seen_at is None or api_key.last_seen_at < (
+        timezone.now() - datetime.timedelta(minutes=1)
+    ):
+        api_key.last_seen_at = timezone.now()
+        api_key.save()
+    request.api_key = api_key
+    return None
+
+
 def require_api_key(view_fn):
     @wraps(view_fn)
     def protected_view_fn(request, *args, **kwargs):
-        authorization = request.META.get("HTTP_AUTHORIZATION") or ""
-        if not authorization.startswith("Bearer "):
-            return auth_error("Authorization header must start with 'Bearer'")
-        token = authorization.split("Bearer ")[1]
-        if token.count(":") != 1:
-            return auth_error("Bearer token must contain one ':'")
-        id, key = token.split(":")
-        try:
-            api_key = ApiKey.objects.get(pk=id)
-        except ApiKey.DoesNotExist:
-            return auth_error("API key does not exist")
-        if not secrets.compare_digest(api_key.key, key):
-            return auth_error("Invalid API key")
-        # update last_seen_at if not seen in last 5 minutes
-        if api_key.last_seen_at is None or api_key.last_seen_at < (
-            timezone.now() - datetime.timedelta(minutes=1)
-        ):
-            api_key.last_seen_at = timezone.now()
-            api_key.save()
-        request.api_key = api_key
+        api_key_error = check_request_for_api_key(request)
+        if api_key_error:
+            return api_key_error
         return view_fn(request, *args, **kwargs)
 
     return protected_view_fn
@@ -68,6 +90,7 @@ def log_api_requests(view_fn):
             except ValueError:
                 response_body = response.content
             log = ApiLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
                 method=request.method,
                 path=request.path,
                 query_string=request.META.get("QUERY_STRING") or "",
