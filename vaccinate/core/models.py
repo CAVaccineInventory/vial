@@ -1038,5 +1038,6 @@ class ConcordanceIdentifier(models.Model):
 
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
-def denormalize_location(sender, instance, **kwargs):
-    instance.location.update_denormalizations()
+def denormalize_location(sender, instance, action, **kwargs):
+    if action in ("post_add", "post_remove", "post_clear"):
+        instance.location.update_denormalizations()
