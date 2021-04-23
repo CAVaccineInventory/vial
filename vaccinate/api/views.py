@@ -813,12 +813,16 @@ def api_debug_view(
     querystring_fields=None,
 ):
     def debug_view(request):
+        api_key = None
+        if request.user.is_authenticated:
+            api_key = request.user.api_keys.order_by("-last_seen_at").first()
         return render(
             request,
             "api/api_debug.html",
             {
                 "use_jwt": use_jwt,
                 "jwt": request.session["jwt"] if "jwt" in request.session else "",
+                "api_key": api_key,
                 "api_path": api_path,
                 "body_textarea": body_textarea,
                 "textarea_placeholder": textarea_placeholder,

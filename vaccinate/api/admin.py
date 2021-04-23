@@ -57,9 +57,7 @@ class ApiKeyAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
     def key_to_use(self, instance):
-        return mark_safe(
-            '<h1 class="copy-to-clipboard">{}:{}</h1>'.format(instance.pk, instance.key)
-        )
+        return mark_safe('<h1 class="copy-to-clipboard">{}</h1>'.format(instance.token))
 
 
 @admin.register(Switch)

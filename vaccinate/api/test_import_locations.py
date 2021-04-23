@@ -71,7 +71,7 @@ def test_import_location(client, api_key, use_list):
     assert location.import_json is None
     # Check that ApiLog record was created
     log = ApiLog.objects.get()
-    assert log.api_key.token() == api_key
+    assert log.api_key.token == api_key
 
 
 @pytest.mark.django_db
