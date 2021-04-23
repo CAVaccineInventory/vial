@@ -999,7 +999,7 @@ def export_mapbox(request):
                         None,
                         None,
                         None,
-                        report.full_appointment_details(location)
+                        report.full_appointment_details(location),
                     ],
                     "latest_contact": report.created_at.isoformat(),
                 }
