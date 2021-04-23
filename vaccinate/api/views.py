@@ -684,7 +684,7 @@ def import_source_locations(request, on_request_logged):
         )
 
         import_json = record["import_json"]
-        if "links" in import_json:
+        if "links" in import_json and import_json["links"] is not None:
             for link in import_json["links"]:
                 identifier, _ = ConcordanceIdentifier.objects.get_or_create(
                     authority=link["authority"], identifier=link["id"]
