@@ -961,10 +961,6 @@ def export_mapbox(request):
 
     post_data = ""
     for location in locations.all():
-        # What are these leading `[None]` elements? Since some fields can be
-        # big, we use Mapbox "zoom elements" to only include them in tiles that
-        # are of a specific zoom level and higher (i.e. more zoomed in),
-        # allowing us to have more points per tile
         properties = {
             "id": location.public_id,
             "name": location.name,
