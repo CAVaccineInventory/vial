@@ -118,6 +118,8 @@ function addConcordanceEditors() {
             .then((d) => {
               if (d.updated) {
                 $(parent).remove();
+              } else if (d.error) {
+                alert(d.error);
               }
             });
         });
@@ -130,6 +132,12 @@ function addConcordanceEditors() {
     });
     container.append(select);
     var inputValue = $("<input type='text'>");
+    inputValue.on('keypress', (ev) => {
+      // Don't submit form on 'enter' in that input
+      if (ev.which == 13) {
+        ev.preventDefault();
+      }
+    });
     container.append(inputValue);
     var addButton = $("<button>Add</button>");
     container.append(addButton);
@@ -161,12 +169,37 @@ function addConcordanceEditors() {
             var p = $("<p></p>");
             p.text(idref);
             container.find(".existing-concordances").append(p);
+          } else if (d.error) {
+            alert(d.error);
           }
         });
     });
   });
 }
 
+function addCopyToClipboard() {
+  $(".copy-to-clipboard").each((i, el) => {
+    var container = $(el);
+    var copyText = container.text();
+    var button = $("<button>Copy to clipboard</button>");
+    button.css({ marginLeft: "10px" });
+    button.on("click", (ev) => {
+      ev.preventDefault();
+      var input = $('<input type="text">');
+      input.appendTo(container);
+      input.css({opacity: 0});
+      input.val(copyText);
+      input[0].select();
+      document.execCommand("copy");
+      input.remove();
+      button.html("Copied!");
+      setTimeout(() => {
+        button.html("Copy to clipboard");
+      }, 1500);
+    });
+    container.append(button);
+  });
+}
 
 window.addEventListener("load", () => {
     let changelistFilter = jQuery('#changelist-filter');
@@ -186,6 +219,8 @@ window.addEventListener("load", () => {
     resizeTable();
 
     addConcordanceEditors();
+
+    addCopyToClipboard();
 });
 </script>
 {% endblock %}

@@ -13,6 +13,13 @@ class ApiKey(models.Model):
     created_at = models.DateTimeField(
         default=timezone.now, help_text="When the API key was created"
     )
+    user = models.ForeignKey(
+        "auth.User",
+        related_name="api_keys",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     last_seen_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -21,6 +28,7 @@ class ApiKey(models.Model):
     description = models.TextField(help_text="What this API key is being used for")
     key = models.CharField(max_length=32, default=random_secret)
 
+    @property
     def token(self):
         return "{}:{}".format(self.id, self.key)
 
