@@ -706,8 +706,10 @@ def build_location_from_source_location(source_location: SourceLocation):
     unknown_location_type = LocationType.objects.get(name="Unknown")
 
     location = Location.objects.create(
-        location_type=unknown_location_type, **location_kwargs
+        location_type=unknown_location_type, **location_kwargs,
     )
+    location.concordances.set(source_location.concordances.all())
+    location.save()
     source_location.matched_location = location
     source_location.save()
 
