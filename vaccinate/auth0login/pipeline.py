@@ -7,6 +7,7 @@ AUTH0_ROLES_TO_REFLECT = {
     "VIAL super-user",
     "Reports QA",
     "VIAL data corrections",
+    "VIAL service account",
 }
 if settings.STAGING:
     AUTH0_ROLES_TO_REFLECT = {name + " STAGING" for name in AUTH0_ROLES_TO_REFLECT}

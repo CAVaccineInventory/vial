@@ -63,7 +63,13 @@ def test_import_location(client, api_key, json_path):
 
     assert response.status_code == 200
     assert SourceLocation.objects.count() == 1
-    assert ConcordanceIdentifier.objects.count() == 2
+    if (
+        "links" in fixture["import_json"]
+        and fixture["import_json"]["links"] is not None
+    ):
+        assert ConcordanceIdentifier.objects.count() == len(
+            fixture["import_json"]["links"]
+        )
     json_response = response.json()
     assert "created" in json_response
     assert len(json_response["created"]) == 1
