@@ -309,7 +309,7 @@ class Location(models.Model):
     dn_latest_non_skip_report = models.ForeignKey(
         "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
-    # Denormalized counts for non is_pendin_review reports:
+    # Denormalized counts for non is_pending_review reports:
     dn_skip_report_count = models.IntegerField(default=0)
     dn_yes_report_count = models.IntegerField(default=0)
 

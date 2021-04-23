@@ -155,7 +155,43 @@ class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display_links = ("public_id", "name")
     actions = [export_as_csv_action()]
     autocomplete_fields = ("phases",)
-    readonly_fields = ("airtable_id", "public_id", "import_json")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "public_id",
+                    "name",
+                    "provider_type",
+                    "internal_contact_instructions",
+                )
+            },
+        ),
+        (
+            "Public data",
+            {
+                "fields": (
+                    "last_updated",
+                    "phases",
+                    "public_notes",
+                    "vaccine_info_url",
+                    "vaccine_locations_url",
+                    "appointments_url",
+                )
+            },
+        ),
+        (
+            "Identifiers",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "airtable_id",
+                    "import_json",
+                ),
+            },
+        ),
+    )
+    readonly_fields = ("public_id",)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -178,7 +214,47 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "fips_code",
     )
     list_filter = ("state",)
-    readonly_fields = ("airtable_id",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "state",
+                    "population",
+                    "internal_notes",
+                )
+            },
+        ),
+        (
+            "Public data",
+            {
+                "fields": (
+                    "age_floor_without_restrictions",
+                    "public_notes",
+                    "hotline_phone_number",
+                    "vaccine_info_url",
+                    "vaccine_locations_url",
+                    "vaccine_reservations_url",
+                    "vaccine_data_url",
+                    "vaccine_arcgis_url",
+                    "vaccine_dashboard_url",
+                )
+            },
+        ),
+        (
+            "Social / engagement",
+            {
+                "fields": (
+                    "facebook_page",
+                    "twitter_page",
+                    "official_volunteering_url",
+                )
+            },
+        ),
+        ("Identifiers", {"classes": ("collapse",), "fields": ("airtable_id",)}),
+    )
+    readonly_fields = ("fips_code", "name", "state", "airtable_id", "population")
     ordering = ("name",)
     actions = [export_as_csv_action()]
 
@@ -684,7 +760,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
     list_display = (
         "created_id_deleted",
-        "location",
+        "location_link",
         "is_pending_review",
         "claimed_by",
         "availability",
@@ -724,8 +800,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
+    ordering = ("-created_at",)
 
     readonly_fields = (
+        "location_link",
+        "reporter",
         "county_summary",
         "created_at",
         "claimed_at",
@@ -737,7 +816,69 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "qa_summary",
     )
     inlines = [ReportReviewNoteInline]
-    ordering = ("-created_at",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "created_at",
+                    "public_id",
+                    "location_link",
+                    "reporter",
+                )
+            },
+        ),
+        (
+            "QA",
+            {
+                "fields": (
+                    "originally_pending_review",
+                    "is_pending_review",
+                    "claimed_by",
+                    "claimed_at",
+                ),
+            },
+        ),
+        (
+            "Details",
+            {
+                "fields": (
+                    "availability_tags",
+                    "public_notes",
+                    "internal_notes",
+                    "appointment_tag",
+                    "appointment_details",
+                    "call_request",
+                    "report_source",
+                ),
+            },
+        ),
+        ("County summary", {"classes": ("collapse",), "fields": ("county_summary",)}),
+        (
+            "Caller history",
+            {
+                "classes": ("collapse",),
+                "fields": ("qa_summary",),
+            },
+        ),
+        (
+            "Report deletion",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "soft_deleted",
+                    "soft_deleted_because",
+                ),
+            },
+        ),
+        (
+            "Identifiers",
+            {
+                "classes": ("collapse",),
+                "fields": ("airtable_id", "airtable_json"),
+            },
+        ),
+    )
 
     def created_id_deleted(self, obj):
         date = (
@@ -747,9 +888,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             .replace(" ", u"\u00a0")
         )
         html = format_html(
-            '{}<br><b><a href="{}">{}</a></b>',
-            date,
+            '<a href="{}">{}<br><b>{}</b></a>',
             reverse("admin:core_report_change", args=(obj.id,)),
+            date,
             obj.public_id,
         )
 
@@ -760,14 +901,25 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     created_id_deleted.short_description = "created"
     created_id_deleted.admin_order_field = "created_at"
 
-    def reporter(self, obj):
-        return mark_safe(
-            "<strong>{}</strong><br>{}".format(
-                escape(obj.reported_by.name),
-                escape(obj.reported_by.auth0_role_names or ""),
-            )
+    def location_link(self, obj):
+        return format_html(
+            '<strong><a href="{}">{}</a></strong>',
+            reverse("admin:core_location_change", args=(obj.location.id,)),
+            obj.location.name,
         )
 
+    location_link.short_description = "Location"
+    location_link.admin_order_field = "location__name"
+
+    def reporter(self, obj):
+        return format_html(
+            '<strong><a href="{}">{}</a></strong><br>{}',
+            reverse("admin:core_reporter_change", args=(obj.reported_by.id,)),
+            obj.reported_by.name,
+            escape(obj.reported_by.auth0_role_names or ""),
+        )
+
+    reporter.short_description = "Reporter"
     reporter.admin_order_field = "reported_by"
 
     def appointment_tag_and_scheduling(self, obj):
