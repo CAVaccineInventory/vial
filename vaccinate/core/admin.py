@@ -528,6 +528,18 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             + "</div></div>"
         )
 
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context[
+            "location_id"
+        ] = object_id
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
 
 class ReporterProviderFilter(admin.SimpleListFilter):
     title = "Provider"
