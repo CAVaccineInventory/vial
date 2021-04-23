@@ -668,7 +668,7 @@ def import_source_locations(request, on_request_logged):
     for record in records:
         matched_location = None
         if "match" in record and record["match"]["action"] == "existing":
-            matched_location = Location.objects.get(id=record["match"]["id"])
+            matched_location = Location.objects.get(public_id=record["match"]["id"])
 
         source_location, was_created = SourceLocation.objects.update_or_create(
             source_uid=record["source_uid"],
