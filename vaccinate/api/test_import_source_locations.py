@@ -97,5 +97,8 @@ def test_import_location(client, api_key, json_path):
         if "location" in fixture:
             assert location.latitude == fixture["location"]["latitude"]
             assert location.longitude == fixture["location"]["longitude"]
+        assert set(source_location.concordances.all()) == set(
+            location.concordances.all()
+        )
     elif original_location is not None:
         assert source_location.matched_location == original_location
