@@ -86,6 +86,7 @@ def dataset() -> Generator[Dataset, None, None]:
             "dn_latest_non_skip_report__created_at",
             "dn_latest_non_skip_report__public_notes",
             "website",
+            "provider__name",
             "provider__appointments_url",
         )
 
@@ -160,12 +161,13 @@ class V0(APIProducer):
                 # We remove the nulls only here, and not as a decorator,
                 # because Airtable does not remove empty values from
                 # rollups, only from fields naturally on the record. (!)
+                provider = location.provider.name if location.provider else None
                 result.append(
                     nonnull_row(
                         {
                             "id": location.public_id,
                             "Name": location.name,
-                            "Affiliation": None,  # ???
+                            "Affiliation": provider,
                             "County": self.county_name(location.county),
                             "Address": location.full_address,
                             "Latitude": location.latitude,
