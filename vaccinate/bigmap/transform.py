@@ -26,7 +26,7 @@ BANKING_CONTACT_METHOD = "booking"
 def source_to_location(normalized_location):
     location = {}
     if "name" in normalized_location:
-        location["name"] = normalized_location["name"]
+        location["name"] = normalized_location.get("name")
 
     if "address" in normalized_location:
         location["full_address"] = address_to_full_address(
@@ -48,7 +48,7 @@ def source_to_location(normalized_location):
 
     if "contact" in normalized_location:
         for contact_method in normalized_location["contact"]:
-            if contact_method["contact_type"] == BANKING_CONTACT_METHOD:
+            if contact_method.get("contact_type") == BANKING_CONTACT_METHOD:
                 location["phone_number"] = contact_method.get("phone")
 
     return location
