@@ -257,24 +257,30 @@ class V1(V0):
     def get_providers(self) -> List[Dict[str, object]]:
         result = []
         for provider in self.ds.providers:
-            last_updated = (
-                provider.last_updated.strftime("%Y-%m-%d")
-                if provider.last_updated
-                else None
-            )
-            result.append(
-                {
-                    "id": provider.public_id,
-                    "Provider": provider.name,
-                    "Provider network type": provider.provider_type.name,
-                    "Public Notes": provider.public_notes,
-                    "Appointments URL": provider.appointments_url,
-                    "Vaccine info URL": provider.vaccine_info_url,
-                    "Vaccine locations URL": provider.vaccine_locations_url,
-                    "Last Updated": last_updated,
-                    "Phase": [p.name for p in provider.phases.all()],
-                }
-            )
+            if (
+                provider.appointments_url
+                or provider.vaccine_info_url
+                or provider.vaccine_locations_url
+                or provider.public_notes
+            ):
+                last_updated = (
+                    provider.last_updated.strftime("%Y-%m-%d")
+                    if provider.last_updated
+                    else None
+                )
+                result.append(
+                    {
+                        "id": provider.public_id,
+                        "Provider": provider.name,
+                        "Provider network type": provider.provider_type.name,
+                        "Public Notes": provider.public_notes,
+                        "Appointments URL": provider.appointments_url,
+                        "Vaccine info URL": provider.vaccine_info_url,
+                        "Vaccine locations URL": provider.vaccine_locations_url,
+                        "Last Updated": last_updated,
+                        "Phase": [p.name for p in provider.phases.all()],
+                    }
+                )
         return result
 
     @beeline.traced(name="core.exporter.V1.write")
