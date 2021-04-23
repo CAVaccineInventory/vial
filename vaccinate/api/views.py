@@ -929,6 +929,7 @@ def export_mapbox(request):
             "dn_latest_non_skip_report__appointment_tag",
             "county",
             "state",
+            "provider",
         )
         .only(
             "public_id",
