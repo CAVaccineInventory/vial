@@ -157,13 +157,22 @@ def reporter_from_request(request, allow_test=False):
 
 
 def user_should_have_reports_reviewed(user):
+    data_corrections = "VIAL data corrections" + (
+        " STAGING" if settings.STAGING else ""
+    )
     roles = [r.strip() for r in user.auth0_role_names.split(",") if r.strip()]
     if "Trainee" in roles:
         return True
     elif "Journeyman" in roles:
         return random.random() < 0.15
+    elif data_corrections in roles or "Web Banker" in roles:
+        # Data corrections and web bankers get a pass; ideally we
+        # would filter this based on if the submission itself was a
+        # data correction, or web banked, but Scooby does not tell us
+        # that yet.  See https://github.com/CAVaccineInventory/help.vaccinate/issues/199
+        pass
     else:
-        return False
+        return random.random() < 0.02
 
 
 @csrf_exempt
