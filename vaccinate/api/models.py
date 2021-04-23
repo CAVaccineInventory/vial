@@ -13,6 +13,13 @@ class ApiKey(models.Model):
     created_at = models.DateTimeField(
         default=timezone.now, help_text="When the API key was created"
     )
+    user = models.ForeignKey(
+        "auth.User",
+        related_name="api_keys",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     last_seen_at = models.DateTimeField(
         null=True,
         blank=True,
