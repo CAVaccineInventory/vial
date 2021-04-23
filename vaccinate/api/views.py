@@ -984,7 +984,8 @@ def export_mapbox(request):
                 {
                     "public_notes": [None] * 6 + [report.public_notes],
                     "appointment_method": report.appointment_tag.name,
-                    "appointment_details": [None] * 6 + [report.full_appointment_details(location)],
+                    "appointment_details": [None] * 6
+                    + [report.full_appointment_details(location)],
                     "latest_contact": report.created_at.isoformat(),
                 }
             )
