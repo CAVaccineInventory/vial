@@ -976,31 +976,15 @@ def export_mapbox(request):
             "google_places_id": location.google_places_id,
             "vaccinefinder_location_id": location.vaccinefinder_location_id,
             "vaccinespotter_location_id": location.vaccinespotter_location_id,
-            "hours": [None, None, None, None, None, None, location.hours],
+            "hours": [None] * 6 + [location.hours],
         }
         if location.dn_latest_non_skip_report:
             report = location.dn_latest_non_skip_report
             properties.update(
                 {
-                    "public_notes": [
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        report.public_notes,
-                    ],
+                    "public_notes": [None] * 6 + [report.public_notes]
                     "appointment_method": report.appointment_tag.name,
-                    "appointment_details": [
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        report.full_appointment_details(location),
-                    ],
+                    "appointment_details": [None] * 6 + [report.full_appointment_details(location)],
                     "latest_contact": report.created_at.isoformat(),
                 }
             )
