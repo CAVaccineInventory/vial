@@ -668,7 +668,7 @@ def import_source_locations(request, on_request_logged):
     for record in records:
         matched_location = None
         if "match" in record and record["match"]["action"] == "existing":
-            matched_location = Location.objects.get(id=record["match"]["id"])
+            matched_location = Location.objects.get(public_id=record["match"]["id"])
 
         source_location, was_created = SourceLocation.objects.update_or_create(
             source_uid=record["source_uid"],
@@ -676,7 +676,7 @@ def import_source_locations(request, on_request_logged):
                 "source_name": record["source_name"],
                 "name": record.get("name"),
                 "latitude": record.get("latitude"),
-                "longitude": record.get("longitud"),
+                "longitude": record.get("longitude"),
                 "import_json": record["import_json"],
                 "import_run": import_run,
                 "matched_location": matched_location,
@@ -960,6 +960,10 @@ def export_mapbox(request):
 
     post_data = ""
     for location in locations.all():
+        # What are these leading `[None]` elements? Since some fields can be
+        # big, we use Mapbox "zoom elements" to only include them in tiles that
+        # are of a specific zoom level and higher (i.e. more zoomed in),
+        # allowing us to have more points per tile
         properties = {
             "id": location.public_id,
             "name": location.name,
@@ -972,15 +976,16 @@ def export_mapbox(request):
             "google_places_id": location.google_places_id,
             "vaccinefinder_location_id": location.vaccinefinder_location_id,
             "vaccinespotter_location_id": location.vaccinespotter_location_id,
-            "hours": location.hours,
+            "hours": [None] * 6 + [location.hours],
         }
         if location.dn_latest_non_skip_report:
             report = location.dn_latest_non_skip_report
             properties.update(
                 {
-                    "public_notes": report.public_notes,
+                    "public_notes": [None] * 6 + [report.public_notes],
                     "appointment_method": report.appointment_tag.name,
-                    "appointment_details": report.full_appointment_details(location),
+                    "appointment_details": [None] * 6
+                    + [report.full_appointment_details(location)],
                     "latest_contact": report.created_at.isoformat(),
                 }
             )

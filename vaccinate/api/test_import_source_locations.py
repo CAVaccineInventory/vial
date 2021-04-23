@@ -31,13 +31,14 @@ def test_import_location(client, api_key, json_path):
     if "match" in fixture and "id" in fixture["match"]:
         # Create a location to match against first
         original_location = Location.objects.create(
-            id=fixture["match"]["id"],
+            public_id=fixture["match"]["id"],
             name=fixture["name"],
             latitude=fixture["latitude"],
             longitude=fixture["longitude"],
             location_type=LocationType.objects.filter(name="Pharmacy").get(),
             state=State.objects.filter(abbreviation="CA").get(),
         )
+        assert original_location.public_id is not None
 
     # Initiate an import run
     start_response = client.post(
@@ -70,6 +71,8 @@ def test_import_location(client, api_key, json_path):
     assert source_location.id == json_response["created"][0]
 
     assert source_location.name == fixture["name"]
+    assert source_location.latitude == fixture["import_json"]["location"]["latitude"]
+    assert source_location.longitude == fixture["import_json"]["location"]["longitude"]
     assert source_location.import_json == fixture["import_json"]
     # TODO add more assertions about fields later
 
