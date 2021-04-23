@@ -108,7 +108,11 @@ def dataset() -> Generator[Dataset, None, None]:
                 )
             )
         )
-        ds.providers = models.Provider.objects.all().select_related("provider_type")
+        ds.providers = (
+            models.Provider.objects.all()
+            .select_related("provider_type")
+            .prefetch_related("phases")
+        )
 
         yield ds
 
