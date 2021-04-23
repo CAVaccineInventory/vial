@@ -676,7 +676,7 @@ def import_source_locations(request, on_request_logged):
                 "source_name": record["source_name"],
                 "name": record.get("name"),
                 "latitude": record.get("latitude"),
-                "longitude": record.get("longitud"),
+                "longitude": record.get("longitude"),
                 "import_json": record["import_json"],
                 "import_run": import_run,
                 "matched_location": matched_location,
