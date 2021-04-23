@@ -654,12 +654,12 @@ class ReporterAdmin(admin.ModelAdmin):
     def roles(self, obj):
         return [r.strip() for r in (obj.auth0_role_names or "").split(",")]
 
-    readonly_fields = ("qa_summary",)
+    readonly_fields = ("reporter_qa_summary",)
 
-    def qa_summary(self, obj):
-        return qa_summary(obj)
+    def reporter_qa_summary(self, obj):
+        return reporter_qa_summary(obj)
 
-    qa_summary.short_description = "QA summary"
+    reporter_qa_summary.short_description = "QA summary"
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -813,7 +813,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "public_id",
         "airtable_id",
         "airtable_json",
-        "qa_summary",
+        "reporter_qa_summary",
     )
     inlines = [ReportReviewNoteInline]
     fieldsets = (
@@ -858,7 +858,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             "Caller history",
             {
                 "classes": ("collapse",),
-                "fields": ("qa_summary",),
+                "fields": ("reporter_qa_summary",),
             },
         ),
         (
@@ -1017,10 +1017,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             )
         )
 
-    def qa_summary(self, obj):
-        return qa_summary(obj.reported_by)
+    def reporter_qa_summary(self, obj):
+        return reporter_qa_summary(obj.reported_by)
 
-    qa_summary.short_description = "QA summary"
+    reporter_qa_summary.short_description = "QA summary"
 
 
 @admin.register(ReportReviewTag)
@@ -1328,7 +1328,7 @@ class VersionAdmin(admin.ModelAdmin):
 admin.site.register(Version, VersionAdmin)
 
 
-def qa_summary(reporter):
+def reporter_qa_summary(reporter):
     reports = reporter.reports.exclude(soft_deleted=True)
     return mark_safe(
         render_to_string(
