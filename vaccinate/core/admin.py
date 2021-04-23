@@ -530,9 +530,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context[
-            "location_id"
-        ] = object_id
+        extra_context["location_id"] = object_id
         return super().change_view(
             request,
             object_id,
