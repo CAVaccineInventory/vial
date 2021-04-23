@@ -982,11 +982,25 @@ def export_mapbox(request):
             report = location.dn_latest_non_skip_report
             properties.update(
                 {
-                    "public_notes": [None, None, None, None, None, None,
-                                     report.public_notes],
+                    "public_notes": [
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        report.public_notes,
+                    ],
                     "appointment_method": report.appointment_tag.name,
-                    "appointment_details": [None, None, None, None, None, None,
-                                            report.full_appointment_details(location)],
+                    "appointment_details": [
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        report.full_appointment_details(location)
+                    ],
                     "latest_contact": report.created_at.isoformat(),
                 }
             )
