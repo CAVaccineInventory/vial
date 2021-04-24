@@ -45,7 +45,16 @@ The JSON document should have the following keys:
 * **Notes**: A free text field of public notes
 * **Internal Notes**: A free text field of private, internal notes
 * **Do not call until**: An ISO 8601-formatted timestamp, before which this location should not be called again
+
+Optional fields:
+
 * **is_pending_review**: Optional boolean - set this to `true` to specify that this report should be reviewed by our QA team
+* **restriction_notes**: Optional string describing any specific restrictions
+* **vaccines_offered**: Optional array of vaccines. Valid options are one or more of `"Moderna"`, `"Pfizer"`, `"Johnson & Johnson"`, `"Other"`
+* **website**: Optional string for updating the website (``web`` is accepted for this key too)
+* **full_address**: Optional string for updating the address (``address`` is accepted too)
+* **hours**: Optional string for updating the hours information
+* **planned_closure**: Optional `yyyy-mm-dd` date detailing the planned closure date for this site
 
 Here is an example submission:
 ```json

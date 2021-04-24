@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
 import beeline
@@ -18,6 +18,8 @@ from pydantic import BaseModel, Field, ValidationError, validator
 
 from .utils import deny_if_api_is_disabled, log_api_requests, reporter_from_request
 
+ALLOWED_VACCINE_VALUES = "Moderna", "Pfizer", "Johnson & Johnson", "Other"
+
 
 class ReportValidator(BaseModel):
     location: str = Field(alias="Location")
@@ -30,6 +32,22 @@ class ReportValidator(BaseModel):
     internal_notes: Optional[str] = Field(alias="Internal Notes")
     do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
     is_pending_review: Optional[bool] = Field(alias="is_pending_review")
+    restriction_notes: Optional[str]
+    vaccines_offered: Optional[List[str]]
+    web: Optional[str]
+    website: Optional[str]
+    address: Optional[str]
+    full_address: Optional[str]
+    hours: Optional[str]
+    planned_closure: Optional[date]
+
+    @validator("vaccines_offered")
+    def validate_vaccines(cls, vaccines):
+        for item in vaccines:
+            assert item in ALLOWED_VACCINE_VALUES, "{} is not one of {}".format(
+                item, ALLOWED_VACCINE_VALUES
+            )
+        return vaccines
 
     @validator("location")
     def location_must_exist(cls, v):
@@ -70,6 +88,12 @@ def submit_report(request, on_request_logged):
         public_notes=report_data["public_notes"],
         internal_notes=report_data["internal_notes"],
         reported_by=reporter,
+        website=report_data["website"] or report_data["web"],
+        vaccines_offered=report_data["vaccines_offered"],
+        restriction_notes=report_data["restriction_notes"],
+        full_address=report_data["full_address"] or report_data["address"],
+        hours=report_data["hours"],
+        planned_closure=report_data["planned_closure"],
     )
     # is_pending_review
     if report_data["is_pending_review"] or user_should_have_reports_reviewed(reporter):

@@ -6,12 +6,12 @@ from typing import Optional
 
 import beeline
 import requests
+from auth0login.auth0_utils import decode_and_verify_jwt
 from core.models import Reporter
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseServerError, JsonResponse
 from django.utils import timezone
 
-from auth0login.auth0_utils import decode_and_verify_jwt
 from .models import ApiKey, ApiLog, Switch
 
 
