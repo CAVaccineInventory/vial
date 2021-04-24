@@ -94,6 +94,9 @@ def log_api_requests(view_fn):
                 response_body_json = json.loads(response.content)
             except ValueError:
                 response_body = response.content
+            except AttributeError:
+                # Streaming responses have no .content
+                pass
             log = ApiLog.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 method=request.method,
