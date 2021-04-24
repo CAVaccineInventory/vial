@@ -809,6 +809,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "location_reports_history",
     )
     inlines = [ReportReviewNoteInline]
+    deliberately_omitted_from_fieldsets = ("location", "reported_by")
     fieldsets = (
         (
             None,
@@ -843,6 +844,13 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     "appointment_details",
                     "call_request",
                     "report_source",
+                    "hours",
+                    "reported_by",
+                    "planned_closure",
+                    "website",
+                    "vaccines_offered",
+                    "full_address",
+                    "restriction_notes",
                 ),
             },
         ),

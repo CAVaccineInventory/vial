@@ -562,6 +562,26 @@ class Report(models.Model):
     )
     public_notes = models.TextField(null=True, blank=True)
     internal_notes = models.TextField(null=True, blank=True)
+    restriction_notes = models.TextField(null=True, blank=True)
+    vaccines_offered = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="JSON array of strings representing vaccines on offer here",
+    )
+    website = CharTextField(
+        null=True, blank=True, help_text="Update for website information"
+    )
+    full_address = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Update for the entire address, including city and zip code",
+    )
+    hours = models.TextField(
+        blank=True, null=True, help_text="Update for hours information"
+    )
+    planned_closure = models.DateField(
+        blank=True, null=True, help_text="Date this site a site plans to stop operating"
+    )
     reported_by = models.ForeignKey(
         Reporter, related_name="reports", on_delete=models.PROTECT
     )
