@@ -1,4 +1,4 @@
-<h2>{{ county }} (<a style="color: white" href="/admin/core/county/{{ county.pk }}/change/">edit county</a>)</h2>
+<strong>{{ county }} (<a href="/admin/core/county/{{ county.pk }}/change/">edit county</a>)</strong>
 {% if county.hotline_phone_number %}
   <p><strong>Hotline phone number</strong>: {{ county.hotline_phone_number }}</p>
 {% endif %}

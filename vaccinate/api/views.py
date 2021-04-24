@@ -706,8 +706,11 @@ def build_location_from_source_location(source_location: SourceLocation):
     unknown_location_type = LocationType.objects.get(name="Unknown")
 
     location = Location.objects.create(
-        location_type=unknown_location_type, **location_kwargs
+        location_type=unknown_location_type,
+        **location_kwargs,
     )
+    location.concordances.set(source_location.concordances.all())
+    location.save()
     source_location.matched_location = location
     source_location.save()
 
@@ -961,10 +964,6 @@ def export_mapbox(request):
 
     post_data = ""
     for location in locations.all():
-        # What are these leading `[None]` elements? Since some fields can be
-        # big, we use Mapbox "zoom elements" to only include them in tiles that
-        # are of a specific zoom level and higher (i.e. more zoomed in),
-        # allowing us to have more points per tile
         properties = {
             "id": location.public_id,
             "name": location.name,
@@ -977,16 +976,15 @@ def export_mapbox(request):
             "google_places_id": location.google_places_id,
             "vaccinefinder_location_id": location.vaccinefinder_location_id,
             "vaccinespotter_location_id": location.vaccinespotter_location_id,
-            "hours": [None] * 6 + [location.hours],
+            "hours": location.hours,
         }
         if location.dn_latest_non_skip_report:
             report = location.dn_latest_non_skip_report
             properties.update(
                 {
-                    "public_notes": [None] * 6 + [report.public_notes],
+                    "public_notes": report.public_notes,
                     "appointment_method": report.appointment_tag.name,
-                    "appointment_details": [None] * 6
-                    + [report.full_appointment_details(location)],
+                    "appointment_details": report.full_appointment_details(location),
                     "latest_contact": report.created_at.isoformat(),
                 }
             )
