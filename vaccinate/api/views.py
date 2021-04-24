@@ -1,31 +1,21 @@
 import json
-import os
 import pathlib
-import random
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 import beeline
 import markdown
-import pytz
 import requests
 import reversion
 from api.location_metrics import LocationMetricsReport
-from auth0login.auth0_utils import decode_and_verify_jwt
 from bigmap.schema import ImportSourceLocation
 from bigmap.transform import source_to_location
 from core import exporter
-from core.import_utils import (
-    derive_appointment_tag,
-    import_airtable_report,
-    resolve_availability_tags,
-)
+from core.import_utils import import_airtable_report
 from core.models import (
-    AppointmentTag,
     AvailabilityTag,
     CallRequest,
-    CallRequestReason,
     ConcordanceIdentifier,
     County,
     ImportRun,
@@ -33,12 +23,9 @@ from core.models import (
     LocationType,
     Provider,
     ProviderType,
-    Report,
-    Reporter,
     SourceLocation,
     State,
 )
-from dateutil import parser
 from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
@@ -47,273 +34,15 @@ from django.utils import timezone
 from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, ValidationError, validator
 
 from .utils import (
     deny_if_api_is_disabled,
     log_api_requests,
+    reporter_from_request,
     require_api_key,
     require_api_key_or_cookie_user,
 )
-
-
-class ReportValidator(BaseModel):
-    location: str = Field(alias="Location")
-    appointment_details: Optional[str] = Field(
-        alias="Appointment scheduling instructions"
-    )
-    appointments_by_phone: Optional[bool] = Field(alias="Appointments by phone?")
-    availability: List[str] = Field(alias="Availability")
-    public_notes: Optional[str] = Field(alias="Notes")
-    internal_notes: Optional[str] = Field(alias="Internal Notes")
-    do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
-    is_pending_review: Optional[bool] = Field(alias="is_pending_review")
-
-    @validator("location")
-    def location_must_exist(cls, v):
-        try:
-            return Location.objects.get(public_id=v)
-        except Location.DoesNotExist:
-            raise ValueError("Location '{}' does not exist".format(v))
-
-
-@beeline.traced("reporter_from_request")
-def reporter_from_request(request, allow_test=False):
-    if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
-        reporter = Reporter.objects.get_or_create(
-            external_id="auth0-fake:{}".format(request.GET["fake_user"]),
-        )[0]
-        user_info = {"fake": reporter.external_id}
-        return reporter, user_info
-    # Use Bearer token in Authorization header
-    authorization = request.META.get("HTTP_AUTHORIZATION") or ""
-    if not authorization.startswith("Bearer "):
-        return (
-            JsonResponse(
-                {"error": "Authorization header must start with 'Bearer'"}, status=403
-            ),
-            None,
-        )
-    # Check JWT token is valid
-    jwt_id_token = authorization.split("Bearer ")[1]
-    try:
-        jwt_payload = decode_and_verify_jwt(jwt_id_token, settings.HELP_JWT_AUDIENCE)
-    except Exception as e:
-        try:
-            # We _also_ try to decode as the VIAL audience, since the
-            # /api/requestCall/debug endpoint passes in _our_ JWT, not
-            # help's.
-            jwt_payload = decode_and_verify_jwt(
-                jwt_id_token, settings.VIAL_JWT_AUDIENCE
-            )
-        except Exception:
-            return (
-                JsonResponse(
-                    {"error": "Could not decode JWT", "details": str(e)}, status=403
-                ),
-                None,
-            )
-    external_id = "auth0:{}".format(jwt_payload["sub"])
-    jwt_auth0_role_names = ", ".join(
-        sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
-    )
-    try:
-        reporter = Reporter.objects.get(external_id=external_id)
-        # Have their auth0 roles changed?
-        if reporter.auth0_role_names != jwt_auth0_role_names:
-            reporter.auth0_role_names = jwt_auth0_role_names
-            reporter.save()
-        return reporter, jwt_payload
-    except Reporter.DoesNotExist:
-        pass
-
-    # If name is missing we need to fetch userdetails
-    if "name" not in jwt_payload or "email" not in jwt_payload:
-        with beeline.tracer(name="get user_info"):
-            user_info_response = requests.get(
-                "https://vaccinateca.us.auth0.com/userinfo",
-                headers={"Authorization": "Bearer {}".format(jwt_id_token)},
-                timeout=5,
-            )
-            beeline.add_context({"status": user_info_response.status_code})
-            user_info_response.raise_for_status()
-            user_info = user_info_response.json()
-            name = user_info["name"]
-            email = user_info["email"]
-    else:
-        name = jwt_payload["name"]
-        email = jwt_payload["email"]
-    defaults = {"auth0_role_names": jwt_auth0_role_names}
-    if name is not None:
-        defaults["name"] = name
-    if email is not None:
-        defaults["email"] = email
-    reporter = Reporter.objects.update_or_create(
-        external_id=external_id,
-        defaults=defaults,
-    )[0]
-    user_info = jwt_payload
-    return reporter, user_info
-
-
-def user_should_have_reports_reviewed(user):
-    data_corrections = "VIAL data corrections" + (
-        " STAGING" if settings.STAGING else ""
-    )
-    roles = [r.strip() for r in user.auth0_role_names.split(",") if r.strip()]
-    if "Trainee" in roles:
-        return True
-    elif "Journeyman" in roles:
-        return random.random() < 0.15
-    elif data_corrections in roles or "Web Banker" in roles:
-        # Data corrections and web bankers get a pass; ideally we
-        # would filter this based on if the submission itself was a
-        # data correction, or web banked, but Scooby does not tell us
-        # that yet.  See https://github.com/CAVaccineInventory/help.vaccinate/issues/199
-        pass
-    else:
-        return random.random() < 0.02
-
-
-@csrf_exempt
-@log_api_requests
-@deny_if_api_is_disabled
-@beeline.traced(name="submit_report")
-def submit_report(request, on_request_logged):
-    # The ?test=1 version accepts &fake_user=external_id
-    reporter, user_info = reporter_from_request(request, allow_test=True)
-    if isinstance(reporter, JsonResponse):
-        return reporter
-    try:
-        post_data = json.loads(request.body.decode("utf-8"))
-    except ValueError as e:
-        return JsonResponse({"error": str(e), "user": user_info}, status=400)
-    try:
-        report_data = ReportValidator(**post_data).dict()
-    except ValidationError as e:
-        return JsonResponse({"error": e.errors(), "user": user_info}, status=400)
-    # Now we add the report
-    appointment_tag_string, appointment_details = derive_appointment_tag(
-        report_data["appointments_by_phone"], report_data["appointment_details"]
-    )
-    availability_tags = resolve_availability_tags(report_data["availability"])
-    kwargs = dict(
-        location=report_data["location"],
-        # Currently hard-coded to caller app:
-        report_source="ca",
-        appointment_tag=AppointmentTag.objects.get(slug=appointment_tag_string),
-        appointment_details=appointment_details,
-        public_notes=report_data["public_notes"],
-        internal_notes=report_data["internal_notes"],
-        reported_by=reporter,
-    )
-    # is_pending_review
-    if report_data["is_pending_review"] or user_should_have_reports_reviewed(reporter):
-        kwargs["is_pending_review"] = True
-        kwargs["originally_pending_review"] = True
-    else:
-        # Explicitly set as False, since the originally_pending_review
-        # field is nullable, so we know which reports were before we
-        # started logging.
-        kwargs["originally_pending_review"] = False
-
-    if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
-        fake_timestamp = parser.parse(request.GET["fake_timestamp"])
-        if fake_timestamp.tzinfo is None:
-            # Assume this is UTC
-            fake_timestamp = pytz.UTC.localize(fake_timestamp)
-        kwargs["created_at"] = fake_timestamp
-
-    beeline.add_context({"availability_tag_count": len(availability_tags)})
-    report = Report.objects.create(**kwargs)
-    report.availability_tags.add(*availability_tags)
-
-    # Refresh Report from DB to get .public_id
-    report.refresh_from_db()
-
-    # Mark any calls to this location claimed by this user as complete
-    existing_call_request = report.location.call_requests.filter(
-        claimed_by=reporter, completed=False
-    ).first()
-    report.location.call_requests.filter(claimed_by=reporter).update(
-        completed=True, completed_at=timezone.now()
-    )
-
-    # If this was based on a call request, associate it with the report
-    if existing_call_request:
-        report.call_request = existing_call_request
-        report.save()
-
-    # Handle skip requests
-    # Only check if "Do not call until is set"
-    if report_data["do_not_call_until"] is not None:
-        skip_reason = CallRequestReason.objects.get(short_reason="Previously skipped")
-        if skip_reason is None:
-            return JsonResponse(
-                {
-                    "error": "Report set do not call time but the database is missing the skip reason."
-                },
-                status=500,
-            )
-
-        if "skip_call_back_later" not in [tag.slug for tag in availability_tags]:
-            return JsonResponse(
-                {"error": "Report set do not call time but did not request a skip."},
-                status=400,
-            )
-        # Priority should match that of the original call request
-        CallRequest.objects.create(
-            location=report_data["location"],
-            vesting_at=report_data["do_not_call_until"],
-            call_request_reason=skip_reason,
-            tip_type=CallRequest.TipType.SCOOBY,
-            tip_report=report,
-            priority_group=existing_call_request.priority_group
-            if existing_call_request
-            else 99,
-        )
-
-    def log_created_report(log):
-        log.created_report = report
-        log.save()
-
-        # Send it to Zapier too
-        if os.environ.get("ZAPIER_REPORT_URL"):
-            with beeline.tracer(name="zapier"):
-                requests.post(
-                    os.environ["ZAPIER_REPORT_URL"],
-                    json={
-                        "report_url": request.build_absolute_uri(
-                            "/admin/core/report/{}/change/".format(report.pk)
-                        ),
-                        "report_public_notes": report.public_notes,
-                        "report_internal_notes": report.internal_notes,
-                        "location_name": report.location.name,
-                        "location_full_address": report.location.full_address,
-                        "location_state": report.location.state.abbreviation,
-                        "reporter_name": report.reported_by.name,
-                        "reporter_id": report.reported_by.external_id,
-                        "reporter_role": report.reported_by.auth0_role_names,
-                        "availability_tags": list(
-                            report.availability_tags.values_list("name", flat=True)
-                        ),
-                    },
-                    timeout=5,
-                )
-
-    on_request_logged(log_created_report)
-
-    return JsonResponse(
-        {
-            "admin_url": "/admin/core/report/{}/change/".format(report.pk),
-            "created": [report.public_id],
-            "appointment_tag_string": appointment_tag_string,
-            "appointment_details": appointment_details,
-            "availability_tags": [str(a) for a in availability_tags],
-            "report": str(report),
-            "user_info": user_info,
-        }
-    )
 
 
 @csrf_exempt
