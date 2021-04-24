@@ -477,7 +477,6 @@ def test_bulk_approve_reports_action(admin_client, ten_locations):
         assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize(
     "model,model_admin",
     [
@@ -489,6 +488,8 @@ def test_bulk_approve_reports_action(admin_client, ten_locations):
     ],
 )
 def test_admin_fieldsets_do_not_omit_fields_accidentally(model, model_admin):
+    # It's easy to add new fields to a Django ORM model but forget to explicitly
+    # add those new fields to the fieldset= for the relevant ModelAdmin
     # https://github.com/CAVaccineInventory/vial/issues/421
     columns = {
         f.name
@@ -497,7 +498,9 @@ def test_admin_fieldsets_do_not_omit_fields_accidentally(model, model_admin):
         and not isinstance(f, ManyToOneRel)
         and not isinstance(f, ManyToManyRel)
     }
-    admin_columns = set()
+    admin_columns = set(
+        getattr(model_admin, "deliberately_omitted_from_fieldsets", None) or []
+    )
     for fieldset_name, fieldset_bits in model_admin.fieldsets:
         admin_columns.update(fieldset_bits["fields"])
     assert columns.issubset(
