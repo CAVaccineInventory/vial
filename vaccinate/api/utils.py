@@ -54,6 +54,7 @@ def check_request_for_api_key(request):
     ):
         api_key.last_seen_at = timezone.now()
         api_key.save()
+    beeline.add_trace_field("user.api_key", api_key.id)
     request.api_key = api_key
     return None
 
