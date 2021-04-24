@@ -120,8 +120,8 @@ def test_search_stream_all(client, two_hundred_locations):
         assert check(joined)
 
 
-def test_search_locations_format_json(client, ten_locations, django_assert_num_queries):
+def test_search_locations_num_queries(client, ten_locations, django_assert_num_queries):
     # Failure of this assert means that a field needs to be added to the "only" of
     # location_json_queryset
     with django_assert_num_queries(3):
-        result = search_get_json(client, "all=1&format=geojson")
+        search_get_json(client, "all=1&format=geojson")
