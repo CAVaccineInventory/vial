@@ -559,22 +559,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         return True
 
     def reports_history(self, obj):
-        reports = obj.reports.exclude(soft_deleted=True)
-        return mark_safe(
-            render_to_string(
-                "admin/_reports_history.html",
-                {
-                    "location_id": obj.pk,
-                    "reports_datetimes": [
-                        d.isoformat()
-                        for d in reports.values_list("created_at", flat=True)
-                    ],
-                    "reports": reports.select_related("reported_by")
-                    .prefetch_related("availability_tags")
-                    .order_by("-created_at"),
-                },
-            )
-        )
+        return reports_history(obj)
 
     def concordances_summary(self, obj):
         bits = []
@@ -660,7 +645,7 @@ class ReporterAdmin(admin.ModelAdmin):
     def reporter_qa_summary(self, obj):
         return reporter_qa_summary(obj)
 
-    reporter_qa_summary.short_description = "QA summary"
+    reporter_qa_summary.short_description = "Caller QA summary"
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -818,6 +803,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "airtable_id",
         "airtable_json",
         "reporter_qa_summary",
+        "location_reports_history",
     )
     inlines = [ReportReviewNoteInline]
     fieldsets = (
@@ -863,6 +849,13 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": ("reporter_qa_summary",),
+            },
+        ),
+        (
+            "Location history",
+            {
+                "classes": ("collapse",),
+                "fields": ("location_reports_history",),
             },
         ),
         (
@@ -1025,6 +1018,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         return reporter_qa_summary(obj.reported_by)
 
     reporter_qa_summary.short_description = "QA summary"
+
+    def location_reports_history(self, obj):
+        return reports_history(obj.location)
+
+    location_reports_history.short_description = "Location history"
 
 
 @admin.register(ReportReviewTag)
@@ -1347,6 +1345,24 @@ def reporter_qa_summary(reporter):
                     for d in reports.values_list("created_at", flat=True)[:100]
                 ],
                 "report_count": reports.count(),
+            },
+        )
+    )
+
+
+def reports_history(location):
+    reports = location.reports.exclude(soft_deleted=True)
+    return mark_safe(
+        render_to_string(
+            "admin/_reports_history.html",
+            {
+                "location_id": location.pk,
+                "reports_datetimes": [
+                    d.isoformat() for d in reports.values_list("created_at", flat=True)
+                ],
+                "reports": reports.select_related("reported_by")
+                .prefetch_related("availability_tags")
+                .order_by("-created_at"),
             },
         )
     )

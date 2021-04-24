@@ -1,15 +1,15 @@
-<h2 id="reporter-h2">All past reports for this location</h2>
+<h2 id="location-h2">All past reports for this location</h2>
 
 {{ reports_datetimes|json_script:"recent_report_datetimes" }}
 
-<svg id="recent-reports"></svg>
+<svg id="recent-reports-location"></svg>
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script>
 var reportDates = JSON.parse(
   document.getElementById('recent_report_datetimes').textContent
 ).map(d => new Date(d));
 (function() {
-  let width = document.getElementById('reporter-h2').offsetWidth;
+  let width = document.getElementById('location-h2').offsetWidth;
   var xScale = d3
     .scaleTime()
     .domain(d3.extent(reportDates))
@@ -17,7 +17,7 @@ var reportDates = JSON.parse(
 
   var xAxis = d3.axisBottom(xScale);
 
-  var svg = d3.select('#recent-reports');
+  var svg = d3.select('#recent-reports-location');
 
   svg
     .attr("width", width)
