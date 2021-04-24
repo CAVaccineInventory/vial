@@ -102,3 +102,6 @@ def test_import_location(client, api_key, json_path):
         )
     elif original_location is not None:
         assert source_location.matched_location == original_location
+        concordances = set(original_location.concordances.all())
+        source_concordanes = set(source_location.concordances.all())
+        assert source_concordanes.issubset(concordances)
