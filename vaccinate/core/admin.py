@@ -3,7 +3,8 @@ import json
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, TextField
+from django.forms import Textarea
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -802,6 +803,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     )
     ordering = ("-created_at",)
 
+    formfield_overrides = {
+        TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 150})}
+    }
     readonly_fields = (
         "location_link",
         "reporter",
@@ -829,7 +833,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             },
         ),
         (
-            "QA",
+            "QA summary",
             {
                 "fields": (
                     "originally_pending_review",
@@ -840,7 +844,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             },
         ),
         (
-            "Details",
+            "Report Details",
             {
                 "fields": (
                     "availability_tags",

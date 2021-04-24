@@ -48,7 +48,11 @@ textarea#id_full_address {
 }
 .primary-button:focus {
     background: #609ab6;
-}   
+}
+#report_form > div > fieldset:nth-child(2) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
 </style>
 {{ block.super }}
 {% endblock %}
