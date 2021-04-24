@@ -443,6 +443,10 @@ def request_call(request, on_request_logged):
             "county_record": county_record,
             "provider_record": provider_record,
             "county_age_floor_without_restrictions": county_age_floor_without_restrictions,
+            # TODO: these should be True sometimes for locations that need updates:
+            "confirm_address": False,
+            "confirm_hours": False,
+            "confirm_website": False,
         },
         status=200,
     )
