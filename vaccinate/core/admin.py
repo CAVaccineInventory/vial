@@ -73,14 +73,19 @@ class ImportRunAdmin(admin.ModelAdmin):
 @admin.register(ConcordanceIdentifier)
 class ConcordanceIdentifierAdmin(admin.ModelAdmin):
     search_fields = ("identifier",)
-    list_display = ("authority", "identifier", "locations_summary")
+    list_display = (
+        "authority",
+        "identifier",
+        "locations_summary",
+        "source_locations_summary",
+    )
     list_display_links = ("authority", "identifier")
     list_filter = ("authority",)
     raw_id_fields = ("locations", "source_locations")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related("locations")
+        return qs.prefetch_related("locations", "source_locations")
 
     def locations_summary(self, obj):
         return mark_safe(
@@ -89,6 +94,16 @@ class ConcordanceIdentifierAdmin(admin.ModelAdmin):
                     location.pk, escape(location.name)
                 )
                 for location in obj.locations.all()
+            )
+        )
+
+    def source_locations_summary(self, obj):
+        return mark_safe(
+            "<br>".join(
+                '<a href="/admin/core/sourcelocation/{}/change/">{}</a>'.format(
+                    location.pk, escape(location.name)
+                )
+                for location in obj.source_locations.all()
             )
         )
 
