@@ -126,6 +126,7 @@ class SourceLocationAdmin(admin.ModelAdmin):
         "longitude",
         "import_run",
     )
+    readonly_fields = ("concordances_summary",)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -135,6 +136,17 @@ class SourceLocationAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def concordances_summary(self, obj):
+        bits = []
+        for concordance in obj.concordances.all():
+            bits.append(
+                '<p><a href="/admin/core/concordanceidentifier/{}/change/">{}</a></p>'.format(
+                    concordance.pk,
+                    escape(str(concordance)),
+                )
+            )
+        return mark_safe("\n".join(bits))
 
 
 class DynamicListDisplayMixin:
