@@ -2,7 +2,9 @@ import datetime
 import re
 
 import pytest
+from django.contrib import admin
 from django.contrib.messages import get_messages
+from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel
 from django.utils import timezone
 
 from .models import (
@@ -473,3 +475,33 @@ def test_bulk_approve_reports_action(admin_client, ten_locations):
         assert report.review_notes.count() == 1
         note = report.review_notes.first()
         assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]
+
+
+@pytest.mark.xfail
+@pytest.mark.parametrize(
+    "model,model_admin",
+    [
+        (model, model_admin)
+        for model, model_admin in admin.site._registry.items()
+        if model._meta.app_label in ("core", "api")
+        and model_admin.__class__ is not admin.ModelAdmin
+        and model_admin.fieldsets is not None
+    ],
+)
+def test_admin_fieldsets_do_not_omit_fields_accidentally(model, model_admin):
+    # https://github.com/CAVaccineInventory/vial/issues/421
+    columns = {
+        f.name
+        for f in model._meta.get_fields()
+        if f is not model._meta.pk
+        and not isinstance(f, ManyToOneRel)
+        and not isinstance(f, ManyToManyRel)
+    }
+    admin_columns = set()
+    for fieldset_name, fieldset_bits in model_admin.fieldsets:
+        admin_columns.update(fieldset_bits["fields"])
+    assert columns.issubset(
+        admin_columns
+    ), "ModelAdmin {} is missing columns {}".format(
+        model_admin.__class__.__name__, columns.difference(admin_columns)
+    )
