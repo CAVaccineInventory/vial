@@ -43,6 +43,9 @@ def search_locations(request):
         qs = qs.filter(name__icontains=q)
     if state:
         qs = qs.filter(state__abbreviation=state)
+    ids = request.GET.getlist("id")
+    if ids:
+        qs = qs.filter(public_id__in=ids)
     idrefs = request.GET.getlist("idref")
     if idrefs:
         # Matching any of those idrefs

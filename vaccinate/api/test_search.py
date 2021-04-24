@@ -41,6 +41,16 @@ def test_search_locations(client, query_string, expected, ten_locations):
     assert data["total"] == len(expected)
 
 
+def test_search_locations_by_id(client, ten_locations):
+    data = search_get_json(
+        client,
+        "id={}&id={}".format(ten_locations[0].public_id, ten_locations[1].public_id),
+    )
+    names = {r["name"] for r in data["results"]}
+    assert names == {ten_locations[0].name, ten_locations[1].name}
+    assert data["total"] == 2
+
+
 def test_search_locations_ignores_soft_deleted(client, ten_locations):
     assert search_get_json(client, "q=Location+1")["total"] == 2
     Location.objects.filter(name="Location 10").update(soft_deleted=True)

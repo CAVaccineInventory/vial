@@ -18,6 +18,7 @@ Optional query string parameters:
 - `size=` - the number of results to return, up to 1000
 - `format=` - the output format, see below.
 - `state=` - a state code such as `CA` or `OR`
+- `id=` - a public ID for one of our locations, can be passed multiple times to retrieve multiple locations at once by their IDs
 - `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 
