@@ -164,6 +164,7 @@ class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "public_id",
                     "name",
                     "provider_type",
+                    "contact_phone_number",
                     "internal_contact_instructions",
                 )
             },
@@ -175,6 +176,7 @@ class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "last_updated",
                     "phases",
                     "public_notes",
+                    "main_url",
                     "vaccine_info_url",
                     "vaccine_locations_url",
                     "appointments_url",
@@ -224,6 +226,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "state",
                     "population",
                     "internal_notes",
+                    "fips_code",
                 )
             },
         ),
@@ -806,6 +809,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "location_reports_history",
     )
     inlines = [ReportReviewNoteInline]
+    deliberately_omitted_from_fieldsets = ("location", "reported_by")
     fieldsets = (
         (
             None,
@@ -840,6 +844,13 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     "appointment_details",
                     "call_request",
                     "report_source",
+                    "hours",
+                    "reported_by",
+                    "planned_closure",
+                    "website",
+                    "vaccines_offered",
+                    "full_address",
+                    "restriction_notes",
                 ),
             },
         ),

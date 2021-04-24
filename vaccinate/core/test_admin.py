@@ -2,7 +2,9 @@ import datetime
 import re
 
 import pytest
+from django.contrib import admin
 from django.contrib.messages import get_messages
+from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel
 from django.utils import timezone
 
 from .models import (
@@ -340,8 +342,8 @@ def test_custom_csv_export_for_reports(
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location_id,location,is_pending_review,originally_pending_review,claimed_by_id,claimed_by,claimed_at,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
-            '{},{},Location 1,True,True,,,,False,,ca,3,web,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
+            "id,location_id,location,is_pending_review,originally_pending_review,claimed_by_id,claimed_by,claimed_at,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,restriction_notes,vaccines_offered,website,full_address,hours,planned_closure,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
+            '{},{},Location 1,True,True,,,,False,,ca,3,web,,,,,,,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 65+, Vaccinating 50+"\r\n'.format(
                 report.id,
                 report.location_id,
                 reporter.id,
@@ -473,3 +475,36 @@ def test_bulk_approve_reports_action(admin_client, ten_locations):
         assert report.review_notes.count() == 1
         note = report.review_notes.first()
         assert list(note.tags.values_list("tag", flat=True)) == ["Approved"]
+
+
+@pytest.mark.parametrize(
+    "model,model_admin",
+    [
+        (model, model_admin)
+        for model, model_admin in admin.site._registry.items()
+        if model._meta.app_label in ("core", "api")
+        and model_admin.__class__ is not admin.ModelAdmin
+        and model_admin.fieldsets is not None
+    ],
+)
+def test_admin_fieldsets_do_not_omit_fields_accidentally(model, model_admin):
+    # It's easy to add new fields to a Django ORM model but forget to explicitly
+    # add those new fields to the fieldset= for the relevant ModelAdmin
+    # https://github.com/CAVaccineInventory/vial/issues/421
+    columns = {
+        f.name
+        for f in model._meta.get_fields()
+        if f is not model._meta.pk
+        and not isinstance(f, ManyToOneRel)
+        and not isinstance(f, ManyToManyRel)
+    }
+    admin_columns = set(
+        getattr(model_admin, "deliberately_omitted_from_fieldsets", None) or []
+    )
+    for fieldset_name, fieldset_bits in model_admin.fieldsets:
+        admin_columns.update(fieldset_bits["fields"])
+    assert columns.issubset(
+        admin_columns
+    ), "ModelAdmin {} is missing columns {}".format(
+        model_admin.__class__.__name__, columns.difference(admin_columns)
+    )

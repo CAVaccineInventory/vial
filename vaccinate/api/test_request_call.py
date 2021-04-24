@@ -92,6 +92,9 @@ def test_request_call(client, jwt_id_token):
         },
         "county_age_floor_without_restrictions": [50],
         "provider_record": {},
+        "confirm_address": False,
+        "confirm_hours": False,
+        "confirm_website": False,
     }
 
 

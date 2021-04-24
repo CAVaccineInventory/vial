@@ -1,0 +1,30 @@
+{
+    "input": {
+        "Location": "recaQlVkkI1rNarvx",
+        "Availability": [
+            "Yes: appointments or walk-ins accepted"
+        ],
+        "Notes": "",
+        "Internal Notes": "",
+        "web": "https://example.com/",
+        "vaccines_offered": ["Moderna", "Pfizer"],
+        "restriction_notes": "Restrictions go here",
+        "address": "101 Main Street",
+        "hours": "M-F 10am-5pm",
+        "planned_closure": "2021-05-05"
+    },
+    "expected_status": 200,
+    "expected_fields": {
+        "location__public_id": "recaQlVkkI1rNarvx",
+        "is_pending_review": false,
+        "website": "https://example.com/",
+        "vaccines_offered": ["Moderna", "Pfizer"],
+        "restriction_notes": "Restrictions go here",
+        "full_address": "101 Main Street",
+        "hours": "M-F 10am-5pm",
+        "planned_closure": "2021-05-05"
+    },
+    "expected_availability_tags": [
+        "appointments_or_walkins"
+    ]
+}

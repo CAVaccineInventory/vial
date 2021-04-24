@@ -43,6 +43,9 @@ def search_locations(request):
         qs = qs.filter(name__icontains=q)
     if state:
         qs = qs.filter(state__abbreviation=state)
+    ids = request.GET.getlist("id")
+    if ids:
+        qs = qs.filter(public_id__in=ids)
     idrefs = request.GET.getlist("idref")
     if idrefs:
         # Matching any of those idrefs
@@ -103,9 +106,35 @@ def search_locations(request):
 
 
 def location_json_queryset(queryset):
-    return queryset.select_related(
-        "state", "county", "location_type", "provider__provider_type"
-    ).prefetch_related("concordances")
+    return (
+        queryset.select_related(
+            "state",
+            "county",
+            "location_type",
+            "provider__provider_type",
+        ).prefetch_related("concordances")
+    ).only(
+        "public_id",
+        "name",
+        "state__abbreviation",
+        "latitude",
+        "longitude",
+        "location_type__name",
+        "import_ref",
+        "phone_number",
+        "full_address",
+        "city",
+        "county__name",
+        "google_places_id",
+        "vaccinefinder_location_id",
+        "vaccinespotter_location_id",
+        "zip_code",
+        "hours",
+        "website",
+        "preferred_contact_method",
+        "provider__name",
+        "provider__provider_type__name",
+    )
 
 
 def location_json(location):

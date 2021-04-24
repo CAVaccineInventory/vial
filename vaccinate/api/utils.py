@@ -4,6 +4,11 @@ import secrets
 from functools import wraps
 from typing import Optional
 
+import beeline
+import requests
+from auth0login.auth0_utils import decode_and_verify_jwt
+from core.models import Reporter
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseServerError, JsonResponse
 from django.utils import timezone
 
@@ -124,3 +129,82 @@ def deny_if_api_is_disabled(view_fn):
         return view_fn(request, *args, **kwargs)
 
     return inner
+
+
+@beeline.traced("reporter_from_request")
+def reporter_from_request(request, allow_test=False):
+    if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
+        reporter = Reporter.objects.get_or_create(
+            external_id="auth0-fake:{}".format(request.GET["fake_user"]),
+        )[0]
+        user_info = {"fake": reporter.external_id}
+        return reporter, user_info
+    # Use Bearer token in Authorization header
+    authorization = request.META.get("HTTP_AUTHORIZATION") or ""
+    if not authorization.startswith("Bearer "):
+        return (
+            JsonResponse(
+                {"error": "Authorization header must start with 'Bearer'"}, status=403
+            ),
+            None,
+        )
+    # Check JWT token is valid
+    jwt_id_token = authorization.split("Bearer ")[1]
+    try:
+        jwt_payload = decode_and_verify_jwt(jwt_id_token, settings.HELP_JWT_AUDIENCE)
+    except Exception as e:
+        try:
+            # We _also_ try to decode as the VIAL audience, since the
+            # /api/requestCall/debug endpoint passes in _our_ JWT, not
+            # help's.
+            jwt_payload = decode_and_verify_jwt(
+                jwt_id_token, settings.VIAL_JWT_AUDIENCE
+            )
+        except Exception:
+            return (
+                JsonResponse(
+                    {"error": "Could not decode JWT", "details": str(e)}, status=403
+                ),
+                None,
+            )
+    external_id = "auth0:{}".format(jwt_payload["sub"])
+    jwt_auth0_role_names = ", ".join(
+        sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
+    )
+    try:
+        reporter = Reporter.objects.get(external_id=external_id)
+        # Have their auth0 roles changed?
+        if reporter.auth0_role_names != jwt_auth0_role_names:
+            reporter.auth0_role_names = jwt_auth0_role_names
+            reporter.save()
+        return reporter, jwt_payload
+    except Reporter.DoesNotExist:
+        pass
+
+    # If name is missing we need to fetch userdetails
+    if "name" not in jwt_payload or "email" not in jwt_payload:
+        with beeline.tracer(name="get user_info"):
+            user_info_response = requests.get(
+                "https://vaccinateca.us.auth0.com/userinfo",
+                headers={"Authorization": "Bearer {}".format(jwt_id_token)},
+                timeout=5,
+            )
+            beeline.add_context({"status": user_info_response.status_code})
+            user_info_response.raise_for_status()
+            user_info = user_info_response.json()
+            name = user_info["name"]
+            email = user_info["email"]
+    else:
+        name = jwt_payload["name"]
+        email = jwt_payload["email"]
+    defaults = {"auth0_role_names": jwt_auth0_role_names}
+    if name is not None:
+        defaults["name"] = name
+    if email is not None:
+        defaults["email"] = email
+    reporter = Reporter.objects.update_or_create(
+        external_id=external_id,
+        defaults=defaults,
+    )[0]
+    user_info = jwt_payload
+    return reporter, user_info
