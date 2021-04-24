@@ -811,10 +811,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             None,
             {
                 "fields": (
-                    "created_at",
+                    "reporter",
                     "public_id",
                     "location_link",
-                    "reporter",
+                    "created_at",
                 )
             },
         ),
@@ -845,17 +845,17 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         ),
         ("County summary", {"classes": ("collapse",), "fields": ("county_summary",)}),
         (
-            "Caller history",
-            {
-                "classes": ("collapse",),
-                "fields": ("reporter_qa_summary",),
-            },
-        ),
-        (
             "Location history",
             {
                 "classes": ("collapse",),
                 "fields": ("location_reports_history",),
+            },
+        ),
+        (
+            "Caller history",
+            {
+                "classes": ("collapse",),
+                "fields": ("reporter_qa_summary",),
             },
         ),
         (
