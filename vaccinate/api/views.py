@@ -423,8 +423,15 @@ def import_source_locations(request, on_request_logged):
                     authority=link["authority"], identifier=link["id"]
                 )
                 identifier.source_locations.add(source_location)
+
         if "match" in record and record["match"]["action"] == "new":
-            build_location_from_source_location(source_location)
+            matched_location = build_location_from_source_location(source_location)
+
+        if matched_location is not None:
+            new_concordances = source_location.concordances.difference(
+                matched_location.concordances.all()
+            )
+            matched_location.concordances.add(*new_concordances)
 
         if was_created:
             created.append(source_location.pk)
@@ -446,6 +453,8 @@ def build_location_from_source_location(source_location: SourceLocation):
     location.save()
     source_location.matched_location = location
     source_location.save()
+
+    return location
 
 
 @csrf_exempt
