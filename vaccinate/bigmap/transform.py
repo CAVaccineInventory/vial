@@ -25,10 +25,10 @@ BANKING_CONTACT_METHOD = "booking"
 
 def source_to_location(normalized_location):
     location = {}
-    if "name" in normalized_location:
+    if normalized_location.get("name") is not None:
         location["name"] = normalized_location.get("name")
 
-    if "address" in normalized_location:
+    if normalized_location.get("address") is not None:
         location["full_address"] = address_to_full_address(
             normalized_location["address"]
         )
@@ -41,14 +41,33 @@ def source_to_location(normalized_location):
         ]  # needs foreign key lookup
         location["zip_code"] = normalized_location["address"]["zip"]
 
-    if "location" in normalized_location:
+    if normalized_location.get("location") is not None:
         # Geo data
         location["latitude"] = normalized_location["location"]["latitude"]
         location["longitude"] = normalized_location["location"]["longitude"]
 
-    if "contact" in normalized_location:
+    phone_number = None
+    website = None
+    if normalized_location.get("contact") is not None:
+        # Structured as two loops over the possible contact info, since we want:
+        # 1. A phone number (website) if there is only one over all contact methods.
+        # 2. The one associated with BANKING_CONTACT_METHOD if there is one.
+
+        for contact_method in normalized_location["contact"]:
+            if phone_number is None and contact_method.get("phone") is not None:
+                phone_number = contact_method.get("phone")
+            if website is None and contact_method.get("website") is not None:
+                website = contact_method.get("website")
+
+        # Loop to fill with BANKING_CONTACT_METHOD
         for contact_method in normalized_location["contact"]:
             if contact_method.get("contact_type") == BANKING_CONTACT_METHOD:
-                location["phone_number"] = contact_method.get("phone")
+                if contact_method.get("phone") is not None:
+                    phone_number = contact_method.get("phone")
+                if contact_method.get("website") is not None:
+                    website = contact_method.get("website")
+
+    location["phone_number"] = phone_number
+    location["website"] = website
 
     return location
