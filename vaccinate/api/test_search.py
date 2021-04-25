@@ -142,4 +142,4 @@ def test_search_locations_num_queries(
     # 5. Fetch the condordances, which are many-to-many
     # 6. Repeat the locations fetch to verify we found all of them
     with django_assert_num_queries(6):
-        result = search_get_json(client, api_key, "all=1&format=geojson")
+        search_get_json(client, api_key, "all=1&format=geojson")
