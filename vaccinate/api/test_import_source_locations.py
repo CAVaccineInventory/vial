@@ -2,6 +2,7 @@ import json
 import pathlib
 
 import pytest
+from bigmap.transform import source_to_location
 from core.models import (
     ConcordanceIdentifier,
     ImportRun,
@@ -100,6 +101,13 @@ def test_import_location(client, api_key, json_path):
         assert set(source_location.concordances.all()) == set(
             location.concordances.all()
         )
+
+        if fixture["import_json"].get("contact") is not None:
+            # source_to_location is tested separately
+            correct_contact = source_to_location(fixture["import_json"])
+            assert location.phone_number == correct_contact.get("phone_number")
+            assert location.website == correct_contact.get("website")
+
     elif original_location is not None:
         assert source_location.matched_location == original_location
         concordances = set(original_location.concordances.all())
