@@ -1,5 +1,7 @@
 import json
 import pathlib
+import random
+import time
 from datetime import datetime
 
 import pytest
@@ -102,13 +104,16 @@ def test_submit_report_api_example(
     assert call_request.claimed_by
     assert call_request.claimed_until is not None
 
-    # Submit the report
+    # Submit the report; because we randomly sample 2% of all reports,
+    # we explicitly seed so we can predict if this will be selected.
+    random.seed(1)
     response = client.post(
         "/api/submitReport",
         fixture["input"],
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
     )
+    random.seed(int(time.time()))
     assert response.status_code == fixture["expected_status"]
 
     # Call request should have been marked as complete

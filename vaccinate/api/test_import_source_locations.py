@@ -2,6 +2,7 @@ import json
 import pathlib
 
 import pytest
+from bigmap.transform import source_to_location
 from core.models import (
     ConcordanceIdentifier,
     ImportRun,
@@ -67,7 +68,8 @@ def test_import_location(client, api_key, json_path):
         "links" in fixture["import_json"]
         and fixture["import_json"]["links"] is not None
     ):
-        assert ConcordanceIdentifier.objects.count() == len(
+        # Add one for the source concordance
+        assert ConcordanceIdentifier.objects.count() == 1 + len(
             fixture["import_json"]["links"]
         )
     json_response = response.json()
@@ -81,6 +83,12 @@ def test_import_location(client, api_key, json_path):
     assert source_location.longitude == fixture["import_json"]["location"]["longitude"]
     assert source_location.import_json == fixture["import_json"]
     # TODO add more assertions about fields later
+
+    # Source concordance must be associated with concordances
+    source_concordance = ConcordanceIdentifier.objects.get(
+        authority=fixture["source_name"], identifier=fixture["source_uid"]
+    )
+    assert source_concordance in source_location.concordances.all()
 
     if (
         "match" in fixture
@@ -100,5 +108,15 @@ def test_import_location(client, api_key, json_path):
         assert set(source_location.concordances.all()) == set(
             location.concordances.all()
         )
+
+        if fixture["import_json"].get("contact") is not None:
+            # source_to_location is tested separately
+            correct_contact = source_to_location(fixture["import_json"])
+            assert location.phone_number == correct_contact.get("phone_number")
+            assert location.website == correct_contact.get("website")
+
     elif original_location is not None:
         assert source_location.matched_location == original_location
+        concordances = set(original_location.concordances.all())
+        source_concordanes = set(source_location.concordances.all())
+        assert source_concordanes.issubset(concordances)

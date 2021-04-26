@@ -54,6 +54,7 @@ def check_request_for_api_key(request):
     ):
         api_key.last_seen_at = timezone.now()
         api_key.save()
+    beeline.add_trace_field("user.api_key", api_key.id)
     request.api_key = api_key
     return None
 
@@ -94,6 +95,9 @@ def log_api_requests(view_fn):
                 response_body_json = json.loads(response.content)
             except ValueError:
                 response_body = response.content
+            except AttributeError:
+                # Streaming responses have no .content
+                pass
             log = ApiLog.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 method=request.method,

@@ -417,14 +417,29 @@ def import_source_locations(request, on_request_logged):
         )
 
         import_json = record["import_json"]
-        if "links" in import_json and import_json["links"] is not None:
-            for link in import_json["links"]:
-                identifier, _ = ConcordanceIdentifier.objects.get_or_create(
-                    authority=link["authority"], identifier=link["id"]
-                )
-                identifier.source_locations.add(source_location)
+
+        links = (
+            list(import_json.get("links"))
+            if import_json.get("links") is not None
+            else []
+        )
+        # Always use the (source_name, source_uid) as a concordance
+        links.append({"authority": record["source_name"], "id": record["source_uid"]})
+
+        for link in links:
+            identifier, _ = ConcordanceIdentifier.objects.get_or_create(
+                authority=link["authority"], identifier=link["id"]
+            )
+            identifier.source_locations.add(source_location)
+
         if "match" in record and record["match"]["action"] == "new":
-            build_location_from_source_location(source_location)
+            matched_location = build_location_from_source_location(source_location)
+
+        if matched_location is not None:
+            new_concordances = source_location.concordances.difference(
+                matched_location.concordances.all()
+            )
+            matched_location.concordances.add(*new_concordances)
 
         if was_created:
             created.append(source_location.pk)
@@ -446,6 +461,8 @@ def build_location_from_source_location(source_location: SourceLocation):
     location.save()
     source_location.matched_location = location
     source_location.save()
+
+    return location
 
 
 @csrf_exempt

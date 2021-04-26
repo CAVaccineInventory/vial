@@ -7,11 +7,7 @@ class RequestLoggingMiddleware(object):
 
     def __call__(self, request):
         if request.user.id:
-            beeline.add_context(
-                {
-                    "user.id": request.user.id,
-                    "user.email": request.user.email,
-                    "user.username": request.user.username,
-                }
-            )
+            beeline.add_trace_field("user.id", request.user.id)
+            beeline.add_trace_field("user.email", request.user.email)
+            beeline.add_trace_field("user.username", request.user.username)
         return self.get_response(request)
