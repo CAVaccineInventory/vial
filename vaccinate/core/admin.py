@@ -638,8 +638,15 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
-    search_fields = ("external_id", "name", "email")
-    list_display = ("external_id", "name", "roles", "report_count", "latest_report")
+    search_fields = ("external_id", "display_name", "name", "email")
+    list_display = (
+        "__str__",
+        "external_id",
+        "name",
+        "roles",
+        "report_count",
+        "latest_report",
+    )
     list_filter = (
         ReporterProviderFilter,
         make_csv_filter(
@@ -671,15 +678,18 @@ class ReporterAdmin(admin.ModelAdmin):
     def roles(self, obj):
         return [r.strip() for r in (obj.auth0_role_names or "").split(",")]
 
-    readonly_fields = ("reporter_qa_summary",)
+    readonly_fields = (
+        "name",
+        "external_id",
+        "email",
+        "auth0_role_names",
+        "reporter_qa_summary",
+    )
 
     def reporter_qa_summary(self, obj):
         return reporter_qa_summary(obj)
 
     reporter_qa_summary.short_description = "Caller QA summary"
-
-    def has_change_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(AvailabilityTag)
@@ -951,7 +961,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         return format_html(
             '<strong><a href="{}">{}</a></strong><br>{}',
             reverse("admin:core_reporter_change", args=(obj.reported_by.id,)),
-            obj.reported_by.name,
+            obj.reported_by,
             escape(obj.reported_by.auth0_role_names or ""),
         )
 
