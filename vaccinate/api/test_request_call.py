@@ -77,6 +77,7 @@ def test_request_call(client, jwt_id_token):
         "Address": "5 5th Street",
         "Internal notes": None,
         "Hours": None,
+        "State": "OR",
         "County": "Multnomah",
         "Location Type": "Pharmacy",
         "Affiliation": None,

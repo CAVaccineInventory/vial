@@ -147,6 +147,7 @@ def request_call(request, on_request_logged):
             "Address": location.full_address,
             "Internal notes": location.internal_notes,
             "Hours": location.hours,
+            "State": location.state.abbreviation,
             "County": location.county.name if location.county else None,
             "Location Type": location.location_type.name,
             "Affiliation": location.provider.name if location.provider else None,
