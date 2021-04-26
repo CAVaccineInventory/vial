@@ -143,3 +143,8 @@ def test_search_locations_num_queries(
     # 6. Repeat the locations fetch to verify we found all of them
     with django_assert_num_queries(6):
         search_get_json(client, api_key, "all=1&format=geojson")
+
+
+def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
+    assert client.get("/api/searchLocations").status_code == 403
+    assert admin_client.get("/api/searchLocations").status_code == 200

@@ -10,7 +10,7 @@ from django.http.response import StreamingHttpResponse
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
-from .utils import log_api_requests, require_api_key
+from .utils import log_api_requests, require_api_key_or_cookie_user
 
 OutputFormat = namedtuple(
     "Format", ("start", "transform", "separator", "end", "content_type")
@@ -18,7 +18,7 @@ OutputFormat = namedtuple(
 
 
 @log_api_requests
-@require_api_key
+@require_api_key_or_cookie_user
 @beeline.traced("search_locations")
 def search_locations(request, on_request_logged):
     format = request.GET.get("format") or "json"
