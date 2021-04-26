@@ -435,11 +435,16 @@ class Reporter(models.Model):
 
     external_id = models.SlugField(unique=True, max_length=400)
     name = CharTextField(null=True, blank=True)
+    display_name = CharTextField(
+        null=True,
+        blank=True,
+        help_text="If set this is displayed within VIAL in place of the Auth0 name",
+    )
     email = CharTextField(null=True, blank=True)
     auth0_role_names = CharTextField(null=True, blank=True)
 
     def __str__(self):
-        return self.name or self.external_id
+        return self.display_name or self.name or self.external_id
 
     class Meta:
         db_table = "reporter"
