@@ -783,6 +783,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__external_id",
         "reported_by__email",
         "reported_by__name",
+        "reported_by__display_name",
     )
     list_display = (
         "created_id_deleted",
@@ -1102,7 +1103,7 @@ class ReportReviewNoteAdmin(admin.ModelAdmin):
             '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
                 obj.report_id,
                 obj.report.public_id,
-                escape(obj.report.reported_by.name),
+                escape(obj.report.reported_by),
                 dateformat.format(
                     timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
                 ),
