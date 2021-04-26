@@ -1104,7 +1104,7 @@ class ReportReviewNoteAdmin(admin.ModelAdmin):
             '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
                 obj.report_id,
                 obj.report.public_id,
-                escape(obj.report.reported_by.name),
+                escape(obj.report.reported_by),
                 dateformat.format(
                     timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
                 ),
