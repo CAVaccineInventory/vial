@@ -783,6 +783,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__external_id",
         "reported_by__email",
         "reported_by__name",
+        "reported_by__display_name",
     )
     list_display = (
         "created_id_deleted",
