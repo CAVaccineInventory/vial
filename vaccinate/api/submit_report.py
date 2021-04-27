@@ -31,6 +31,7 @@ class ReportValidator(BaseModel):
     public_notes: Optional[str] = Field(alias="Notes")
     internal_notes: Optional[str] = Field(alias="Internal Notes")
     do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
+    web_banked: Optional[bool]
     is_pending_review: Optional[bool] = Field(alias="is_pending_review")
     restriction_notes: Optional[str]
     vaccines_offered: Optional[List[str]]
@@ -96,7 +97,9 @@ def submit_report(request, on_request_logged):
         planned_closure=report_data["planned_closure"],
     )
     # is_pending_review
-    if report_data["is_pending_review"] or user_should_have_reports_reviewed(reporter):
+    if report_data["is_pending_review"] or user_should_have_reports_reviewed(
+        reporter, report_data
+    ):
         kwargs["is_pending_review"] = True
         kwargs["originally_pending_review"] = True
     else:
@@ -204,7 +207,7 @@ def submit_report(request, on_request_logged):
     )
 
 
-def user_should_have_reports_reviewed(user):
+def user_should_have_reports_reviewed(user, report):
     data_corrections = "VIAL data corrections" + (
         " STAGING" if settings.STAGING else ""
     )
@@ -213,11 +216,10 @@ def user_should_have_reports_reviewed(user):
         return True
     elif "Journeyman" in roles:
         return random.random() < 0.15
-    elif data_corrections in roles or "Web Banker" in roles:
-        # Data corrections and web bankers get a pass; ideally we
-        # would filter this based on if the submission itself was a
-        # data correction, or web banked, but Scooby does not tell us
-        # that yet.  See https://github.com/CAVaccineInventory/help.vaccinate/issues/199
+    elif (data_corrections in roles or "Web Banker" in roles) and (
+        report.get("web_banked")
+    ):
+        # Data corrections and web bankers get a pass
         pass
     else:
         return random.random() < 0.02
