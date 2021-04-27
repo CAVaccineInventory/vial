@@ -463,7 +463,24 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 ),
             },
         ),
+        (
+            "Matched source locations",
+            {"classes": ("collapse",), "fields": ("matched_source_locations",)},
+        ),
     )
+
+    def matched_source_locations(self, obj):
+        return mark_safe(
+            "".join(
+                '<p><a href="/admin/core/sourcelocation/{}/change/">{}:{} {}</a></p>'.format(
+                    source_location.pk,
+                    source_location.source_uid,
+                    source_location.source_name,
+                    source_location.name,
+                )
+                for source_location in obj.matched_source_locations.all()
+            )
+        )
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -531,6 +548,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_latest_non_skip_report",
         "dn_skip_report_count",
         "dn_yes_report_count",
+        "matched_source_locations",
     )
 
     def summary(self, obj):
