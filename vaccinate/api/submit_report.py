@@ -153,6 +153,14 @@ def submit_report(request, on_request_logged):
                 {"error": "Report set do not call time but did not request a skip."},
                 status=400,
             )
+        priority_in_group = 0
+        if existing_call_request:
+            priority_in_group = (
+                CallRequest.objects.filter(
+                    priority_group=existing_call_request.priority_group
+                ).aggregate(max=Max("priority"))["max"]
+                - 1
+            )
         # Priority group should match that of the original call request, BUT we
         # use the separate priority integer to drop them to the very end of the
         # queue within that priority group
@@ -165,10 +173,7 @@ def submit_report(request, on_request_logged):
             priority_group=existing_call_request.priority_group
             if existing_call_request
             else 99,
-            priority=CallRequest.objects.filter(
-                priority_group=existing_call_request.priority_group
-            ).aggregate(max=Max("priority"))["max"]
-            - 1,
+            priority=priority_in_group,
         )
 
     def log_created_report(log):
