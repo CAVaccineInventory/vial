@@ -11,6 +11,7 @@ from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import AppointmentTag, CallRequest, CallRequestReason, Location, Report
 from dateutil import parser
 from django.conf import settings
+from django.db.models import Max
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -152,7 +153,9 @@ def submit_report(request, on_request_logged):
                 {"error": "Report set do not call time but did not request a skip."},
                 status=400,
             )
-        # Priority should match that of the original call request
+        # Priority group should match that of the original call request, BUT we
+        # use the separate priority integer to drop them to the very end of the
+        # queue within that priority group
         CallRequest.objects.create(
             location=report_data["location"],
             vesting_at=report_data["do_not_call_until"],
@@ -162,6 +165,10 @@ def submit_report(request, on_request_logged):
             priority_group=existing_call_request.priority_group
             if existing_call_request
             else 99,
+            priority=CallRequest.objects.filter(
+                priority_group=existing_call_request.priority_group
+            ).aggregate(max=Max("priority"))["max"]
+            - 1,
         )
 
     def log_created_report(log):
