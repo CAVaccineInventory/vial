@@ -420,8 +420,13 @@ def import_source_locations(request, on_request_logged):
             if import_json.get("links") is not None
             else []
         )
-        # Always use the (source_name, source_uid) as a concordance
-        links.append({"authority": record["source_name"], "id": record["source_uid"]})
+        # Always use the (source, id) as a concordance
+        links.append(
+            {
+                "authority": import_json["source"]["source"],
+                "id": import_json["source"]["id"],
+            }
+        )
 
         for link in links:
             identifier, _ = ConcordanceIdentifier.objects.get_or_create(
