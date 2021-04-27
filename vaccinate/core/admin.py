@@ -445,6 +445,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "import_run",
                     "provenance",
                     "airtable_id",
                     "vaccinespotter_location_id",

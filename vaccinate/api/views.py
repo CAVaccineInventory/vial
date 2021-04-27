@@ -201,15 +201,11 @@ class _LocationSharedValidators(BaseModel):
             raise ValueError("State '{}' does not exist".format(value))
 
     @validator("county", check_fields=False)
-    def county_must_exist(cls, value, values):
+    def set_county_to_null_if_it_does_not_exist(cls, value, values):
         try:
             return values["state"].counties.get(name=value)
         except County.DoesNotExist:
-            raise ValueError(
-                "County '{}' does not exist in state {}".format(
-                    value, values["state"].name
-                )
-            )
+            return None
 
     @validator("location_type", check_fields=False)
     def location_type_must_exist(cls, value):
@@ -456,6 +452,7 @@ def build_location_from_source_location(source_location: SourceLocation):
 
     location = Location.objects.create(
         location_type=unknown_location_type,
+        import_run=source_location.import_run,
         **location_kwargs,
     )
     location.concordances.set(source_location.concordances.all())
