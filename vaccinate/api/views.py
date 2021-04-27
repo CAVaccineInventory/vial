@@ -456,6 +456,7 @@ def build_location_from_source_location(source_location: SourceLocation):
 
     location = Location.objects.create(
         location_type=unknown_location_type,
+        import_run=source_location.import_run,
         **location_kwargs,
     )
     location.concordances.set(source_location.concordances.all())
