@@ -118,6 +118,7 @@ class Provider(models.Model):
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
         if set_public_id_later:
+            self.public_id = self.pid
             Provider.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
@@ -443,6 +444,7 @@ class Location(models.Model):
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
         if set_public_id_later:
+            self.public_id = self.pid
             Location.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
@@ -697,6 +699,7 @@ class Report(models.Model):
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
         if set_public_id_later:
+            self.public_id = self.pid
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
         self.location.update_denormalizations()
 

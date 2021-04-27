@@ -99,6 +99,8 @@ def test_import_location(client, api_key, json_path):
         assert Location.objects.count() == 1
         assert source_location.matched_location is not None
         location = source_location.matched_location
+        # https://github.com/CAVaccineInventory/vial/issues/443
+        assert location.public_id.public_id.startswith("l")
         assert location.name == fixture["name"]
         assert location.import_run == import_run
         assert (
