@@ -178,6 +178,19 @@ class County(models.Model):
         db_table = "county"
 
 
+class ImportRun(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
+    api_key = models.ForeignKey(
+        "api.ApiKey", blank=True, null=True, on_delete=models.SET_NULL
+    )
+
+    def __str__(self):
+        return str(self.created_at)
+
+    class Meta:
+        db_table = "import_run"
+
+
 class Location(models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
     name = CharTextField()
@@ -249,6 +262,14 @@ class Location(models.Model):
         related_name="duplicate_locations",
         on_delete=models.PROTECT,
         help_text="duplicate locations are associated with a canonical location",
+    )
+    import_run = models.ForeignKey(
+        ImportRun,
+        null=True,
+        blank=True,
+        related_name="created_locations",
+        on_delete=models.PROTECT,
+        help_text="the import run that created this location, if any",
     )
     provenance = CharTextField(null=True, blank=True)
     internal_notes = models.TextField(null=True, blank=True)
@@ -968,19 +989,6 @@ class PublishedReport(models.Model):
 
     class Meta:
         db_table = "published_report"
-
-
-class ImportRun(models.Model):
-    created_at = models.DateTimeField(default=timezone.now)
-    api_key = models.ForeignKey(
-        "api.ApiKey", blank=True, null=True, on_delete=models.SET_NULL
-    )
-
-    def __str__(self):
-        return str(self.created_at)
-
-    class Meta:
-        db_table = "import_run"
 
 
 class SourceLocation(models.Model):

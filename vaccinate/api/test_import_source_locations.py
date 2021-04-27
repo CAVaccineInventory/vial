@@ -48,9 +48,10 @@ def test_import_location(client, api_key, json_path):
 
     assert start_response.status_code == 200
     assert ImportRun.objects.count() == 1
+    import_run = ImportRun.objects.get()
     json_start_response = start_response.json()
     assert "import_run_id" in json_start_response
-    assert json_start_response["import_run_id"] == ImportRun.objects.get().id
+    assert json_start_response["import_run_id"] == import_run.id
 
     # Make the API request
     response = client.post(
@@ -99,6 +100,7 @@ def test_import_location(client, api_key, json_path):
         assert source_location.matched_location is not None
         location = source_location.matched_location
         assert location.name == fixture["name"]
+        assert location.import_run == import_run
         assert (
             location.location_type.name == "Unknown"
         )  # all source location conversions use unknown for now
