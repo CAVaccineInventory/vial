@@ -279,7 +279,8 @@ def import_locations(request, on_request_logged):
     with reversion.create_revision():
         for location_json in post_data:
             try:
-                location_data = LocationValidator(**location_json).dict()
+                with beeline.tracer(name="location_validator"):
+                    location_data = LocationValidator(**location_json).dict()
                 kwargs = dict(
                     name=location_data["name"],
                     latitude=location_data["latitude"],
