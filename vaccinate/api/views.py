@@ -680,6 +680,7 @@ def _mapbox_locations_queryset():
             "state",
             "provider",
         )
+        .prefetch_related("dn_latest_non_skip_report__availability_tags")
         .only(
             "public_id",
             "name",
@@ -694,12 +695,15 @@ def _mapbox_locations_queryset():
             "vaccinefinder_location_id",
             "vaccinespotter_location_id",
             "hours",
+            "dn_latest_non_skip_report__planned_closure",
             "dn_latest_non_skip_report__public_notes",
             "dn_latest_non_skip_report__appointment_tag__slug",
             "dn_latest_non_skip_report__appointment_tag__name",
             "dn_latest_non_skip_report__appointment_details",
             "dn_latest_non_skip_report__location_id",
             "dn_latest_non_skip_report__created_at",
+            "dn_latest_non_skip_report__vaccines_offered",
+            "dn_latest_non_skip_report__restriction_notes",
             "website",
             "provider__appointments_url",
             "longitude",
@@ -733,6 +737,15 @@ def _mapbox_geojson(location):
                 "appointment_method": report.appointment_tag.name,
                 "appointment_details": report.full_appointment_details(location),
                 "latest_contact": report.created_at.isoformat(),
+                "availability_tags": [
+                    {"name": tag.name, "group": tag.group, "slug": tag.slug}
+                    for tag in report.availability_tags.all()
+                ],
+                "planned_closure": str(report.planned_closure)
+                if report.planned_closure
+                else None,
+                "vaccines_offered": report.vaccines_offered,
+                "restriction_notes": report.restriction_notes,
             }
         )
     return {
