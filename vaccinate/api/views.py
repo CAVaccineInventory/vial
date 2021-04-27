@@ -9,7 +9,6 @@ import markdown
 import requests
 import reversion
 from api.location_metrics import LocationMetricsReport
-from bigmap.schema import ImportSourceLocation
 from bigmap.transform import source_to_location
 from core import exporter
 from core.import_utils import import_airtable_report
@@ -35,6 +34,7 @@ from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
+from vaccine_feed_ingest_schema.schema import ImportSourceLocation
 
 from .utils import (
     deny_if_api_is_disabled,
