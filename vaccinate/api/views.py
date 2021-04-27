@@ -421,7 +421,12 @@ def import_source_locations(request, on_request_logged):
             else []
         )
         # Always use the (source, id) as a concordance
-        links.append({"authority": import_json["source"]["source"], "id": import_json["source"]["id"]})
+        links.append(
+            {
+                "authority": import_json["source"]["source"],
+                "id": import_json["source"]["id"],
+            }
+        )
 
         for link in links:
             identifier, _ = ConcordanceIdentifier.objects.get_or_create(
