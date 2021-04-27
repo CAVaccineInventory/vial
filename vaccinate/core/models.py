@@ -836,7 +836,7 @@ class CallRequest(models.Model):
     priority = models.IntegerField(
         default=0,
         db_index=True,
-        help_text="Priority for call queue - higher number means higher priority",
+        help_text="Priority within this priority group - higher number means higher priority",
     )
 
     tip_type = CharTextField(

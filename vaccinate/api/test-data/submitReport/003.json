@@ -20,6 +20,7 @@
         "location__public_id": "rec5RXyYpi7IHQ2eN",
         "vesting_at": "2021-03-07T18:35:03.742Z",
         "priority_group": 2,
+        "priority": -1,
         "call_request_reason__short_reason": "Previously skipped"
     }
 }
