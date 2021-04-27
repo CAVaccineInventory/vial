@@ -8,7 +8,6 @@ import beeline
 import markdown
 import reversion
 from api.location_metrics import LocationMetricsReport
-from bigmap.schema import ImportSourceLocation
 from bigmap.transform import source_to_location
 from core import exporter
 from core.import_utils import import_airtable_report
@@ -34,6 +33,7 @@ from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
+from vaccine_feed_ingest_schema.schema import ImportSourceLocation
 
 from .utils import (
     deny_if_api_is_disabled,
@@ -193,6 +193,11 @@ def verify_token(request):
 
 
 class _LocationSharedValidators(BaseModel):
+    # We use check_fields=Falsse because this class
+    # is designed to be used as a subclass/mixin,
+    # and without check_fields=False pydantic will
+    # show an error because the validator refers
+    # to a field not available on this class.
     @validator("state", check_fields=False)
     def state_must_exist(cls, value):
         try:
@@ -420,8 +425,13 @@ def import_source_locations(request, on_request_logged):
             if import_json.get("links") is not None
             else []
         )
-        # Always use the (source_name, source_uid) as a concordance
-        links.append({"authority": record["source_name"], "id": record["source_uid"]})
+        # Always use the (source, id) as a concordance
+        links.append(
+            {
+                "authority": import_json["source"]["source"],
+                "id": import_json["source"]["id"],
+            }
+        )
 
         for link in links:
             identifier, _ = ConcordanceIdentifier.objects.get_or_create(

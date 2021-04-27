@@ -579,7 +579,9 @@ pydantic==1.8.1 \
     --hash=sha256:fb77f7a7e111db1832ae3f8f44203691e15b1fa7e5a1cb9691d4e2659aee41c4 \
     --hash=sha256:fbfb608febde1afd4743c6822c19060a8dbdd3eb30f98e36061ba4973308059e \
     --hash=sha256:fff29fe54ec419338c522b908154a2efabeee4f483e48990f87e189661f31ce3
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   vaccine-feed-ingest-schema
 pyflakes==2.2.0 \
     --hash=sha256:0d94e0e05a19e57a99444b6ddcf9a6eb2e5c68d3ca1e98e90707af8152c90a92 \
     --hash=sha256:35b2d75ee967ea93b55750aa9edbbf72813e06a66ba54438df2cfac9e3c27fc8
@@ -885,6 +887,10 @@ urllib3==1.26.4 \
     # via
     #   requests
     #   sentry-sdk
+vaccine-feed-ingest-schema==0.1 \
+    --hash=sha256:b666618ee144ce85324bed756d768f6671f5dc792f9b84b4d1690dcc372bbbaf \
+    --hash=sha256:f84963aac8b1a72da1d8f5d2c834251a78ad3de116110f76982442eb5b8f4758
+    # via -r requirements.in
 wcwidth==0.2.5 \
     --hash=sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784 \
     --hash=sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83

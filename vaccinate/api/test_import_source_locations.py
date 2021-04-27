@@ -87,7 +87,8 @@ def test_import_location(client, api_key, json_path):
 
     # Source concordance must be associated with concordances
     source_concordance = ConcordanceIdentifier.objects.get(
-        authority=fixture["source_name"], identifier=fixture["source_uid"]
+        authority=fixture["import_json"]["source"]["source"],
+        identifier=fixture["import_json"]["source"]["id"],
     )
     assert source_concordance in source_location.concordances.all()
 
