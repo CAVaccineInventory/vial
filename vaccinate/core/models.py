@@ -118,6 +118,7 @@ class Provider(models.Model):
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
         if set_public_id_later:
+            self.public_id = self.pid
             Provider.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
@@ -176,6 +177,19 @@ class County(models.Model):
     class Meta:
         verbose_name_plural = "counties"
         db_table = "county"
+
+
+class ImportRun(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
+    api_key = models.ForeignKey(
+        "api.ApiKey", blank=True, null=True, on_delete=models.SET_NULL
+    )
+
+    def __str__(self):
+        return str(self.created_at)
+
+    class Meta:
+        db_table = "import_run"
 
 
 class Location(models.Model):
@@ -250,6 +264,14 @@ class Location(models.Model):
         on_delete=models.PROTECT,
         help_text="duplicate locations are associated with a canonical location",
     )
+    import_run = models.ForeignKey(
+        ImportRun,
+        null=True,
+        blank=True,
+        related_name="created_locations",
+        on_delete=models.PROTECT,
+        help_text="the import run that created this location, if any",
+    )
     provenance = CharTextField(null=True, blank=True)
     internal_notes = models.TextField(null=True, blank=True)
     do_not_call = models.BooleanField(default=False)
@@ -309,7 +331,7 @@ class Location(models.Model):
     dn_latest_non_skip_report = models.ForeignKey(
         "Report", related_name="+", on_delete=models.SET_NULL, null=True, blank=True
     )
-    # Denormalized counts for non is_pendin_review reports:
+    # Denormalized counts for non is_pending_review reports:
     dn_skip_report_count = models.IntegerField(default=0)
     dn_yes_report_count = models.IntegerField(default=0)
 
@@ -422,6 +444,7 @@ class Location(models.Model):
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
         if set_public_id_later:
+            self.public_id = self.pid
             Location.objects.filter(pk=self.pk).update(public_id=self.pid)
 
 
@@ -435,11 +458,16 @@ class Reporter(models.Model):
 
     external_id = models.SlugField(unique=True, max_length=400)
     name = CharTextField(null=True, blank=True)
+    display_name = CharTextField(
+        null=True,
+        blank=True,
+        help_text="If set this is displayed within VIAL in place of the Auth0 name",
+    )
     email = CharTextField(null=True, blank=True)
     auth0_role_names = CharTextField(null=True, blank=True)
 
     def __str__(self):
-        return self.name or self.external_id
+        return self.display_name or self.name or self.external_id
 
     class Meta:
         db_table = "reporter"
@@ -562,6 +590,26 @@ class Report(models.Model):
     )
     public_notes = models.TextField(null=True, blank=True)
     internal_notes = models.TextField(null=True, blank=True)
+    restriction_notes = models.TextField(null=True, blank=True)
+    vaccines_offered = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="JSON array of strings representing vaccines on offer here",
+    )
+    website = CharTextField(
+        null=True, blank=True, help_text="Update for website information"
+    )
+    full_address = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Update for the entire address, including city and zip code",
+    )
+    hours = models.TextField(
+        blank=True, null=True, help_text="Update for hours information"
+    )
+    planned_closure = models.DateField(
+        blank=True, null=True, help_text="Date this site a site plans to stop operating"
+    )
     reported_by = models.ForeignKey(
         Reporter, related_name="reports", on_delete=models.PROTECT
     )
@@ -651,6 +699,7 @@ class Report(models.Model):
             self.public_id = "tmp:{}".format(uuid.uuid4())
         super().save(*args, **kwargs)
         if set_public_id_later:
+            self.public_id = self.pid
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
         self.location.update_denormalizations()
 
@@ -948,19 +997,6 @@ class PublishedReport(models.Model):
 
     class Meta:
         db_table = "published_report"
-
-
-class ImportRun(models.Model):
-    created_at = models.DateTimeField(default=timezone.now)
-    api_key = models.ForeignKey(
-        "api.ApiKey", blank=True, null=True, on_delete=models.SET_NULL
-    )
-
-    def __str__(self):
-        return str(self.created_at)
-
-    class Meta:
-        db_table = "import_run"
 
 
 class SourceLocation(models.Model):

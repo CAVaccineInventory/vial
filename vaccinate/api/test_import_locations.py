@@ -81,6 +81,7 @@ def test_import_location_with_import_json(client, api_key):
         "import_json": {"This is import json": True},
         "location_type": "Pharmacy",
         "state": "CA",
+        "county": "Kern",
         "latitude": 37.781869,
         "longitude": -122.439517,
         "preferred_contact_method": "research_online",
@@ -97,8 +98,35 @@ def test_import_location_with_import_json(client, api_key):
     assert Location.objects.count() == 1
     location = Location.objects.get()
     assert location.name == "Walgreens San Francisco II"
+    assert location.county.name == "Kern"
     assert location.preferred_contact_method == "research_online"
     assert location.import_json == {"This is import json": True}
+
+
+@pytest.mark.django_db
+def test_import_location_ignores_invalid_county(client, api_key):
+    location_input = {
+        "name": "Walgreens San Francisco II",
+        "import_json": {"This is import json": True},
+        "location_type": "Pharmacy",
+        "state": "CA",
+        "county": "Invalid County",
+        "latitude": 37.781869,
+        "longitude": -122.439517,
+        "preferred_contact_method": "research_online",
+    }
+    assert Location.objects.count() == 0
+    response = client.post(
+        "/api/importLocations",
+        location_input,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response.status_code == 200
+    assert not response.json()["errors"]
+    assert Location.objects.count() == 1
+    location = Location.objects.get()
+    assert location.county is None
 
 
 @pytest.mark.django_db

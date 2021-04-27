@@ -1,12 +1,11 @@
 {
-  "source_uid": "7382088",
+  "source_uid": "vaccinespotter:7382088",
   "source_name": "vaccinespotter",
   "name": "Rite Aid",
   "latitude": 33.4962,
   "longitude": -117.663,
   "match": {
-    "action": "existing",
-    "id": "rechXpKyPM0Wt4h06"
+    "action": "new"
   },
   "import_json": {
     "id": "vaccinespotter:7382088",

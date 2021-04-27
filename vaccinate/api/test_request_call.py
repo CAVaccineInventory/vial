@@ -25,7 +25,11 @@ def test_request_call(client, jwt_id_token):
     assert response1.status_code == 400
     assert response1.json() == {"error": "Couldn't find somewhere to call"}
     # Queue up a request and try again
-    county = County.objects.get(fips_code="06079")  # San Luis Obispo
+    county = County.objects.create(
+        name="Multnomah",
+        fips_code="41051",
+        state=State.objects.get(abbreviation="OR"),
+    )
     county.age_floor_without_restrictions = 50
     county.save()
     locations = []
@@ -33,12 +37,12 @@ def test_request_call(client, jwt_id_token):
         location = Location.objects.create(
             county=county,
             state=State.objects.get(abbreviation="OR"),
-            name="SLO Pharmacy {}".format(i),
+            name="Multnomah Pharmacy {}".format(i),
             phone_number="555 555-5555" if i > 1 else None,
             full_address="5 5th Street",
             location_type=LocationType.objects.get(name="Pharmacy"),
-            latitude=35.279,
-            longitude=-120.664,
+            latitude=45.5760998,
+            longitude=-122.5134775,
         )
         # Ensure location.public_id is correct:
         location.refresh_from_db()
@@ -68,12 +72,13 @@ def test_request_call(client, jwt_id_token):
     assert call_request.claimed_until is not None
     assert data == {
         "id": call_request.location.public_id,
-        "Name": "SLO Pharmacy 2",
+        "Name": "Multnomah Pharmacy 2",
         "Phone number": "555 555-5555",
         "Address": "5 5th Street",
         "Internal notes": None,
         "Hours": None,
-        "County": "San Luis Obispo",
+        "State": "OR",
+        "County": "Multnomah",
         "Location Type": "Pharmacy",
         "Affiliation": None,
         "Latest report": None,
@@ -84,14 +89,17 @@ def test_request_call(client, jwt_id_token):
         "Availability Info": [],
         "Number of Reports": 0,
         "county_record": {
-            "id": county.airtable_id,
-            "County": "San Luis Obispo",
+            "id": county.id,
+            "County": "Multnomah",
             "Vaccine info URL": None,
             "Vaccine locations URL": None,
             "Notes": None,
         },
         "county_age_floor_without_restrictions": [50],
         "provider_record": {},
+        "confirm_address": False,
+        "confirm_hours": False,
+        "confirm_website": False,
     }
 
 

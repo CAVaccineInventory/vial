@@ -1,10 +1,13 @@
 import json
 import pathlib
+import random
+import time
 from datetime import datetime
 
 import pytest
 from api.models import ApiLog
 from core.models import CallRequest, CallRequestReason, Location, Report, State
+from dateutil import parser
 from django.utils import timezone
 
 tests_dir = pathlib.Path(__file__).parent / "test-data" / "submitReport"
@@ -101,13 +104,16 @@ def test_submit_report_api_example(
     assert call_request.claimed_by
     assert call_request.claimed_until is not None
 
-    # Submit the report
+    # Submit the report; because we randomly sample 2% of all reports,
+    # we explicitly seed so we can predict if this will be selected.
+    random.seed(1)
     response = client.post(
         "/api/submitReport",
         fixture["input"],
         content_type="application/json",
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
     )
+    random.seed(int(time.time()))
     assert response.status_code == fixture["expected_status"]
 
     # Call request should have been marked as complete
@@ -123,7 +129,12 @@ def test_submit_report_api_example(
     expected_field_values = Report.objects.filter(pk=report.pk).values(
         *list(fixture["expected_fields"].keys())
     )[0]
-    assert expected_field_values == fixture["expected_fields"]
+    expected_fields = fixture["expected_fields"]
+    # Special case for dates:
+    for key, value in expected_fields.items():
+        if key in ("planned_closure",):
+            expected_fields[key] = parser.parse(value).date()
+    assert expected_field_values == expected_fields
     # And check the tags
     actual_tags = [tag.slug for tag in report.availability_tags.all()]
     assert actual_tags == fixture["expected_availability_tags"]

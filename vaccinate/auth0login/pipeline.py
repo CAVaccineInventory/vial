@@ -7,9 +7,16 @@ AUTH0_ROLES_TO_REFLECT = {
     "VIAL super-user",
     "Reports QA",
     "VIAL data corrections",
+    "VIAL service account",
 }
+
+AUTH0_ROLES_TO_LOCAL_GROUP = {}
 if settings.STAGING:
-    AUTH0_ROLES_TO_REFLECT = {name + " STAGING" for name in AUTH0_ROLES_TO_REFLECT}
+    AUTH0_ROLES_TO_LOCAL_GROUP = {
+        name + " STAGING": name for name in AUTH0_ROLES_TO_REFLECT
+    }
+else:
+    AUTH0_ROLES_TO_LOCAL_GROUP = {name: name for name in AUTH0_ROLES_TO_REFLECT}
 
 
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
@@ -17,17 +24,18 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
         users_roles = kwargs.get("details", {}).get("roles", {}) or []
         groups = {
             name: Group.objects.get_or_create(name=name)[0]
-            for name in AUTH0_ROLES_TO_REFLECT
+            for name in AUTH0_ROLES_TO_LOCAL_GROUP.values()
         }
         should_be_staff = any(
-            auth0_role in users_roles for auth0_role in AUTH0_ROLES_TO_REFLECT
+            auth0_role in users_roles
+            for auth0_role in AUTH0_ROLES_TO_LOCAL_GROUP.keys()
         )
         if should_be_staff != user.is_staff:
             user.is_staff = should_be_staff
             user.save()
         # Add user to groups if necessary:
-        for auth0_role in AUTH0_ROLES_TO_REFLECT:
-            group = groups[auth0_role]
+        for auth0_role, local_group in AUTH0_ROLES_TO_LOCAL_GROUP.items():
+            group = groups[local_group]
             if auth0_role in users_roles:
                 group.user_set.add(user)
             else:

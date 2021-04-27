@@ -3,7 +3,8 @@ import json
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, TextField
+from django.forms import Textarea
 from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -72,14 +73,19 @@ class ImportRunAdmin(admin.ModelAdmin):
 @admin.register(ConcordanceIdentifier)
 class ConcordanceIdentifierAdmin(admin.ModelAdmin):
     search_fields = ("identifier",)
-    list_display = ("authority", "identifier", "locations_summary")
+    list_display = (
+        "authority",
+        "identifier",
+        "locations_summary",
+        "source_locations_summary",
+    )
     list_display_links = ("authority", "identifier")
     list_filter = ("authority",)
     raw_id_fields = ("locations", "source_locations")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related("locations")
+        return qs.prefetch_related("locations", "source_locations")
 
     def locations_summary(self, obj):
         return mark_safe(
@@ -88,6 +94,16 @@ class ConcordanceIdentifierAdmin(admin.ModelAdmin):
                     location.pk, escape(location.name)
                 )
                 for location in obj.locations.all()
+            )
+        )
+
+    def source_locations_summary(self, obj):
+        return mark_safe(
+            "<br>".join(
+                '<a href="/admin/core/sourcelocation/{}/change/">{}</a>'.format(
+                    location.pk, escape(location.name)
+                )
+                for location in obj.source_locations.all()
             )
         )
 
@@ -110,6 +126,7 @@ class SourceLocationAdmin(admin.ModelAdmin):
         "longitude",
         "import_run",
     )
+    readonly_fields = ("concordances_summary",)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -119,6 +136,17 @@ class SourceLocationAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def concordances_summary(self, obj):
+        bits = []
+        for concordance in obj.concordances.all():
+            bits.append(
+                '<p><a href="/admin/core/concordanceidentifier/{}/change/">{}</a></p>'.format(
+                    concordance.pk,
+                    escape(str(concordance)),
+                )
+            )
+        return mark_safe("\n".join(bits))
 
 
 class DynamicListDisplayMixin:
@@ -155,7 +183,45 @@ class ProviderAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display_links = ("public_id", "name")
     actions = [export_as_csv_action()]
     autocomplete_fields = ("phases",)
-    readonly_fields = ("airtable_id", "public_id", "import_json")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "public_id",
+                    "name",
+                    "provider_type",
+                    "contact_phone_number",
+                    "internal_contact_instructions",
+                )
+            },
+        ),
+        (
+            "Public data",
+            {
+                "fields": (
+                    "last_updated",
+                    "phases",
+                    "public_notes",
+                    "main_url",
+                    "vaccine_info_url",
+                    "vaccine_locations_url",
+                    "appointments_url",
+                )
+            },
+        ),
+        (
+            "Identifiers",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "airtable_id",
+                    "import_json",
+                ),
+            },
+        ),
+    )
+    readonly_fields = ("public_id",)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -178,7 +244,48 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "fips_code",
     )
     list_filter = ("state",)
-    readonly_fields = ("airtable_id",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "state",
+                    "population",
+                    "internal_notes",
+                    "fips_code",
+                )
+            },
+        ),
+        (
+            "Public data",
+            {
+                "fields": (
+                    "age_floor_without_restrictions",
+                    "public_notes",
+                    "hotline_phone_number",
+                    "vaccine_info_url",
+                    "vaccine_locations_url",
+                    "vaccine_reservations_url",
+                    "vaccine_data_url",
+                    "vaccine_arcgis_url",
+                    "vaccine_dashboard_url",
+                )
+            },
+        ),
+        (
+            "Social / engagement",
+            {
+                "fields": (
+                    "facebook_page",
+                    "twitter_page",
+                    "official_volunteering_url",
+                )
+            },
+        ),
+        ("Identifiers", {"classes": ("collapse",), "fields": ("airtable_id",)}),
+    )
+    readonly_fields = ("fips_code", "name", "state", "airtable_id", "population")
     ordering = ("name",)
     actions = [export_as_csv_action()]
 
@@ -338,6 +445,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "import_run",
                     "provenance",
                     "airtable_id",
                     "vaccinespotter_location_id",
@@ -355,7 +463,24 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 ),
             },
         ),
+        (
+            "Matched source locations",
+            {"classes": ("collapse",), "fields": ("matched_source_locations",)},
+        ),
     )
+
+    def matched_source_locations(self, obj):
+        return mark_safe(
+            "".join(
+                '<p><a href="/admin/core/sourcelocation/{}/change/">{}:{} {}</a></p>'.format(
+                    source_location.pk,
+                    source_location.source_uid,
+                    source_location.source_name,
+                    source_location.name,
+                )
+                for source_location in obj.matched_source_locations.all()
+            )
+        )
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -377,7 +502,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         )
         return actions
 
-    search_fields = ("name", "full_address", "public_id")
+    search_fields = ("name", "full_address", "public_id", "phone_number")
     list_display_links = None
     list_display = (
         "summary",
@@ -423,6 +548,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_latest_non_skip_report",
         "dn_skip_report_count",
         "dn_yes_report_count",
+        "matched_source_locations",
     )
 
     def summary(self, obj):
@@ -482,22 +608,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         return True
 
     def reports_history(self, obj):
-        reports = obj.reports.exclude(soft_deleted=True)
-        return mark_safe(
-            render_to_string(
-                "admin/_reports_history.html",
-                {
-                    "location_id": obj.pk,
-                    "reports_datetimes": [
-                        d.isoformat()
-                        for d in reports.values_list("created_at", flat=True)
-                    ],
-                    "reports": reports.select_related("reported_by")
-                    .prefetch_related("availability_tags")
-                    .order_by("-created_at"),
-                },
-            )
-        )
+        return reports_history(obj)
 
     def concordances_summary(self, obj):
         bits = []
@@ -555,8 +666,15 @@ class ReporterProviderFilter(admin.SimpleListFilter):
 
 @admin.register(Reporter)
 class ReporterAdmin(admin.ModelAdmin):
-    search_fields = ("external_id", "name", "email")
-    list_display = ("external_id", "name", "roles", "report_count", "latest_report")
+    search_fields = ("external_id", "display_name", "name", "email")
+    list_display = (
+        "__str__",
+        "external_id",
+        "name",
+        "roles",
+        "report_count",
+        "latest_report",
+    )
     list_filter = (
         ReporterProviderFilter,
         make_csv_filter(
@@ -588,15 +706,18 @@ class ReporterAdmin(admin.ModelAdmin):
     def roles(self, obj):
         return [r.strip() for r in (obj.auth0_role_names or "").split(",")]
 
-    readonly_fields = ("qa_summary",)
+    readonly_fields = (
+        "name",
+        "external_id",
+        "email",
+        "auth0_role_names",
+        "reporter_qa_summary",
+    )
 
-    def qa_summary(self, obj):
-        return qa_summary(obj)
+    def reporter_qa_summary(self, obj):
+        return reporter_qa_summary(obj)
 
-    qa_summary.short_description = "QA summary"
-
-    def has_change_permission(self, request, obj=None):
-        return False
+    reporter_qa_summary.short_description = "Caller QA summary"
 
 
 @admin.register(AvailabilityTag)
@@ -691,10 +812,11 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__external_id",
         "reported_by__email",
         "reported_by__name",
+        "reported_by__display_name",
     )
     list_display = (
         "created_id_deleted",
-        "location",
+        "location_link",
         "is_pending_review",
         "claimed_by",
         "availability",
@@ -734,8 +856,14 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "appointment_tag",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
+    ordering = ("-created_at",)
 
+    formfield_overrides = {
+        TextField: {"widget": Textarea(attrs={"rows": 4, "cols": 150})}
+    }
     readonly_fields = (
+        "location_link",
+        "reporter",
         "county_summary",
         "created_at",
         "claimed_at",
@@ -744,10 +872,88 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "public_id",
         "airtable_id",
         "airtable_json",
-        "qa_summary",
+        "reporter_qa_summary",
+        "location_reports_history",
     )
     inlines = [ReportReviewNoteInline]
-    ordering = ("-created_at",)
+    deliberately_omitted_from_fieldsets = ("location", "reported_by")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "reporter",
+                    "public_id",
+                    "location_link",
+                    "created_at",
+                )
+            },
+        ),
+        (
+            "QA summary",
+            {
+                "fields": (
+                    "originally_pending_review",
+                    "is_pending_review",
+                    "claimed_by",
+                    "claimed_at",
+                ),
+            },
+        ),
+        (
+            "Report Details",
+            {
+                "fields": (
+                    "availability_tags",
+                    "public_notes",
+                    "internal_notes",
+                    "appointment_tag",
+                    "appointment_details",
+                    "call_request",
+                    "report_source",
+                    "hours",
+                    "reported_by",
+                    "planned_closure",
+                    "website",
+                    "vaccines_offered",
+                    "full_address",
+                    "restriction_notes",
+                ),
+            },
+        ),
+        ("County summary", {"classes": ("collapse",), "fields": ("county_summary",)}),
+        (
+            "Location history",
+            {
+                "classes": ("collapse",),
+                "fields": ("location_reports_history",),
+            },
+        ),
+        (
+            "Caller history",
+            {
+                "classes": ("collapse",),
+                "fields": ("reporter_qa_summary",),
+            },
+        ),
+        (
+            "Report deletion",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "soft_deleted",
+                    "soft_deleted_because",
+                ),
+            },
+        ),
+        (
+            "Identifiers",
+            {
+                "classes": ("collapse",),
+                "fields": ("airtable_id", "airtable_json"),
+            },
+        ),
+    )
 
     def created_id_deleted(self, obj):
         date = (
@@ -757,9 +963,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             .replace(" ", u"\u00a0")
         )
         html = format_html(
-            '{}<br><b><a href="{}">{}</a></b>',
-            date,
+            '<a href="{}">{}<br><b>{}</b></a>',
             reverse("admin:core_report_change", args=(obj.id,)),
+            date,
             obj.public_id,
         )
 
@@ -770,14 +976,25 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     created_id_deleted.short_description = "created"
     created_id_deleted.admin_order_field = "created_at"
 
-    def reporter(self, obj):
-        return mark_safe(
-            "<strong>{}</strong><br>{}".format(
-                escape(obj.reported_by.name),
-                escape(obj.reported_by.auth0_role_names or ""),
-            )
+    def location_link(self, obj):
+        return format_html(
+            '<strong><a href="{}">{}</a></strong>',
+            reverse("admin:core_location_change", args=(obj.location.id,)),
+            obj.location.name,
         )
 
+    location_link.short_description = "Location"
+    location_link.admin_order_field = "location__name"
+
+    def reporter(self, obj):
+        return format_html(
+            '<strong><a href="{}">{}</a></strong><br>{}',
+            reverse("admin:core_reporter_change", args=(obj.reported_by.id,)),
+            obj.reported_by,
+            escape(obj.reported_by.auth0_role_names or ""),
+        )
+
+    reporter.short_description = "Reporter"
     reporter.admin_order_field = "reported_by"
 
     def appointment_tag_and_scheduling(self, obj):
@@ -875,10 +1092,15 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             )
         )
 
-    def qa_summary(self, obj):
-        return qa_summary(obj.reported_by)
+    def reporter_qa_summary(self, obj):
+        return reporter_qa_summary(obj.reported_by)
 
-    qa_summary.short_description = "QA summary"
+    reporter_qa_summary.short_description = "QA summary"
+
+    def location_reports_history(self, obj):
+        return reports_history(obj.location)
+
+    location_reports_history.short_description = "Location history"
 
 
 @admin.register(ReportReviewTag)
@@ -910,7 +1132,7 @@ class ReportReviewNoteAdmin(admin.ModelAdmin):
             '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
                 obj.report_id,
                 obj.report.public_id,
-                escape(obj.report.reported_by.name),
+                escape(obj.report.reported_by),
                 dateformat.format(
                     timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
                 ),
@@ -1186,7 +1408,7 @@ class VersionAdmin(admin.ModelAdmin):
 admin.site.register(Version, VersionAdmin)
 
 
-def qa_summary(reporter):
+def reporter_qa_summary(reporter):
     reports = reporter.reports.exclude(soft_deleted=True)
     return mark_safe(
         render_to_string(
@@ -1201,6 +1423,24 @@ def qa_summary(reporter):
                     for d in reports.values_list("created_at", flat=True)[:100]
                 ],
                 "report_count": reports.count(),
+            },
+        )
+    )
+
+
+def reports_history(location):
+    reports = location.reports.exclude(soft_deleted=True)
+    return mark_safe(
+        render_to_string(
+            "admin/_reports_history.html",
+            {
+                "location_id": location.pk,
+                "reports_datetimes": [
+                    d.isoformat() for d in reports.values_list("created_at", flat=True)
+                ],
+                "reports": reports.select_related("reported_by")
+                .prefetch_related("availability_tags")
+                .order_by("-created_at"),
             },
         )
     )

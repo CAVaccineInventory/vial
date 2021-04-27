@@ -55,7 +55,7 @@ docutils
 Markdown
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.8a2
+django-sql-dashboard==0.11a0
 
 # Version history in Django admin
 django-reversion
@@ -98,3 +98,6 @@ google-cloud-storage
 
 # Metrics reporting
 prometheus_client
+
+# Internal tools
+vaccine-feed-ingest-schema

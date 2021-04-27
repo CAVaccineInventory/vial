@@ -1,7 +1,9 @@
 import debug_toolbar
 import django_sql_dashboard
+from api import export_mapbox as export_mapbox_views
 from api import search as search_views
 from api import views as api_views
+from api.submit_report import submit_report
 from auth0login.views import login, logout
 from core import tool_views
 from core import views as core_views
@@ -20,7 +22,7 @@ urlpatterns = [
     path("logout", logout),
     path("dashboard/", include(django_sql_dashboard.urls)),
     path("api/docs", api_views.api_docs),
-    path("api/submitReport", api_views.submit_report),
+    path("api/submitReport", submit_report),
     path(
         "api/submitReport/debug",
         api_views.api_debug_view(
@@ -121,7 +123,8 @@ urlpatterns = [
     path("api/export", api_views.api_export),
     path("api/export-preview/Locations.json", api_views.api_export_preview_locations),
     path("api/export-preview/Providers.json", api_views.api_export_preview_providers),
-    path("api/export-mapbox/", api_views.export_mapbox),
+    path("api/export-mapbox/", export_mapbox_views.export_mapbox),
+    path("api/export-mapbox-preview", export_mapbox_views.export_mapbox_preview),
     path("api/location_metrics", api_views.location_metrics),
     path("api/counties/<state_abbreviation>", api_views.counties),
     path("", include("django.contrib.auth.urls")),

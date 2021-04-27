@@ -2,6 +2,7 @@ import json
 import pathlib
 
 import pytest
+from bigmap.transform import source_to_location
 from core.models import (
     ConcordanceIdentifier,
     ImportRun,
@@ -31,13 +32,14 @@ def test_import_location(client, api_key, json_path):
     if "match" in fixture and "id" in fixture["match"]:
         # Create a location to match against first
         original_location = Location.objects.create(
-            id=fixture["match"]["id"],
+            public_id=fixture["match"]["id"],
             name=fixture["name"],
             latitude=fixture["latitude"],
             longitude=fixture["longitude"],
             location_type=LocationType.objects.filter(name="Pharmacy").get(),
             state=State.objects.filter(abbreviation="CA").get(),
         )
+        assert original_location.public_id is not None
 
     # Initiate an import run
     start_response = client.post(
@@ -46,9 +48,10 @@ def test_import_location(client, api_key, json_path):
 
     assert start_response.status_code == 200
     assert ImportRun.objects.count() == 1
+    import_run = ImportRun.objects.get()
     json_start_response = start_response.json()
     assert "import_run_id" in json_start_response
-    assert json_start_response["import_run_id"] == ImportRun.objects.get().id
+    assert json_start_response["import_run_id"] == import_run.id
 
     # Make the API request
     response = client.post(
@@ -62,7 +65,14 @@ def test_import_location(client, api_key, json_path):
 
     assert response.status_code == 200
     assert SourceLocation.objects.count() == 1
-    assert ConcordanceIdentifier.objects.count() == 2
+    if (
+        "links" in fixture["import_json"]
+        and fixture["import_json"]["links"] is not None
+    ):
+        # Add one for the source concordance
+        assert ConcordanceIdentifier.objects.count() == 1 + len(
+            fixture["import_json"]["links"]
+        )
     json_response = response.json()
     assert "created" in json_response
     assert len(json_response["created"]) == 1
@@ -70,8 +80,17 @@ def test_import_location(client, api_key, json_path):
     assert source_location.id == json_response["created"][0]
 
     assert source_location.name == fixture["name"]
+    assert source_location.latitude == fixture["import_json"]["location"]["latitude"]
+    assert source_location.longitude == fixture["import_json"]["location"]["longitude"]
     assert source_location.import_json == fixture["import_json"]
     # TODO add more assertions about fields later
+
+    # Source concordance must be associated with concordances
+    source_concordance = ConcordanceIdentifier.objects.get(
+        authority=fixture["import_json"]["source"]["source"],
+        identifier=fixture["import_json"]["source"]["id"],
+    )
+    assert source_concordance in source_location.concordances.all()
 
     if (
         "match" in fixture
@@ -81,12 +100,28 @@ def test_import_location(client, api_key, json_path):
         assert Location.objects.count() == 1
         assert source_location.matched_location is not None
         location = source_location.matched_location
+        # https://github.com/CAVaccineInventory/vial/issues/443
+        assert location.public_id.startswith("l")
         assert location.name == fixture["name"]
+        assert location.import_run == import_run
         assert (
             location.location_type.name == "Unknown"
         )  # all source location conversions use unknown for now
         if "location" in fixture:
             assert location.latitude == fixture["location"]["latitude"]
             assert location.longitude == fixture["location"]["longitude"]
+        assert set(source_location.concordances.all()) == set(
+            location.concordances.all()
+        )
+
+        if fixture["import_json"].get("contact") is not None:
+            # source_to_location is tested separately
+            correct_contact = source_to_location(fixture["import_json"])
+            assert location.phone_number == correct_contact.get("phone_number")
+            assert location.website == correct_contact.get("website")
+
     elif original_location is not None:
         assert source_location.matched_location == original_location
+        concordances = set(original_location.concordances.all())
+        source_concordanes = set(source_location.concordances.all())
+        assert source_concordanes.issubset(concordances)

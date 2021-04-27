@@ -2,7 +2,7 @@
 
 {{ recent_report_datetimes|json_script:"recent_report_datetimes" }}
 
-<svg id="recent-reports"></svg>
+<svg id="recent-reports-reporter"></svg>
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script>
 var reportDates = JSON.parse(
@@ -17,7 +17,7 @@ var reportDates = JSON.parse(
 
   var xAxis = d3.axisBottom(xScale);
 
-  var svg = d3.select('#recent-reports');
+  var svg = d3.select('#recent-reports-reporter');
 
   svg
     .attr("width", width)

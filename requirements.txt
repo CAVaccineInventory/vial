@@ -208,9 +208,9 @@ django-reversion==3.0.9 \
     # via
     #   -r requirements.in
     #   django-reversion-compare
-django-sql-dashboard==0.8a2 \
-    --hash=sha256:8d7cf7890ed790e25465cd552f31584de28f61752e2ea7cba23693b114d6521d \
-    --hash=sha256:ca3526a6cd19bd06b95a37e2b9ad705356bda338e27491596f75bc4880b3cb87
+django-sql-dashboard==0.11a0 \
+    --hash=sha256:2c9537a42e2d302d1cbf866fa8a2b17035583a4d7a5fb3d4987da4fb7f141272 \
+    --hash=sha256:2e0fcc7b84083680100ae9beb714532f7368b9b3106884f9d6a433eb09286318
     # via -r requirements.in
 django==3.1.8 \
     --hash=sha256:c348b3ddc452bf4b62361f0752f71a339140c777ebea3cdaaaa8fdb7f417a862 \
@@ -579,7 +579,9 @@ pydantic==1.8.1 \
     --hash=sha256:fb77f7a7e111db1832ae3f8f44203691e15b1fa7e5a1cb9691d4e2659aee41c4 \
     --hash=sha256:fbfb608febde1afd4743c6822c19060a8dbdd3eb30f98e36061ba4973308059e \
     --hash=sha256:fff29fe54ec419338c522b908154a2efabeee4f483e48990f87e189661f31ce3
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   vaccine-feed-ingest-schema
 pyflakes==2.2.0 \
     --hash=sha256:0d94e0e05a19e57a99444b6ddcf9a6eb2e5c68d3ca1e98e90707af8152c90a92 \
     --hash=sha256:35b2d75ee967ea93b55750aa9edbbf72813e06a66ba54438df2cfac9e3c27fc8
@@ -885,6 +887,10 @@ urllib3==1.26.4 \
     # via
     #   requests
     #   sentry-sdk
+vaccine-feed-ingest-schema==0.1 \
+    --hash=sha256:b666618ee144ce85324bed756d768f6671f5dc792f9b84b4d1690dcc372bbbaf \
+    --hash=sha256:f84963aac8b1a72da1d8f5d2c834251a78ad3de116110f76982442eb5b8f4758
+    # via -r requirements.in
 wcwidth==0.2.5 \
     --hash=sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784 \
     --hash=sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83

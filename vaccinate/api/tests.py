@@ -5,7 +5,7 @@ import pytest
 from core.models import AvailabilityTag, Reporter
 
 from .models import ApiKey, Switch
-from .views import user_should_have_reports_reviewed
+from .submit_report import user_should_have_reports_reviewed
 
 GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
 
@@ -69,20 +69,31 @@ def test_availability_tags(client):
 
 @pytest.mark.django_db
 def test_user_should_have_reports_reviewed():
+    def passes_for(user, report):
+        random.seed(1)
+        passes = 0
+        for i in range(100):
+            if user_should_have_reports_reviewed(user, report):
+                passes += 1
+        return passes
+
     user = Reporter.objects.get_or_create(external_id="test:1")[0]
+    # Most users are ar 2%
     user.auth0_role_names = ""
-    assert not user_should_have_reports_reviewed(user)
-    # If user is Trainee, then yes
+    assert passes_for(user, {}) == 2
+
+    # Web bankers never get it -- if they're web-banking, otherwise 2%.
+    user.auth0_role_names = "Web Banker"
+    assert passes_for(user, {}) == 2
+    assert passes_for(user, {"web_banked": True}) == 0
+
+    # If user is Trainee, then always
     user.auth0_role_names = "Blah, Trainee"
-    assert user_should_have_reports_reviewed(user)
+    assert passes_for(user, {}) == 100
+
     # If user is Journeyman, then 15% of the time
-    random.seed(1)
     user.auth0_role_names = "Journeyman"
-    passes = 0
-    for i in range(100):
-        if user_should_have_reports_reviewed(user):
-            passes += 1
-    assert passes == 13
+    assert passes_for(user, {}) == 13
     random.seed(int(time.time()))
 
 

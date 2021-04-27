@@ -86,6 +86,7 @@ def dataset() -> Generator[Dataset, None, None]:
             "dn_latest_non_skip_report__created_at",
             "dn_latest_non_skip_report__public_notes",
             "website",
+            "provider__name",
             "provider__appointments_url",
         )
 
@@ -108,7 +109,11 @@ def dataset() -> Generator[Dataset, None, None]:
                 )
             )
         )
-        ds.providers = models.Provider.objects.all().select_related("provider_type")
+        ds.providers = (
+            models.Provider.objects.all()
+            .select_related("provider_type")
+            .prefetch_related("phases")
+        )
 
         yield ds
 
@@ -156,12 +161,13 @@ class V0(APIProducer):
                 # We remove the nulls only here, and not as a decorator,
                 # because Airtable does not remove empty values from
                 # rollups, only from fields naturally on the record. (!)
+                provider = location.provider.name if location.provider else None
                 result.append(
                     nonnull_row(
                         {
                             "id": location.public_id,
                             "Name": location.name,
-                            "Affiliation": None,  # ???
+                            "Affiliation": provider,
                             "County": self.county_name(location.county),
                             "Address": location.full_address,
                             "Latitude": location.latitude,
@@ -230,26 +236,6 @@ class V0(APIProducer):
             )
         return result
 
-    @beeline.traced(name="core.exporter.V0.get_providers")
-    @remove_null_values
-    def get_providers(self) -> List[Dict[str, object]]:
-        result = []
-        for provider in self.ds.providers:
-            result.append(
-                {
-                    "id": "???",  # provider.public_id ??,
-                    "Provider": provider.name,
-                    "Provider network type": provider.provider_type.name,
-                    "Public Notes": provider.public_notes,
-                    "Appointments URL": provider.appointments_url,
-                    "Vaccine info URL": provider.vaccine_info_url,
-                    "Vaccine locations URL": provider.vaccine_info_url,
-                    "Last Updated": "???",
-                    "Phase": "???",
-                }
-            )
-        return result
-
     @beeline.traced(name="core.exporter.V0.write")
     def write(self, sw: StorageWriter) -> None:
         sw.write("Locations.json", self.get_locations())
@@ -268,15 +254,42 @@ class V1(V0):
             "content": content,
         }
 
+    @beeline.traced(name="core.exporter.V1.get_providers")
+    @remove_null_values
+    def get_providers(self) -> List[Dict[str, object]]:
+        result = []
+        for provider in self.ds.providers:
+            if (
+                provider.appointments_url
+                or provider.vaccine_info_url
+                or provider.vaccine_locations_url
+                or provider.public_notes
+            ):
+                last_updated = (
+                    provider.last_updated.strftime("%Y-%m-%d")
+                    if provider.last_updated
+                    else None
+                )
+                result.append(
+                    {
+                        "id": provider.public_id,
+                        "Provider": provider.name,
+                        "Provider network type": provider.provider_type.name,
+                        "Public Notes": provider.public_notes,
+                        "Appointments URL": provider.appointments_url,
+                        "Vaccine info URL": provider.vaccine_info_url,
+                        "Vaccine locations URL": provider.vaccine_locations_url,
+                        "Last Updated": last_updated,
+                        "Phase": [p.name for p in provider.phases.all()],
+                    }
+                )
+        return result
+
     @beeline.traced(name="core.exporter.V1.write")
     def write(self, sw: StorageWriter):
         sw.write("locations.json", self.metadata_wrap(self.get_locations()))
         sw.write("counties.json", self.metadata_wrap(self.get_counties()))
-        # TODO: Do not remove this until it is no longer being
-        # published from Airtable.  Ref
-        # https://github.com/CAVaccineInventory/vial/issues/219
-        #
-        # sw.write("providers.json", self.metadata_wrap(self.get_providers()))
+        sw.write("providers.json", self.metadata_wrap(self.get_providers()))
 
 
 def api(version: int, ds: Dataset) -> APIProducer:

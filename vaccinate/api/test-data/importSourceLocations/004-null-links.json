@@ -4,10 +4,6 @@
   "name": "Rite Aid",
   "latitude": 33.4962,
   "longitude": -117.663,
-  "match": {
-    "action": "existing",
-    "id": "rechXpKyPM0Wt4h06"
-  },
   "import_json": {
     "id": "vaccinespotter:7382088",
     "name": "Rite Aid",
@@ -31,16 +27,7 @@
       "id": "rite_aid",
       "name": "Rite Aid"
     },
-    "links": [
-      {
-        "authority": "rite_aid",
-        "id": "5751"
-      },
-      {
-        "authority": "google_places",
-        "id": "38dajsdlfajsd"
-      }
-    ],
+    "links": null,
     "source": {
       "source": "vaccinespotter",
       "id": "7382088",

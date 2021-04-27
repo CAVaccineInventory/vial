@@ -126,8 +126,9 @@ def test_v1_provider_contents(django_assert_num_queries):
         vaccine_locations_url="https://pharmacy.example.com/locations/",
     )
     # Two queries of these four are for the atomic savepoint.  The
-    # other fetches all of the provider information.
-    with django_assert_num_queries(3):
+    # other two fetch all of the provider information, and the
+    # many-to-many information for phases.
+    with django_assert_num_queries(4):
         with dataset() as ds:
             providers = api(1, ds).get_providers()
             assert len(providers) == 1
@@ -277,12 +278,12 @@ def test_api_v1_framing():
     # We expect to have written three endpoints
     writer.write.assert_called()
     calls = writer.write.call_args_list
-    assert len(calls) == 2  # TODO: 3
+    assert len(calls) == 3
     assert (
         set(
             [
                 "locations.json",
-                # "providers.json",
+                "providers.json",
                 "counties.json",
             ]
         )
