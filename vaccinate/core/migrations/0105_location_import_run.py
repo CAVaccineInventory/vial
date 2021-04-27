@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0102_report_extra_columns_issue_293"),
+        ("core", "0104_fix_tmp_public_ids_issue_443"),
     ]
 
     operations = [
