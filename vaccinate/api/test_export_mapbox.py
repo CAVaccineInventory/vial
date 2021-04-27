@@ -1,5 +1,6 @@
 import json
-from core.models import Reporter, AvailabilityTag, AppointmentTag
+
+from core.models import AppointmentTag, AvailabilityTag, Reporter
 
 
 def test_export_mapbox_location_with_no_report(client, ten_locations):
