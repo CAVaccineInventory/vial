@@ -193,6 +193,11 @@ def verify_token(request):
 
 
 class _LocationSharedValidators(BaseModel):
+    # We use check_fields=Falsse because this class
+    # is designed to be used as a subclass/mixin,
+    # and without check_fields=False pydantic will
+    # show an error because the validator refers
+    # to a field not available on this class.
     @validator("state", check_fields=False)
     def state_must_exist(cls, value):
         try:
