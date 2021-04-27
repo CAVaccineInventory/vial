@@ -3,6 +3,7 @@ import json
 import beeline
 import requests
 from core.models import Location
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
