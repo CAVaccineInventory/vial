@@ -123,6 +123,7 @@ urlpatterns = [
     path("api/export-preview/Locations.json", api_views.api_export_preview_locations),
     path("api/export-preview/Providers.json", api_views.api_export_preview_providers),
     path("api/export-mapbox/", api_views.export_mapbox),
+    path("api/export-mapbox-preview", api_views.export_mapbox_preview),
     path("api/location_metrics", api_views.location_metrics),
     path("api/counties/<state_abbreviation>", api_views.counties),
     path("", include("django.contrib.auth.urls")),

@@ -28,9 +28,10 @@ from core.models import (
 )
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
@@ -668,14 +669,7 @@ def location_metrics(request):
     return LocationMetricsReport().serve()
 
 
-@csrf_exempt
-def export_mapbox(request):
-    if request.method != "POST":
-        return JsonResponse(
-            {"error": "Must be a POST"},
-            status=400,
-        )
-
+def _mapbox_locations_queryset():
     locations = (
         Location.objects.all()
         .select_related(
@@ -713,46 +707,89 @@ def export_mapbox(request):
         )
     )
     locations = locations.exclude(soft_deleted=True)
+    return locations
+
+
+def _mapbox_geojson(location):
+    properties = {
+        "id": location.public_id,
+        "name": location.name,
+        "location_type": location.location_type.name,
+        "website": location.website,
+        "address": location.full_address,
+        "county": location.county.name if location.county else None,
+        "state_abbreviation": location.state.abbreviation,
+        "phone_number": location.phone_number,
+        "google_places_id": location.google_places_id,
+        "vaccinefinder_location_id": location.vaccinefinder_location_id,
+        "vaccinespotter_location_id": location.vaccinespotter_location_id,
+        "hours": location.hours,
+    }
+    if location.dn_latest_non_skip_report:
+        report = location.dn_latest_non_skip_report
+        properties.update(
+            {
+                "public_notes": report.public_notes,
+                "appointment_method": report.appointment_tag.name,
+                "appointment_details": report.full_appointment_details(location),
+                "latest_contact": report.created_at.isoformat(),
+            }
+        )
+    return {
+        "type": "Feature",
+        "properties": properties,
+        "geometry": {
+            "type": "Point",
+            "coordinates": [location.longitude, location.latitude],
+        },
+    }
+
+
+def export_mapbox_preview(request):
+    locations = _mapbox_locations_queryset()
+    # For debugging: shows the GeoJSON we would send to Mapbox
+    ids = request.GET.getlist("id")
+    if ids:
+        locations = locations.filter(public_id__in=ids)
+    # Maximum of 20 for the debugging preview
+    locations = locations.order_by("-id")[:20]
+    preview = {"geojson": [_mapbox_geojson(location) for location in locations]}
+    # Defaults to wrapping in HTML so you can see Django debug toolbar
+    # Use ?raw=1 to get back a raw JSON response
+    if request.GET.get("raw"):
+        return JsonResponse(preview)
+    raw_url = request.build_absolute_uri()
+    if "?" not in raw_url:
+        raw_url += "?raw=1"
+    else:
+        raw_url += "&raw=1"
+    return HttpResponse(
+        """
+        <html><head><title>Mapbox preview</title></head>
+        <body>
+        <h1>Mapbox preview</h1>
+        <pre>{}</pre>
+        <p><a href="{}">Raw JSON</a></p>
+        </body></html>
+    """.format(
+            escape(json.dumps(preview, indent=4)), escape(raw_url)
+        ).strip()
+    )
+
+
+@csrf_exempt
+def export_mapbox(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Must be a POST"},
+            status=400,
+        )
+
+    locations = _mapbox_locations_queryset()
 
     post_data = ""
     for location in locations.all():
-        properties = {
-            "id": location.public_id,
-            "name": location.name,
-            "location_type": location.location_type.name,
-            "website": location.website,
-            "address": location.full_address,
-            "county": location.county.name if location.county else None,
-            "state_abbreviation": location.state.abbreviation,
-            "phone_number": location.phone_number,
-            "google_places_id": location.google_places_id,
-            "vaccinefinder_location_id": location.vaccinefinder_location_id,
-            "vaccinespotter_location_id": location.vaccinespotter_location_id,
-            "hours": location.hours,
-        }
-        if location.dn_latest_non_skip_report:
-            report = location.dn_latest_non_skip_report
-            properties.update(
-                {
-                    "public_notes": report.public_notes,
-                    "appointment_method": report.appointment_tag.name,
-                    "appointment_details": report.full_appointment_details(location),
-                    "latest_contact": report.created_at.isoformat(),
-                }
-            )
-        post_data += (
-            json.dumps(
-                {
-                    "type": "Feature",
-                    "properties": properties,
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [location.longitude, location.latitude],
-                    },
-                }
-            )
-            + "\n"
-        )
+        post_data += json.dumps(_mapbox_geojson(location)) + "\n"
 
     access_token = settings.MAPBOX_ACCESS_TOKEN
     if not access_token:
