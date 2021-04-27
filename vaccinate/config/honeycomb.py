@@ -24,7 +24,7 @@ def init():
                 )
                 beeline.add_field("response.status", resp.status_code)
                 beeline.add_field("response.content", resp.content)
-                instance_id = resp.content
+                instance_id = resp.content.decode("utf-8")
                 beeline.add_field("meta.instance_id", instance_id)
             except Exception:
                 beeline.add_field("response.status", 599)
