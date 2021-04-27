@@ -99,8 +99,9 @@ def _mapbox_geojson(location):
 
 
 def export_mapbox_preview(request):
+    # For debugging: shows the GeoJSON we would send to Mapbox. Also
+    # used by our unit tests.
     locations = _mapbox_locations_queryset()
-    # For debugging: shows the GeoJSON we would send to Mapbox
     ids = request.GET.getlist("id")
     if ids:
         locations = locations.filter(public_id__in=ids)
