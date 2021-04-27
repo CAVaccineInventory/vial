@@ -15,5 +15,23 @@ Array.from(document.querySelectorAll('div.readonly')).forEach(div => {
     div.style.fontSize = '0.9em';
     div.innerText = JSON.stringify(data, null, 2);
 });
+
+function onClickSaveOpenScooby(element, locationId) {
+    window.open('https://help.vaccinateca.com/call/?location_id=' + locationId, '_blank');
+}
+
 </script>
+
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+{% load admin_modify %}
+    <input 
+        onclick="onClickSaveOpenScooby(this, ({{ location_id }}))"
+        type="submit"
+        value="Save and open Scooby"
+        style="margin-bottom: 15px;"
+    >
+    
+{% submit_row %}
 {% endblock %}
