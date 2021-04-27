@@ -1,4 +1,5 @@
 from django.db import migrations
+
 from ..baseconverter import pid
 
 # https://github.com/CAVaccineInventory/vial/issues/443
