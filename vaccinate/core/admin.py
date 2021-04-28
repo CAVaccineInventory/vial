@@ -1270,6 +1270,7 @@ def make_call_request_move_to_priority_group(priority_group):
 
 @admin.register(CallRequest)
 class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
+    add_form_template = "admin/add_call_request.html"
     search_fields = ("location__name", "location__public_id")
     list_display = (
         "summary",
@@ -1346,6 +1347,21 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                 )
             )
         return "Available"
+
+    def add_view(self, request, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        print("existing_call_requests change_view")
+        extra_context["existing_call_requests"] = []
+        if request.GET.get("location"):
+            location = Location.objects.get(pk=request.GET["location"])
+            extra_context["existing_call_requests"] = list(
+                location.call_requests.filter(completed=False)
+            )
+        return super().add_view(
+            request,
+            form_url,
+            extra_context=extra_context,
+        )
 
 
 # NOT CURRENTLY USED

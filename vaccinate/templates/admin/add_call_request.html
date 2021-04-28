@@ -1,0 +1,17 @@
+{% extends "admin/change_form.html" %}
+
+{% block field_sets %}
+
+{% if existing_call_requests %}
+<div style="border: 2px solid red; background-color: #ffe9ed; padding: 0.5em 1em; margin-bottom: 20em">
+  <h2>This location is already in the queue</h2>
+  <p>You can edit the existing call request here:</p>
+  {% for call_request in existing_call_requests %}
+    <p><a href="/admin/core/callrequest/{{ call_request.pk }}/change/">{{ call_request }}</a></p>
+  {% endfor %}
+</div>
+{% endif %}
+
+{{ block.super }}
+
+{% endblock %}
