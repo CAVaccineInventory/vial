@@ -1,5 +1,7 @@
+import datetime
 import json
 
+import pytest
 from core.models import AppointmentTag, AvailabilityTag, Reporter
 
 
@@ -87,3 +89,32 @@ def test_export_mapbox_location_with_report(client, ten_locations):
         },
         "geometry": {"type": "Point", "coordinates": [40.0, 30.0]},
     }
+
+
+@pytest.mark.parametrize("has_planned_closure", (True, False))
+def test_planned_closure_location_not_returned(
+    client, ten_locations, has_planned_closure
+):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    planned_closure = (
+        (datetime.date.today() - datetime.timedelta(days=1))
+        if has_planned_closure
+        else None
+    )
+    location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+        planned_closure=planned_closure,
+    )
+    response = client.get(
+        "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
+    )
+    geojson = json.loads(response.content)["geojson"]
+    assert isinstance(geojson, list)
+    if has_planned_closure:
+        assert len(geojson) == 0
+    else:
+        assert len(geojson) == 1

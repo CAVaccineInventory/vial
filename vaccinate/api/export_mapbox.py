@@ -1,3 +1,4 @@
+import datetime
 import json
 
 import beeline
@@ -10,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 def _mapbox_locations_queryset():
-    locations = (
+    return (
         Location.objects.all()
         .select_related(
             "location_type",
@@ -49,9 +50,9 @@ def _mapbox_locations_queryset():
             "longitude",
             "latitude",
         )
+        .exclude(soft_deleted=True)
+        .exclude(dn_latest_non_skip_report__planned_closure__lt=datetime.date.today())
     )
-    locations = locations.exclude(soft_deleted=True)
-    return locations
 
 
 def _mapbox_geojson(location):
