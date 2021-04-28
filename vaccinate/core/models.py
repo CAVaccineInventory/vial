@@ -249,8 +249,8 @@ class Location(models.Model):
     )
     # This was originally specified as a 'coordinate point' but Django doesn't easily
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
-    latitude = models.FloatField()
-    longitude = models.FloatField()
+    latitude = models.DecimalField(max_digits=9, decimal_places=5)
+    longitude = models.DecimalField(max_digits=9, decimal_places=5)
     soft_deleted = models.BooleanField(
         default=False,
         help_text="we never delete rows from this table; all deletes are soft",
@@ -1014,8 +1014,12 @@ class SourceLocation(models.Model):
     )
     source_name = CharTextField(help_text="e.g. vaccinespotter")
     name = CharTextField(null=True, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=5, null=True, blank=True
+    )
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=5, null=True, blank=True
+    )
     import_json = models.JSONField(
         null=True,
         blank=True,
