@@ -4,7 +4,8 @@ steps:
   # this is a private repository, and the FETCH step has thrown the keys away
   # already.  Install a deploy key, known_hosts and swap the URL around to the
   # ssh one, so we can unshallow.
-  - name: "gcr.io/cloud-builders/git"
+  - id: "set up SSH"
+    name: "gcr.io/cloud-builders/git"
     secretEnv: ["_SSH_KEY"]
     entrypoint: "bash"
     args:
@@ -16,13 +17,15 @@ steps:
     volumes:
       - name: "ssh"
         path: /root/.ssh
-  - name: gcr.io/cloud-builders/git
+  - id: "set origin URL"
+    name: gcr.io/cloud-builders/git
     args:
       - "remote"
       - "set-url"
       - "origin"
       - "git@github.com:CAVaccineInventory/vial"
-  - name: gcr.io/cloud-builders/git
+  - id: "git fetch --unshallow"
+    name: gcr.io/cloud-builders/git
     args: ["fetch", "--unshallow"]
     volumes:
       - name: "ssh"
@@ -30,7 +33,8 @@ steps:
 
   # Tell Sentry about the release; we need to use `/bin/sh` as the entrypoint to
   # allow the $_SENTRY_TOKEN injection at runtime.
-  - name: getsentry/sentry-cli
+  - id: "sentry releases new"
+    name: getsentry/sentry-cli
     entrypoint: /bin/sh
     args:
       - "-c"
@@ -40,7 +44,8 @@ steps:
             new --project=vial ${COMMIT_SHA}
     secretEnv: ["_SENTRY_TOKEN"]
   # Also tell it the commits that it has
-  - name: getsentry/sentry-cli
+  - id: "sentry releases set-commits"
+    name: getsentry/sentry-cli
     entrypoint: /bin/sh
     args:
       - "-c"
@@ -51,7 +56,8 @@ steps:
     secretEnv: ["_SENTRY_TOKEN"]
 
   # Pull the previous image, as a starting point
-  - name: gcr.io/cloud-builders/docker
+  - id: "fetch previous image"
+    name: gcr.io/cloud-builders/docker
     entrypoint: bash
     args: ["-c", "docker pull ${_IMAGE_NAME}:latest || exit 0"]
 
@@ -130,7 +136,8 @@ steps:
       ]
 
   # Finalize the Sentry release, timestamp for deploy duration
-  - name: getsentry/sentry-cli
+  - id: "sentry releases finalize"
+    name: getsentry/sentry-cli
     entrypoint: /bin/sh
     args:
       - "-c"
@@ -139,7 +146,8 @@ steps:
             releases --org=vaccinateca \
             finalize ${COMMIT_SHA}
     secretEnv: ["_SENTRY_TOKEN"]
-  - name: getsentry/sentry-cli
+  - id: "sentry timestamp"
+    name: getsentry/sentry-cli
     entrypoint: /bin/sh
     args: ["-c", "date +%s > /timestamp/build"]
     volumes:
@@ -147,7 +155,8 @@ steps:
         path: /timestamp
 
   # Deploy the new code.
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  - id: "cloud-sdk run services update"
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
     args:
       - run
       - services
@@ -162,11 +171,11 @@ steps:
       - "--set-env-vars=RUNNING_IN_GCLOUD=1"
       - "--set-cloudsql-instances=${_CLOUDSQL_INSTANCE}"
       - "--service-account=${_DEPLOY}@django-vaccinateca.iam.gserviceaccount.com"
-    id: Deploy
     entrypoint: gcloud
 
   # Tell Sentry about the deploy
-  - name: getsentry/sentry-cli
+  - id: "sentry releases deploys new"
+    name: getsentry/sentry-cli
     entrypoint: /bin/sh
     args:
       - "-c"
@@ -182,7 +191,8 @@ steps:
     secretEnv: ["_SENTRY_TOKEN"]
 
   # Tell honeycomb about the deploy
-  - name: gcr.io/cloud-builders/gcloud
+  - id: "honeycomb tag"
+    name: gcr.io/cloud-builders/gcloud
     entrypoint: "bash"
     args:
       [
@@ -191,7 +201,6 @@ steps:
         "Deploy $SHORT_SHA",
         "https://github.com/CAVaccineInventory/vial/commits/$COMMIT_SHA",
       ]
-    id: "Add Honeycomb deploy marker"
 
 options:
   dynamic_substitutions: true
