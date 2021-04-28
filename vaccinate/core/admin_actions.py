@@ -1,4 +1,5 @@
 import csv
+import json
 from io import StringIO
 
 from django.db.models.fields.related import ForeignKey
@@ -64,6 +65,10 @@ def export_as_csv_action(
                     ]
                 if extra_columns_factory:
                     csv_row.extend(extra_columns_factory(row))
+                # JSONify any lists or dicts
+                for i, item in enumerate(csv_row):
+                    if isinstance(item, (list, dict)):
+                        csv_row[i] = json.dumps(item)
                 csvwriter.writerow(csv_row)
                 yield read_and_flush()
 
