@@ -71,6 +71,40 @@ steps:
       - "${_IMAGE_NAME}:latest"
       - .
 
+  # Start up a postgres for tests
+  - id: "start postgres"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "run"
+      - "-d"
+      - "--network=cloudbuild"
+      - "-e"
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+      - "--name"
+      - "vaccinate-db"
+      - "postgres"
+
+  - id: "test image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "run"
+      - "-t"
+      - "--network=cloudbuild"
+      - "-e"
+      - "DJANGO_SECRET_KEY=1"
+      - "-e"
+      - "SOCIAL_AUTH_AUTH0_SECRET="
+      - "-e"
+      - "DATABASE_URL=postgres://postgres@vaccinate-db:5432/vaccinate"
+      - "${_IMAGE_NAME}:latest"
+      - "pytest"
+      - "core/test_healthcheck.py"
+      - "-vv"
+
+  - id: "stop postgres"
+    name: "gcr.io/cloud-builders/docker"
+    args: ["rm", "--force", "vaccinate-db"]
+
   # Push the commit-sha tag (but not `latest` tag), so we can deploy it
   - id: "push image"
     name: "gcr.io/cloud-builders/docker"
