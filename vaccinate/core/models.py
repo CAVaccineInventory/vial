@@ -610,7 +610,10 @@ class Report(models.Model):
         blank=True, null=True, help_text="Update for hours information"
     )
     planned_closure = models.DateField(
-        blank=True, null=True, help_text="Date this site a site plans to stop operating"
+        blank=True,
+        null=True,
+        help_text='Date this site a site plans to stop operating, "planned_closure" in our API',
+        verbose_name="Last known event date",
     )
     reported_by = models.ForeignKey(
         Reporter, related_name="reports", on_delete=models.PROTECT
