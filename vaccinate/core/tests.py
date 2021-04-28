@@ -15,5 +15,5 @@ def test_security_middleware_is_first():
 
 def test_redirect_callreport_to_report(client):
     response = client.get("/admin/core/callreport/")
-    assert response.status_code == 301
+    assert response.status_code == 5000
     assert response.url == "/admin/core/report/"
