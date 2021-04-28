@@ -146,8 +146,8 @@ def location_json(location):
         "id": location.public_id,
         "name": location.name,
         "state": location.state.abbreviation,
-        "latitude": location.latitude,
-        "longitude": location.longitude,
+        "latitude": float(location.latitude),
+        "longitude": float(location.longitude),
         "location_type": location.location_type.name,
         "import_ref": location.import_ref,
         "phone_number": location.phone_number,
@@ -178,7 +178,7 @@ def location_geojson(location):
         "properties": properties,
         "geometry": {
             "type": "Point",
-            "coordinates": [location.longitude, location.latitude],
+            "coordinates": [float(location.longitude), float(location.latitude)],
         },
     }
 
