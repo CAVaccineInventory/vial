@@ -833,7 +833,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     list_filter = (
         "is_pending_review",
         ClaimFilter,
-        SoftDeletedFilter,
+        "report_source",
         ("created_at", DateYesterdayFieldListFilter),
         make_csv_filter(
             filter_title="Roles",
@@ -844,7 +844,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         ),
         "availability_tags",
         "appointment_tag",
-        "report_source",
+        SoftDeletedFilter,
         ("airtable_json", admin.EmptyFieldListFilter),
     )
     ordering = ("-created_at",)
