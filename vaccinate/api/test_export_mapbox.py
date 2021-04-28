@@ -43,10 +43,10 @@ def test_export_mapbox_location_with_report(client, ten_locations):
         vaccines_offered=["Pfizer", "Moderna"],
         restriction_notes="No notes",
     )
-    plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
-    plus_50 = AvailabilityTag.objects.get(slug="vaccinating_50_plus")
-    report.availability_tags.add(plus_65)
-    report.availability_tags.add(plus_50)
+    tag1 = AvailabilityTag.objects.get(slug="appointments_or_walkins")
+    tag2 = AvailabilityTag.objects.get(slug="appointments_available")
+    report.availability_tags.add(tag1)
+    report.availability_tags.add(tag2)
     report.refresh_from_db()
     response = client.get(
         "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
@@ -71,20 +71,11 @@ def test_export_mapbox_location_with_report(client, ten_locations):
             "appointment_method": "web",
             "appointment_details": None,
             "latest_contact": report.created_at.isoformat(),
-            "availability_tags": [
-                {
-                    "name": "Vaccinating 50+",
-                    "group": "yes",
-                    "slug": "vaccinating_50_plus",
-                },
-                {
-                    "name": "Vaccinating 65+",
-                    "group": "yes",
-                    "slug": "vaccinating_65_plus",
-                },
-            ],
             "planned_closure": "2029-05-01",
-            "vaccines_offered": ["Pfizer", "Moderna"],
+            "available_walkins": True,
+            "available_appointments": True,
+            "vaccine_pfizer": True,
+            "vaccine_moderna": True,
             "restriction_notes": "No notes",
         },
         "geometry": {"type": "Point", "coordinates": [40.0, 30.0]},

@@ -78,17 +78,26 @@ def _mapbox_geojson(location):
                 "appointment_method": report.appointment_tag.name,
                 "appointment_details": report.full_appointment_details(location),
                 "latest_contact": report.created_at.isoformat(),
-                "availability_tags": [
-                    {"name": tag.name, "group": tag.group, "slug": tag.slug}
-                    for tag in report.availability_tags.all()
-                ],
                 "planned_closure": report.planned_closure.isoformat()
                 if report.planned_closure
                 else None,
-                "vaccines_offered": report.vaccines_offered,
                 "restriction_notes": report.restriction_notes,
             }
         )
+        tag_slugs = {tag.slug for tag in report.availability_tags.all()}
+        if "appointments_available" in tag_slugs:
+            properties["available_appointments"] = True
+        if "appointments_or_walkins" in tag_slugs:
+            properties["available_appointments"] = True
+            properties["available_walkins"] = True
+        for property, vaccine_name in (
+            ("vaccine_moderna", "Moderna"),
+            ("vaccine_pfizer", "Pfizer"),
+            ("vaccine_jj", "Johnson & Johnson"),
+        ):
+            if report.vaccines_offered and vaccine_name in report.vaccines_offered:
+                properties[property] = True
+
     return {
         "type": "Feature",
         "properties": properties,
