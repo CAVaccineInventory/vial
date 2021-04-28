@@ -225,6 +225,163 @@ window.addEventListener("load", () => {
     addConcordanceEditors();
 
     addCopyToClipboard();
+
+    onLoadAddMap();
 });
+
+var LEAFLET_CSS = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.css";
+var LEAFLET_JS = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.js";
+var TILE_LAYER = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+var TILE_LAYER_OPTIONS = {
+  maxZoom: 19,
+  detectRetina: true,
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+};
+
+function onLoadAddMap() {
+  var inputLatitude = document.querySelector("input[name=latitude]");
+  var inputLongitude = document.querySelector("input[name=longitude]");
+
+  function configureMap(input) {
+    var container = document.createElement("div");
+    container.style.border = "1px solid #666";
+    container.style.padding = "5px";
+    container.style.marginTop = "1em";
+    // First add the search box
+    var searchDiv = document.createElement("div");
+    searchDiv.style.textAlign = "center";
+    var search = document.createElement("input");
+    search.setAttribute("type", "search");
+    search.style.marginRight = "5px";
+    search.addEventListener("keypress", (ev) => {
+      // Click button on 'enter' in that input
+      if (ev.which == 13) {
+        ev.preventDefault();
+        button.click();
+      }
+    });
+    searchDiv.appendChild(search);
+    var button = document.createElement("button");
+    button.innerHTML = "Search map";
+    button.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      var q = search.value;
+      fetch(
+        `https://nominatim.openstreetmap.org/search.php?q=${encodeURIComponent(
+          q
+        )}&format=geocodejson`
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          var feature = d.features[0];
+          var latitude = feature.geometry.coordinates[1];
+          var longitude = feature.geometry.coordinates[0];
+          info.innerText = feature.properties.geocoding.label;
+          inputLatitude.value = latitude;
+          inputLongitude.value = longitude;
+          map.panTo([latitude, longitude], 16);
+          marker.setLatLng([latitude, longitude]);
+          setGoogleMapsLink(latitude, longitude);
+        });
+    });
+    function setGoogleMapsLink(latitude, longitude) {
+      var href = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      googleMaps.href = href;
+      googleMaps.style.visibility = "visible";
+    }
+    function onLatitudeLongitudeChanged() {
+      var latitude = inputLatitude.value;
+      var longitude = inputLongitude.value;
+      if (latitude && longitude) {
+        setGoogleMapsLink(latitude, longitude);
+        map.panTo([latitude, longitude]);
+        marker.setLatLng([latitude, longitude]);
+      } else {
+        googleMaps.style.visibility = "hidden";
+      }
+    }
+    inputLongitude.addEventListener("change", onLatitudeLongitudeChanged);
+    inputLatitude.addEventListener("change", onLatitudeLongitudeChanged);
+    searchDiv.appendChild(button);
+    var googleMaps = document.createElement("a");
+    googleMaps.href = "https://www.google.com/maps/search/";
+    googleMaps.innerHTML = "On Google Maps";
+    googleMaps.target = "_blank";
+    googleMaps.style.visibility = "hidden";
+    googleMaps.style.paddingLeft = "5px";
+    searchDiv.append(googleMaps);
+    var info = document.createElement("p");
+    info.style.fontSize = "0.8em";
+    info.innerHTML = "&nbsp;";
+    searchDiv.appendChild(info);
+    container.appendChild(searchDiv);
+    inputLongitude.parentElement.appendChild(container);
+    // Now the map
+    let mapDiv = document.createElement("div");
+    mapDiv.style.marginTop = "1em";
+    mapDiv.style.height = "400px";
+    container.appendChild(mapDiv);
+    let tiles = L.tileLayer(TILE_LAYER, TILE_LAYER_OPTIONS);
+    let center = L.latLng(39.0575452, -98.5379642);
+    let zoom = 4;
+    if (inputLatitude.value != "" && inputLongitude.value != "") {
+      center = L.latLng(inputLatitude.value, inputLongitude.value);
+      zoom = 16;
+    }
+    var marker = new L.marker(center, { draggable: true, autoPan: true });
+    marker.on("dragend", function () {
+      var position = marker.getLatLng();
+      var newLatitude = position.lat.toFixed(5);
+      var newLongitude = position.lng.toFixed(5);
+      inputLatitude.value = newLatitude;
+      inputLongitude.value = newLongitude;
+      setGoogleMapsLink(newLatitude, newLongitude);
+      info.innerHTML = "&nbsp;";
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse.php?lat=${newLatitude}&lon=${newLongitude}&format=geocodejson`
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          var feature = d.features[0];
+          console.log(feature);
+          info.innerText = feature.properties.geocoding.label;
+        });
+    });
+    let map = L.map(mapDiv, {
+      center: center,
+      zoom: zoom,
+      layers: [tiles],
+    });
+    map.addLayer(marker);
+    onLatitudeLongitudeChanged();
+  }
+
+  /* Load modules and CSS */
+  let loadDependencies = (callback) => {
+    let loaded = [];
+    function hasLoaded() {
+      loaded.push(this);
+      if (loaded.length == 2) {
+        callback();
+      }
+    }
+    let stylesheet = document.createElement("link");
+    stylesheet.setAttribute("rel", "stylesheet");
+    stylesheet.setAttribute("href", LEAFLET_CSS);
+    stylesheet.onload = hasLoaded;
+    document.head.appendChild(stylesheet);
+    var script = document.createElement("script");
+    script.setAttribute("src", LEAFLET_JS);
+    script.onload = hasLoaded;
+    document.head.appendChild(script);
+  };
+  if (inputLatitude && inputLongitude) {
+    loadDependencies(() => {
+      configureMap(inputLongitude);
+    });
+  }
+}
+
 </script>
 {% endblock %}

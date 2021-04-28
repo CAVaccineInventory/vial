@@ -508,6 +508,7 @@ class AvailabilityTag(models.Model):
 
     class Meta:
         db_table = "availability_tag"
+        ordering = ["-group", "name"]
 
 
 class AppointmentTag(models.Model):
@@ -540,6 +541,7 @@ class Report(models.Model):
     class ReportSource(models.TextChoices):
         CALLER_APP = "ca", "Caller app"
         DATA_CORRECTIONS = "dc", "Data corrections"
+        WEB_BANK = "wb", "Web banking"
 
     location = models.ForeignKey(
         Location,

@@ -13,6 +13,7 @@
     },
     "expected_status": 200,
     "expected_fields": {
+        "report_source": "ca",
         "location__public_id": "recgDrq7aQMo0M5x7",
         "public_notes": "Check the Walgreens site regularly to see when appointments open up.",
         "is_pending_review": true

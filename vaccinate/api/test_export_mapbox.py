@@ -71,14 +71,14 @@ def test_export_mapbox_location_with_report(client, ten_locations):
             "latest_contact": report.created_at.isoformat(),
             "availability_tags": [
                 {
-                    "name": "Vaccinating 65+",
-                    "group": "yes",
-                    "slug": "vaccinating_65_plus",
-                },
-                {
                     "name": "Vaccinating 50+",
                     "group": "yes",
                     "slug": "vaccinating_50_plus",
+                },
+                {
+                    "name": "Vaccinating 65+",
+                    "group": "yes",
+                    "slug": "vaccinating_65_plus",
                 },
             ],
             "planned_closure": "2029-05-01",
