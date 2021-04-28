@@ -1,3 +1,4 @@
+import datetime
 import os
 from contextlib import contextmanager
 from typing import Callable, Dict, Generator, List, Optional
@@ -63,6 +64,9 @@ def dataset() -> Generator[Dataset, None, None]:
         # additional queries, at significant cost!
         ds.locations = (
             models.Location.objects.filter(state__abbreviation="CA", soft_deleted=False)
+            .exclude(
+                dn_latest_non_skip_report__planned_closure__lt=datetime.date.today()
+            )
             .select_related("dn_latest_non_skip_report__appointment_tag")
             .select_related("county")
             .select_related("location_type")

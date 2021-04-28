@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import MagicMock
 
 import pytest
@@ -111,6 +112,13 @@ def test_dataset(django_assert_num_queries):
     skip_report.save()
     with dataset() as ds:
         assert counties == list(ds.counties)
+        assert ds.locations.count() == 1
+
+    # Set planned closure on most recent report, which should remove it
+    no_report.planned_closure = datetime.date.today() - datetime.timedelta(days=1)
+    no_report.save()
+    with dataset() as ds:
+        assert ds.locations.count() == 0
 
 
 @pytest.mark.django_db
@@ -249,6 +257,13 @@ def test_v1_location_county_contents(django_assert_num_queries):
     slo = [c for c in counties if c["County"] == "San Luis Obispo County"][0]
     assert slo["Total reports"] == 1
     assert slo["Yeses"] == 0
+
+    # Set the planned_closure on that report to yesterday
+    no_report.planned_closure = datetime.date.today() - datetime.timedelta(days=1)
+    no_report.save()
+    with dataset() as ds:
+        locations = api(1, ds).get_locations()
+        assert len(locations) == 0
 
 
 @pytest.mark.django_db
