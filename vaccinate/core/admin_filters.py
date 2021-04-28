@@ -48,7 +48,7 @@ def make_csv_filter(
             with connection.cursor() as cursor:
                 cursor.execute(sql)
                 values = [r[0] for r in cursor.fetchall() if r[0]]
-            return zip(values, values)
+            return sorted(zip(values, values))
 
         def queryset(self, request, queryset):
             value = self.value()
