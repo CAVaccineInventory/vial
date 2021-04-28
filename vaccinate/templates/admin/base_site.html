@@ -244,17 +244,17 @@ function onLoadAddMap() {
   var inputLongitude = document.querySelector("input[name=longitude]");
 
   function configureMap(input) {
-    var container = document.createElement('div');
-    container.style.border = '1px solid #666';
-    container.style.padding = '5px';
-    container.style.marginTop = '1em';
+    var container = document.createElement("div");
+    container.style.border = "1px solid #666";
+    container.style.padding = "5px";
+    container.style.marginTop = "1em";
     // First add the search box
-    var searchDiv = document.createElement('div');
-    searchDiv.style.textAlign = 'center';
-    var search = document.createElement('input');
-    search.setAttribute('type', 'search');
-    search.style.marginRight = '5px';
-    search.addEventListener('keypress', (ev) => {
+    var searchDiv = document.createElement("div");
+    searchDiv.style.textAlign = "center";
+    var search = document.createElement("input");
+    search.setAttribute("type", "search");
+    search.style.marginRight = "5px";
+    search.addEventListener("keypress", (ev) => {
       // Click button on 'enter' in that input
       if (ev.which == 13) {
         ev.preventDefault();
@@ -262,28 +262,58 @@ function onLoadAddMap() {
       }
     });
     searchDiv.appendChild(search);
-    var button = document.createElement('button');
-    button.innerHTML = 'Search map';
-    button.addEventListener('click', ev => {
+    var button = document.createElement("button");
+    button.innerHTML = "Search map";
+    button.addEventListener("click", (ev) => {
       ev.preventDefault();
       var q = search.value;
       fetch(
-        `https://nominatim.openstreetmap.org/search.php?q=${encodeURIComponent(q)}&format=geocodejson`
-      ).then(r => r.json()).then(d => {
-        var feature = d.features[0];
-        var latitude = feature.geometry.coordinates[1];
-        var longitude = feature.geometry.coordinates[0];
-        info.innerText = feature.properties.geocoding.label;
-        inputLatitude.value = latitude;
-        inputLongitude.value = longitude;
-        map.panTo([latitude, longitude], 16);
-        marker.setLatLng([latitude, longitude]);
-      });
+        `https://nominatim.openstreetmap.org/search.php?q=${encodeURIComponent(
+          q
+        )}&format=geocodejson`
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          var feature = d.features[0];
+          var latitude = feature.geometry.coordinates[1];
+          var longitude = feature.geometry.coordinates[0];
+          info.innerText = feature.properties.geocoding.label;
+          inputLatitude.value = latitude;
+          inputLongitude.value = longitude;
+          map.panTo([latitude, longitude], 16);
+          marker.setLatLng([latitude, longitude]);
+          setGoogleMapsLink(latitude, longitude);
+        });
     });
+    function setGoogleMapsLink(latitude, longitude) {
+      var href = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      googleMaps.href = href;
+      googleMaps.style.visibility = "visible";
+    }
+    function onLatitudeLongitudeChanged() {
+      var latitude = inputLatitude.value;
+      var longitude = inputLongitude.value;
+      if (latitude && longitude) {
+        setGoogleMapsLink(latitude, longitude);
+        map.panTo([latitude, longitude]);
+        marker.setLatLng([latitude, longitude]);
+      } else {
+        googleMaps.style.visibility = "hidden";
+      }
+    }
+    inputLongitude.addEventListener("change", onLatitudeLongitudeChanged);
+    inputLatitude.addEventListener("change", onLatitudeLongitudeChanged);
     searchDiv.appendChild(button);
-    var info = document.createElement('p');
-    info.style.fontSize = '0.8em';
-    info.innerHTML = '&nbsp;'
+    var googleMaps = document.createElement("a");
+    googleMaps.href = "https://www.google.com/maps/search/";
+    googleMaps.innerHTML = "On Google Maps";
+    googleMaps.target = "_blank";
+    googleMaps.style.visibility = "hidden";
+    googleMaps.style.paddingLeft = "5px";
+    searchDiv.append(googleMaps);
+    var info = document.createElement("p");
+    info.style.fontSize = "0.8em";
+    info.innerHTML = "&nbsp;";
     searchDiv.appendChild(info);
     container.appendChild(searchDiv);
     inputLongitude.parentElement.appendChild(container);
@@ -295,25 +325,28 @@ function onLoadAddMap() {
     let tiles = L.tileLayer(TILE_LAYER, TILE_LAYER_OPTIONS);
     let center = L.latLng(39.0575452, -98.5379642);
     let zoom = 4;
-    if (inputLatitude.value != '' && inputLongitude.value != '') {
+    if (inputLatitude.value != "" && inputLongitude.value != "") {
       center = L.latLng(inputLatitude.value, inputLongitude.value);
       zoom = 16;
     }
-    var marker = new L.marker(center, {draggable:true, autoPan: true});
-    marker.on('dragend', function() {
+    var marker = new L.marker(center, { draggable: true, autoPan: true });
+    marker.on("dragend", function () {
       var position = marker.getLatLng();
       var newLatitude = position.lat.toFixed(5);
-      var newLongitude = position.lng.toFixed(5);;
+      var newLongitude = position.lng.toFixed(5);
       inputLatitude.value = newLatitude;
       inputLongitude.value = newLongitude;
-      info.innerHTML = '&nbsp;';
+      setGoogleMapsLink(newLatitude, newLongitude);
+      info.innerHTML = "&nbsp;";
       fetch(
         `https://nominatim.openstreetmap.org/reverse.php?lat=${newLatitude}&lon=${newLongitude}&format=geocodejson`
-      ).then(r => r.json()).then(d => {
-        var feature = d.features[0];
-        console.log(feature);
-        info.innerText = feature.properties.geocoding.label;
-      });
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          var feature = d.features[0];
+          console.log(feature);
+          info.innerText = feature.properties.geocoding.label;
+        });
     });
     let map = L.map(mapDiv, {
       center: center,
@@ -321,6 +354,7 @@ function onLoadAddMap() {
       layers: [tiles],
     });
     map.addLayer(marker);
+    onLatitudeLongitudeChanged();
   }
 
   /* Load modules and CSS */
