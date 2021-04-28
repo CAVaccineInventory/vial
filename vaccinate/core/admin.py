@@ -835,7 +835,6 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         ClaimFilter,
         SoftDeletedFilter,
         ("created_at", DateYesterdayFieldListFilter),
-        "availability_tags",
         make_csv_filter(
             filter_title="Roles",
             filter_parameter_name="role",
@@ -843,6 +842,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             column="auth0_role_names",
             queryset_column="reported_by__auth0_role_names",
         ),
+        "availability_tags",
         "appointment_tag",
         "report_source",
         ("airtable_json", admin.EmptyFieldListFilter),
