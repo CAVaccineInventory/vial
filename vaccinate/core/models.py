@@ -508,6 +508,7 @@ class AvailabilityTag(models.Model):
 
     class Meta:
         db_table = "availability_tag"
+        ordering = ["-group", "name"]
 
 
 class AppointmentTag(models.Model):
