@@ -65,8 +65,8 @@ def test_import_location(client, api_key, use_list):
     assert location.vaccinespotter_location_id == "vaccine-spotter-1"
     assert location.vaccinefinder_location_id == "vaccine-finder-1"
     assert location.airtable_id == "airtable-1"
-    assert location.latitude == 37.781869
-    assert location.longitude == -122.439517
+    assert float(location.latitude) == pytest.approx(37.781869)
+    assert float(location.longitude) == pytest.approx(-122.439517)
     assert location.location_type.name == "Pharmacy"
     assert location.import_json is None
     # Check that ApiLog record was created

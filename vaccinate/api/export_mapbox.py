@@ -93,7 +93,7 @@ def _mapbox_geojson(location):
         "properties": properties,
         "geometry": {
             "type": "Point",
-            "coordinates": [location.longitude, location.latitude],
+            "coordinates": [float(location.longitude), float(location.latitude)],
         },
     }
 
@@ -126,7 +126,8 @@ def export_mapbox_preview(request):
         <p><a href="{}">Raw JSON</a></p>
         </body></html>
     """.format(
-            escape(json.dumps(preview, indent=4)), escape(raw_url)
+            escape(json.dumps(preview, indent=4)),
+            escape(raw_url),
         ).strip()
     )
 
