@@ -3,7 +3,7 @@ import datetime
 from django.contrib.admin import DateFieldListFilter, SimpleListFilter
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection
-from django.db.models import F, TextField, Value
+from django.db.models import F, IntegerField, TextField, Value
 from django.db.models.expressions import Func
 from django.utils import timezone
 
@@ -40,7 +40,7 @@ def make_csv_filter(
         def lookups(self, request, model_admin):
             sql = """
                 select distinct unnest(
-                    regexp_split_to_array({}, ',\s*')
+                    regexp_split_to_array({}, ',\\s*')
                 ) from {}
             """.format(
                 column, table
@@ -59,12 +59,13 @@ def make_csv_filter(
                     value_array_position=Func(
                         Func(
                             F(queryset_column),
-                            Value(",\s*"),
+                            Value(",\\s*"),
                             function="regexp_split_to_array",
                             output_field=ArrayField(TextField()),
                         ),
                         Value(value),
                         function="array_position",
+                        output_field=IntegerField(),
                     )
                 ).filter(value_array_position__isnull=False)
 
