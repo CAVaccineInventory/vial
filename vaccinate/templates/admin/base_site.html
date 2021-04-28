@@ -249,8 +249,8 @@ function onLoadAddMap() {
     container.style.padding = '5px';
     container.style.marginTop = '1em';
     // First add the search box
-    var p = document.createElement('p');
-    p.style.textAlign = 'center';
+    var searchDiv = document.createElement('div');
+    searchDiv.style.textAlign = 'center';
     var search = document.createElement('input');
     search.setAttribute('type', 'search');
     search.style.marginRight = '5px';
@@ -261,7 +261,7 @@ function onLoadAddMap() {
         button.click();
       }
     });
-    p.appendChild(search);
+    searchDiv.appendChild(search);
     var button = document.createElement('button');
     button.innerHTML = 'Search map';
     button.addEventListener('click', ev => {
@@ -273,20 +273,25 @@ function onLoadAddMap() {
         var feature = d.features[0];
         var latitude = feature.geometry.coordinates[1];
         var longitude = feature.geometry.coordinates[0];
+        info.innerText = feature.properties.geocoding.label;
         inputLatitude.value = latitude;
         inputLongitude.value = longitude;
         map.panTo([latitude, longitude], 16);
         marker.setLatLng([latitude, longitude]);
       });
     });
-    p.appendChild(button);
-    container.appendChild(p);
+    searchDiv.appendChild(button);
+    var info = document.createElement('p');
+    info.style.fontSize = '0.8em';
+    info.innerHTML = '&nbsp;'
+    searchDiv.appendChild(info);
+    container.appendChild(searchDiv);
     inputLongitude.parentElement.appendChild(container);
     // Now the map
-    let div = document.createElement("div");
-    div.style.marginTop = "1em";
-    div.style.height = "400px";
-    container.appendChild(div);
+    let mapDiv = document.createElement("div");
+    mapDiv.style.marginTop = "1em";
+    mapDiv.style.height = "400px";
+    container.appendChild(mapDiv);
     let tiles = L.tileLayer(TILE_LAYER, TILE_LAYER_OPTIONS);
     let center = L.latLng(39.0575452, -98.5379642);
     let zoom = 4;
@@ -297,10 +302,20 @@ function onLoadAddMap() {
     var marker = new L.marker(center, {draggable:true, autoPan: true});
     marker.on('dragend', function() {
       var position = marker.getLatLng();
-      inputLatitude.value = position.lat.toFixed(5);
-      inputLongitude.value = position.lng.toFixed(5);
+      var newLatitude = position.lat.toFixed(5);
+      var newLongitude = position.lng.toFixed(5);;
+      inputLatitude.value = newLatitude;
+      inputLongitude.value = newLongitude;
+      info.innerHTML = '&nbsp;';
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse.php?lat=${newLatitude}&lon=${newLongitude}&format=geocodejson`
+      ).then(r => r.json()).then(d => {
+        var feature = d.features[0];
+        console.log(feature);
+        info.innerText = feature.properties.geocoding.label;
+      });
     });
-    let map = L.map(div, {
+    let map = L.map(mapDiv, {
       center: center,
       zoom: zoom,
       layers: [tiles],
