@@ -28,28 +28,6 @@ steps:
       - name: "ssh"
         path: /root/.ssh
 
-  # Tell Sentry about the release; we need to use `/bin/sh` as the entrypoint to
-  # allow the $_SENTRY_TOKEN injection at runtime.
-  - name: getsentry/sentry-cli
-    entrypoint: /bin/sh
-    args:
-      - "-c"
-      - |
-        sentry-cli --auth-token=$$_SENTRY_TOKEN \
-            releases --org=vaccinateca \
-            new --project=vial ${COMMIT_SHA}
-    secretEnv: ["_SENTRY_TOKEN"]
-  # Also tell it the commits that it has
-  - name: getsentry/sentry-cli
-    entrypoint: /bin/sh
-    args:
-      - "-c"
-      - |
-        sentry-cli --auth-token=$$_SENTRY_TOKEN \
-          releases --org=vaccinateca \
-          set-commits --auto ${COMMIT_SHA}
-    secretEnv: ["_SENTRY_TOKEN"]
-
   # Pull the previous image, as a starting point
   - name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -105,102 +83,11 @@ steps:
     name: "gcr.io/cloud-builders/docker"
     args: ["rm", "--force", "vaccinate-db"]
 
-  # Push the commit-sha tag (but not `latest` tag), so we can deploy it
-  - id: "push image"
-    name: "gcr.io/cloud-builders/docker"
-    args: ["push", "${_IMAGE_NAME}:${COMMIT_SHA}"]
-
-  # Apply the database migrations to the live database; exec-wrapper does
-  # nothing other than standing up a cloud_sql_proxy at the same path as Cloud
-  # Run/AppEngine, then exec'ing inside the image.  Because this needs access to
-  # secrets, pass in the GCLOUD_SETTINGS_NAME.
-  - id: "apply migrations"
-    name: "gcr.io/google-appengine/exec-wrapper"
-    args:
-      [
-        "-i",
-        "${_IMAGE_NAME}:${COMMIT_SHA}",
-        "-s",
-        "${_CLOUDSQL_INSTANCE}",
-        "-e",
-        "GCLOUD_SETTINGS_NAME=${_GCLOUD_SETTINGS_NAME}",
-        "--",
-        "python",
-        "manage.py",
-        "migrate",
-      ]
-
-  # Finalize the Sentry release, timestamp for deploy duration
-  - name: getsentry/sentry-cli
-    entrypoint: /bin/sh
-    args:
-      - "-c"
-      - |
-        sentry-cli --auth-token=$$_SENTRY_TOKEN \
-            releases --org=vaccinateca \
-            finalize ${COMMIT_SHA}
-    secretEnv: ["_SENTRY_TOKEN"]
-  - name: getsentry/sentry-cli
-    entrypoint: /bin/sh
-    args: ["-c", "date +%s > /timestamp/build"]
-    volumes:
-      - name: "timestamp"
-        path: /timestamp
-
-  # Deploy the new code.
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    args:
-      - run
-      - services
-      - update
-      - "${_SERVICE_NAME}-${_DEPLOY}"
-      - "--platform=managed"
-      - "--image=${_IMAGE_NAME}:${COMMIT_SHA}"
-      - "--labels=commit-sha=${COMMIT_SHA},gcb-build-id=${BUILD_ID},deploy=${_DEPLOY}"
-      - "--region=${_DEPLOY_REGION}"
-      - "--set-env-vars=DEPLOY=${_DEPLOY}"
-      - "--set-env-vars=GCLOUD_SETTINGS_NAME=${_GCLOUD_SETTINGS_NAME}"
-      - "--set-env-vars=RUNNING_IN_GCLOUD=1"
-      - "--set-cloudsql-instances=${_CLOUDSQL_INSTANCE}"
-      - "--service-account=${_DEPLOY}@django-vaccinateca.iam.gserviceaccount.com"
-    id: Deploy
-    entrypoint: gcloud
-
-  # Tell Sentry about the deploy
-  - name: getsentry/sentry-cli
-    entrypoint: /bin/sh
-    args:
-      - "-c"
-      # TODO --started=....unix...
-      - |
-        sentry-cli --auth-token=$$_SENTRY_TOKEN \
-            releases --org=vaccinateca \
-            deploys ${COMMIT_SHA} new \
-            --env=${_DEPLOY} --started=$(cat /timestamp/build)
-    volumes:
-      - name: "timestamp"
-        path: /timestamp
-    secretEnv: ["_SENTRY_TOKEN"]
-
-  # Tell honeycomb about the deploy
-  - name: gcr.io/cloud-builders/gcloud
-    entrypoint: "bash"
-    args:
-      [
-        "./scripts/cd/honeytag.sh",
-        "vial-$_DEPLOY",
-        "Deploy $SHORT_SHA",
-        "https://github.com/CAVaccineInventory/vial/commits/$COMMIT_SHA",
-      ]
-    id: "Add Honeycomb deploy marker"
-
 options:
   dynamic_substitutions: true
 
 availableSecrets:
   secretManager:
-    - versionName: projects/373178984669/secrets/sentry-release-token/versions/latest
-      env: _SENTRY_TOKEN
     - versionName: projects/373178984669/secrets/github-deploy/versions/latest
       env: _SSH_KEY
 
