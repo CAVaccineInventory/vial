@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from core.exporter import api, dataset
+from core.exporter import api, dataset, storage
 
 from .models import (
     AppointmentTag,
@@ -297,3 +297,34 @@ def test_api_v1_framing():
         assert "usage" in output
         assert "content" in output
         assert isinstance(output["content"], list)
+
+
+@pytest.mark.django_db
+def test_api_serialization():
+    county = County.objects.get(fips_code="06079")  # San Luis Obispo
+    location = Location.objects.create(
+        county=county,
+        state=State.objects.get(abbreviation="CA"),
+        name="SLO Pharmacy",
+        phone_number="555 555-5555",
+        full_address="5 5th Street",
+        location_type=LocationType.objects.get(name="Pharmacy"),
+        latitude=35.279,
+        longitude=-120.664,
+    )
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+    )
+    plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
+    report.availability_tags.add(plus_65)
+    current_patient = AvailabilityTag.objects.get(slug="must_be_a_current_patient")
+    report.availability_tags.add(current_patient)
+
+    writer = storage.DebugWriter()
+    with dataset() as ds:
+        api(1, ds).write(writer)
+        api(0, ds).write(writer)

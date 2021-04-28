@@ -882,7 +882,10 @@ class CallRequest(models.Model):
             )
             .filter(completed=False, vesting_at__lte=now)
             .exclude(
-                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
+                Q(location__phone_number__isnull=True)
+                | Q(location__phone_number="")
+                | Q(location__do_not_call=True)
+                | Q(location__soft_deleted=True)
             )
         )
 
