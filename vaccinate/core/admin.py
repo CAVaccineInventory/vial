@@ -844,6 +844,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             queryset_column="reported_by__auth0_role_names",
         ),
         "appointment_tag",
+        "report_source",
         ("airtable_json", admin.EmptyFieldListFilter),
     )
     ordering = ("-created_at",)

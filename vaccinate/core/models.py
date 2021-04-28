@@ -540,6 +540,7 @@ class Report(models.Model):
     class ReportSource(models.TextChoices):
         CALLER_APP = "ca", "Caller app"
         DATA_CORRECTIONS = "dc", "Data corrections"
+        WEB_BANK = "wb", "Web banking"
 
     location = models.ForeignKey(
         Location,

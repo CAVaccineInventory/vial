@@ -15,6 +15,7 @@
     },
     "expected_status": 200,
     "expected_fields": {
+        "report_source": "ca",
         "location__public_id": "recaQlVkkI1rNarvx",
         "is_pending_review": false,
         "website": "https://example.com/",

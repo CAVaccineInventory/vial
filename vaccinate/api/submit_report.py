@@ -83,8 +83,7 @@ def submit_report(request, on_request_logged):
     availability_tags = resolve_availability_tags(report_data["availability"])
     kwargs = dict(
         location=report_data["location"],
-        # Currently hard-coded to caller app:
-        report_source="ca",
+        report_source="wb" if report_data.get("web_banked") else "ca",
         appointment_tag=AppointmentTag.objects.get(slug=appointment_tag_string),
         appointment_details=appointment_details,
         public_notes=report_data["public_notes"],

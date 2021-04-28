@@ -5,10 +5,12 @@
             "No: may be a vaccination site in the future"
         ],
         "Notes": "March 2: recommended to check their website for new availability in a week or more",
-        "Internal Notes": ""
+        "Internal Notes": "",
+        "web_banked": true
     },
     "expected_status": 200,
     "expected_fields": {
+        "report_source": "wb",
         "location__public_id": "recaQlVkkI1rNarvx",
         "public_notes": "March 2: recommended to check their website for new availability in a week or more",
         "is_pending_review": false
