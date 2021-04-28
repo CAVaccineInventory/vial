@@ -1051,7 +1051,14 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
+        # If the user toggled it to is_pending_review=False, record note
+        marked_as_reviewed = (
+            "is_pending_review" in form.changed_data and not obj.is_pending_review
+        )
         super().save_model(request, obj, form, change)
+        if marked_as_reviewed:
+            note = obj.review_notes.create(author=request.user)
+            note.tags.add(ReportReviewTag.objects.get(tag="Approved"))
 
     def state(self, obj):
         return obj.location.state.abbreviation

@@ -432,6 +432,43 @@ def test_adding_review_note_with_approved_tag_approves_report(
     assert not report.is_pending_review
 
 
+def test_setting_is_pending_review_false_adds_note(admin_client, ten_locations):
+    # https://github.com/CAVaccineInventory/vial/issues/450
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag_id=1,
+        is_pending_review=True,
+    )
+    assert report.is_pending_review
+    assert not report.review_notes.exists()
+    # Update it and turn off is_pending_review
+    response = admin_client.post(
+        "/admin/core/report/{}/change/".format(report.pk),
+        {
+            "location": location.pk,
+            "is_pending_review": "",
+            "report_source": "ca",
+            "appointment_tag": "1",
+            "availability_tags": "2",
+            "reported_by": reporter.pk,
+            "review_notes-TOTAL_FORMS": "1",
+            "review_notes-INITIAL_FORMS": "0",
+            "review_notes-MIN_NUM_FORMS": "0",
+            "review_notes-MAX_NUM_FORMS": "1000",
+        },
+    )
+    assert response.status_code == 302
+    report.refresh_from_db()
+    assert not report.is_pending_review
+    # Check that the report had a note added
+    review_note = report.review_notes.first()
+    assert review_note is not None
+    assert list(review_note.tags.values_list("tag", flat=True)) == ["Approved"]
+
+
 def test_bulk_approve_reports_action(admin_client, ten_locations):
     reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
     web = AppointmentTag.objects.get(slug="web")
