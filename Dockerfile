@@ -5,6 +5,13 @@ WORKDIR $APP_HOME
 
 ENV PYTHONUNBUFFERED 1
 
+# gdal for GeoDjango
+RUN apt-get update && apt-get install -y \
+    binutils \
+    gdal-bin \
+    libproj-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
