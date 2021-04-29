@@ -457,7 +457,9 @@ def import_source_locations(request, on_request_logged):
 
 def build_location_from_source_location(source_location: SourceLocation):
     location_kwargs = source_to_location(source_location.import_json)
-    location_kwargs["state"] = State.objects.get(abbreviation=location_kwargs["state"])
+    location_kwargs["state"] = State.objects.get(
+        abbreviation=location_kwargs["state"].upper()
+    )
     unknown_location_type = LocationType.objects.get(name="Unknown")
 
     location = Location.objects.create(
