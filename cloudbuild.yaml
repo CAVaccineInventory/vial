@@ -95,6 +95,9 @@ steps:
       - "--name"
       - "vaccinate-db"
       - "postgis/postgis:13-3.1"
+  - id: "wait for postgres"
+    name: "jwilder/dockerize"
+    args: ["dockerize", "-timeout=60s", "-wait=tcp://vaccinate-db:5432"]
 
   - id: "test image"
     name: "gcr.io/cloud-builders/docker"
