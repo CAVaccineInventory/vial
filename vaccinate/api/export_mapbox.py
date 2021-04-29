@@ -87,8 +87,7 @@ def _mapbox_geojson(location):
         tag_slugs = {tag.slug for tag in report.availability_tags.all()}
         if "appointments_available" in tag_slugs:
             properties["available_appointments"] = True
-        if "appointments_or_walkins" in tag_slugs:
-            properties["available_appointments"] = True
+        if "appointments_or_walkins" in tag_slugs or "walk_ins_accepted" in tag_slugs:
             properties["available_walkins"] = True
         for property, vaccine_name in (
             ("vaccine_moderna", "Moderna"),
