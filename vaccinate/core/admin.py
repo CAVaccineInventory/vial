@@ -468,7 +468,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {"classes": ("collapse",), "fields": ("matched_source_locations",)},
         ),
     )
-    deliberately_omitted_from_fieldsets = ("point",)
 
     def matched_source_locations(self, obj):
         return mark_safe(

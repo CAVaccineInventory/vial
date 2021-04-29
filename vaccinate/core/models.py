@@ -6,8 +6,6 @@ from typing import Optional
 import beeline
 import pytz
 from django.conf import settings
-from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Max, Q
 from django.db.models.signals import m2m_changed
@@ -194,7 +192,7 @@ class ImportRun(models.Model):
         db_table = "import_run"
 
 
-class Location(gis_models.Model):
+class Location(models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
     name = CharTextField()
     phone_number = CharTextField(null=True, blank=True)
@@ -253,7 +251,6 @@ class Location(gis_models.Model):
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
     latitude = models.DecimalField(max_digits=9, decimal_places=5)
     longitude = models.DecimalField(max_digits=9, decimal_places=5)
-    point = gis_models.PointField(blank=True, null=True, spatial_index=True)
     soft_deleted = models.BooleanField(
         default=False,
         help_text="we never delete rows from this table; all deletes are soft",
@@ -439,11 +436,6 @@ class Location(gis_models.Model):
             beeline.add_context({"updates": False})
 
     def save(self, *args, **kwargs):
-        # Point is derived from latitude/longitude
-        if self.longitude and self.latitude:
-            self.point = Point(float(self.longitude), float(self.latitude), srid=4326)
-        else:
-            self.point = None
         set_public_id_later = False
         if (not self.public_id) and self.airtable_id:
             self.public_id = self.airtable_id

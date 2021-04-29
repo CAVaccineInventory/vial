@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgis/postgis:13-3.1
+        image: postgres:13
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -34,8 +34,6 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-    - name: Install GeoDjango dependencies
-      run: sudo apt-get install binutils libproj-dev gdal-bin
     - name: Run Black
       run: |
         black --check --diff .
