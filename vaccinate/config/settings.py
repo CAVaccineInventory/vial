@@ -137,6 +137,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
+    "django.contrib.gis",
     "django_migration_linter",
     "django_sql_dashboard",
     "social_django",
@@ -213,7 +214,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 DATABASES: Dict[str, Dict[str, Any]] = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
         "NAME": "vaccinate",
     }
 }
