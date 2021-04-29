@@ -223,6 +223,7 @@ DATABASES: Dict[str, Dict[str, Any]] = {
 if "DATABASE_URL" in os.environ:
     # Parse database configuration from $DATABASE_URL
     DATABASES["default"] = dj_database_url.config()
+    DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
 
     # Work around https://github.com/jacobian/dj-database-url/pull/113
     DATABASES["default"]["HOST"] = (
