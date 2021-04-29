@@ -48,7 +48,17 @@ class ApiKeyAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj and request.user.is_superuser:
-            return ("created_at", "last_seen_at")
+            if obj and obj.user == request.user:
+                return (
+                    "created_at",
+                    "last_seen_at",
+                    "key_to_use",
+                )
+            else:
+                return (
+                    "created_at",
+                    "last_seen_at",
+                )
         if obj and obj.user == request.user:
             return self.readonly_fields + ("key_to_use",)
         if obj and obj.user != request.user:
