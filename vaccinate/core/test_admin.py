@@ -325,6 +325,7 @@ def test_custom_csv_export_for_reports(
         appointment_tag=web,
         is_pending_review=True,
         originally_pending_review=True,
+        airtable_json={"foo": "bar"},
     )
     plus_65 = AvailabilityTag.objects.get(slug="vaccinating_65_plus")
     plus_50 = AvailabilityTag.objects.get(slug="vaccinating_50_plus")
@@ -343,7 +344,7 @@ def test_custom_csv_export_for_reports(
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
             "id,location_id,location,is_pending_review,originally_pending_review,claimed_by_id,claimed_by,claimed_at,soft_deleted,soft_deleted_because,report_source,appointment_tag_id,appointment_tag,appointment_details,public_notes,internal_notes,restriction_notes,vaccines_offered,website,full_address,hours,planned_closure,reported_by_id,reported_by,created_at,call_request_id,call_request,airtable_id,airtable_json,public_id,availability_tags\r\n"
-            '{},{},Location 1,True,True,,,,False,,ca,3,web,,,,,,,,,,{},auth0:reporter,{},,,,,{},"Vaccinating 50+, Vaccinating 65+"\r\n'.format(
+            '{},{},Location 1,True,True,,,,False,,ca,3,web,,,,,,,,,,{},auth0:reporter,{},,,,"{{""foo"": ""bar""}}",{},"Vaccinating 50+, Vaccinating 65+"\r\n'.format(
                 report.id,
                 report.location_id,
                 reporter.id,
