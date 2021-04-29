@@ -107,7 +107,7 @@ steps:
       - "-e"
       - "SOCIAL_AUTH_AUTH0_SECRET="
       - "-e"
-      - "DATABASE_URL=postgres://postgres@vaccinate-db:5432/vaccinate"
+      - "DATABASE_URL=postgres://postgres:postgres@vaccinate-db:5432/vaccinate"
       - "${_IMAGE_NAME}:latest"
       - "pytest"
       - "-v"
