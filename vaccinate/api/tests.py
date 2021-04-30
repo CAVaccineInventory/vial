@@ -14,8 +14,10 @@ GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
 @pytest.mark.parametrize(
     "token,expected_error,expected_body",
     (
-        ("", "Bearer token must contain one ':'", None),
-        ("1", "Bearer token must contain one ':'", None),
+        ("", "Bearer token is expected to be nnn:long-string", None),
+        ("1", "Bearer token is expected to be nnn:long-string", None),
+        ("foo", "Bearer token is expected to be nnn:long-string", None),
+        ("foo:bar", "Bearer token is expected to be nnn:long-string", None),
         ("2:123", "API key does not exist", None),
         ("1:123", "Invalid API key", None),
         (f"1:{GOODTOKEN}", None, {}),
