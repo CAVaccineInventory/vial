@@ -234,9 +234,16 @@ def search_source_locations(request, on_request_logged):
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
     debug = request.GET.get("debug")
-    unmatched = request.GET.get("debug")
+    unmatched = request.GET.get("unmatched")
     random = request.GET.get("random")
+    ids = request.GET.getlist("id")
+    location_ids = request.GET.getlist("location_id")
+
     qs = SourceLocation.objects.all()
+    if ids:
+        qs = qs.filter(id__in=ids)
+    if location_ids:
+        qs = qs.filter(matched_location__public_id__in=location_ids)
     if q:
         qs = qs.filter(name__icontains=q)
     idrefs = request.GET.getlist("idref")
