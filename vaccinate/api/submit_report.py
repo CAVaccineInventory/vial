@@ -41,6 +41,7 @@ class ReportValidator(BaseModel):
     do_not_call_until: Optional[datetime] = Field(alias="Do not call until")
     web_banked: Optional[bool]
     is_pending_review: Optional[bool] = Field(alias="is_pending_review")
+    pending_review_because: Optional[str]
     restriction_notes: Optional[str]
     vaccines_offered: Optional[List[str]]
     web: Optional[str]
