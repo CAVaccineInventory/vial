@@ -151,8 +151,8 @@ def test_search_locations_num_queries(
 @pytest.mark.parametrize(
     "radius,expected",
     (
-        (10, ["Location 1"]),
-        (10000, ""),
+        (10, {"Location 1"}),
+        (10000, {"Location 1", "Location 2"}),
     ),
 )
 def test_search_locations_point_radius(
@@ -165,7 +165,7 @@ def test_search_locations_point_radius(
     results = search_get_json(
         client, api_key, "latitude=37.5&longitude=-122.4&radius={}".format(radius)
     )
-    assert [r["name"] for r in results["results"]] == expected
+    assert {r["name"] for r in results["results"]} == expected
 
 
 def test_search_locations_point_radius_errors(client, api_key):
