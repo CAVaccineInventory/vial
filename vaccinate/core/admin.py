@@ -516,18 +516,17 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display_links = None
     list_display = (
         "summary",
-        "public_id",
-        "times_reported",
-        "scooby_report_link",
-        "request_a_call",
         "full_address",
         "state",
         "county",
+        "scooby_report_link",
+        "request_a_call",
         "preferred_contact_method",
         "location_type",
-        "provider",
-        "latest_non_skip_report_date",
-        "dn_skip_report_count",
+        "latest_non_skip_report",
+        "latest_availability",
+        "latest_reporter",
+        "provider",   
     )
     list_filter = (
         LocationInQueueFilter,
@@ -563,9 +562,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     def summary(self, obj):
         html = (
-            '<a href="/admin/core/location/{}/change/"><strong>{}</strong></a>'.format(
+            '<a href="/admin/core/location/{}/change/"><strong>{}</strong><br>{}</a>'.format(
                 obj.id,
                 escape(obj.name),
+                obj.public_id,
             )
         )
         if obj.do_not_call:
@@ -608,13 +608,40 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "times_reported_count"
     )
 
-    def latest_non_skip_report_date(self, obj):
+    def latest_non_skip_report(self, obj):
         if obj.dn_latest_non_skip_report:
-            return obj.dn_latest_non_skip_report.created_at
+            date = (
+                dateformat.format(timezone.localtime(obj.dn_latest_non_skip_report.created_at), "j M g:iA e")
+                .replace("PM", "pm")
+                .replace("AM", "am")
+                .replace(" ", u"\u00a0")
+            )
+            return format_html(
+                '<a href="{}">{}</a>',
+                reverse("admin:core_report_change", args=(obj.dn_latest_non_skip_report.id,)),
+                date,
+            )
 
     latest_non_skip_report_date.admin_order_field = (  # type:ignore[attr-defined]
         "dn_latest_non_skip_report__created_at"
     )
+
+    def latest_reporter(self, obj):
+        if obj.dn_latest_non_skip_report:
+            return format_html(
+                '<strong><a href="{}">{}</a></strong><br>{}',
+                reverse("admin:core_reporter_change", args=(obj.dn_latest_non_skip_report.reported_by.id,)),
+                obj.dn_latest_non_skip_report.reported_by,
+                escape(obj.dn_latest_non_skip_report.reported_by.auth0_role_names or ""),
+            )
+
+    latest_reporter.admin_order_field = "reported_by"
+
+    def latest_availability(self, obj):
+        if obj.dn_latest_non_skip_report:
+            return obj.dn_latest_non_skip_report.availability()
+
+    latest_reporter.admin_order_field = "availability"
 
     def lookup_allowed(self, lookup, value):
         return True
