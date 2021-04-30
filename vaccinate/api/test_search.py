@@ -145,6 +145,26 @@ def test_search_locations_num_queries(
         search_get_json(client, api_key, "all=1&format=geojson")
 
 
+@pytest.mark.parametrize(
+    "radius,expected",
+    (
+        (10, ["Location 1"]),
+        (10000, ""),
+    ),
+)
+def test_search_locations_point_radius(
+    client, api_key, ten_locations, radius, expected
+):
+    for i, location in enumerate(ten_locations):
+        location.latitude = 37.5
+        location.longitude = -122.4 + (i / 10.0)
+        location.save()
+    results = search_get_json(
+        client, api_key, "latitude=37.5&longitude=-122.4&radius={}".format(radius)
+    )
+    assert [r["name"] for r in results["results"]] == expected
+
+
 def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
     assert client.get("/api/searchLocations").status_code == 403
     assert admin_client.get("/api/searchLocations").status_code == 200
