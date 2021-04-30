@@ -2,13 +2,20 @@ import json
 import os
 import random
 from datetime import date, datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import beeline
 import pytz
 import requests
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
-from core.models import AppointmentTag, CallRequest, CallRequestReason, Location, Report
+from core.models import (
+    AppointmentTag,
+    CallRequest,
+    CallRequestReason,
+    Location,
+    Report,
+    Reporter,
+)
 from dateutil import parser
 from django.conf import settings
 from django.db.models import Max
@@ -96,17 +103,23 @@ def submit_report(request, on_request_logged):
         hours=report_data["hours"],
         planned_closure=report_data["planned_closure"],
     )
-    # is_pending_review
-    if report_data["is_pending_review"] or user_should_have_reports_reviewed(
-        reporter, report_data
-    ):
-        kwargs["is_pending_review"] = True
+
+    # Baseline these as not pending review, since the
+    # originally_pending_review field is nullable, so we know which
+    # reports were before we started logging.
+    kwargs["originally_pending_review"] = False
+    if report_data["is_pending_review"]:
         kwargs["originally_pending_review"] = True
+        kwargs["pending_review_because"] = report_data.get(
+            "pending_review_because", "Unknown"
+        )
     else:
-        # Explicitly set as False, since the originally_pending_review
-        # field is nullable, so we know which reports were before we
-        # started logging.
-        kwargs["originally_pending_review"] = False
+        should_review, why = user_should_have_reports_reviewed(reporter, report_data)
+        if should_review:
+            kwargs["originally_pending_review"] = True
+            kwargs["pending_review_because"] = why
+
+    kwargs["is_pending_review"] = kwargs["originally_pending_review"]
 
     if bool(request.GET.get("test")) and request.GET.get("fake_timestamp"):
         fake_timestamp = parser.parse(request.GET["fake_timestamp"])
@@ -218,19 +231,27 @@ def submit_report(request, on_request_logged):
     )
 
 
-def user_should_have_reports_reviewed(user, report):
+def user_should_have_reports_reviewed(
+    user: Reporter, report: Dict[str, Any]
+) -> Tuple[bool, str]:
     data_corrections = "VIAL data corrections" + (
         " STAGING" if settings.STAGING else ""
     )
     roles = [r.strip() for r in user.auth0_role_names.split(",") if r.strip()]
     if "Trainee" in roles:
-        return True
+        return True, "Trainee; selected 100% for review"
     elif "Journeyman" in roles:
-        return random.random() < 0.15
-    elif (data_corrections in roles or "Web Banker" in roles) and (
-        report.get("web_banked")
-    ):
-        # Data corrections and web bankers get a pass
-        pass
-    else:
-        return random.random() < 0.02
+        if random.random() < 0.15:
+            return True, "Journeyman; selected 15% for review"
+    elif report.get("web_banked"):
+        if data_corrections in roles or "Web Banker" in roles:
+            # Web-banked and has one of the right roles, always gets a pass
+            return False, ""
+        elif random.random() < 0.02:
+            return (
+                True,
+                "Web-banked, but doesn't have appropriate Web Banker or data corrections roles; selected 2% for review",
+            )
+    elif random.random() < 0.02:
+        return True, "Randomly selected 2% for review"
+    return False, ""

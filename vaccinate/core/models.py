@@ -564,6 +564,10 @@ class Report(models.Model):
         null=True,
         help_text="Reports that were originally flagged as pending review",
     )
+    pending_review_because = CharTextField(
+        null=True, blank=True, help_text="Reason this was originally flagged for review"
+    )
+
     claimed_by = models.ForeignKey(
         "auth.User",
         related_name="claimed_reports",

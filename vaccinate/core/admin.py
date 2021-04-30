@@ -862,6 +862,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "claimed_at",
         "created_at_utc",
         "originally_pending_review",
+        "pending_review_because",
         "public_id",
         "airtable_id",
         "airtable_json",
@@ -888,6 +889,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                 "fields": (
                     "originally_pending_review",
                     "is_pending_review",
+                    "pending_review_because",
                     "claimed_by",
                     "claimed_at",
                 ),
