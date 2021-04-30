@@ -415,6 +415,7 @@ def import_source_locations(request, on_request_logged):
                 "import_json": record["import_json"],
                 "import_run": import_run,
                 "matched_location": matched_location,
+                "last_imported_at": timezone.now(),
             },
         )
 

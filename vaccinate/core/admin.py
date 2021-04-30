@@ -125,6 +125,7 @@ class SourceLocationAdmin(admin.ModelAdmin):
         "latitude",
         "longitude",
         "import_run",
+        "last_imported_at",
     )
     readonly_fields = ("concordances_summary",)
 

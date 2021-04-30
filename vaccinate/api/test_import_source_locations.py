@@ -1,3 +1,4 @@
+import datetime
 import json
 import pathlib
 
@@ -129,3 +130,38 @@ def test_import_location(client, api_key, json_path):
         concordances = set(original_location.concordances.all())
         source_concordanes = set(source_location.concordances.all())
         assert source_concordanes.issubset(concordances)
+
+
+def test_import_location_twice_updates(client, api_key):
+    fixture = json.load((tests_dir / "001-no-match.json").open())
+    import_run_id = client.post(
+        "/api/startImportRun", HTTP_AUTHORIZATION="Bearer {}".format(api_key)
+    ).json()["import_run_id"]
+    # Make the API request
+    client.post(
+        "/api/importSourceLocations?import_run_id={}".format(import_run_id),
+        fixture,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    source_location = SourceLocation.objects.first()
+    assert source_location.name == "Rite Aid"
+    # Edit it a bit
+    fake_last_imported_at = source_location.last_imported_at - datetime.timedelta(
+        hours=1
+    )
+    source_location.last_imported_at = fake_last_imported_at
+    source_location.name = "Update me"
+    source_location.save()
+    source_location.refresh_from_db()
+    assert source_location.last_imported_at == fake_last_imported_at
+    assert source_location.name == "Update me"
+    client.post(
+        "/api/importSourceLocations?import_run_id={}".format(import_run_id),
+        fixture,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    source_location.refresh_from_db()
+    assert source_location.last_imported_at != fake_last_imported_at
+    assert source_location.name == "Rite Aid"

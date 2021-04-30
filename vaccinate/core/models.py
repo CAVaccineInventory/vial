@@ -1049,6 +1049,9 @@ class SourceLocation(models.Model):
         on_delete=models.SET_NULL,
     )
     created_at = models.DateTimeField(default=timezone.now)
+    last_imported_at = models.DateTimeField(
+        blank=True, null=True, help_text="When this source location was last imported"
+    )
 
     class Meta:
         db_table = "source_location"
