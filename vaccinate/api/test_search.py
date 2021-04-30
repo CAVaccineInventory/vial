@@ -4,14 +4,17 @@ import pytest
 from core.models import ConcordanceIdentifier, Location, State
 
 
-def search_get_json(client, api_key, query_string):
+def search_get_json(client, api_key, query_string, expected_status_code=200):
     response = client.get(
         "/api/searchLocations?" + query_string,
         HTTP_AUTHORIZATION=f"Bearer {api_key}",
     )
-    assert response.status_code == 200
-    joined = b"".join(response.streaming_content)
-    return json.loads(joined)
+    assert response.status_code == expected_status_code
+    if hasattr(response, "streaming_content"):
+        content = b"".join(response.streaming_content)
+    else:
+        content = response.content
+    return json.loads(content)
 
 
 @pytest.mark.parametrize(
@@ -163,6 +166,17 @@ def test_search_locations_point_radius(
         client, api_key, "latitude=37.5&longitude=-122.4&radius={}".format(radius)
     )
     assert [r["name"] for r in results["results"]] == expected
+
+
+def test_search_locations_point_radius_errors(client, api_key):
+    for qs in (
+        "latitude=bad&longitude=-122.4&radius=10",
+        "latitude=43.4&longitude=bad&radius=10",
+        "latitude=43.4&longitude=-122.4&radius=bad",
+    ):
+        assert search_get_json(client, api_key, qs, expected_status_code=400) == {
+            "error": "latitude/longitude/radius should be numbers"
+        }
 
 
 def test_search_allows_users_with_cookie(client, admin_client, ten_locations):

@@ -53,6 +53,13 @@ def search_locations(request, on_request_logged):
     if state:
         qs = qs.filter(state__abbreviation=state)
     if latitude and longitude and radius:
+        for value in (latitude, longitude, radius):
+            try:
+                float(value)
+            except ValueError:
+                return JsonResponse(
+                    {"error": "latitude/longitude/radius should be numbers"}, status=400
+                )
         qs = qs.filter(
             point__distance_lt=(
                 Point(float(longitude), float(latitude)),
