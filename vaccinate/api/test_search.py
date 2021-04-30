@@ -42,8 +42,8 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
         ConcordanceIdentifier.for_idref("google_places:456")
     )
     data = search_get_json(client, api_key, query_string)
-    names = [r["name"] for r in data["results"]]
-    assert names == expected
+    names = {r["name"] for r in data["results"]}
+    assert names == set(expected)
     assert data["total"] == len(expected)
 
 
