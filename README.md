@@ -69,6 +69,8 @@ You'll need a PostgreSQL database called "vaccinate". On macOS I've used https:/
 
 Alternatively, you can use [Docker](docs/docker.md).
 
+We use GeoDjango, so you'll need GDAL installed. If you run into trouble with this check out the [GeoDjango installation instructions](https://docs.djangoproject.com/en/3.2/ref/contrib/gis/install/).
+
 You'll need to run `./manage.py` commands from the `vaccinate` directory, so `cd vaccinate`.
 
 Then run the database migrations with `./manage.py migrate` - you'll need to run this command any time we release new migrations.

@@ -4,14 +4,17 @@ import pytest
 from core.models import ConcordanceIdentifier, Location, State
 
 
-def search_get_json(client, api_key, query_string):
+def search_get_json(client, api_key, query_string, expected_status_code=200):
     response = client.get(
         "/api/searchLocations?" + query_string,
         HTTP_AUTHORIZATION=f"Bearer {api_key}",
     )
-    assert response.status_code == 200
-    joined = b"".join(response.streaming_content)
-    return json.loads(joined)
+    assert response.status_code == expected_status_code
+    if hasattr(response, "streaming_content"):
+        content = b"".join(response.streaming_content)
+    else:
+        content = response.content
+    return json.loads(content)
 
 
 @pytest.mark.parametrize(
@@ -39,8 +42,8 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
         ConcordanceIdentifier.for_idref("google_places:456")
     )
     data = search_get_json(client, api_key, query_string)
-    names = [r["name"] for r in data["results"]]
-    assert names == expected
+    names = {r["name"] for r in data["results"]}
+    assert names == set(expected)
     assert data["total"] == len(expected)
 
 
@@ -143,6 +146,37 @@ def test_search_locations_num_queries(
     # 6. Repeat the locations fetch to verify we found all of them
     with django_assert_num_queries(6):
         search_get_json(client, api_key, "all=1&format=geojson")
+
+
+@pytest.mark.parametrize(
+    "radius,expected",
+    (
+        (10, {"Location 1"}),
+        (10000, {"Location 1", "Location 2"}),
+    ),
+)
+def test_search_locations_point_radius(
+    client, api_key, ten_locations, radius, expected
+):
+    for i, location in enumerate(ten_locations):
+        location.latitude = 37.5
+        location.longitude = -122.4 + (i / 10.0)
+        location.save()
+    results = search_get_json(
+        client, api_key, "latitude=37.5&longitude=-122.4&radius={}".format(radius)
+    )
+    assert {r["name"] for r in results["results"]} == expected
+
+
+def test_search_locations_point_radius_errors(client, api_key):
+    for qs in (
+        "latitude=bad&longitude=-122.4&radius=10",
+        "latitude=43.4&longitude=bad&radius=10",
+        "latitude=43.4&longitude=-122.4&radius=bad",
+    ):
+        assert search_get_json(client, api_key, qs, expected_status_code=400) == {
+            "error": "latitude/longitude/radius should be numbers"
+        }
 
 
 def test_search_allows_users_with_cookie(client, admin_client, ten_locations):

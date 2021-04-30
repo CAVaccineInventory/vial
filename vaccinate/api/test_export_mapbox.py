@@ -2,7 +2,7 @@ import datetime
 import json
 
 import pytest
-from core.models import AppointmentTag, AvailabilityTag, Reporter
+from core.models import AppointmentTag, AvailabilityTag, Reporter, SourceLocation
 
 
 def test_export_mapbox_location_with_no_report(client, ten_locations):
@@ -29,6 +29,101 @@ def test_export_mapbox_location_with_no_report(client, ten_locations):
         },
         "geometry": {"type": "Point", "coordinates": [40.0, 30.0]},
     }
+
+
+@pytest.mark.parametrize(
+    "inventory,expected_properties",
+    (
+        (
+            [
+                {
+                    "guid": "779bfe52-0dd8-4023-a183-457eb100fccc",
+                    "name": "Moderna COVID Vaccine",
+                    "in_stock": "TRUE",
+                    "supply_level": "NO_SUPPLY",
+                },
+                {
+                    "guid": "a84fb9ed-deb4-461c-b785-e17c782ef88b",
+                    "name": "Pfizer-BioNTech COVID Vaccine",
+                    "in_stock": "FALSE",
+                    "supply_level": "NO_SUPPLY",
+                },
+                {
+                    "guid": "784db609-dc1f-45a5-bad6-8db02e79d44f",
+                    "name": "Johnson & Johnson's Janssen COVID Vaccine",
+                    "in_stock": "FALSE",
+                    "supply_level": "NO_SUPPLY",
+                },
+            ],
+            {"vaccine_moderna"},
+        ),
+        (
+            [
+                {
+                    "guid": "779bfe52-0dd8-4023-a183-457eb100fccc",
+                    "name": "Moderna COVID Vaccine",
+                    "in_stock": "FALSE",
+                    "supply_level": "NO_SUPPLY",
+                },
+                {
+                    "guid": "a84fb9ed-deb4-461c-b785-e17c782ef88b",
+                    "name": "Pfizer-BioNTech COVID Vaccine",
+                    "in_stock": "TRUE",
+                    "supply_level": "NO_SUPPLY",
+                },
+                {
+                    "guid": "784db609-dc1f-45a5-bad6-8db02e79d44f",
+                    "name": "Johnson & Johnson's Janssen COVID Vaccine",
+                    "in_stock": "FALSE",
+                    "supply_level": "NO_SUPPLY",
+                },
+            ],
+            {"vaccine_pfizer"},
+        ),
+        (
+            [
+                {
+                    "guid": "779bfe52-0dd8-4023-a183-457eb100fccc",
+                    "name": "Moderna COVID Vaccine",
+                    "in_stock": "FALSE",
+                    "supply_level": "NO_SUPPLY",
+                },
+                {
+                    "guid": "a84fb9ed-deb4-461c-b785-e17c782ef88b",
+                    "name": "Pfizer-BioNTech COVID Vaccine",
+                    "in_stock": "FALSE",
+                    "supply_level": "NO_SUPPLY",
+                },
+                {
+                    "guid": "784db609-dc1f-45a5-bad6-8db02e79d44f",
+                    "name": "Johnson & Johnson's Janssen COVID Vaccine",
+                    "in_stock": "TRUE",
+                    "supply_level": "NO_SUPPLY",
+                },
+            ],
+            {"vaccine_jj"},
+        ),
+    ),
+)
+def test_export_mapbox_location_with_vaccinefinder_source_location(
+    client, ten_locations, inventory, expected_properties
+):
+    location = ten_locations[0]
+    SourceLocation.objects.create(
+        source_uid="uid",
+        source_name="vaccinefinder_org",
+        import_json={"source": {"data": {"inventory": inventory}}},
+        matched_location=location,
+    )
+    response = client.get(
+        "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
+    )
+    data = json.loads(response.content)["geojson"][0]
+    for property in ("vaccine_moderna", "vaccine_pfizer", "vaccine_jj"):
+        if property in expected_properties:
+            assert data["properties"][property]
+        else:
+            assert property not in data["properties"]
 
 
 @pytest.mark.parametrize(

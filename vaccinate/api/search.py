@@ -5,6 +5,8 @@ from html import escape
 import beeline
 from core.models import ConcordanceIdentifier, Location, State
 from core.utils import keyset_pagination_iterator
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import Distance
 from django.http import JsonResponse
 from django.http.response import StreamingHttpResponse
 from django.shortcuts import render
@@ -26,6 +28,9 @@ def search_locations(request, on_request_logged):
     q = (request.GET.get("q") or "").strip().lower()
     all = request.GET.get("all")
     state = (request.GET.get("state") or "").upper()
+    latitude = request.GET.get("latitude")
+    longitude = request.GET.get("longitude")
+    radius = request.GET.get("radius")
     if state:
         try:
             State.objects.get(abbreviation=state)
@@ -47,6 +52,20 @@ def search_locations(request, on_request_logged):
         qs = qs.filter(name__icontains=q)
     if state:
         qs = qs.filter(state__abbreviation=state)
+    if latitude and longitude and radius:
+        for value in (latitude, longitude, radius):
+            try:
+                float(value)
+            except ValueError:
+                return JsonResponse(
+                    {"error": "latitude/longitude/radius should be numbers"}, status=400
+                )
+        qs = qs.filter(
+            point__distance_lt=(
+                Point(float(longitude), float(latitude)),
+                Distance(m=float(radius)),
+            )
+        )
     ids = request.GET.getlist("id")
     if ids:
         qs = qs.filter(public_id__in=ids)

@@ -40,8 +40,10 @@ def check_request_for_api_key(request):
         return auth_error("Authorization header must start with 'Bearer'")
     token = authorization.split("Bearer ")[1]
     if token.count(":") != 1:
-        return auth_error("Bearer token must contain one ':'")
+        return auth_error("Bearer token is expected to be nnn:long-string")
     id, key = token.split(":")
+    if not id.isnumeric():
+        return auth_error("Bearer token is expected to be nnn:long-string")
     try:
         api_key = ApiKey.objects.get(pk=id)
     except ApiKey.DoesNotExist:

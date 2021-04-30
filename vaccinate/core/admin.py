@@ -125,6 +125,7 @@ class SourceLocationAdmin(admin.ModelAdmin):
         "latitude",
         "longitude",
         "import_run",
+        "last_imported_at",
     )
     readonly_fields = ("concordances_summary",)
 
@@ -468,6 +469,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {"classes": ("collapse",), "fields": ("matched_source_locations",)},
         ),
     )
+    deliberately_omitted_from_fieldsets = ("point",)
 
     def matched_source_locations(self, obj):
         return mark_safe(
@@ -860,6 +862,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "claimed_at",
         "created_at_utc",
         "originally_pending_review",
+        "pending_review_because",
         "public_id",
         "airtable_id",
         "airtable_json",
@@ -886,6 +889,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                 "fields": (
                     "originally_pending_review",
                     "is_pending_review",
+                    "pending_review_because",
                     "claimed_by",
                     "claimed_at",
                 ),

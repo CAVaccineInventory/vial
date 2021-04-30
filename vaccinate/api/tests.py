@@ -1,5 +1,6 @@
 import random
 import time
+from typing import Any, Dict
 
 import pytest
 from core.models import AvailabilityTag, Reporter
@@ -14,8 +15,10 @@ GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
 @pytest.mark.parametrize(
     "token,expected_error,expected_body",
     (
-        ("", "Bearer token must contain one ':'", None),
-        ("1", "Bearer token must contain one ':'", None),
+        ("", "Bearer token is expected to be nnn:long-string", None),
+        ("1", "Bearer token is expected to be nnn:long-string", None),
+        ("foo", "Bearer token is expected to be nnn:long-string", None),
+        ("foo:bar", "Bearer token is expected to be nnn:long-string", None),
         ("2:123", "API key does not exist", None),
         ("1:123", "Invalid API key", None),
         (f"1:{GOODTOKEN}", None, {}),
@@ -68,12 +71,13 @@ def test_availability_tags(client):
 
 
 @pytest.mark.django_db
-def test_user_should_have_reports_reviewed():
-    def passes_for(user, report):
+def test_user_should_have_reports_reviewed() -> None:
+    def passes_for(user: Reporter, report: Dict[str, Any]) -> int:
         random.seed(1)
         passes = 0
         for i in range(100):
-            if user_should_have_reports_reviewed(user, report):
+            should_review, why = user_should_have_reports_reviewed(user, report)
+            if should_review:
                 passes += 1
         return passes
 
