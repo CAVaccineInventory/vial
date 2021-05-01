@@ -3,7 +3,7 @@ from collections import namedtuple
 from html import escape
 
 import beeline
-from core.models import ConcordanceIdentifier, Location, State
+from core.models import ConcordanceIdentifier, Location, SourceLocation, State
 from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance
@@ -225,3 +225,80 @@ FORMATS = {
         content_type="text/plain",
     ),
 }
+
+
+@log_api_requests
+@require_api_key_or_cookie_user
+@beeline.traced("search_locations")
+def search_source_locations(request, on_request_logged):
+    size = min(int(request.GET.get("size", "10")), 1000)
+    q = (request.GET.get("q") or "").strip().lower()
+    debug = request.GET.get("debug")
+    unmatched = request.GET.get("unmatched")
+    random = request.GET.get("random")
+    ids = request.GET.getlist("id")
+    location_ids = request.GET.getlist("location_id")
+
+    qs = SourceLocation.objects.all()
+    if ids:
+        qs = qs.filter(id__in=ids)
+    if location_ids:
+        qs = qs.filter(matched_location__public_id__in=location_ids)
+    if q:
+        qs = qs.filter(name__icontains=q)
+    idrefs = request.GET.getlist("idref")
+    if idrefs:
+        idref_filter = ConcordanceIdentifier.filter_for_idrefs(idrefs)
+        qs = qs.filter(
+            concordances__in=ConcordanceIdentifier.objects.filter(idref_filter)
+        )
+    if unmatched:
+        qs = qs.filter(matched_location=None)
+    if random:
+        qs = qs.order_by("?")
+    qs = qs.prefetch_related("concordances")
+    output = {
+        "results": [
+            {
+                "id": source_location.id,
+                "source_name": source_location.source_name,
+                "name": source_location.name,
+                "latitude": float(source_location.latitude)
+                if source_location.latitude
+                else None,
+                "longitude": float(source_location.longitude)
+                if source_location.longitude
+                else None,
+                "import_json": source_location.import_json,
+                "matched_location": {
+                    "id": source_location.matched_location.public_id,
+                    "name": source_location.matched_location.name,
+                    "vial_url": request.build_absolute_uri(
+                        "/admin/core/location/{}/change/".format(
+                            source_location.matched_location.id
+                        )
+                    ),
+                }
+                if source_location.matched_location
+                else None,
+                "created_at": source_location.created_at.isoformat(),
+                "last_imported_at": source_location.last_imported_at.isoformat(),
+                "concordances": [str(c) for c in source_location.concordances.all()],
+                "vial_url": request.build_absolute_uri(
+                    "/admin/core/sourcelocation/{}/change/".format(source_location.id)
+                ),
+            }
+            for source_location in qs[:size]
+        ],
+        "total": qs.count(),
+    }
+
+    if debug:
+        return render(
+            request,
+            "api/search_locations_debug.html",
+            {
+                "output": mark_safe(escape(json.dumps(output, indent=4))),
+            },
+        )
+    return JsonResponse(output)

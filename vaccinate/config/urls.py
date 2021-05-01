@@ -50,6 +50,7 @@ urlpatterns = [
     ),
     path("api/verifyToken", api_views.verify_token),
     path("api/searchLocations", search_views.search_locations),
+    path("api/searchSourceLocations", search_views.search_source_locations),
     path("api/location/<public_id>/concordances", api_views.location_concordances),
     path("api/importLocations", api_views.import_locations),
     path(
