@@ -245,7 +245,9 @@ def merge_locations(request):
                     )
                 )
             messages.success(request, "Locations merged")
-            return HttpResponseRedirect(f"/admin/core/location/{winner.pk}/change/")
+            return HttpResponseRedirect(
+                f"/admin/core/location/{winner.pk}/change/#location-h2"
+            )
     else:
         winner, loser = get_winner_loser(request.GET)
     return render(
