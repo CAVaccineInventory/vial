@@ -49,7 +49,9 @@
     {% endif %}
 </div>
 {% endif %}
-
+{% if winner and loser %}
+    <p><a href="?winner={{ loser.public_id }}&loser={{ winner.public_id }}">Swap winner and loser</a></p>
+{% endif %}
 {% if loser %}
 <div class="card">
     <h3>Loser</h3>
