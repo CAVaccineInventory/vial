@@ -13,24 +13,57 @@
 {% block content %}
 <h1>Merge locations</h1>
 
+<p>This tool accepts two location IDs - a "winner" and a "loser".</p>
+
+<p>The IDs should look like <code>lqxyw</code> or <code>recn3aqBCWEVarXqV</code>.</p>
+
+<p>The loser will be soft-deleted and marked as a duplicate of the winner. Any reports against the loser will be transferred to the winner.</p>
+
+<style>
+.form-row {
+  display: flex;
+  width: 30%;
+}
+.form-row > label {
+  flex: 1;
+  font-weight: bold;
+}
+.form-row > input {
+  flex: 5;
+}
+</style>
 {% if winner %}
 <div class="card">
     <h3>Winner</h3>
     <p><strong><a href="/admin/core/location/{{ winner.pk }}/change/">{{ winner }}</a></strong></p>
     <p>{{ winner.full_address }}</p>
     <p><a href="/admin/core/report/?location={{ winner.pk }}">{{ winner.reports.count }} reports</a></p>
+    {% if winner.dn_latest_non_skip_report %}
+    <p>Latest non-skip report:
+        <a href="/admin/core/report/{{ winner.dn_latest_non_skip_report.pk }}/change/">{{ winner.dn_latest_non_skip_report.created_at }}</a>
+        {{ winner.dn_latest_non_skip_report.availability }}
+    </p>
+    {% endif %}
     {% if winner.soft_deleted %}
         <p><strong>Soft deleted</strong> - so you cannot merge this</p>
     {% endif %}
 </div>
 {% endif %}
-
+{% if winner and loser %}
+    <p><a href="?winner={{ loser.public_id }}&loser={{ winner.public_id }}">Swap winner and loser</a></p>
+{% endif %}
 {% if loser %}
 <div class="card">
     <h3>Loser</h3>
     <p><strong><a href="/admin/core/location/{{ loser.pk }}/change/">{{ loser }}</a></strong></p>
     <p>{{ loser.full_address }}</p>
     <p><a href="/admin/core/report/?location={{ loser.pk }}">{{ loser.reports.count }} reports</a> (will be merged into winner)</p>
+    {% if loser.dn_latest_non_skip_report %}
+        <p>Latest non-skip report:
+            <a href="/admin/core/report/{{ loser.dn_latest_non_skip_report.pk }}/change/">{{ loser.dn_latest_non_skip_report.created_at }}</a>
+            {{ loser.dn_latest_non_skip_report.availability }}
+        </p>
+    {% endif %}
     {% if loser.soft_deleted %}
         <p><strong>Soft deleted</strong> - so you cannot merge this</p>
     {% endif %}
@@ -52,14 +85,14 @@
     {% endif %}
     <h3>Pick different winner and loser</h3>
     <form action="{{ request.path }}" method="GET">
-        <p><label>Winner: <input name="winner" type="text" value="{{ winner.public_id }}"></label></p>
-        <p><label>Loser: <input name="loser" type="text" value="{{ loser.public_id }}"></label></p>
+        <p class="form-row"><label for="id_winner">Winner</label><input id="id_winner" name="winner" type="text" value="{{ winner.public_id }}"></p>
+        <p class="form-row"><label for="id_loser">Loser</label><input id="id_loser" name="loser" type="text" value="{{ loser.public_id }}"></p>
         <input type="submit" value="Preview merge">
     </form>
 {% else %}
     <form action="{{ request.path }}" method="GET">
-        <p><label>Winner: <input name="winner" type="text" value="{{ winner.public_id }}"></label></p>
-        <p><label>Loser: <input name="loser" type="text" value="{{ loser.public_id }}"></label></p>
+        <p class="form-row"><label for="id_winner">Winner</label><input id="id_winner" name="winner" type="text" value="{{ winner.public_id }}"></p>
+        <p class="form-row"><label for="id_loser">Loser</label><input id="id_loser" name="loser" type="text" value="{{ loser.public_id }}"></p>
         <input type="submit" value="Preview merge">
     </form>
 {% endif %}
