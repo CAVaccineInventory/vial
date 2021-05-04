@@ -45,6 +45,9 @@ jobs:
     - name: Run flake8
       run: |
         scripts/run-flake8
+    - name: Run mypy
+      run: |
+        cd vaccinate && mypy .
     - name: Run Django tests
       env:
         DJANGO_SECRET_KEY: secret for running tests

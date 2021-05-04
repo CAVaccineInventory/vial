@@ -58,7 +58,9 @@ class ImportRunAdmin(admin.ModelAdmin):
     def source_locations(self, obj):
         return obj.source_locations_count
 
-    source_locations.admin_order_field = "source_locations_count"
+    source_locations.admin_order_field = (  # type:ignore[attr-defined]
+        "source_locations_count"
+    )
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -297,7 +299,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             else (obj.public_notes[:47] + "..")
         )
 
-    short_public_notes.short_description = "Public Notes"
+    short_public_notes.short_description = "Public Notes"  # type:ignore[attr-defined]
 
 
 def make_call_request_queue_action(reason):
@@ -568,7 +570,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             html += '<br><strong style="color: red">Soft deleted</strong>'
         return mark_safe(html)
 
-    summary.admin_order_field = "name"
+    summary.admin_order_field = "name"  # type:ignore[attr-defined]
 
     def request_a_call(self, obj):
         return mark_safe(
@@ -596,13 +598,15 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def times_reported(self, obj):
         return obj.times_reported_count
 
-    times_reported.admin_order_field = "times_reported_count"
+    times_reported.admin_order_field = (  # type:ignore[attr-defined]
+        "times_reported_count"
+    )
 
     def latest_non_skip_report_date(self, obj):
         if obj.dn_latest_non_skip_report:
             return obj.dn_latest_non_skip_report.created_at
 
-    latest_non_skip_report_date.admin_order_field = (
+    latest_non_skip_report_date.admin_order_field = (  # type:ignore[attr-defined]
         "dn_latest_non_skip_report__created_at"
     )
 
@@ -688,12 +692,16 @@ class ReporterAdmin(admin.ModelAdmin):
     def report_count(self, obj):
         return obj.reporter_report_count
 
-    report_count.admin_order_field = "reporter_report_count"
+    report_count.admin_order_field = (  # type:ignore[attr-defined]
+        "reporter_report_count"
+    )
 
     def latest_report(self, obj):
         return obj.reporter_latest_report
 
-    latest_report.admin_order_field = "reporter_latest_report"
+    latest_report.admin_order_field = (  # type:ignore[attr-defined]
+        "reporter_latest_report"
+    )
 
     def roles(self, obj):
         return [r.strip() for r in (obj.auth0_role_names or "").split(",")]
@@ -709,7 +717,9 @@ class ReporterAdmin(admin.ModelAdmin):
     def reporter_qa_summary(self, obj):
         return reporter_qa_summary(obj)
 
-    reporter_qa_summary.short_description = "Caller QA summary"
+    reporter_qa_summary.short_description = (  # type:ignore[attr-defined]
+        "Caller QA summary"
+    )
 
 
 @admin.register(AvailabilityTag)
@@ -847,7 +857,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "availability_tags",
         "appointment_tag",
         SoftDeletedFilter,
-        ("airtable_json", admin.EmptyFieldListFilter),
+        ("airtable_json", admin.EmptyFieldListFilter),  # type:ignore[attr-defined]
     )
     ordering = ("-created_at",)
 
@@ -968,8 +978,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             html += mark_safe('<br><strong style="color: red">Soft deleted</strong>')
         return mark_safe(html)
 
-    created_id_deleted.short_description = "created"
-    created_id_deleted.admin_order_field = "created_at"
+    created_id_deleted.short_description = "created"  # type:ignore[attr-defined]
+    created_id_deleted.admin_order_field = "created_at"  # type:ignore[attr-defined]
 
     def location_link(self, obj):
         return format_html(
@@ -978,8 +988,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             obj.location.name,
         )
 
-    location_link.short_description = "Location"
-    location_link.admin_order_field = "location__name"
+    location_link.short_description = "Location"  # type:ignore[attr-defined]
+    location_link.admin_order_field = "location__name"  # type:ignore[attr-defined]
 
     def reporter(self, obj):
         return format_html(
@@ -989,8 +999,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             escape(obj.reported_by.auth0_role_names or ""),
         )
 
-    reporter.short_description = "Reporter"
-    reporter.admin_order_field = "reported_by"
+    reporter.short_description = "Reporter"  # type:ignore[attr-defined]
+    reporter.admin_order_field = "reported_by"  # type:ignore[attr-defined]
 
     def appointment_tag_and_scheduling(self, obj):
         raw_details = obj.full_appointment_details()
@@ -1008,8 +1018,12 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
         return mark_safe("<b>{}</b><br>{}".format(obj.appointment_tag.name, details))
 
-    appointment_tag_and_scheduling.admin_order_field = "appointment_tag"
-    appointment_tag_and_scheduling.short_description = "appointment info"
+    appointment_tag_and_scheduling.admin_order_field = (  # type:ignore[attr-defined]
+        "appointment_tag"
+    )
+    appointment_tag_and_scheduling.short_description = (  # type:ignore[attr-defined]
+        "appointment info"
+    )
 
     def has_delete_permission(self, request, obj=None):
         # Soft delete only
@@ -1097,12 +1111,14 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     def reporter_qa_summary(self, obj):
         return reporter_qa_summary(obj.reported_by)
 
-    reporter_qa_summary.short_description = "QA summary"
+    reporter_qa_summary.short_description = "QA summary"  # type:ignore[attr-defined]
 
     def location_reports_history(self, obj):
         return reports_history(obj.location)
 
-    location_reports_history.short_description = "Location history"
+    location_reports_history.short_description = (  # type:ignore[attr-defined]
+        "Location history"
+    )
 
 
 @admin.register(ReportReviewTag)
@@ -1503,7 +1519,7 @@ class LogEntryAdmin(admin.ModelAdmin):
         else:
             return obj.object_repr
 
-    object_link.short_description = "object"
+    object_link.short_description = "object"  # type:ignore[attr-defined]
 
     def action_message(self, obj):
         change_message = obj.get_change_message()
@@ -1512,7 +1528,7 @@ class LogEntryAdmin(admin.ModelAdmin):
             change_message = "{}.".format(obj.get_action_flag_display())
         return change_message
 
-    action_message.short_description = "action"
+    action_message.short_description = "action"  # type:ignore[attr-defined]
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("content_type")

@@ -15,7 +15,7 @@ from django.utils.safestring import mark_safe
 from .utils import log_api_requests, require_api_key_or_cookie_user
 
 OutputFormat = namedtuple(
-    "Format", ("start", "transform", "separator", "end", "content_type")
+    "OutputFormat", ("start", "transform", "separator", "end", "content_type")
 )
 
 
@@ -282,7 +282,9 @@ def search_source_locations(request, on_request_logged):
                 if source_location.matched_location
                 else None,
                 "created_at": source_location.created_at.isoformat(),
-                "last_imported_at": source_location.last_imported_at.isoformat(),
+                "last_imported_at": source_location.last_imported_at.isoformat()
+                if source_location.last_imported_at
+                else None,
                 "concordances": [str(c) for c in source_location.concordances.all()],
                 "vial_url": request.build_absolute_uri(
                     "/admin/core/sourcelocation/{}/change/".format(source_location.id)

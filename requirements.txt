@@ -213,6 +213,14 @@ django-sql-dashboard==0.11a0 \
     --hash=sha256:2c9537a42e2d302d1cbf866fa8a2b17035583a4d7a5fb3d4987da4fb7f141272 \
     --hash=sha256:2e0fcc7b84083680100ae9beb714532f7368b9b3106884f9d6a433eb09286318
     # via -r requirements.in
+django-stubs-ext==0.2.0 \
+    --hash=sha256:bd4a1e36ef2ba0ef15801933c85c68e59b383302c873795c6ecfc25950c7ecdb \
+    --hash=sha256:c14f297835a42c1122421ec7e2d06579996b29d33b8016002762afa5d78863af
+    # via django-stubs
+django-stubs==1.8.0 \
+    --hash=sha256:717967d7fee0a6af0746724a0be80d72831a982a40fa8f245a6a46f4cafd157b \
+    --hash=sha256:bde9e44e3c4574c2454e74a3e607cc3bc23b0441bb7d1312cd677d5e30984b74
+    # via -r requirements.in
 django==3.2 \
     --hash=sha256:0604e84c4fb698a5e53e5857b5aea945b2f19a18f25f10b8748dbdf935788927 \
     --hash=sha256:21f0f9643722675976004eb683c55d33c05486f94506672df3d6a141546f389d
@@ -223,6 +231,8 @@ django==3.2 \
     #   django-migration-linter
     #   django-reversion
     #   django-sql-dashboard
+    #   django-stubs
+    #   django-stubs-ext
 dnspython==2.1.0 \
     --hash=sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216 \
     --hash=sha256:e4a87f0b573201a0f3727fa18a516b055fd1107e0e5477cded4a2de497df1dd4
@@ -470,7 +480,34 @@ mypy-extensions==0.4.3 \
     --hash=sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8
     # via
     #   black
+    #   mypy
     #   typing-inspect
+mypy==0.812 \
+    --hash=sha256:0d0a87c0e7e3a9becdfbe936c981d32e5ee0ccda3e0f07e1ef2c3d1a817cf73e \
+    --hash=sha256:25adde9b862f8f9aac9d2d11971f226bd4c8fbaa89fb76bdadb267ef22d10064 \
+    --hash=sha256:28fb5479c494b1bab244620685e2eb3c3f988d71fd5d64cc753195e8ed53df7c \
+    --hash=sha256:2f9b3407c58347a452fc0736861593e105139b905cca7d097e413453a1d650b4 \
+    --hash=sha256:33f159443db0829d16f0a8d83d94df3109bb6dd801975fe86bacb9bf71628e97 \
+    --hash=sha256:3f2aca7f68580dc2508289c729bd49ee929a436208d2b2b6aab15745a70a57df \
+    --hash=sha256:499c798053cdebcaa916eef8cd733e5584b5909f789de856b482cd7d069bdad8 \
+    --hash=sha256:4eec37370483331d13514c3f55f446fc5248d6373e7029a29ecb7b7494851e7a \
+    --hash=sha256:552a815579aa1e995f39fd05dde6cd378e191b063f031f2acfe73ce9fb7f9e56 \
+    --hash=sha256:5873888fff1c7cf5b71efbe80e0e73153fe9212fafdf8e44adfe4c20ec9f82d7 \
+    --hash=sha256:61a3d5b97955422964be6b3baf05ff2ce7f26f52c85dd88db11d5e03e146a3a6 \
+    --hash=sha256:674e822aa665b9fd75130c6c5f5ed9564a38c6cea6a6432ce47eafb68ee578c5 \
+    --hash=sha256:7ce3175801d0ae5fdfa79b4f0cfed08807af4d075b402b7e294e6aa72af9aa2a \
+    --hash=sha256:9743c91088d396c1a5a3c9978354b61b0382b4e3c440ce83cf77994a43e8c521 \
+    --hash=sha256:9f94aac67a2045ec719ffe6111df543bac7874cee01f41928f6969756e030564 \
+    --hash=sha256:a26f8ec704e5a7423c8824d425086705e381b4f1dfdef6e3a1edab7ba174ec49 \
+    --hash=sha256:abf7e0c3cf117c44d9285cc6128856106183938c68fd4944763003decdcfeb66 \
+    --hash=sha256:b09669bcda124e83708f34a94606e01b614fa71931d356c1f1a5297ba11f110a \
+    --hash=sha256:cd07039aa5df222037005b08fbbfd69b3ab0b0bd7a07d7906de75ae52c4e3119 \
+    --hash=sha256:d23e0ea196702d918b60c8288561e722bf437d82cb7ef2edcd98cfa38905d506 \
+    --hash=sha256:d65cc1df038ef55a99e617431f0553cd77763869eebdf9042403e16089fe746c \
+    --hash=sha256:d7da2e1d5f558c37d6e8c1246f1aec1e7349e4913d8fb3cb289a35de573fe2eb
+    # via
+    #   -r requirements.in
+    #   django-stubs
 numba==0.53.1 \
     --hash=sha256:0ef9d1f347b251282ae46e5a5033600aa2d0dfa1ee8c16cb8137b8cd6f79e221 \
     --hash=sha256:17146885cbe4e89c9d4abd4fcb8886dee06d4591943dc4343500c36ce2fcfa69 \
@@ -958,12 +995,64 @@ traitlets==5.0.5 \
     # via
     #   ipython
     #   matplotlib-inline
+typed-ast==1.4.3 \
+    --hash=sha256:01ae5f73431d21eead5015997ab41afa53aa1fbe252f9da060be5dad2c730ace \
+    --hash=sha256:067a74454df670dcaa4e59349a2e5c81e567d8d65458d480a5b3dfecec08c5ff \
+    --hash=sha256:0fb71b8c643187d7492c1f8352f2c15b4c4af3f6338f21681d3681b3dc31a266 \
+    --hash=sha256:1b3ead4a96c9101bef08f9f7d1217c096f31667617b58de957f690c92378b528 \
+    --hash=sha256:2068531575a125b87a41802130fa7e29f26c09a2833fea68d9a40cf33902eba6 \
+    --hash=sha256:209596a4ec71d990d71d5e0d312ac935d86930e6eecff6ccc7007fe54d703808 \
+    --hash=sha256:2c726c276d09fc5c414693a2de063f521052d9ea7c240ce553316f70656c84d4 \
+    --hash=sha256:398e44cd480f4d2b7ee8d98385ca104e35c81525dd98c519acff1b79bdaac363 \
+    --hash=sha256:52b1eb8c83f178ab787f3a4283f68258525f8d70f778a2f6dd54d3b5e5fb4341 \
+    --hash=sha256:5feca99c17af94057417d744607b82dd0a664fd5e4ca98061480fd8b14b18d04 \
+    --hash=sha256:7538e495704e2ccda9b234b82423a4038f324f3a10c43bc088a1636180f11a41 \
+    --hash=sha256:760ad187b1041a154f0e4d0f6aae3e40fdb51d6de16e5c99aedadd9246450e9e \
+    --hash=sha256:777a26c84bea6cd934422ac2e3b78863a37017618b6e5c08f92ef69853e765d3 \
+    --hash=sha256:95431a26309a21874005845c21118c83991c63ea800dd44843e42a916aec5899 \
+    --hash=sha256:9ad2c92ec681e02baf81fdfa056fe0d818645efa9af1f1cd5fd6f1bd2bdfd805 \
+    --hash=sha256:9c6d1a54552b5330bc657b7ef0eae25d00ba7ffe85d9ea8ae6540d2197a3788c \
+    --hash=sha256:aee0c1256be6c07bd3e1263ff920c325b59849dc95392a05f258bb9b259cf39c \
+    --hash=sha256:af3d4a73793725138d6b334d9d247ce7e5f084d96284ed23f22ee626a7b88e39 \
+    --hash=sha256:b36b4f3920103a25e1d5d024d155c504080959582b928e91cb608a65c3a49e1a \
+    --hash=sha256:b9574c6f03f685070d859e75c7f9eeca02d6933273b5e69572e5ff9d5e3931c3 \
+    --hash=sha256:bff6ad71c81b3bba8fa35f0f1921fb24ff4476235a6e94a26ada2e54370e6da7 \
+    --hash=sha256:c190f0899e9f9f8b6b7863debfb739abcb21a5c054f911ca3596d12b8a4c4c7f \
+    --hash=sha256:c907f561b1e83e93fad565bac5ba9c22d96a54e7ea0267c708bffe863cbe4075 \
+    --hash=sha256:cae53c389825d3b46fb37538441f75d6aecc4174f615d048321b716df2757fb0 \
+    --hash=sha256:dd4a21253f42b8d2b48410cb31fe501d32f8b9fbeb1f55063ad102fe9c425e40 \
+    --hash=sha256:dde816ca9dac1d9c01dd504ea5967821606f02e510438120091b84e852367428 \
+    --hash=sha256:f2362f3cb0f3172c42938946dbc5b7843c2a28aec307c49100c8b38764eb6927 \
+    --hash=sha256:f328adcfebed9f11301eaedfa48e15bdece9b519fb27e6a8c01aa52a17ec31b3 \
+    --hash=sha256:f8afcf15cc511ada719a88e013cec87c11aff7b91f019295eb4530f96fe5ef2f \
+    --hash=sha256:fb1bbeac803adea29cedd70781399c99138358c26d05fcbd23c13016b7f5ec65
+    # via mypy
+types-futures==0.1.3 \
+    --hash=sha256:98d999e13837ca2c05a3ba37765d09b8dc12b222e86fb25e324362ddfde17f5f
+    # via types-protobuf
+types-markdown==0.1.1 \
+    --hash=sha256:c1b941b4a5395a5936993524365beb40b3ae4fab0a21411d0cd3a0345f9e7f2f
+    # via -r requirements.in
+types-protobuf==0.1.9 \
+    --hash=sha256:5a00448a0a2ca7700faba1dae7c25a900ba47336eae1e97ff1d9fa46a9197128
+    # via -r requirements.in
+types-python-dateutil==0.1.2 \
+    --hash=sha256:498492e71dfb983ecc47924fb4f0987d205901ebd1d59f9a1c6603f3f970a62b
+    # via -r requirements.in
+types-pytz==0.1.0 \
+    --hash=sha256:82b3b8cfeb1496cb856cbb7fd514ad21f70e1b2dc765cba42f55bb2927375c8e
+    # via -r requirements.in
+types-requests==0.1.6 \
+    --hash=sha256:12b3d771c7cf51905dbf6d8ad4f0b77800a8f444c56623fe1e17a1c508626a2d
+    # via -r requirements.in
 typing-extensions==3.7.4.3 \
     --hash=sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918 \
     --hash=sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c \
     --hash=sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f
     # via
+    #   django-stubs
     #   libcst
+    #   mypy
     #   pydantic
     #   typing-inspect
 typing-inspect==0.6.0 \
