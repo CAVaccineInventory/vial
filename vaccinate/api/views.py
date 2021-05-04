@@ -2,12 +2,13 @@ import json
 import pathlib
 import re
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import beeline
 import markdown
 import reversion
 from api.location_metrics import LocationMetricsReport
+from api.models import ApiLog
 from bigmap.transform import source_to_location
 from core import exporter
 from core.import_utils import import_airtable_report
@@ -26,7 +27,7 @@ from core.models import (
 )
 from django.conf import settings
 from django.db import transaction
-from django.http import HttpRequest, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import localdate
@@ -37,27 +38,28 @@ from timezonefinder import TimezoneFinder
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation
 
 from .utils import (
+    JWTRequest,
     deny_if_api_is_disabled,
+    jwt_auth,
     log_api_requests,
-    reporter_from_request,
     require_api_key,
     require_api_key_or_cookie_user,
 )
 
 
 @csrf_exempt
+@beeline.traced(name="request_call")
 @log_api_requests
 @deny_if_api_is_disabled
-@beeline.traced(name="request_call")
-def request_call(request, on_request_logged):
+@jwt_auth(required_permissions=set(["caller"]))
+def request_call(
+    request: JWTRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
+):
     if request.method != "POST":
         return JsonResponse(
             {"error": "Must be a POST"},
             status=400,
         )
-    reporter = reporter_from_request(request)
-    if isinstance(reporter, JsonResponse):
-        return reporter
     # Ensure there are at least MIN_QUEUE items in the queue
     CallRequest.backfill_queue()
     # Override location selection: pass the public_id of a rocation to
@@ -93,7 +95,7 @@ def request_call(request, on_request_logged):
                 except IndexError:
                     call_request = None
                 if call_request is not None and not no_claim:
-                    call_request.claimed_by = reporter
+                    call_request.claimed_by = request.reporter
                     call_request.claimed_until = now + timedelta(
                         minutes=settings.CLAIM_LOCK_MINUTES
                     )
@@ -567,11 +569,9 @@ def counties(request, state_abbreviation):
 
 @csrf_exempt
 @beeline.traced(name="caller_stats")
-def caller_stats(request: HttpRequest) -> JsonResponse:
-    reporter = reporter_from_request(request, update_metadata=True)
-    if isinstance(reporter, JsonResponse):
-        return reporter
-    reports = reporter.reports.exclude(soft_deleted=True)
+@jwt_auth(required_permissions=set(["caller"]))
+def caller_stats(request: JWTRequest) -> JsonResponse:
+    reports = request.reporter.reports.exclude(soft_deleted=True)
     return JsonResponse(
         {
             "total": reports.count(),
