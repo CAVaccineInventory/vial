@@ -403,7 +403,7 @@ def import_source_locations(request, on_request_logged):
                 and record.import_json.address.state is None
             ):
                 errors.append((json_record, "no state specified on address"))
-            records.append(ImportSourceLocation(**json_record))
+            records.append(record)
         except ValidationError as e:
             errors.append((json_record, e.errors()))
     if errors:
