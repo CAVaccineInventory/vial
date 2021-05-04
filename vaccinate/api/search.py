@@ -1,7 +1,7 @@
 import json
 from collections import namedtuple
 from html import escape
-from typing import Dict
+from typing import Callable, Dict
 
 import beeline
 from core.models import ConcordanceIdentifier, Location, SourceLocation, State
@@ -9,11 +9,17 @@ from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance
 from django.db.models.query import QuerySet
-from django.http.response import JsonResponse, StreamingHttpResponse
+from django.http import HttpRequest
+from django.http.response import (
+    HttpResponse,
+    HttpResponseBase,
+    JsonResponse,
+    StreamingHttpResponse,
+)
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
-from .utils import log_api_requests, require_api_key_or_cookie_user
+from .utils import jwt_auth, log_api_requests
 
 OutputFormat = namedtuple(
     "OutputFormat", ("start", "transform", "separator", "end", "content_type")
@@ -21,9 +27,15 @@ OutputFormat = namedtuple(
 
 
 @log_api_requests
-@require_api_key_or_cookie_user
 @beeline.traced("search_locations")
-def search_locations(request, on_request_logged):
+@jwt_auth(
+    allow_session_auth=True,
+    allow_internal_api_key=True,
+    required_permissions=set(["read:locations"]),
+)
+def search_locations(
+    request: HttpRequest, on_request_logged: Callable
+) -> HttpResponseBase:
     format = request.GET.get("format") or "json"
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
@@ -229,9 +241,15 @@ FORMATS = {
 
 
 @log_api_requests
-@require_api_key_or_cookie_user
 @beeline.traced("search_source_locations")
-def search_source_locations(request, on_request_logged):
+@jwt_auth(
+    allow_session_auth=True,
+    allow_internal_api_key=True,
+    required_permissions=set(["read:locations"]),
+)
+def search_source_locations(
+    request: HttpRequest, on_request_logged: Callable
+) -> HttpResponse:
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
     debug = request.GET.get("debug")
