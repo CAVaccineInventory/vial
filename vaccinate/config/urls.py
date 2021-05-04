@@ -3,6 +3,7 @@ import django_sql_dashboard
 from api import export_mapbox as export_mapbox_views
 from api import search as search_views
 from api import views as api_views
+from api.request_call import request_call
 from api.submit_report import submit_report
 from auth0login.views import login, logout
 from core import tool_views
@@ -31,7 +32,7 @@ urlpatterns = [
             docs="/api/docs#post-apisubmitreport",
         ),
     ),
-    path("api/requestCall", api_views.request_call),
+    path("api/requestCall", request_call),
     path(
         "api/requestCall/debug",
         api_views.api_debug_view(
