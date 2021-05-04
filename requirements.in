@@ -80,7 +80,7 @@ pytest-httpx
 # Formatting
 black
 isort
-pyflakes
+flake8
 
 # Dependency management
 pip-tools
