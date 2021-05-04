@@ -154,22 +154,31 @@ def reporter_from_request(
             {"error": "Authorization header must start with 'Bearer'"}, status=403
         )
     # Check JWT token is valid
-    jwt_id_token = authorization.split("Bearer ")[1]
+    jwt_access_token = authorization.split("Bearer ")[1]
     try:
-        jwt_payload = decode_and_verify_jwt(jwt_id_token, settings.HELP_JWT_AUDIENCE)
+        jwt_payload = decode_and_verify_jwt(
+            jwt_access_token, settings.HELP_JWT_AUDIENCE
+        )
     except Exception as e:
         try:
             # We _also_ try to decode as the VIAL audience, since the
             # /api/requestCall/debug endpoint passes in _our_ JWT, not
-            # help's.
+            # help's.  Our JWT is an id token, not an access token,
+            # which means it won't have permissions in it (see below)
             jwt_payload = decode_and_verify_jwt(
-                jwt_id_token, settings.VIAL_JWT_AUDIENCE
+                jwt_access_token, settings.VIAL_JWT_AUDIENCE
             )
         except Exception:
             return JsonResponse(
                 {"error": "Could not decode JWT", "details": str(e)}, status=403
             )
     external_id = "auth0:{}".format(jwt_payload["sub"])
+
+    # We have an _access_ token, not an _id_ token.  This means that
+    # it has authorization information, but no authentication
+    # information -- just an id, and a statement that the user is
+    # authenticated to hit this API.  https://auth0.com/docs/tokens
+    # describes this in more detail.
     jwt_auth0_role_names = ", ".join(
         sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
     )
@@ -188,7 +197,7 @@ def reporter_from_request(
         with beeline.tracer(name="get user_info"):
             user_info_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
-                headers={"Authorization": "Bearer {}".format(jwt_id_token)},
+                headers={"Authorization": "Bearer {}".format(jwt_access_token)},
                 timeout=5,
             )
             beeline.add_context({"status": user_info_response.status_code})
