@@ -153,6 +153,8 @@ class JWTRequest(HttpRequest):
 
 
 def jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=False,
     required_permissions: Set[str] = set(["caller"]),
     update_metadata=False,
 ) -> Callable[[Callable[..., JsonResponse]], Callable[..., JsonResponse]]:
@@ -160,6 +162,12 @@ def jwt_auth(
         @beeline.traced("jwt_auth")
         @wraps(view_fn)
         def inner(request: HttpRequest, *args, **kwargs: Any) -> JsonResponse:
+            # Two other kinds of auth to possibly check
+            if allow_session_auth and request.user.is_authenticated:
+                return view_fn(request, *args, **kwargs)
+            if allow_internal_api_key and not check_request_for_api_key(request):
+                return view_fn(request, *args, **kwargs)
+
             # Use Bearer token in Authorization header
             authorization = request.META.get("HTTP_AUTHORIZATION") or ""
             if not authorization.startswith("Bearer "):
