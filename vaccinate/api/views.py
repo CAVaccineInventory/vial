@@ -89,21 +89,21 @@ def request_call(request, on_request_logged):
             call_requests = available_requests.select_for_update()[:1]
             with transaction.atomic():
                 try:
-                    request = call_requests[0]
+                    call_request: Optional[CallRequest] = call_requests[0]
                 except IndexError:
-                    request = None
-                if request is not None and not no_claim:
-                    request.claimed_by = reporter
-                    request.claimed_until = now + timedelta(
+                    call_request = None
+                if call_request is not None and not no_claim:
+                    call_request.claimed_by = reporter
+                    call_request.claimed_until = now + timedelta(
                         minutes=settings.CLAIM_LOCK_MINUTES
                     )
-                    request.save()
-            if request is None:
+                    call_request.save()
+            if call_request is None:
                 return JsonResponse(
                     {"error": "Couldn't find somewhere to call"},
                     status=400,
                 )
-            location = request.location
+            location = call_request.location
 
     latest_report = location.dn_latest_non_skip_report
 
