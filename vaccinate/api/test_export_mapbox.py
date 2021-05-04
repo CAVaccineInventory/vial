@@ -8,7 +8,7 @@ from core.models import AppointmentTag, AvailabilityTag, Reporter, SourceLocatio
 def test_export_mapbox_location_with_no_report(client, ten_locations):
     location = ten_locations[0]
     response = client.get(
-        "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
+        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
     data = json.loads(response.content)["geojson"][0]
     assert data == {
@@ -116,7 +116,7 @@ def test_export_mapbox_location_with_vaccinefinder_source_location(
         matched_location=location,
     )
     response = client.get(
-        "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
+        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
     data = json.loads(response.content)["geojson"][0]
     for property in ("vaccine_moderna", "vaccine_pfizer", "vaccine_jj"):
@@ -155,7 +155,7 @@ def test_export_mapbox_location_with_report(
         report.availability_tags.add(AvailabilityTag.objects.get(slug=tag))
     report.refresh_from_db()
     response = client.get(
-        "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
+        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
     data = json.loads(response.content)["geojson"][0]
     expected_properties = {
@@ -207,7 +207,7 @@ def test_planned_closure_location_not_returned(
         planned_closure=planned_closure,
     )
     response = client.get(
-        "/api/export-mapbox-preview?id={}&raw=1".format(location.public_id)
+        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
     geojson = json.loads(response.content)["geojson"]
     assert isinstance(geojson, list)
