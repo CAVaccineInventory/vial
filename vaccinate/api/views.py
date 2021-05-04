@@ -55,7 +55,7 @@ def request_call(request, on_request_logged):
             {"error": "Must be a POST"},
             status=400,
         )
-    reporter, user_info = reporter_from_request(request)
+    reporter = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
         return reporter
     # Ensure there are at least MIN_QUEUE items in the queue
@@ -568,7 +568,7 @@ def counties(request, state_abbreviation):
 @csrf_exempt
 @beeline.traced(name="caller_stats")
 def caller_stats(request):
-    reporter, user_info = reporter_from_request(request)
+    reporter = reporter_from_request(request)
     if isinstance(reporter, JsonResponse):
         return reporter
     reports = reporter.reports.exclude(soft_deleted=True)

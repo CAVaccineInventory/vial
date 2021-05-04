@@ -2,14 +2,14 @@ import datetime
 import json
 import secrets
 from functools import wraps
-from typing import Optional
+from typing import Optional, Union
 
 import beeline
 import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.models import Reporter
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseServerError, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseServerError, JsonResponse
 from django.utils import timezone
 
 from .models import ApiKey, ApiLog, Switch
@@ -138,21 +138,20 @@ def deny_if_api_is_disabled(view_fn):
 
 
 @beeline.traced("reporter_from_request")
-def reporter_from_request(request, allow_test=False):
+def reporter_from_request(
+    request: HttpRequest, allow_test=False
+) -> Union[Reporter, JsonResponse]:
     if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
         reporter = Reporter.objects.get_or_create(
             external_id="auth0-fake:{}".format(request.GET["fake_user"]),
         )[0]
         user_info = {"fake": reporter.external_id}
-        return reporter, user_info
+        return reporter
     # Use Bearer token in Authorization header
     authorization = request.META.get("HTTP_AUTHORIZATION") or ""
     if not authorization.startswith("Bearer "):
-        return (
-            JsonResponse(
-                {"error": "Authorization header must start with 'Bearer'"}, status=403
-            ),
-            None,
+        return JsonResponse(
+            {"error": "Authorization header must start with 'Bearer'"}, status=403
         )
     # Check JWT token is valid
     jwt_id_token = authorization.split("Bearer ")[1]
@@ -167,11 +166,8 @@ def reporter_from_request(request, allow_test=False):
                 jwt_id_token, settings.VIAL_JWT_AUDIENCE
             )
         except Exception:
-            return (
-                JsonResponse(
-                    {"error": "Could not decode JWT", "details": str(e)}, status=403
-                ),
-                None,
+            return JsonResponse(
+                {"error": "Could not decode JWT", "details": str(e)}, status=403
             )
     external_id = "auth0:{}".format(jwt_payload["sub"])
     jwt_auth0_role_names = ", ".join(
@@ -183,7 +179,7 @@ def reporter_from_request(request, allow_test=False):
         if reporter.auth0_role_names != jwt_auth0_role_names:
             reporter.auth0_role_names = jwt_auth0_role_names
             reporter.save()
-        return reporter, jwt_payload
+        return reporter
     except Reporter.DoesNotExist:
         pass
 
@@ -212,5 +208,4 @@ def reporter_from_request(request, allow_test=False):
         external_id=external_id,
         defaults=defaults,
     )[0]
-    user_info = jwt_payload
-    return reporter, user_info
+    return reporter

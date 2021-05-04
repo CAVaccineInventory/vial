@@ -73,17 +73,17 @@ class ReportValidator(BaseModel):
 @beeline.traced(name="submit_report")
 def submit_report(request, on_request_logged):
     # The ?test=1 version accepts &fake_user=external_id
-    reporter, user_info = reporter_from_request(request, allow_test=True)
+    reporter = reporter_from_request(request, allow_test=True)
     if isinstance(reporter, JsonResponse):
         return reporter
     try:
         post_data = json.loads(request.body.decode("utf-8"))
     except ValueError as e:
-        return JsonResponse({"error": str(e), "user": user_info}, status=400)
+        return JsonResponse({"error": str(e)}, status=400)
     try:
         report_data = ReportValidator(**post_data).dict()
     except ValidationError as e:
-        return JsonResponse({"error": e.errors(), "user": user_info}, status=400)
+        return JsonResponse({"error": e.errors()}, status=400)
     # Now we add the report
     appointment_tag_string, appointment_details = derive_appointment_tag(
         report_data["appointments_by_phone"], report_data["appointment_details"]
@@ -227,7 +227,6 @@ def submit_report(request, on_request_logged):
             "appointment_details": appointment_details,
             "availability_tags": [str(a) for a in availability_tags],
             "report": str(report),
-            "user_info": user_info,
         }
     )
 
