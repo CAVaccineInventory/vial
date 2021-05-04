@@ -26,7 +26,7 @@ from core.models import (
 )
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.timezone import localdate
@@ -567,8 +567,8 @@ def counties(request, state_abbreviation):
 
 @csrf_exempt
 @beeline.traced(name="caller_stats")
-def caller_stats(request):
-    reporter = reporter_from_request(request)
+def caller_stats(request: HttpRequest) -> JsonResponse:
+    reporter = reporter_from_request(request, update_metadata=True)
     if isinstance(reporter, JsonResponse):
         return reporter
     reports = reporter.reports.exclude(soft_deleted=True)

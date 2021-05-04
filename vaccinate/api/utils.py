@@ -142,6 +142,7 @@ def reporter_from_request(
     request: HttpRequest,
     allow_test=False,
     required_permissions: Set[str] = set(["caller"]),
+    update_metadata=False,
 ) -> Union[Reporter, JsonResponse]:
     if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
         reporter = Reporter.objects.get_or_create(
@@ -177,7 +178,6 @@ def reporter_from_request(
             return JsonResponse(
                 {"error": "Could not decode JWT", "details": str(e)}, status=403
             )
-    external_id = "auth0:{}".format(jwt_payload["sub"])
 
     # We have an _access_ token, not an _id_ token.  This means that
     # it has authorization information, but no authentication
@@ -187,18 +187,14 @@ def reporter_from_request(
     jwt_auth0_role_names = ", ".join(
         sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
     )
-    try:
-        reporter = Reporter.objects.get(external_id=external_id)
-        # Have their auth0 roles changed?
-        if reporter.auth0_role_names != jwt_auth0_role_names:
-            reporter.auth0_role_names = jwt_auth0_role_names
-            reporter.save()
-        return reporter
-    except Reporter.DoesNotExist:
-        pass
+    name: Optional[str] = None
+    email: Optional[str] = None
 
-    # If name is missing we need to fetch userdetails
-    if "name" not in jwt_payload or "email" not in jwt_payload:
+    # We may want to update the email address and name; we do this
+    # sparingly, since it's a round-trip to the Auth0 endpoint, which
+    # is somewhat slow.  Again, we must do this because we're getting
+    # an access token, not an id token.
+    if update_metadata:
         with beeline.tracer(name="get user_info"):
             user_info_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
@@ -217,10 +213,8 @@ def reporter_from_request(
                 jwt_auth0_role_names = ", ".join(
                     sorted(user_info["https://help.vaccinateca.com/roles"])
                 )
-    else:
-        name = jwt_payload["name"]
-        email = jwt_payload["email"]
 
+    external_id = "auth0:{}".format(jwt_payload["sub"])
     defaults = {"auth0_role_names": jwt_auth0_role_names}
     if name is not None:
         defaults["name"] = name
