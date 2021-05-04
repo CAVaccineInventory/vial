@@ -101,3 +101,6 @@ prometheus_client
 
 # Internal tools
 vaccine-feed-ingest-schema
+
+# Map location to timezone
+timezonefinder[numba]
