@@ -400,9 +400,9 @@ ipython-genutils==0.2.0 \
     --hash=sha256:72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8 \
     --hash=sha256:eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8
     # via traitlets
-ipython==7.22.0 \
-    --hash=sha256:9c900332d4c5a6de534b4befeeb7de44ad0cc42e8327fa41b7685abde58cec74 \
-    --hash=sha256:c0ce02dfaa5f854809ab7413c601c4543846d9da81010258ecdab299b542d199
+ipython==7.23.0 \
+    --hash=sha256:3455b020a895710c4366e8d1b326e5ee6aa684607907fc96895e7b8359569f49 \
+    --hash=sha256:69178f32bf9c6257430b6f592c3ae230c32861a1966d2facec454e09078e232d
     # via -r requirements.in
 isort==5.8.0 \
     --hash=sha256:0a943902919f65c5684ac4e0154b1ad4fac6dcaa5d9f3426b732f1c8b5419be6 \
@@ -449,6 +449,10 @@ markdown==3.3.4 \
     # via
     #   -r requirements.in
     #   django-sql-dashboard
+matplotlib-inline==0.1.2 \
+    --hash=sha256:5cf1176f554abb4fa98cb362aa2b55c500147e4bdbb07e3fda359143e1da0811 \
+    --hash=sha256:f41d5ff73c9f5385775d5c0bc13b424535c8402fe70ea8210f93e11f3683993e
+    # via ipython
 mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
     --hash=sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8
@@ -935,7 +939,9 @@ toml==0.10.2 \
 traitlets==5.0.5 \
     --hash=sha256:178f4ce988f69189f7e523337a3e11d91c786ded9360174a3d9ca83e79bc5396 \
     --hash=sha256:69ff3f9d5351f31a7ad80443c2674b7099df13cc41fc5fa6e2f6d3b0330b0426
-    # via ipython
+    # via
+    #   ipython
+    #   matplotlib-inline
 typing-extensions==3.7.4.3 \
     --hash=sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918 \
     --hash=sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c \
