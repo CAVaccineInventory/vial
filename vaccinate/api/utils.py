@@ -206,13 +206,21 @@ def reporter_from_request(
                 timeout=5,
             )
             beeline.add_context({"status": user_info_response.status_code})
-            user_info_response.raise_for_status()
-            user_info = user_info_response.json()
-            name = user_info["name"]
-            email = user_info["email"]
+            # If this fails, we don't fail the request; they still
+            # had a valid access token, auth0 is just being slow
+            # telling us their bio.
+            if user_info_response.status_code == 200:
+                user_info = user_info_response.json()
+                name = user_info["name"]
+                if user_info["email_verified"]:
+                    email = user_info["email"]
+                jwt_auth0_role_names = ", ".join(
+                    sorted(user_info["https://help.vaccinateca.com/roles"])
+                )
     else:
         name = jwt_payload["name"]
         email = jwt_payload["email"]
+
     defaults = {"auth0_role_names": jwt_auth0_role_names}
     if name is not None:
         defaults["name"] = name
