@@ -25,9 +25,10 @@
         "phone": "(555) 456-7890"
       }
     ],
-    "booking": {
+    "contact": [{
+      "contact_type": "booking",
       "website": "https://www.riteaid.com/pharmacy/covid-qualifier"
-    },
+    }],
     "availability": {
       "appointments": false
     },
