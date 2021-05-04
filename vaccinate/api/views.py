@@ -34,7 +34,7 @@ from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from timezonefinder import TimezoneFinder
-from vaccine_feed_ingest_schema.schema import ImportSourceLocation
+from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
 from .utils import (
     deny_if_api_is_disabled,
@@ -389,62 +389,61 @@ def import_source_locations(request, on_request_logged):
     try:
         post_data = request.body.decode("utf-8")
         lines = post_data.split("\n")
-        records = [json.loads(l) for l in lines if l.strip()]
+        json_records = [json.loads(l) for l in lines if l.strip()]
     except ValueError as e:
         return JsonResponse({"error": "JSON error: " + str(e)}, status=400)
     # Validate those JSON records
     errors = []
-    for record in records:
+    records = []
+    for json_record in json_records:
         try:
-            ImportSourceLocation(**record).dict()
+            record = ImportSourceLocation(**json_record)
+            if (
+                record.import_json.address is not None
+                and record.import_json.address.state is None
+            ):
+                errors.append((json_record, "no state specified on address"))
+            records.append(ImportSourceLocation(**json_record))
         except ValidationError as e:
-            errors.append((record, e.errors()))
+            errors.append((json_record, e.errors()))
     if errors:
         return JsonResponse({"errors": errors}, status=400)
     # All are valid, record them
     created = []
     updated = []
-    for record in records:
+    for json_record, record in zip(json_records, records):
         matched_location = None
-        if "match" in record and record["match"]["action"] == "existing":
-            matched_location = Location.objects.get(public_id=record["match"]["id"])
+        if record.match is not None and record.match.action == "existing":
+            matched_location = Location.objects.get(public_id=record.match.id)
 
         source_location, was_created = SourceLocation.objects.update_or_create(
-            source_uid=record["source_uid"],
+            source_uid=record.source_uid,
             defaults={
-                "source_name": record["source_name"],
-                "name": record.get("name"),
-                "latitude": record.get("latitude"),
-                "longitude": record.get("longitude"),
-                "import_json": record["import_json"],
+                "source_name": record.source_name,
+                "name": record.name,
+                "latitude": record.latitude,
+                "longitude": record.longitude,
+                "import_json": json_record["import_json"],
                 "import_run": import_run,
                 "matched_location": matched_location,
                 "last_imported_at": timezone.now(),
             },
         )
 
-        import_json = record["import_json"]
-
-        links = (
-            list(import_json.get("links"))
-            if import_json.get("links") is not None
-            else []
-        )
+        import_json = record.import_json
+        links = list(import_json.links) if import_json.links is not None else []
         # Always use the (source, id) as a concordance
         links.append(
-            {
-                "authority": import_json["source"]["source"],
-                "id": import_json["source"]["id"],
-            }
+            Link(authority=import_json.source.source, id=import_json.source.id)
         )
 
         for link in links:
             identifier, _ = ConcordanceIdentifier.objects.get_or_create(
-                authority=link["authority"], identifier=link["id"]
+                authority=link.authority, identifier=link.id
             )
             identifier.source_locations.add(source_location)
 
-        if "match" in record and record["match"]["action"] == "new":
+        if record.match is not None and record.match.action == "new":
             matched_location = build_location_from_source_location(source_location)
 
         if matched_location is not None:
@@ -462,9 +461,10 @@ def import_source_locations(request, on_request_logged):
 
 def build_location_from_source_location(source_location: SourceLocation):
     location_kwargs = source_to_location(source_location.import_json)
-    location_kwargs["state"] = State.objects.get(
-        abbreviation=location_kwargs["state"].upper()
-    )
+    if location_kwargs["state"] is not None:
+        location_kwargs["state"] = State.objects.get(
+            abbreviation=location_kwargs["state"].upper()
+        )
     unknown_location_type = LocationType.objects.get(name="Unknown")
 
     location = Location.objects.create(
