@@ -25,19 +25,12 @@ from core.models import (
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation
 
-from .utils import (
-    JWTRequest,
-    jwt_auth,
-    log_api_requests,
-    require_api_key,
-    require_api_key_or_cookie_user,
-)
+from .utils import log_api_requests, require_api_key, require_api_key_or_cookie_user
 
 
 @require_api_key
@@ -416,19 +409,6 @@ def counties(request, state_abbreviation):
                 }
                 for county in state.counties.order_by("name")
             ],
-        }
-    )
-
-
-@csrf_exempt
-@beeline.traced(name="caller_stats")
-@jwt_auth(required_permissions=set(["caller"]))
-def caller_stats(request: JWTRequest) -> JsonResponse:
-    reports = request.reporter.reports.exclude(soft_deleted=True)
-    return JsonResponse(
-        {
-            "total": reports.count(),
-            "today": reports.filter(created_at__date=localdate()).count(),
         }
     )
 

@@ -8,6 +8,7 @@ import beeline
 import pytz
 import requests
 from api.models import ApiLog
+from api.utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
@@ -24,8 +25,6 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
-
-from .utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
 
 ALLOWED_VACCINE_VALUES = "Moderna", "Pfizer", "Johnson & Johnson", "Other"
 

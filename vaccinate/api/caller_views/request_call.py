@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 import beeline  # type: ignore
 from api.models import ApiLog
+from api.utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.models import CallRequest, Location
 from django.conf import settings
 from django.db import transaction
@@ -10,8 +11,6 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from timezonefinder import TimezoneFinder
-
-from .utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
 
 
 @csrf_exempt
