@@ -33,6 +33,7 @@ from django.utils.timezone import localdate
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
+from timezonefinder import TimezoneFinder
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation
 
 from .utils import (
@@ -172,6 +173,9 @@ def request_call(request, on_request_logged):
             "county_record": county_record,
             "provider_record": provider_record,
             "county_age_floor_without_restrictions": county_age_floor_without_restrictions,
+            "timezone": TimezoneFinder().timezone_at(
+                lng=float(location.longitude), lat=float(location.latitude)
+            ),
             # TODO: these should be True sometimes for locations that need updates:
             "confirm_address": False,
             "confirm_hours": False,

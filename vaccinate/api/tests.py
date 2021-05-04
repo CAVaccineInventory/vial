@@ -82,12 +82,17 @@ def test_user_should_have_reports_reviewed() -> None:
         return passes
 
     user = Reporter.objects.get_or_create(external_id="test:1")[0]
-    # Most users are ar 2%
+    # Most users are at 2%
     user.auth0_role_names = ""
     assert passes_for(user, {}) == 2
 
-    # Web bankers never get it -- if they're web-banking, otherwise 2%.
+    # Web bankers are also at 2%
     user.auth0_role_names = "Web Banker"
+    assert passes_for(user, {}) == 2
+    assert passes_for(user, {"web_banked": True}) == 2
+
+    # Data corrections are never flagged if they submitted a specific location
+    user.auth0_role_names = "VIAL data corrections"
     assert passes_for(user, {}) == 2
     assert passes_for(user, {"web_banked": True}) == 0
 

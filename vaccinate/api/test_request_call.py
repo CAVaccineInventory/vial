@@ -100,6 +100,7 @@ def test_request_call(client, jwt_id_token):
         "confirm_address": False,
         "confirm_hours": False,
         "confirm_website": False,
+        "timezone": "America/Los_Angeles",
     }
 
 

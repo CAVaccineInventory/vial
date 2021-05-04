@@ -229,7 +229,7 @@ FORMATS = {
 
 @log_api_requests
 @require_api_key_or_cookie_user
-@beeline.traced("search_locations")
+@beeline.traced("search_source_locations")
 def search_source_locations(request, on_request_logged):
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()

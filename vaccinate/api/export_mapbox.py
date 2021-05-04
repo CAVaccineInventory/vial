@@ -125,6 +125,7 @@ def _mapbox_geojson(location, loaded_vaccinefinder_data=None):
     }
 
 
+@beeline.traced("_vaccinefinder_data_for_locations")
 def _vaccinefinder_data_for_locations(location_ids=None):
     sql = """
         select

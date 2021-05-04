@@ -244,15 +244,9 @@ def user_should_have_reports_reviewed(
     elif "Journeyman" in roles:
         if random.random() < 0.15:
             return True, "Journeyman; selected 15% for review"
-    elif report.get("web_banked"):
-        if data_corrections in roles or "Web Banker" in roles:
-            # Web-banked and has one of the right roles, always gets a pass
-            return False, ""
-        elif random.random() < 0.02:
-            return (
-                True,
-                "Web-banked, but doesn't have appropriate Web Banker or data corrections roles; selected 2% for review",
-            )
+    elif report.get("web_banked") and data_corrections in roles:
+        # Data corrections never get flagged
+        return False, ""
     elif random.random() < 0.02:
         return True, "Randomly selected 2% for review"
     return False, ""
