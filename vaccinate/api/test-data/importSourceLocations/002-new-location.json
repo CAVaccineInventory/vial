@@ -13,16 +13,17 @@
     "address": {
       "street1": "32121 Camino Capistrano",
       "city": "San Juan Capistrano",
-      "state": "ca",
+      "state": "CA",
       "zip": "92675"
     },
     "location": {
       "latitude": 33.4962,
       "longitude": -117.663
     },
-    "booking": {
+    "contact": [{
+      "contact_type": "booking",
       "website": "https://www.riteaid.com/pharmacy/covid-qualifier"
-    },
+    }],
     "availability": {
       "appointments": false
     },
