@@ -13,17 +13,6 @@
       <input type="text" name="bearer" size="40" value="{{ jwt }}"
     /></label>
   </p>
-  <p>
-    <label
-      >Fake user ID:
-      <input
-        type="text"
-        name="fake_user"
-        size="40"
-        value=""
-        placeholder="Optional, use this instead of a JWT"
-    /></label>
-  </p>
   {% else %}
   <p>
     <label
@@ -68,7 +57,6 @@ let adminUrl = document.querySelector(".adminUrl");
 let bodyTextarea = form.getElementsByTagName("textarea")[0];
 {% endif %}
 let bearerInput = form.querySelector("[name=bearer]");
-let fakeUserInput = form.querySelector("[name=fake_user]");
 let apiResponse = document.querySelector(".apiResponse");
 let responseStatus = document.querySelector(".responseStatus");
 let responseHeaders = document.querySelector(".responseHeaders");
@@ -77,9 +65,6 @@ form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   let url = "/{{ api_path }}";
   let extraQueryStringBits = [];
-  if (fakeUserInput && fakeUserInput.value) {
-    extraQueryStringBits.push("fake_user=" + encodeURIComponent(fakeUserInput.value));
-  }
   let querystringFields = document.querySelectorAll(".querystringField");
   if (querystringFields) {
     Array.from(querystringFields).forEach(f => {

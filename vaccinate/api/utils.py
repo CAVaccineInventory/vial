@@ -153,7 +153,6 @@ class JWTRequest(HttpRequest):
 
 
 def jwt_auth(
-    allow_test=False,
     required_permissions: Set[str] = set(["caller"]),
     update_metadata=False,
 ) -> Callable[[Callable[..., JsonResponse]], Callable[..., JsonResponse]]:
@@ -161,17 +160,6 @@ def jwt_auth(
         @beeline.traced("jwt_auth")
         @wraps(view_fn)
         def inner(request: HttpRequest, *args, **kwargs: Any) -> JsonResponse:
-            if (
-                allow_test
-                and bool(request.GET.get("test"))
-                and request.GET.get("fake_user")
-            ):
-                fake_reporter = Reporter.objects.get_or_create(
-                    external_id="auth0-fake:{}".format(request.GET["fake_user"]),
-                )[0]
-                user_info = {"fake": fake_reporter.external_id}
-                jwt_request = JWTRequest(request, fake_reporter)
-                return view_fn(jwt_request, **kwargs)
             # Use Bearer token in Authorization header
             authorization = request.META.get("HTTP_AUTHORIZATION") or ""
             if not authorization.startswith("Bearer "):
