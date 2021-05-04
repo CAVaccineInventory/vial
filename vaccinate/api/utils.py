@@ -9,7 +9,13 @@ import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.models import Reporter
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse, HttpResponseServerError, JsonResponse
+from django.http import HttpRequest
+from django.http.response import (
+    HttpResponse,
+    HttpResponseBase,
+    HttpResponseServerError,
+    JsonResponse,
+)
 from django.utils import timezone
 
 from .models import ApiKey, ApiLog, Switch
@@ -157,11 +163,13 @@ def jwt_auth(
     allow_internal_api_key=False,
     required_permissions: Set[str] = set(["caller"]),
     update_metadata=False,
-) -> Callable[[Callable[..., JsonResponse]], Callable[..., JsonResponse]]:
-    def wrapper(view_fn: Callable[..., JsonResponse]) -> Callable[..., JsonResponse]:
+) -> Callable[[Callable[..., HttpResponseBase]], Callable[..., HttpResponseBase]]:
+    def wrapper(
+        view_fn: Callable[..., HttpResponseBase]
+    ) -> Callable[..., HttpResponseBase]:
         @beeline.traced("jwt_auth")
         @wraps(view_fn)
-        def inner(request: HttpRequest, *args, **kwargs: Any) -> JsonResponse:
+        def inner(request: HttpRequest, *args, **kwargs: Any) -> HttpResponseBase:
             # Two other kinds of auth to possibly check
             if allow_session_auth and request.user.is_authenticated:
                 return view_fn(request, *args, **kwargs)
