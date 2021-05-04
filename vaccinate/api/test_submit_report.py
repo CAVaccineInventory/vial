@@ -30,6 +30,19 @@ def test_submit_report_api_bad_token(client):
 
 
 @pytest.mark.django_db
+def test_submit_report_unauth_token(client, jwt_unauth_id_token):
+    # A valid JWT, but with no permissions
+    response = client.post(
+        "/api/submitReport",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_unauth_id_token),
+    )
+    assert response.status_code == 403
+    assert response.json() == {"error": "Missing permissions: caller"}
+
+
+@pytest.mark.django_db
 def test_submit_report_api_invalid_json(client, jwt_id_token):
     response = client.post(
         "/api/submitReport",

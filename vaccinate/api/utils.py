@@ -2,7 +2,7 @@ import datetime
 import json
 import secrets
 from functools import wraps
-from typing import Optional, Union
+from typing import Optional, Set, Union
 
 import beeline
 import requests
@@ -139,7 +139,9 @@ def deny_if_api_is_disabled(view_fn):
 
 @beeline.traced("reporter_from_request")
 def reporter_from_request(
-    request: HttpRequest, allow_test=False
+    request: HttpRequest,
+    allow_test=False,
+    required_permissions: Set[str] = set(["caller"]),
 ) -> Union[Reporter, JsonResponse]:
     if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
         reporter = Reporter.objects.get_or_create(
@@ -153,8 +155,10 @@ def reporter_from_request(
         return JsonResponse(
             {"error": "Authorization header must start with 'Bearer'"}, status=403
         )
+
     # Check JWT token is valid
     jwt_access_token = authorization.split("Bearer ")[1]
+    check_permissions = True
     try:
         jwt_payload = decode_and_verify_jwt(
             jwt_access_token, settings.HELP_JWT_AUDIENCE
@@ -168,6 +172,7 @@ def reporter_from_request(
             jwt_payload = decode_and_verify_jwt(
                 jwt_access_token, settings.VIAL_JWT_AUDIENCE
             )
+            check_permissions = False
         except Exception:
             return JsonResponse(
                 {"error": "Could not decode JWT", "details": str(e)}, status=403
@@ -217,4 +222,16 @@ def reporter_from_request(
         external_id=external_id,
         defaults=defaults,
     )[0]
+
+    # Finally, make sure they have the required permissions
+    if check_permissions:
+        missing_perms = required_permissions - set(jwt_payload["permissions"])
+        if missing_perms:
+            return JsonResponse(
+                {
+                    "error": "Missing permissions: %s"
+                    % (", ".join(list(missing_perms)),),
+                },
+                status=403,
+            )
     return reporter

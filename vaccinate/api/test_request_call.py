@@ -13,6 +13,28 @@ from django.utils import timezone
 
 
 @pytest.mark.django_db
+def test_unauth_request_call(client, jwt_unauth_id_token):
+    # No auth header fails
+    response = client.post(
+        "/api/requestCall",
+        {},
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+    assert response.json() == {"error": "Authorization header must start with 'Bearer'"}
+
+    # A valid JWT, but with no permissions
+    response = client.post(
+        "/api/requestCall",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_unauth_id_token),
+    )
+    assert response.status_code == 403
+    assert response.json() == {"error": "Missing permissions: caller"}
+
+
+@pytest.mark.django_db
 def test_request_call(client, jwt_id_token):
     assert CallRequest.objects.count() == 0
     # First attempt should return 'no calls' error
