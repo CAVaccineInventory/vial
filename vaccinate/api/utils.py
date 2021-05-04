@@ -190,11 +190,16 @@ def reporter_from_request(
     name: Optional[str] = None
     email: Optional[str] = None
 
+    # Get full metadata if the user doesn't exist; also take a lock on the user.
+    external_id = "auth0:{}".format(jwt_payload["sub"])
+    reporter = (
+        Reporter.objects.select_for_update().filter(external_id=external_id).first()
+    )
     # We may want to update the email address and name; we do this
     # sparingly, since it's a round-trip to the Auth0 endpoint, which
     # is somewhat slow.  Again, we must do this because we're getting
     # an access token, not an id token.
-    if update_metadata:
+    if not reporter or update_metadata:
         with beeline.tracer(name="get user_info"):
             user_info_response = requests.get(
                 "https://vaccinateca.us.auth0.com/userinfo",
@@ -214,7 +219,6 @@ def reporter_from_request(
                     sorted(user_info["https://help.vaccinateca.com/roles"])
                 )
 
-    external_id = "auth0:{}".format(jwt_payload["sub"])
     defaults = {"auth0_role_names": jwt_auth0_role_names}
     if name is not None:
         defaults["name"] = name
