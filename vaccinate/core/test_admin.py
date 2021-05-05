@@ -65,7 +65,7 @@ def test_admin_location_actions_for_queue(admin_client, ten_locations):
         "/admin/core/location/",
         {
             "action": "add_to_call_request_queue_data_corrections_tip",
-            "_selected_action": [l.id for l in locations_to_queue],
+            "_selected_action": [location.id for location in locations_to_queue],
         },
     )
     assert response2.status_code == 302
@@ -109,7 +109,7 @@ def test_clear_claims_action(admin_client):
         "/admin/core/location/",
         {
             "action": "add_to_call_request_queue_data_corrections_tip",
-            "_selected_action": [l.id for l in locations],
+            "_selected_action": [location.id for location in locations],
         },
     )
     assert CallRequest.objects.count() == 3
@@ -151,7 +151,7 @@ def test_claim_bump_to_top_bottom_actions(admin_client):
         "/admin/core/location/",
         {
             "action": "add_to_call_request_queue_data_corrections_tip",
-            "_selected_action": [l.id for l in locations],
+            "_selected_action": [location.id for location in locations],
         },
     )
     cr3, cr2, cr1 = CallRequest.objects.values_list("pk", flat=True)
@@ -283,7 +283,7 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
         "/admin/core/location/",
         {
             "action": "add_to_call_request_queue_data_corrections_tip",
-            "_selected_action": [l.id for l in ten_locations],
+            "_selected_action": [location.id for location in ten_locations],
         },
     )
     # Ensure they have predictable vesting_at values
@@ -369,7 +369,7 @@ def test_csv_export_for_locations_with_phone_and_website(admin_client, ten_locat
     )
     csv_bytes = b"".join(chunk for chunk in response.streaming_content)
     csv_string = csv_bytes.decode("utf-8")
-    expected_public_ids = [l.public_id for l in ten_locations]
+    expected_public_ids = [location.public_id for location in ten_locations]
     assert csv_string == (
         "Name,Phone number,Website,Location ID\r\n"
         "Location 1,(555) 555-5551,https://example.com/1,{}\r\n"

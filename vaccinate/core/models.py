@@ -399,6 +399,7 @@ class Location(gis_models.Model):
             dn_latest_non_skip_report = dn_latest_non_skip_reports[0]
         else:
             dn_latest_non_skip_report = None
+
         # Has anything changed?
         def pk_or_none(record):
             if record is None:
