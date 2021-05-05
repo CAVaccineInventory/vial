@@ -85,6 +85,17 @@ urlpatterns = [
             docs="/api/docs#post-apiupdatelocationconcordances",
         ),
     ),
+    path("api/updateSourceLocationMatch", api_views.update_source_location_match),
+    path(
+        "api/updateSourceLocationMatch/debug",
+        api_views.api_debug_view(
+            "api/updateSourceLocationMatch",
+            use_jwt=False,
+            body_textarea=True,
+            default_body="{}",
+            docs="/api/docs#post-apiupdatesourcelocationmatch",
+        ),
+    ),
     path("api/startImportRun", api_views.start_import_run),
     path(
         "api/startImportRun/debug",
