@@ -145,11 +145,11 @@ def reporter_from_request(
     update_metadata=False,
 ) -> Union[Reporter, JsonResponse]:
     if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
-        reporter = Reporter.objects.get_or_create(
+        fake_reporter = Reporter.objects.get_or_create(
             external_id="auth0-fake:{}".format(request.GET["fake_user"]),
         )[0]
-        user_info = {"fake": reporter.external_id}
-        return reporter
+        user_info = {"fake": fake_reporter.external_id}
+        return fake_reporter
     # Use Bearer token in Authorization header
     authorization = request.META.get("HTTP_AUTHORIZATION") or ""
     if not authorization.startswith("Bearer "):
