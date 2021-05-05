@@ -1,2 +1,0 @@
-#!/bin/bash
-git ls-files | grep '\.py$' | grep -v config/pythonrc.py | grep -v 'test_settings.py' | xargs pyflakes

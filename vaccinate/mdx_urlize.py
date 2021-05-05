@@ -38,6 +38,7 @@ u'<p>del.icio.us</p>'
 """
 
 import markdown
+from markdown.inlinepatterns import Pattern
 
 # Global Vars
 URLIZE_RE = "(%s)" % "|".join(
@@ -50,7 +51,7 @@ URLIZE_RE = "(%s)" % "|".join(
 )
 
 
-class UrlizePattern(markdown.inlinepatterns.Pattern):
+class UrlizePattern(Pattern):
     """Return a link Element given an autolink (`http://example/com`)."""
 
     def handleMatch(self, m):
@@ -62,7 +63,7 @@ class UrlizePattern(markdown.inlinepatterns.Pattern):
         text = url
 
         if not url.split("://")[0] in ("http", "https", "ftp"):
-            if "@" in url and not "/" in url:
+            if "@" in url and "/" not in url:
                 url = "mailto:" + url
             else:
                 url = "http://" + url

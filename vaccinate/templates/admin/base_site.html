@@ -205,6 +205,44 @@ function addCopyToClipboard() {
   });
 }
 
+function checkboxEditorForVaccinesOffered() {
+  var ta = document.getElementById('id_vaccines_offered');
+  if (!ta) {
+    return;
+  }
+  ta.rows = 1;
+  ta.readOnly = true;
+  var div = document.createElement('div');
+  div.innerHTML = `
+  <div class="vaccines-offered-json-editor">
+    <p><label style="float: none; display: inline">Pfizer <input data-array-value="Pfizer" type="checkbox"></label></p>
+    <p><label style="float: none; display: inline">Moderna <input data-array-value="Moderna" type="checkbox"></label></p>
+    <p><label style="float: none; display: inline">Johnson &amp; Johnson <input data-array-value="Johnson &amp; Johnson" type="checkbox"></label></p>
+    <p><label style="float: none; display: inline">Other <input data-array-value="Other" type="checkbox"></label></p>
+  </div>
+  `;
+  function recalculateVaccinesOffered() {
+    var newArray = [];
+    Array.from(div.querySelectorAll('input')).forEach(el => {
+      if (el.checked && el.dataset.arrayValue) {
+        newArray.push(el.dataset.arrayValue);
+      }
+      ta.value = JSON.stringify(newArray.length ? newArray : null);
+    });
+  }
+  div.querySelectorAll('input').forEach(el => {
+    el.addEventListener('change', recalculateVaccinesOffered);
+  });
+  ta.parentNode.appendChild(div);
+  /* On page load, populate based on data in there already */
+  var current = JSON.parse(ta.value);
+  if (current) {
+    div.querySelectorAll('input').forEach(el => {
+      el.checked = current.includes(el.dataset.arrayValue);
+    });
+  }
+}
+
 window.addEventListener("load", () => {
     let changelistFilter = jQuery('#changelist-filter');
     let x = jQuery('<a href="#">X</a>');
@@ -227,6 +265,8 @@ window.addEventListener("load", () => {
     addCopyToClipboard();
 
     onLoadAddMap();
+
+    checkboxEditorForVaccinesOffered();
 });
 
 var LEAFLET_CSS = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.css";

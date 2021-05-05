@@ -219,6 +219,20 @@ class Location(gis_models.Model):
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
     )
+
+    vaccines_offered = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="JSON array of strings representing vaccines on offer here - enter 'null' if we do not know",
+    )
+    accepts_appointments = models.BooleanField(
+        null=True, blank=True, help_text="Does this location accept appointments"
+    )
+    accepts_walkins = models.BooleanField(
+        null=True, blank=True, help_text="Does this location accept walkins"
+    )
+    public_notes = models.TextField(blank=True, null=True)
+
     google_places_id = CharTextField(
         null=True,
         blank=True,
@@ -399,6 +413,7 @@ class Location(gis_models.Model):
             dn_latest_non_skip_report = dn_latest_non_skip_reports[0]
         else:
             dn_latest_non_skip_report = None
+
         # Has anything changed?
         def pk_or_none(record):
             if record is None:
@@ -1099,14 +1114,12 @@ class ConcordanceIdentifier(models.Model):
         return reduce(or_, (Q(authority=p[0], identifier=p[1]) for p in pairs))
 
 
-ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(
-    self.concordanceidentifier, self.location.public_id
+ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(  # type: ignore[assignment]
+    self.concordanceidentifier, self.location.public_id  # type: ignore[attr-defined]
 )
 
-ConcordanceIdentifier.source_locations.through.__str__ = (
-    lambda self: "{} on source location {}".format(
-        self.concordanceidentifier, self.sourcelocation_id
-    )
+ConcordanceIdentifier.source_locations.through.__str__ = lambda self: "{} on source location {}".format(  # type: ignore[assignment]
+    self.concordanceidentifier, self.sourcelocation_id  # type: ignore[attr-defined]
 )
 
 

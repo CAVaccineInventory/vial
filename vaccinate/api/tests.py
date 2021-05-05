@@ -5,8 +5,8 @@ from typing import Any, Dict
 import pytest
 from core.models import AvailabilityTag, Reporter
 
+from .caller_views.submit_report import user_should_have_reports_reviewed
 from .models import ApiKey, Switch
-from .submit_report import user_should_have_reports_reviewed
 
 GOODTOKEN = "1953b7a735274809f4ff230048b60a4a"
 
