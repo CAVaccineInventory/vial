@@ -9,6 +9,7 @@ import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.models import Reporter
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpRequest
 from django.http.response import (
     HttpResponse,
@@ -217,47 +218,50 @@ def jwt_auth(
             name: Optional[str] = None
             email: Optional[str] = None
 
-            # Get full metadata if the user doesn't exist; also take a lock on the user.
             external_id = "auth0:{}".format(jwt_payload["sub"])
-            reporter = (
-                Reporter.objects.select_for_update()
-                .filter(external_id=external_id)
-                .first()
-            )
-            # We may want to update the email address and name; we do this
-            # sparingly, since it's a round-trip to the Auth0 endpoint, which
-            # is somewhat slow.  Again, we must do this because we're getting
-            # an access token, not an id token.
-            if not reporter or update_metadata:
-                with beeline.tracer(name="get user_info"):
-                    user_info_response = requests.get(
-                        "https://vaccinateca.us.auth0.com/userinfo",
-                        headers={"Authorization": "Bearer {}".format(jwt_access_token)},
-                        timeout=5,
-                    )
-                    beeline.add_context({"status": user_info_response.status_code})
-                    # If this fails, we don't fail the request; they still
-                    # had a valid access token, auth0 is just being slow
-                    # telling us their bio.
-                    if user_info_response.status_code == 200:
-                        user_info = user_info_response.json()
-                        name = user_info["name"]
-                        if user_info["email_verified"]:
-                            email = user_info["email"]
-                        jwt_auth0_role_names = ", ".join(
-                            sorted(user_info["https://help.vaccinateca.com/roles"])
+            with transaction.atomic():
+                # Get full metadata if the user doesn't exist; also take a lock on the user.
+                reporter = (
+                    Reporter.objects.select_for_update()
+                    .filter(external_id=external_id)
+                    .first()
+                )
+                # We may want to update the email address and name; we do this
+                # sparingly, since it's a round-trip to the Auth0 endpoint, which
+                # is somewhat slow.  Again, we must do this because we're getting
+                # an access token, not an id token.
+                if not reporter or update_metadata:
+                    with beeline.tracer(name="get user_info"):
+                        user_info_response = requests.get(
+                            "https://vaccinateca.us.auth0.com/userinfo",
+                            headers={
+                                "Authorization": "Bearer {}".format(jwt_access_token)
+                            },
+                            timeout=5,
                         )
+                        beeline.add_context({"status": user_info_response.status_code})
+                        # If this fails, we don't fail the request; they still
+                        # had a valid access token, auth0 is just being slow
+                        # telling us their bio.
+                        if user_info_response.status_code == 200:
+                            user_info = user_info_response.json()
+                            name = user_info["name"]
+                            if user_info["email_verified"]:
+                                email = user_info["email"]
+                            jwt_auth0_role_names = ", ".join(
+                                sorted(user_info["https://help.vaccinateca.com/roles"])
+                            )
 
-            external_id = "auth0:{}".format(jwt_payload["sub"])
-            defaults = {"auth0_role_names": jwt_auth0_role_names}
-            if name is not None:
-                defaults["name"] = name
-            if email is not None:
-                defaults["email"] = email
-            reporter = Reporter.objects.update_or_create(
-                external_id=external_id,
-                defaults=defaults,
-            )[0]
+                external_id = "auth0:{}".format(jwt_payload["sub"])
+                defaults = {"auth0_role_names": jwt_auth0_role_names}
+                if name is not None:
+                    defaults["name"] = name
+                if email is not None:
+                    defaults["email"] = email
+                reporter = Reporter.objects.update_or_create(
+                    external_id=external_id,
+                    defaults=defaults,
+                )[0]
 
             # Finally, make sure they have the required permissions
             if check_permissions:
