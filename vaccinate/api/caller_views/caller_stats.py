@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 @beeline.traced(name="caller_stats")
-@jwt_auth(required_permissions=["caller"])
+@jwt_auth(required_permissions=["caller"], update_metadata=True)
 def caller_stats(request: JWTRequest) -> JsonResponse:
     reports = request.reporter.reports.exclude(soft_deleted=True)
     return JsonResponse(
