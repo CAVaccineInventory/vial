@@ -2,11 +2,13 @@ import json
 import os
 import random
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import beeline
 import pytz
 import requests
+from api.models import ApiLog
+from api.utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
@@ -23,8 +25,6 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
-
-from .utils import deny_if_api_is_disabled, log_api_requests, reporter_from_request
 
 ALLOWED_VACCINE_VALUES = "Moderna", "Pfizer", "Johnson & Johnson", "Other"
 
@@ -68,22 +68,21 @@ class ReportValidator(BaseModel):
 
 
 @csrf_exempt
+@beeline.traced(name="submit_report")
 @log_api_requests
 @deny_if_api_is_disabled
-@beeline.traced(name="submit_report")
-def submit_report(request, on_request_logged):
-    # The ?test=1 version accepts &fake_user=external_id
-    reporter, user_info = reporter_from_request(request, allow_test=True)
-    if isinstance(reporter, JsonResponse):
-        return reporter
+@jwt_auth(required_permissions=set(["caller"]))
+def submit_report(
+    request: JWTRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
+):
     try:
         post_data = json.loads(request.body.decode("utf-8"))
     except ValueError as e:
-        return JsonResponse({"error": str(e), "user": user_info}, status=400)
+        return JsonResponse({"error": str(e)}, status=400)
     try:
         report_data = ReportValidator(**post_data).dict()
     except ValidationError as e:
-        return JsonResponse({"error": e.errors(), "user": user_info}, status=400)
+        return JsonResponse({"error": e.errors()}, status=400)
     # Now we add the report
     appointment_tag_string, appointment_details = derive_appointment_tag(
         report_data["appointments_by_phone"], report_data["appointment_details"]
@@ -96,7 +95,7 @@ def submit_report(request, on_request_logged):
         appointment_details=appointment_details,
         public_notes=report_data["public_notes"],
         internal_notes=report_data["internal_notes"],
-        reported_by=reporter,
+        reported_by=request.reporter,
         website=report_data["website"] or report_data["web"],
         vaccines_offered=report_data["vaccines_offered"],
         restriction_notes=report_data["restriction_notes"],
@@ -115,7 +114,9 @@ def submit_report(request, on_request_logged):
             "pending_review_because", "Unknown"
         )
     else:
-        should_review, why = user_should_have_reports_reviewed(reporter, report_data)
+        should_review, why = user_should_have_reports_reviewed(
+            request.reporter, report_data
+        )
         if should_review:
             kwargs["originally_pending_review"] = True
             kwargs["pending_review_because"] = why
@@ -138,9 +139,9 @@ def submit_report(request, on_request_logged):
 
     # Mark any calls to this location claimed by this user as complete
     existing_call_request = report.location.call_requests.filter(
-        claimed_by=reporter, completed=False
+        claimed_by=request.reporter, completed=False
     ).first()
-    report.location.call_requests.filter(claimed_by=reporter).update(
+    report.location.call_requests.filter(claimed_by=request.reporter).update(
         completed=True, completed_at=timezone.now()
     )
 
@@ -227,7 +228,6 @@ def submit_report(request, on_request_logged):
             "appointment_details": appointment_details,
             "availability_tags": [str(a) for a in availability_tags],
             "report": str(report),
-            "user_info": user_info,
         }
     )
 
