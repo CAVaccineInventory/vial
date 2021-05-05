@@ -715,7 +715,7 @@ class UpdateSourceLocationMatchValidator(BaseModel):
 
 
 @log_api_requests
-@beeline.traced("search_source_locations")
+@beeline.traced("update_source_location_match")
 @jwt_auth(
     allow_session_auth=False,
     allow_internal_api_key=True,
