@@ -2,7 +2,7 @@ import datetime
 import json
 import secrets
 from functools import wraps
-from typing import Any, Callable, List, Optional, Set, Union
+from typing import Any, Callable, List, Optional, Set
 
 import beeline
 import requests
@@ -144,27 +144,12 @@ def deny_if_api_is_disabled(view_fn):
     return inner
 
 
-class JWTRequest(HttpRequest):
-    reporter: Reporter
-    _req: HttpRequest
-
-    def __init__(self, req: HttpRequest, reporter: Reporter):
-        self._req = req
-        self.reporter = reporter
-
-    def __getattr__(self, attr: str) -> Any:
-        try:
-            return getattr(self._req, attr)
-        except AttributeError:
-            return self.__getattribute__(attr)
-
-
 @beeline.traced("jwt_auth")
 def _jwt_auth(
     required_permissions: Set[str],
     request: HttpRequest,
     update_metadata: bool,
-) -> Union[JWTRequest, JsonResponse]:
+) -> Optional[JsonResponse]:
     # Use Bearer token in Authorization header
     authorization = request.META.get("HTTP_AUTHORIZATION") or ""
     if not authorization.startswith("Bearer "):
@@ -258,8 +243,8 @@ def _jwt_auth(
                 },
                 status=403,
             )
-    jwt_request = JWTRequest(request, reporter)
-    return jwt_request
+    request.reporter = reporter  # type: ignore[attr-defined]
+    return None
 
 
 def jwt_auth(
@@ -279,11 +264,13 @@ def jwt_auth(
             if allow_internal_api_key and not check_request_for_api_key(request):
                 return view_fn(request, *args, **kwargs)
 
-            got_auth = _jwt_auth(set(required_permissions), request, update_metadata)
-            if isinstance(got_auth, HttpResponse):
-                return got_auth
+            auth_failure = _jwt_auth(
+                set(required_permissions), request, update_metadata
+            )
+            if auth_failure:
+                return auth_failure
 
-            return view_fn(got_auth, *args, **kwargs)
+            return view_fn(request, *args, **kwargs)
 
         return inner
 

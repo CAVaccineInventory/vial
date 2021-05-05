@@ -3,11 +3,11 @@ from typing import Callable, Optional
 
 import beeline  # type: ignore
 from api.models import ApiLog
-from api.utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
+from api.utils import deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.models import CallRequest, Location
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from timezonefinder import TimezoneFinder
@@ -19,7 +19,7 @@ from timezonefinder import TimezoneFinder
 @deny_if_api_is_disabled
 @jwt_auth(required_permissions=["caller"])
 def request_call(
-    request: JWTRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
+    request: HttpRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
 ):
     if request.method != "POST":
         return JsonResponse(
@@ -61,7 +61,7 @@ def request_call(
                 except IndexError:
                     call_request = None
                 if call_request is not None and not no_claim:
-                    call_request.claimed_by = request.reporter
+                    call_request.claimed_by = request.reporter  # type: ignore[attr-defined]
                     call_request.claimed_until = now + timedelta(
                         minutes=settings.CLAIM_LOCK_MINUTES
                     )
