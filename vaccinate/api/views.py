@@ -738,10 +738,10 @@ def update_source_location_match(
     source_location = data.source_location
     location = data.location
 
-    old_matched_location = source_location.matched_location
+    old_matched_location = source_location.matched_location  # type:ignore[attr-defined]
 
-    source_location.matched_location = location
-    source_location.save()
+    source_location.matched_location = location  # type:ignore[attr-defined]
+    source_location.save()  # type:ignore[attr-defined]
 
     # Record the history record
     kwargs = {
@@ -749,18 +749,23 @@ def update_source_location_match(
         "new_match_location": location,
     }
     if hasattr(request, "reporter"):
-        kwargs["reporter"] = request.reporter
+        kwargs["reporter"] = request.reporter  # type:ignore[attr-defined]
     else:
-        kwargs["api_key"] = request.api_key
-    source_location.source_location_match_history.create(**kwargs)
+        kwargs["api_key"] = request.api_key  # type:ignore[attr-defined]
+    source_location.source_location_match_history.create(  # type:ignore[attr-defined]
+        **kwargs
+    )
 
     return JsonResponse(
         {
             "matched": {
-                "location": {"id": location.public_id, "name": location.name},
+                "location": {
+                    "id": location.public_id,  # type:ignore[attr-defined]
+                    "name": location.name,  # type:ignore[attr-defined]
+                },
                 "source_location": {
-                    "source_uid": source_location.source_uid,
-                    "name": source_location.name,
+                    "source_uid": source_location.source_uid,  # type:ignore[attr-defined]
+                    "name": source_location.name,  # type:ignore[attr-defined]
                 },
             }
         }
