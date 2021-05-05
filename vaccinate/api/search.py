@@ -31,7 +31,7 @@ OutputFormat = namedtuple(
 @jwt_auth(
     allow_session_auth=True,
     allow_internal_api_key=True,
-    required_permissions=set(["read:locations"]),
+    required_permissions=["read:locations"],
 )
 def search_locations(
     request: HttpRequest, on_request_logged: Callable
@@ -245,7 +245,7 @@ FORMATS = {
 @jwt_auth(
     allow_session_auth=True,
     allow_internal_api_key=True,
-    required_permissions=set(["read:locations"]),
+    required_permissions=["read:locations"],
 )
 def search_source_locations(
     request: HttpRequest, on_request_logged: Callable

@@ -17,7 +17,7 @@ from timezonefinder import TimezoneFinder
 @beeline.traced(name="request_call")
 @log_api_requests
 @deny_if_api_is_disabled
-@jwt_auth(required_permissions=set(["caller"]))
+@jwt_auth(required_permissions=["caller"])
 def request_call(
     request: JWTRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
 ):

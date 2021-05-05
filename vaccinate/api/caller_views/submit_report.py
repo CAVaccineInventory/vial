@@ -71,7 +71,7 @@ class ReportValidator(BaseModel):
 @beeline.traced(name="submit_report")
 @log_api_requests
 @deny_if_api_is_disabled
-@jwt_auth(required_permissions=set(["caller"]))
+@jwt_auth(required_permissions=["caller"])
 def submit_report(
     request: JWTRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
 ):

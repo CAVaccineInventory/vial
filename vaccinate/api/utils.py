@@ -2,7 +2,7 @@ import datetime
 import json
 import secrets
 from functools import wraps
-from typing import Any, Callable, Optional, Set, Union
+from typing import Any, Callable, List, Optional, Set, Union
 
 import beeline
 import requests
@@ -265,7 +265,7 @@ def _jwt_auth(
 def jwt_auth(
     allow_session_auth=False,
     allow_internal_api_key=False,
-    required_permissions: Set[str] = set(["caller"]),
+    required_permissions: List[str] = ["caller"],
     update_metadata=False,
 ) -> Callable[[Callable[..., HttpResponseBase]], Callable[..., HttpResponseBase]]:
     def wrapper(
@@ -279,7 +279,7 @@ def jwt_auth(
             if allow_internal_api_key and not check_request_for_api_key(request):
                 return view_fn(request, *args, **kwargs)
 
-            got_auth = _jwt_auth(required_permissions, request, update_metadata)
+            got_auth = _jwt_auth(set(required_permissions), request, update_metadata)
             if isinstance(got_auth, HttpResponse):
                 return got_auth
 
