@@ -4,7 +4,9 @@ from functools import cache
 from pathlib import Path
 
 import beeline
-from google.cloud import storage
+from google.cloud import (  # type: ignore  # XXX: This works when mypy is re-run with a cache?
+    storage,
+)
 
 
 class StorageWriter:

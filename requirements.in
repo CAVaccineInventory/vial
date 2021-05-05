@@ -66,6 +66,15 @@ django-admin-tools
 
 ### Development
 
+# Typing
+mypy
+django-stubs
+types-Markdown
+types-pytz
+types-requests
+types-python-dateutil
+types-protobuf
+
 # Debug toolbar (dev only, not production)
 django-debug-toolbar>=3.2.1
 

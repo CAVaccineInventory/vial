@@ -1114,14 +1114,12 @@ class ConcordanceIdentifier(models.Model):
         return reduce(or_, (Q(authority=p[0], identifier=p[1]) for p in pairs))
 
 
-ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(
-    self.concordanceidentifier, self.location.public_id
+ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(  # type: ignore[assignment]
+    self.concordanceidentifier, self.location.public_id  # type: ignore[attr-defined]
 )
 
-ConcordanceIdentifier.source_locations.through.__str__ = (
-    lambda self: "{} on source location {}".format(
-        self.concordanceidentifier, self.sourcelocation_id
-    )
+ConcordanceIdentifier.source_locations.through.__str__ = lambda self: "{} on source location {}".format(  # type: ignore[assignment]
+    self.concordanceidentifier, self.sourcelocation_id  # type: ignore[attr-defined]
 )
 
 
