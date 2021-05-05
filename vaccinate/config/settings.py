@@ -53,11 +53,9 @@ if SENTRY_DSN:
         "django.security.DisallowedModelAdminToField",
         "django.security.DisallowedRedirect",
         "django.security.InvalidSessionKey",
-        "django.security.RequestDataTooBig",
         "django.security.SuspiciousFileOperation",
         "django.security.SuspiciousMultipartForm",
         "django.security.SuspiciousSession",
-        "django.security.TooManyFieldsSent",
     ]
     for logger in IGNORE_LOGGERS:
         ignore_logger(logger)
