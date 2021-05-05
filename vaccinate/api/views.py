@@ -719,7 +719,7 @@ class UpdateSourceLocationMatchValidator(BaseModel):
 @jwt_auth(
     allow_session_auth=False,
     allow_internal_api_key=True,
-    required_permissions=["read:locations"],
+    required_permissions=["write:locations"],
 )
 @csrf_exempt
 def update_source_location_match(
