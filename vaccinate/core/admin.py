@@ -35,6 +35,7 @@ from .models import (
     ReportReviewNote,
     ReportReviewTag,
     SourceLocation,
+    SourceLocationMatchHistory,
     State,
 )
 
@@ -1395,6 +1396,34 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             form_url,
             extra_context=extra_context,
         )
+
+
+@admin.register(SourceLocationMatchHistory)
+class SourceLocationMatchHistoryAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "source_location",
+        "new_match_location",
+        "reporter",
+        "api_key",
+    )
+    actions = [export_as_csv_action()]
+    raw_id_fields = (
+        "api_key",
+        "reporter",
+        "source_location",
+        "old_match_location",
+        "new_match_location",
+    )
+
+    def has_add_permission(self, request, obj=None):
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # NOT CURRENTLY USED
