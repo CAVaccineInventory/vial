@@ -422,6 +422,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "preferred_contact_method",
                     "provider",
                     "internal_notes",
+                    "vaccines_offered",
+                    "accepts_appointments",
+                    "accepts_walkins",
+                    "public_notes",
                 )
             },
         ),

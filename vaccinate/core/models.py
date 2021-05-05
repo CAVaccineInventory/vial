@@ -219,6 +219,20 @@ class Location(gis_models.Model):
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
     )
+
+    vaccines_offered = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="JSON array of strings representing vaccines on offer here - enter 'null' if we do not know",
+    )
+    accepts_appointments = models.BooleanField(
+        null=True, blank=True, help_text="Does this location accept appointments"
+    )
+    accepts_walkins = models.BooleanField(
+        null=True, blank=True, help_text="Does this location accept walkins"
+    )
+    public_notes = models.TextField(blank=True, null=True)
+
     google_places_id = CharTextField(
         null=True,
         blank=True,
