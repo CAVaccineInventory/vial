@@ -120,6 +120,9 @@ AUTHENTICATION_BACKENDS = {
 LOGIN_URL = "/login/auth0"
 LOGIN_REDIRECT_URL = "/"
 
+# Bump up maximum incoming request body to 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10_000_000
+
 REVERSION_COMPARE_IGNORE_NOT_REGISTERED = True
 
 # Application definition
