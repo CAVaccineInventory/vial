@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import uuid
 from functools import reduce
 from operator import or_
