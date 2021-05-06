@@ -811,9 +811,9 @@ def create_location_from_source_location(
         location = build_location_from_source_location(data.source_location)
         credit = ""
         if getattr(request, "api_key", None):
-            credit = " API key {}".format(str(request.api_key))  # type: ignore[attr-defined]
+            credit = "API key {}".format(str(request.api_key))  # type: ignore[attr-defined]
         elif getattr(request, "reporter", None):
-            credit = " Reporter {}".format(str(request.reporter))  # type: ignore[attr-defined]
+            credit = "Reporter {}".format(str(request.reporter))  # type: ignore[attr-defined]
         reversion.set_comment("/api/createLocationFromSourceLocation {}".format(credit))
 
     return JsonResponse(
