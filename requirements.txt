@@ -217,9 +217,9 @@ django-stubs==1.8.0 \
     --hash=sha256:717967d7fee0a6af0746724a0be80d72831a982a40fa8f245a6a46f4cafd157b \
     --hash=sha256:bde9e44e3c4574c2454e74a3e607cc3bc23b0441bb7d1312cd677d5e30984b74
     # via -r requirements.in
-django==3.2.1 \
-    --hash=sha256:95c13c750f1f214abadec92b82c2768a5e795e6c2ebd0b4126f895ce9efffcdd \
-    --hash=sha256:e2f73790c60188d3f94f08f644de249d956b3789161e7604509d128a13fb2fcc
+django==3.2.2 \
+    --hash=sha256:0a1d195ad65c52bf275b8277b3d49680bd1137a5f55039a806f25f6b9752ce3d \
+    --hash=sha256:18dd3145ddbd04bf189ff79b9954d08fda5171ea7b57bf705789fea766a07d50
     # via
     #   -r requirements.in
     #   django-cors-headers
