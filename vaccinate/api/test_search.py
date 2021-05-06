@@ -1,12 +1,14 @@
 import json
 
 import pytest
-from core.models import ConcordanceIdentifier, Location, State
+from core.models import ConcordanceIdentifier, Location, SourceLocation, State
 
 
-def search_get_json(client, api_key, query_string, expected_status_code=200):
+def search_locations(
+    client, api_key, query_string, path="/api/searchLocations", expected_status_code=200
+):
     response = client.get(
-        "/api/searchLocations?" + query_string,
+        path + "?" + query_string,
         HTTP_AUTHORIZATION=f"Bearer {api_key}",
     )
     assert response.status_code == expected_status_code
@@ -15,6 +17,16 @@ def search_get_json(client, api_key, query_string, expected_status_code=200):
     else:
         content = response.content
     return json.loads(content)
+
+
+def search_source_locations(client, api_key, query_string, expected_status_code=200):
+    return search_locations(
+        client,
+        api_key,
+        query_string,
+        path="/api/searchSourceLocations",
+        expected_status_code=expected_status_code,
+    )
 
 
 @pytest.mark.parametrize(
@@ -41,14 +53,14 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
     with_concordances_2.concordances.add(
         ConcordanceIdentifier.for_idref("google_places:456")
     )
-    data = search_get_json(client, api_key, query_string)
+    data = search_locations(client, api_key, query_string)
     names = {r["name"] for r in data["results"]}
     assert names == set(expected)
     assert data["total"] == len(expected)
 
 
 def test_search_locations_by_id(client, api_key, ten_locations):
-    data = search_get_json(
+    data = search_locations(
         client,
         api_key,
         "id={}&id={}".format(ten_locations[0].public_id, ten_locations[1].public_id),
@@ -59,13 +71,13 @@ def test_search_locations_by_id(client, api_key, ten_locations):
 
 
 def test_search_locations_ignores_soft_deleted(client, api_key, ten_locations):
-    assert search_get_json(client, api_key, "q=Location+1")["total"] == 2
+    assert search_locations(client, api_key, "q=Location+1")["total"] == 2
     Location.objects.filter(name="Location 10").update(soft_deleted=True)
-    assert search_get_json(client, api_key, "q=Location+1")["total"] == 1
+    assert search_locations(client, api_key, "q=Location+1")["total"] == 1
 
 
 def test_search_locations_format_json(client, api_key, ten_locations):
-    result = search_get_json(client, api_key, "q=Location+1")
+    result = search_locations(client, api_key, "q=Location+1")
     assert set(result.keys()) == {"results", "total"}
     record = result["results"][0]
     assert set(record.keys()) == {
@@ -93,7 +105,7 @@ def test_search_locations_format_json(client, api_key, ten_locations):
 
 
 def test_search_locations_format_geojson(client, api_key, ten_locations):
-    result = search_get_json(client, api_key, "q=Location+1&format=geojson")
+    result = search_locations(client, api_key, "q=Location+1&format=geojson")
     assert set(result.keys()) == {"type", "features"}
     assert result["type"] == "FeatureCollection"
     record = result["features"][0]
@@ -145,7 +157,7 @@ def test_search_locations_num_queries(
     # 5. Fetch the condordances, which are many-to-many
     # 6. Repeat the locations fetch to verify we found all of them
     with django_assert_num_queries(6):
-        search_get_json(client, api_key, "all=1&format=geojson")
+        search_locations(client, api_key, "all=1&format=geojson")
 
 
 @pytest.mark.parametrize(
@@ -162,7 +174,7 @@ def test_search_locations_point_radius(
         location.latitude = 37.5
         location.longitude = -122.4 + (i / 10.0)
         location.save()
-    results = search_get_json(
+    results = search_locations(
         client, api_key, "latitude=37.5&longitude=-122.4&radius={}".format(radius)
     )
     assert {r["name"] for r in results["results"]} == expected
@@ -174,7 +186,7 @@ def test_search_locations_point_radius_errors(client, api_key):
         "latitude=43.4&longitude=bad&radius=10",
         "latitude=43.4&longitude=-122.4&radius=bad",
     ):
-        assert search_get_json(client, api_key, qs, expected_status_code=400) == {
+        assert search_locations(client, api_key, qs, expected_status_code=400) == {
             "error": "latitude/longitude/radius should be numbers"
         }
 
@@ -182,3 +194,35 @@ def test_search_locations_point_radius_errors(client, api_key):
 def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
     assert client.get("/api/searchLocations").status_code == 403
     assert admin_client.get("/api/searchLocations").status_code == 200
+
+
+@pytest.mark.parametrize(
+    "query_string,expected_names",
+    (
+        ("", {"One", "Two", "Three Matched"}),
+        ("unmatched=1", {"One", "Two"}),
+        ("matched=1", {"Three Matched"}),
+    ),
+)
+def test_search_source_locations(
+    client, api_key, ten_locations, query_string, expected_names
+):
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:1",
+        name="One",
+    )
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:2",
+        name="Two",
+    )
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:3",
+        name="Three Matched",
+        matched_location=ten_locations[0],
+    )
+    data = search_source_locations(client, api_key, query_string)
+    assert data["total"] == len(expected_names)
+    assert {result["name"] for result in data["results"]} == expected_names

@@ -254,6 +254,7 @@ def search_source_locations(
     q = (request.GET.get("q") or "").strip().lower()
     debug = request.GET.get("debug")
     unmatched = request.GET.get("unmatched")
+    matched = request.GET.get("matched")
     random = request.GET.get("random")
     ids = request.GET.getlist("id")
     location_ids = request.GET.getlist("location_id")
@@ -273,6 +274,8 @@ def search_source_locations(
         )
     if unmatched:
         qs = qs.filter(matched_location=None)
+    if matched:
+        qs = qs.exclude(matched_location=None)
     if random:
         qs = qs.order_by("?")
     qs = qs.prefetch_related("concordances")
