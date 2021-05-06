@@ -266,6 +266,7 @@ def search_source_locations(
     unmatched = request.GET.get("unmatched")
     matched = request.GET.get("matched")
     random = request.GET.get("random")
+    source_names = request.GET.getlist("source_name")
     ids = request.GET.getlist("id")
     location_ids = request.GET.getlist("location_id")
     idrefs = request.GET.getlist("idref")
@@ -295,6 +296,8 @@ def search_source_locations(
         qs = qs.filter(
             concordances__in=ConcordanceIdentifier.objects.filter(idref_filter)
         )
+    if source_names:
+        qs = qs.filter(source_name__in=source_names)
     if unmatched:
         qs = qs.filter(matched_location=None)
     if matched:

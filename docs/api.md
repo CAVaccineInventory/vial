@@ -45,6 +45,7 @@ Optional query string parameters:
 - `q=` - a term to search for in the `name` field.
 - `size=` - the number of results to return, up to 1000.
 - `id=` - an ID for one of our source location records, can be passed multiple times. This accepts both numeric database IDs and `source_uid` values.
+- `source_name=` - a source name, e.g. `vaccinespotter_org`. Can be specified multiple times.
 - `location_id=` - a public ID for one of our locations - this will return any source locations that have been marked as matching that location.
 - `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers.
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every source location in our database!
