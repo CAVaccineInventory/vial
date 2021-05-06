@@ -1,8 +1,8 @@
-from factory import Faker, Iterator, LazyAttribute, Maybe, lazy_attribute
+from factory import Faker, Iterator, LazyAttribute, Maybe, lazy_attribute, random
 from factory.django import DjangoModelFactory
 from faker import Faker as DirectFaker
 
-from .models import Location, LocationType, Reporter, State
+from .models import County, Location, LocationType, Reporter, State
 
 direct_faker = DirectFaker(["en_US"])
 
@@ -38,22 +38,22 @@ class LocationFactory(DjangoModelFactory):
     city = LazyAttribute(lambda o: o.geo_data[2])
 
     @lazy_attribute
-    def state(self):
+    def state(self) -> State:
         return State.objects.get(abbreviation=self.state_abbr)
 
     # County will match with the state but not zipcode/lat/lng
     @lazy_attribute
-    def county(self):
-        return self.state.counties.order_by("?").first()
+    def county(self) -> County:
+        return random.randgen.choice(self.state.counties.all())
 
     # Zipcode will match with the state but not county/lat/lng
     @lazy_attribute
-    def zip_code(self):
+    def zip_code(self) -> str:
         return direct_faker.postalcode_in_state(state_abbr=self.state_abbr)
 
     # A hodgepodge of things!
     @lazy_attribute
-    def full_address(self):
+    def full_address(self) -> str:
         return f"{self.street_address}\n{self.city}, {self.state} {self.zip_code}"
 
     latitude = LazyAttribute(lambda o: o.geo_data[0])

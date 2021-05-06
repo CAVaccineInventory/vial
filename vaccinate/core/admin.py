@@ -4,8 +4,9 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q, TextField
+from django.db.models.query import QuerySet
 from django.forms import Textarea
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import dateformat, timezone
@@ -304,26 +305,23 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     short_public_notes.short_description = "Public Notes"  # type:ignore[attr-defined]
 
 
-def make_call_request_queue_action(reason):
-    def add_to_call_request_queue(modeladmin, request, queryset):
-        locations = list(queryset.exclude(do_not_call=True))
-        num_do_not_call_locations = queryset.filter(do_not_call=True).count()
-        now = timezone.now()
-        reason_obj = CallRequestReason.objects.get(short_reason=reason)
-        CallRequest.objects.bulk_create(
-            [
-                CallRequest(
-                    location=location, vesting_at=now, call_request_reason=reason_obj
-                )
-                for location in locations
-            ]
-        )
+def make_call_request_queue_action(reason: str):
+    def add_to_call_request_queue(
+        modeladmin: LocationAdmin, request: HttpRequest, queryset: QuerySet[Location]
+    ):
+        # We have to flatten this into IDs to make insert able to deal
+        # -- it may have GROUP BY, which makes us unable to SELECT FOR
+        # UPDATE it.
+        queryset = Location.objects.filter(id__in=[loc.id for loc in queryset])
+        inserted = CallRequest.insert(queryset, reason)
+
         message = "Added {} location{} to queue with reason: {}".format(
-            len(locations), "s" if len(locations) == 1 else "", reason
+            len(inserted), "s" if len(inserted) == 1 else "", reason
         )
-        if num_do_not_call_locations:
-            message += '. Skipped {} location{} marked "do not call"'.format(
-                num_do_not_call_locations, "s" if num_do_not_call_locations != 1 else ""
+        if len(inserted) < queryset.count():
+            skipped = queryset.count() - len(inserted)
+            message += ". Skipped {} location{}".format(
+                skipped, "s" if skipped != 1 else ""
             )
         messages.success(request, message)
 

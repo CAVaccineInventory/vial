@@ -48,7 +48,8 @@ def import_call_requests(request):
                         priority_group=group_id,
                     )
                     for location in locations
-                ]
+                ],
+                ignore_conflicts=True,
             )
             if len(locations):
                 messages.append(

@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta
 from functools import reduce
 from operator import or_
-from typing import Optional
+from typing import Any, List, Optional
 
 import beeline
 import pytz
+import sentry_sdk
 from django.conf import settings
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.geos import Point
-from django.db import models
-from django.db.models import Max, Q
+from django.db import IntegrityError, models, transaction
+from django.db.models import Min, Q
+from django.db.models.query import QuerySet
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.utils import dateformat, timezone
@@ -385,6 +388,17 @@ class Location(gis_models.Model):
     def pid(self):
         return "l" + pid.from_int(self.pk)
 
+    @classmethod
+    def valid_for_call(cls) -> QuerySet[Location]:
+        return (
+            cls.objects.filter(soft_deleted=False, do_not_call=False)
+            .exclude(phone_number__isnull=True)
+            .exclude(phone_number="")
+            .exclude(
+                preferred_contact_method="research_online",
+            )
+        )
+
     @beeline.traced("update_denormalizations")
     def update_denormalizations(self):
         reports = (
@@ -489,6 +503,11 @@ class Location(gis_models.Model):
         if set_public_id_later:
             self.public_id = self.pid
             Location.objects.filter(pk=self.pk).update(public_id=self.pid)
+
+        # If we don't belong in the callable locations anymore, remove
+        # from the call request queue
+        if Location.valid_for_call().filter(pk=self.pk).count() == 0:
+            CallRequest.objects.filter(location_id=self.id, completed=False).delete()
 
 
 class Reporter(models.Model):
@@ -921,79 +940,229 @@ class CallRequest(models.Model):
         # Within those groups, lower priority scores come before higher
         # Finally we tie-break on ID optimizing for mostl recently created first
         ordering = ("priority_group", "-priority", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                name="unique_locations_in_queue",
+                fields=["location"],
+                condition=Q(completed=False),
+            )
+        ]
 
     @classmethod
-    def available_requests(cls, qs=None):
+    def available_requests(
+        cls, qs: Optional[QuerySet[CallRequest]] = None
+    ) -> QuerySet[CallRequest]:
         if qs is None:
             qs = cls.objects
         now = timezone.now()
-        return (
-            qs.filter(
-                # Unclaimed
-                Q(claimed_until__isnull=True)
-                | Q(claimed_until__lte=now)
+        return qs.filter(
+            # Unclaimed
+            Q(claimed_until__isnull=True)
+            | Q(claimed_until__lte=now)
+        ).filter(completed=False, vesting_at__lte=now)
+
+    @classmethod
+    @beeline.traced("insert")
+    def insert(
+        cls,
+        locations: QuerySet[Location],
+        reason: str,
+        limit: Optional[int] = 0,
+        **kwargs: Any,
+    ) -> List[CallRequest]:
+        now = timezone.now()
+        reason_obj = CallRequestReason.objects.get_or_create(short_reason=reason)[0]
+        with transaction.atomic():
+            # Lock the locations we want to insert, so they don't
+            # change if they're valid to be in the queue, while we
+            # insert them.
+            locations = (locations & Location.valid_for_call()).select_for_update(
+                of=["self"]
             )
-            .filter(completed=False, vesting_at__lte=now)
-            .exclude(
-                Q(location__phone_number__isnull=True)
-                | Q(location__phone_number="")
-                | Q(location__do_not_call=True)
-                | Q(location__soft_deleted=True)
+            # Now that we have a lock on them, we know any other
+            # inserts of them (though not others) will block behind
+            # that.  Estimate out how many duplicates we possibly
+            # have.  We lock them so our estimate is more accurate.
+            existing_call_requests = CallRequest.objects.filter(
+                location__in=locations, completed=False
+            ).select_for_update()
+            # Filter duplicates them out of the insert.  Note that
+            # this is mostly advisory, so we get the right-ish objects
+            # from the bulk_create -- the `ignore_conflicts` on it
+            # will enfoce the uniqueness.
+            locations = locations.exclude(
+                id__in=existing_call_requests.values("location_id")
             )
+            if limit:
+                locations = locations[0:limit]
+
+            args = {
+                "vesting_at": now,
+                "call_request_reason": reason_obj,
+            }
+            args.update(**kwargs)
+
+            # Do the insert, ignoring duplicates.  bulk_create returns
+            # all rows, even ones whose insert failed because of
+            # conflicts; this _may_, on races, contain too many rows
+            # in the return value, so the returned list of "new"
+            # values is advisory.
+            return cls.objects.bulk_create(
+                [cls(location=location, **args) for location in locations],
+                ignore_conflicts=True,
+            )
+
+    @classmethod
+    @beeline.traced("get_call_request")
+    def get_call_request(
+        cls,
+        claim_for: Optional[Reporter] = None,
+        state: Optional[str] = None,
+    ) -> Optional[CallRequest]:
+        # First, drop some items there are some items in the queue, in case
+        # it has run dry.  We backfill according to the state we're
+        # looking for, which may affect which locations are in the
+        # queue for people who are _not_ asking for a specific state.
+        cls.backfill_queue(state=state)
+        now = timezone.now()
+        available_requests = cls.available_requests()
+        if state is not None:
+            available_requests = available_requests.filter(
+                location__state__abbreviation=state
+            )
+        # We need to lock the record we select so we can update
+        # it marking that we have claimed it
+        with transaction.atomic():
+            call_requests = available_requests.select_for_update()[:1]
+            try:
+                call_request: Optional[CallRequest] = call_requests[0]
+            except IndexError:
+                call_request = None
+            if call_request is not None and claim_for:
+                call_request.claimed_by = claim_for
+                call_request.claimed_until = now + timedelta(
+                    minutes=settings.CLAIM_LOCK_MINUTES
+                )
+                call_request.save()
+            return call_request
+
+    @classmethod
+    @beeline.traced("mark_completed_by")
+    def mark_completed_by(
+        cls, report: Report, enqueue_again_at: Optional[datetime] = None
+    ) -> None:
+        # Make sure the call request doesn't go away (e.g. from a bulk
+        # load) while we update it
+        with transaction.atomic():
+            # There can only be _one_ incomplete report for a
+            # location; find it and lock it.
+            existing_call_request = (
+                report.location.call_requests.filter(completed=False)
+                .select_for_update()
+                .first()
+            )
+
+            # The call request may no longer exist -- either it never
+            # did, because this was web-banked, orsomeone else also
+            # fulfilled it, or a queue update happened between when we
+            # took it and completed it, removing it.
+            if existing_call_request is not None:
+                # If this was based on a call request, mark it as
+                # completed and associate it with the report
+                existing_call_request.completed = True
+                existing_call_request.completed_at = timezone.now()
+                existing_call_request.save()
+                report.call_request = existing_call_request
+                report.save()
+
+        # If we're not re-scheduling, we're done!
+        if enqueue_again_at is None:
+            return
+
+        priority_in_group = 0
+        priority_group = 99
+        if existing_call_request:
+            # Priority group should match that of the original call
+            # request, BUT we use the separate priority integer to
+            # drop them to the very end of the queue within that
+            # priority group.  "end" here means one less than the
+            # _smallest_ priority within the group, since we take from
+            # high to low priority within a group.
+            priority_group = existing_call_request.priority_group
+            priority_in_group = (
+                cls.objects.filter(
+                    priority_group=existing_call_request.priority_group
+                ).aggregate(min=Min("priority"))["min"]
+                - 1
+            )
+        cls.insert(
+            locations=Location.objects.filter(id=report.location.id),
+            reason="Previously skipped",
+            vesting_at=enqueue_again_at,
+            tip_type=cls.TipType.SCOOBY,
+            tip_report=report,
+            priority_group=priority_group,
+            priority=priority_in_group,
         )
 
     @classmethod
     @beeline.traced("backfill_queue")
-    def backfill_queue(cls, minimum=None):
+    def backfill_queue(
+        cls, minimum: Optional[int] = None, state: Optional[str] = None
+    ) -> None:
+        """This is a last-resort refill of the queue.
+
+        It should only happen when we have exhausted all things
+        explicitly placed in the queue.
+
+        """
         if minimum is None:
             minimum = settings.MIN_CALL_REQUEST_QUEUE_ITEMS
         num_to_create = max(0, minimum - cls.available_requests().count())
-        now = timezone.now()
         beeline.add_context({"count": num_to_create})
-        # Queue up that many locations, by never-called or longest-ago-called
-        # We use .select_for_update(nowait=True) to try to avoid race conditions
-        # where multiple calls to /api/requestCall attempt to backfill at
-        # the same time.
-        # Only consider existing locations that are not currently queued
-        location_options = Location.objects.exclude(
-            id__in=cls.available_requests().values("location_id"),
-        ).filter(
-            soft_deleted=False,
-            do_not_call=False,
-        )
-        if num_to_create:
-            backfill_reason = CallRequestReason.objects.get_or_create(
-                short_reason="Automatic backfill"
-            )[0]
-            # Try for never-called
-            never_called_qs = location_options.filter(
-                reports__isnull=True,
-                do_not_call=False,
-            )[:num_to_create]
-            never_called = list(never_called_qs)
-            for location in never_called:
-                cls.objects.create(
-                    location=location,
-                    vesting_at=now,
-                    call_request_reason=backfill_reason,
+        if num_to_create == 0:
+            return
+
+        # num_to_create may be stale by now, but worst case if we race
+        # we'll insert more locations than necessary.
+        try:
+            with transaction.atomic():
+                # Only consider existing locations that are valid for
+                # calling that are not currently queued in _any_ form
+                # (even if that's claimed or not-yet-vested)
+                location_options = Location.valid_for_call().exclude(
+                    id__in=cls.objects.filter(completed=False).values("location_id")
                 )
-            num_to_create = max(0, num_to_create - len(never_called))
-            beeline.add_context({"never_called_added": len(never_called)})
-        # Do we need to create any more? If so do longest-ago-called
-        if num_to_create:
-            location_options.select_for_update(nowait=True)
-            # Called longest ago
-            called_longest_ago_qs = location_options.annotate(
-                most_recent_report=Max("reports__created_at")
-            ).order_by("most_recent_report")[:num_to_create]
-            called_longest_ago = list(called_longest_ago_qs)
-            for location in called_longest_ago:
-                cls.objects.create(
-                    location=location,
-                    vesting_at=now,
-                    call_request_reason=backfill_reason,
+                if state is not None:
+                    location_options = location_options.filter(
+                        state__abbreviation=state
+                    )
+
+                # Add any locations that have never been called
+                created_call_requests = cls.insert(
+                    location_options.filter(
+                        dn_latest_report_including_pending__isnull=True
+                    ),
+                    reason="Automatic backfill",
+                    limit=num_to_create,
                 )
-            beeline.add_context({"called_longest_ago_added": len(called_longest_ago)})
+                num_to_create -= len(created_call_requests)
+                if num_to_create <= 0:
+                    return
+
+                # Then add locations by longest-ago
+                cls.insert(
+                    location_options.order_by(
+                        "dn_latest_report_including_pending__created_at"
+                    ),
+                    reason="Automatic backfill",
+                    limit=num_to_create,
+                )
+        except IntegrityError:
+            # We tried to add a location that was already in the
+            # queue, probably via a race condition!  Just log, and
+            # carry on.
+            sentry_sdk.capture_exception()
 
 
 class PublishedReport(models.Model):
