@@ -526,7 +526,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "latest_non_skip_report",
         "latest_availability",
         "latest_reporter",
-        "provider",   
+        "provider",
     )
     list_filter = (
         LocationInQueueFilter,
@@ -561,12 +561,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     )
 
     def summary(self, obj):
-        html = (
-            '<a href="/admin/core/location/{}/change/"><strong>{}</strong><br>{}</a>'.format(
-                obj.id,
-                escape(obj.name),
-                obj.public_id,
-            )
+        html = '<a href="/admin/core/location/{}/change/"><strong>{}</strong><br>{}</a>'.format(
+            obj.id,
+            escape(obj.name),
+            obj.public_id,
         )
         if obj.do_not_call:
             html += "<br><strong>Do not call</strong>"
@@ -611,18 +609,23 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def latest_non_skip_report(self, obj):
         if obj.dn_latest_non_skip_report:
             date = (
-                dateformat.format(timezone.localtime(obj.dn_latest_non_skip_report.created_at), "j M g:iA e")
+                dateformat.format(
+                    timezone.localtime(obj.dn_latest_non_skip_report.created_at),
+                    "j M g:iA e",
+                )
                 .replace("PM", "pm")
                 .replace("AM", "am")
                 .replace(" ", u"\u00a0")
             )
             return format_html(
                 '<a href="{}">{}</a>',
-                reverse("admin:core_report_change", args=(obj.dn_latest_non_skip_report.id,)),
+                reverse(
+                    "admin:core_report_change", args=(obj.dn_latest_non_skip_report.id,)
+                ),
                 date,
             )
 
-    latest_non_skip_report_date.admin_order_field = (  # type:ignore[attr-defined]
+    latest_non_skip_report.admin_order_field = (  # type:ignore[attr-defined]
         "dn_latest_non_skip_report__created_at"
     )
 
@@ -630,9 +633,14 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         if obj.dn_latest_non_skip_report:
             return format_html(
                 '<strong><a href="{}">{}</a></strong><br>{}',
-                reverse("admin:core_reporter_change", args=(obj.dn_latest_non_skip_report.reported_by.id,)),
+                reverse(
+                    "admin:core_reporter_change",
+                    args=(obj.dn_latest_non_skip_report.reported_by.id,),
+                ),
                 obj.dn_latest_non_skip_report.reported_by,
-                escape(obj.dn_latest_non_skip_report.reported_by.auth0_role_names or ""),
+                escape(
+                    obj.dn_latest_non_skip_report.reported_by.auth0_role_names or ""
+                ),
             )
 
     latest_reporter.admin_order_field = "reported_by"
