@@ -700,7 +700,7 @@ class UpdateSourceLocationMatchValidator(BaseModel):
         try:
             return SourceLocation.objects.get(**kwargs)
         except SourceLocation.DoesNotExist:
-            raise ValueError("Location '{}' does not exist".format(value))
+            raise ValueError("Source Location '{}' does not exist".format(value))
 
     @validator("location")
     def location_must_exist(cls, value):
@@ -711,7 +711,7 @@ class UpdateSourceLocationMatchValidator(BaseModel):
         try:
             return Location.objects.get(**kwargs)
         except Location.DoesNotExist:
-            raise ValueError("Source location '{}' does not exist".format(value))
+            raise ValueError("Location '{}' does not exist".format(value))
 
 
 @log_api_requests
@@ -767,6 +767,63 @@ def update_source_location_match(
                     "source_uid": source_location.source_uid,  # type:ignore[attr-defined]
                     "name": source_location.name,  # type:ignore[attr-defined]
                 },
+            }
+        }
+    )
+
+
+class CreateLocationFromSourceLocationValidator(BaseModel):
+    source_location: SourceLocation
+
+    @validator("source_location")
+    def source_location_is_not_matched(cls, source_location):
+        if source_location.matched_location:
+            raise ValueError(
+                "SourceLocation {} is already matched to location {}".format(
+                    source_location, source_location.matched_location
+                )
+            )
+        return source_location
+
+
+@log_api_requests
+@beeline.traced("create_location_from_source_location")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["write:locations"],
+)
+@csrf_exempt
+def create_location_from_source_location(
+    request: HttpRequest, on_request_logged: Callable
+) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    try:
+        data = CreateLocationFromSourceLocationValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    with reversion.create_revision():
+        location = build_location_from_source_location(data.source_location)
+        credit = ""
+        if getattr(request, "api_key"):
+            credit = " API key {}".format(str(request.api_key))  # type: ignore[attr-defined]
+        elif getattr(request, "reporter"):
+            credit = " Reporter {}".format(str(request.reporter))  # type: ignore[attr-defined]
+        reversion.set_comment("/api/createLocationFromSourceLocation {}".format(credit))
+
+    return JsonResponse(
+        {
+            "location": {
+                "id": location.public_id,
+                "name": location.name,
+                "vial_url": request.build_absolute_uri(
+                    "/admin/core/location/{}/change/".format(location.id)
+                ),
             }
         }
     )

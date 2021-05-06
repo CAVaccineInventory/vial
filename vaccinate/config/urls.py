@@ -96,6 +96,20 @@ urlpatterns = [
             docs="/api/docs#post-apiupdatesourcelocationmatch",
         ),
     ),
+    path(
+        "api/createLocationFromSourceLocation",
+        api_views.create_location_from_source_location,
+    ),
+    path(
+        "api/createLocationFromSourceLocation/debug",
+        api_views.api_debug_view(
+            "api/createLocationFromSourceLocation",
+            use_jwt=False,
+            body_textarea=True,
+            default_body="{}",
+            docs="/api/docs#post-apicreatelocationfromsourcelocation",
+        ),
+    ),
     path("api/startImportRun", api_views.start_import_run),
     path(
         "api/startImportRun/debug",

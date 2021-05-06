@@ -167,7 +167,7 @@ The response from this API currently looks like this:
 }
 ```
 
-Try this API at https://vial-staging.calltheshots.us/api/requestCall/debug
+Try this API: at https://vial-staging.calltheshots.us/api/requestCall/debug
 
 ## GET /api/verifyToken
 
@@ -200,7 +200,7 @@ The response currently looks like this:
 }
 ```
 
-Try this API at https://vial-staging.calltheshots.us/api/callerStats/debug
+Try this API: at https://vial-staging.calltheshots.us/api/callerStats/debug
 
 ## POST /api/importLocations
 
@@ -304,7 +304,7 @@ The existing record will be updated with those altered values.
 
 Make sure you pick import refs that won't be used by anyone else: using a prefix that matches the location you are pulling from is a good idea.
 
-Try this API at https://vial-staging.calltheshots.us/api/importLocations/debug
+Try this API: at https://vial-staging.calltheshots.us/api/importLocations/debug
 
 ## POST /api/updateLocations
 
@@ -367,7 +367,7 @@ The following fields can be updated using this API. All are optional.
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
 
-Try this API at https://vial-staging.calltheshots.us/api/updateLocations/debug
+Try this API: at https://vial-staging.calltheshots.us/api/updateLocations/debug
 
 ## POST /api/updateLocationConcordances
 
@@ -416,7 +416,7 @@ To remove a concordance identifier, use `"remove"` instead of `"add"`:
 ```
 You can pass multiple ID references to both the `"add"` and the `"remove"` action. You can send multiple location IDs to the endpoint at once.
 
-Try this API at https://vial-staging.calltheshots.us/api/updateLocationConcordances/debug
+Try this API: at https://vial-staging.calltheshots.us/api/updateLocationConcordances/debug
 
 ## POST /api/updateSourceLocationMatch
 
@@ -453,13 +453,45 @@ Returns the following:
 }
 ```
 
+Try this API: https://vial-staging.calltheshots.us/api/updateSourceLocationMatch/debug
+
+## POST /api/createLocationFromSourceLocation
+
+Creates a new location record from an available source location, provided that source location has not yet been marked as matching an existing location.
+
+Accepts either an API key or a JWT token for authentication.
+
+POST the following JSON:
+
+```json
+{
+  "source_location": "vaccinespotter_org:206891330",
+}
+```
+
+`source_location` should be a `source_uid`, but can alternatively be an internal database integer ID
+
+Returns the following:
+
+```json
+{
+  "location": {
+    "id": "lxx",
+    "name": "Location 1",
+    "vial_url": "https://vial-staging.calltheshots.us/admin/core/location/1234/change/"
+  }
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/createLocationFromSourceLocation/debug
+
 ## POST /api/importReports
 
 Private API for us to import old reports from Airtable into the VIAL database.
 
 Accepts a JSON array of items from the [airtable-data-backup/backups/Reports.json](https://github.com/CAVaccineInventory/airtable-data-backup/blob/main/backups/Reports.json) file.
 
-Try this API at https://vial-staging.calltheshots.us/api/importReports/debug
+Try this API: https://vial-staging.calltheshots.us/api/importReports/debug
 
 ## GET /api/providerTypes
 
@@ -478,7 +510,7 @@ Example output:
 }
 ```
 
-Try this API at https://vial-staging.calltheshots.us/api/providerTypes
+Try this API: at https://vial-staging.calltheshots.us/api/providerTypes
 
 ## GET /api/locationTypes
 
@@ -513,7 +545,7 @@ Example output:
 }
 ```
 
-Try this API at https://vial-staging.calltheshots.us/api/locationTypes
+Try this API: at https://vial-staging.calltheshots.us/api/locationTypes
 
 ## GET /api/availabilityTags
 
@@ -555,7 +587,7 @@ Example output:
 }
 ```
 
-Try this API at https://vial-staging.calltheshots.us/api/availabilityTags
+Try this API: at https://vial-staging.calltheshots.us/api/availabilityTags
 
 ## GET /api/counties/&lt;state&gt;
 

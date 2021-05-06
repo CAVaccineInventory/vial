@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uuid
 from functools import reduce
 from operator import or_
@@ -1077,6 +1078,22 @@ class SourceLocation(models.Model):
         if self.name:
             bits.extend((" - ", self.name))
         return "".join(bits)
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, id: str) -> SourceLocation:
+        if id.isdigit():
+            kwargs = {"pk": id}
+        else:
+            kwargs = {"source_uid": id}
+        try:
+            obj = cls.objects.get(**kwargs)
+        except cls.DoesNotExist:
+            raise ValueError("SourceLocation '{}' does not exist".format(id))
+        return obj
 
     class Meta:
         db_table = "source_location"
