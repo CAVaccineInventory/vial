@@ -207,6 +207,7 @@ def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
         ("idref=foo:bar", {"Two"}),
         ("source_name=test3", {"Three Matched"}),
         ("source_name=test&source_name=test3", {"One", "Two", "Three Matched"}),
+        ("state=MN", {"Two"}),
     ),
 )
 def test_search_source_locations(
@@ -222,6 +223,7 @@ def test_search_source_locations(
         source_name="test",
         source_uid="test:2",
         name="Two",
+        import_json={"address": {"state": "MN"}},
     )
     two.concordances.add(ConcordanceIdentifier.for_idref("foo:bar"))
     SourceLocation.objects.create(

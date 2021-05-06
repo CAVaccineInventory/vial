@@ -265,6 +265,7 @@ def search_source_locations(
     all = request.GET.get("all")
     unmatched = request.GET.get("unmatched")
     matched = request.GET.get("matched")
+    state = (request.GET.get("state") or "").upper()
     random = request.GET.get("random")
     source_names = request.GET.getlist("source_name")
     ids = request.GET.getlist("id")
@@ -302,6 +303,8 @@ def search_source_locations(
         qs = qs.filter(matched_location=None)
     if matched:
         qs = qs.exclude(matched_location=None)
+    if state:
+        qs = qs.filter(import_json__address__state=state)
     if random:
         qs = qs.order_by("?")
     qs = qs.prefetch_related("concordances")
