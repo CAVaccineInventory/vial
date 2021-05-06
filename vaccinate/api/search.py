@@ -92,10 +92,12 @@ def search_locations(
         )
     qs = location_json_queryset(qs)
 
-    if format not in FORMATS:
+    formats = make_formats(location_json, location_geojson)
+
+    if format not in formats:
         return JsonResponse({"error": "Invalid format"}, status=400)
 
-    formatter = FORMATS[format]
+    formatter = formats[format]
 
     stream_qs = qs[:size]
     if all:
@@ -224,29 +226,30 @@ def location_geojson(location: Location) -> Dict[str, object]:
     }
 
 
-FORMATS = {
-    "json": OutputFormat(
-        start='{"results": [',
-        transform=lambda l: json.dumps(location_json(l)),
-        separator=",",
-        end=lambda qs: '], "total": TOTAL}'.replace("TOTAL", str(qs.count())),
-        content_type="application/json",
-    ),
-    "geojson": OutputFormat(
-        start='{"type": "FeatureCollection", "features": [',
-        transform=lambda l: json.dumps(location_geojson(l)),
-        separator=",",
-        end=lambda qs: "]}",
-        content_type="application/json",
-    ),
-    "nlgeojson": OutputFormat(
-        start="",
-        transform=lambda l: json.dumps(location_geojson(l)),
-        separator="\n",
-        end="",
-        content_type="text/plain",
-    ),
-}
+def make_formats(json_convert, geojson_convert):
+    return {
+        "json": OutputFormat(
+            start='{"results": [',
+            transform=lambda l: json.dumps(json_convert(l)),
+            separator=",",
+            end=lambda qs: '], "total": TOTAL}'.replace("TOTAL", str(qs.count())),
+            content_type="application/json",
+        ),
+        "geojson": OutputFormat(
+            start='{"type": "FeatureCollection", "features": [',
+            transform=lambda l: json.dumps(geojson_convert(l)),
+            separator=",",
+            end=lambda qs: "]}",
+            content_type="application/json",
+        ),
+        "nlgeojson": OutputFormat(
+            start="",
+            transform=lambda l: json.dumps(geojson_convert(l)),
+            separator="\n",
+            end="",
+            content_type="text/plain",
+        ),
+    }
 
 
 @log_api_requests
@@ -259,6 +262,7 @@ FORMATS = {
 def search_source_locations(
     request: HttpRequest, on_request_logged: Callable
 ) -> Union[HttpResponse, StreamingHttpResponse]:
+    format = request.GET.get("format") or "json"
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
     debug = request.GET.get("debug")
@@ -309,46 +313,73 @@ def search_source_locations(
         qs = qs.order_by("?")
     qs = qs.prefetch_related("concordances")
 
-    formatter = OutputFormat(
-        start='{"results": [',
-        transform=lambda source_location: json.dumps(
-            {
-                "id": source_location.id,
-                "source_uid": source_location.source_uid,
-                "source_name": source_location.source_name,
-                "name": source_location.name,
-                "latitude": float(source_location.latitude)
-                if source_location.latitude
-                else None,
-                "longitude": float(source_location.longitude)
-                if source_location.longitude
-                else None,
-                "import_json": source_location.import_json,
-                "matched_location": {
-                    "id": source_location.matched_location.public_id,
-                    "name": source_location.matched_location.name,
-                    "vial_url": request.build_absolute_uri(
-                        "/admin/core/location/{}/change/".format(
-                            source_location.matched_location.id
-                        )
-                    ),
-                }
-                if source_location.matched_location
-                else None,
-                "created_at": source_location.created_at.isoformat(),
-                "last_imported_at": source_location.last_imported_at.isoformat()
-                if source_location.last_imported_at
-                else None,
-                "concordances": [str(c) for c in source_location.concordances.all()],
+    if format == "map":
+        get = request.GET.copy()
+        get["format"] = "geojson"
+        if "debug" in get:
+            del get["debug"]
+        return render(
+            request, "api/search_locations_map.html", {"query_string": get.urlencode()}
+        )
+
+    def source_location_geojson(source_location: SourceLocation) -> Dict[str, object]:
+        properties = source_location_json(source_location)
+        return {
+            "type": "Feature",
+            "properties": properties,
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    float(source_location.longitude)
+                    if source_location.longitude is not None
+                    else None,
+                    float(source_location.latitude)
+                    if source_location.latitude is not None
+                    else None,
+                ],
+            },
+        }
+
+    def source_location_json(source_location: SourceLocation) -> Dict[str, object]:
+        return {
+            "id": source_location.id,
+            "source_uid": source_location.source_uid,
+            "source_name": source_location.source_name,
+            "name": source_location.name,
+            "latitude": float(source_location.latitude)
+            if source_location.latitude
+            else None,
+            "longitude": float(source_location.longitude)
+            if source_location.longitude
+            else None,
+            "import_json": source_location.import_json,
+            "matched_location": {
+                "id": source_location.matched_location.public_id,
+                "name": source_location.matched_location.name,
                 "vial_url": request.build_absolute_uri(
-                    "/admin/core/sourcelocation/{}/change/".format(source_location.id)
+                    "/admin/core/location/{}/change/".format(
+                        source_location.matched_location.id
+                    )
                 ),
             }
-        ),
-        separator=",",
-        end=lambda qs: '], "total": TOTAL}'.replace("TOTAL", str(qs.count())),
-        content_type="application/json",
-    )
+            if source_location.matched_location
+            else None,
+            "created_at": source_location.created_at.isoformat(),
+            "last_imported_at": source_location.last_imported_at.isoformat()
+            if source_location.last_imported_at
+            else None,
+            "concordances": [str(c) for c in source_location.concordances.all()],
+            "vial_url": request.build_absolute_uri(
+                "/admin/core/sourcelocation/{}/change/".format(source_location.id)
+            ),
+        }
+
+    formats = make_formats(source_location_json, source_location_geojson)
+
+    if format not in formats:
+        return JsonResponse({"error": "Invalid format"}, status=400)
+
+    formatter = formats[format]
 
     stream_qs = qs[:size]
     if all:

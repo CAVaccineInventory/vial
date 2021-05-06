@@ -1,4 +1,5 @@
 import json
+import re
 
 import pytest
 from core.models import ConcordanceIdentifier, Location, SourceLocation, State
@@ -217,12 +218,16 @@ def test_search_source_locations(
         source_name="test",
         source_uid="test:1",
         name="One",
+        latitude=37.5,
+        longitude=-122.4,
     ).pk
     query_string = query_string.replace("ID_OF_ONE", str(id_of_one))
     two = SourceLocation.objects.create(
         source_name="test",
         source_uid="test:2",
         name="Two",
+        latitude=37.5,
+        longitude=-122.4,
         import_json={"address": {"state": "MN"}},
     )
     two.concordances.add(ConcordanceIdentifier.for_idref("foo:bar"))
@@ -231,6 +236,8 @@ def test_search_source_locations(
         source_uid="test3:3",
         name="Three Matched",
         matched_location=ten_locations[0],
+        latitude=37.5,
+        longitude=-122.4,
     )
     data = search_source_locations(client, api_key, query_string)
     assert data["total"] == len(expected_names)
@@ -245,8 +252,78 @@ def test_search_source_locations_all(client, api_key):
             source_name="test",
             source_uid="test:{}".format(i),
             name=str(i),
+            latitude=37.5,
+            longitude=-122.4,
         )
         expected_source_uids.add("test:{}".format(i))
     data = search_source_locations(client, api_key, "all=1")
     assert data["total"] == 1001
     assert {result["source_uid"] for result in data["results"]} == expected_source_uids
+
+
+@pytest.mark.parametrize(
+    "format,expected",
+    (
+        # expected can use '***' for wildcards
+        (
+            "json",
+            '{"results": [{"id": ***, "source_uid": "test:formatted", '
+            '"source_name": "test", "name": "Formatted", '
+            '"latitude": 37.5, "longitude": -122.5, "import_json": '
+            '{"foo": "bar"}, "matched_location": null, "created_at": '
+            '"***", "last_imported_at": null, "concordances": [], '
+            '"vial_url": "http://testserver/admin/core/sourcelocation/***/change/"}], '
+            '"total": 1}',
+        ),
+        (
+            "geojson",
+            '{"type": "FeatureCollection", "features": [{"type": "Feature", '
+            '"properties": {"id": ***, "source_uid": "test:formatted", '
+            '"source_name": "test", "name": "Formatted", "latitude": 37.5, '
+            '"longitude": -122.5, "import_json": {"foo": "bar"}, '
+            '"matched_location": null, "created_at": "***", '
+            '"last_imported_at": null, "concordances": [], '
+            '"vial_url": "http://testserver/admin/core/sourcelocation/***/change/"}, '
+            '"geometry": {"type": "Point", "coordinates": [-122.5, 37.5]}}]}',
+        ),
+        (
+            "nlgeojson",
+            '{"type": "Feature", "properties": {"id": ***, "source_uid": '
+            '"test:formatted", "source_name": "test", "name": '
+            '"Formatted", "latitude": 37.5, "longitude": -122.5, '
+            '"import_json": {"foo": "bar"}, "matched_location": null, '
+            '"created_at": "***", '
+            '"last_imported_at": null, "concordances": [], '
+            '"vial_url": "http://testserver/admin/core/sourcelocation/***/change/"}, "geometry": {"type": "Point", "coordinates": [-122.5, 37.5]}}',
+        ),
+    ),
+)
+def test_search_source_locations_format(client, api_key, format, expected):
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:formatted",
+        name="Formatted",
+        latitude=37.5,
+        longitude=-122.5,
+        import_json={"foo": "bar"},
+    )
+    response = client.get(
+        "/api/searchSourceLocations?id=test:formatted&format={}".format(format),
+        HTTP_AUTHORIZATION=f"Bearer {api_key}",
+    )
+    if hasattr(response, "streaming_content"):
+        content = b"".join(response.streaming_content)
+    else:
+        content = response.content
+    content = content.decode("utf-8")
+    assert_wildcard_match(content, expected)
+
+
+def assert_wildcard_match(value, expected_with_wildcards):
+    # Matches value but converts *** in expected_with_wildcards into .*
+    bits = expected_with_wildcards.split("***")
+    bits_re = [re.escape(bit) for bit in bits]
+    regex = re.compile("^" + ".*?".join(bits_re) + "$")
+    assert regex.match(value), "'{}' does not match '{}'".format(
+        value, expected_with_wildcards
+    )
