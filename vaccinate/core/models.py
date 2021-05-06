@@ -269,7 +269,9 @@ class Location(gis_models.Model):
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
     latitude = models.DecimalField(max_digits=9, decimal_places=5)
     longitude = models.DecimalField(max_digits=9, decimal_places=5)
-    point = gis_models.PointField(blank=True, null=True, spatial_index=True)
+    point = gis_models.PointField(
+        geography=True, blank=True, null=True, spatial_index=True
+    )
     soft_deleted = models.BooleanField(
         default=False,
         help_text="we never delete rows from this table; all deletes are soft",
@@ -356,6 +358,22 @@ class Location(gis_models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, id: str) -> Location:
+        if str(id).isdigit():
+            kwargs = {"pk": id}
+        else:
+            kwargs = {"public_id": id}
+        try:
+            obj = cls.objects.get(**kwargs)
+        except cls.DoesNotExist:
+            raise ValueError("Location '{}' does not exist".format(id))
+        return obj
 
     class Meta:
         db_table = "location"
@@ -1036,7 +1054,7 @@ class PublishedReport(models.Model):
         db_table = "published_report"
 
 
-class SourceLocation(models.Model):
+class SourceLocation(gis_models.Model):
     "Source locations are unmodified records imported from other sources"
     import_run = models.ForeignKey(
         ImportRun,
@@ -1057,6 +1075,9 @@ class SourceLocation(models.Model):
     longitude = models.DecimalField(
         max_digits=9, decimal_places=5, null=True, blank=True
     )
+    point = gis_models.GeometryField(
+        geography=True, blank=True, null=True, spatial_index=True
+    )
     import_json = models.JSONField(
         null=True,
         blank=True,
@@ -1074,6 +1095,13 @@ class SourceLocation(models.Model):
         blank=True, null=True, help_text="When this source location was last imported"
     )
 
+    def save(self, *args, **kwargs):
+        if self.longitude and self.latitude:
+            self.point = Point(float(self.longitude), float(self.latitude), srid=4326)
+        else:
+            self.point = None
+        super().save(*args, **kwargs)
+
     def __str__(self):
         bits = [self.source_uid]
         if self.name:
@@ -1086,7 +1114,7 @@ class SourceLocation(models.Model):
 
     @classmethod
     def pydantic_convert(cls, id: str) -> SourceLocation:
-        if id.isdigit():
+        if str(id).isdigit():
             kwargs = {"pk": id}
         else:
             kwargs = {"source_uid": id}

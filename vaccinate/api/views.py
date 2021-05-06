@@ -688,30 +688,8 @@ def location_concordances(request, public_id):
 
 
 class UpdateSourceLocationMatchValidator(BaseModel):
-    source_location: str
-    location: str
-
-    @validator("source_location")
-    def source_location_must_exist(cls, value):
-        if value.isdigit():
-            kwargs = {"pk": value}
-        else:
-            kwargs = {"source_uid": value}
-        try:
-            return SourceLocation.objects.get(**kwargs)
-        except SourceLocation.DoesNotExist:
-            raise ValueError("Source Location '{}' does not exist".format(value))
-
-    @validator("location")
-    def location_must_exist(cls, value):
-        if value.isdigit():
-            kwargs = {"pk": value}
-        else:
-            kwargs = {"public_id": value}
-        try:
-            return Location.objects.get(**kwargs)
-        except Location.DoesNotExist:
-            raise ValueError("Location '{}' does not exist".format(value))
+    source_location: SourceLocation
+    location: Location
 
 
 @log_api_requests
@@ -738,10 +716,10 @@ def update_source_location_match(
     source_location = data.source_location
     location = data.location
 
-    old_matched_location = source_location.matched_location  # type:ignore[attr-defined]
+    old_matched_location = source_location.matched_location
 
-    source_location.matched_location = location  # type:ignore[attr-defined]
-    source_location.save()  # type:ignore[attr-defined]
+    source_location.matched_location = location
+    source_location.save()
 
     # Record the history record
     kwargs = {

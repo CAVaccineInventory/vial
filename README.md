@@ -148,3 +148,34 @@ You can set the `DJANGO_DEBUG_LOG_ALL_SQL=1` environment variable to log all SQL
     DJANGO_DEBUG_LOG_ALL_SQL=1 ./manage.py migrate
 
 [1]: docs/env-setup-faq.md
+
+## Django SQL Dashboard
+
+https://vial.calltheshots.us/dashboard/ and https://vial-staging.calltheshots.us/dashboard/ offer an interface for running read-only SQL queries against our database and bookmarking the results.
+
+You can create saved dashboards at https://vial.calltheshots.us/admin/django_sql_dashboard/dashboard/ - these will then be available at URLs like https://vial.calltheshots.us/dashboard/closest-locations/
+
+Only a specific list of tables are available through that interface. To make a new table available follow these instructions:
+
+1. Make sure you're auth'd at the command line as someone who can connect to the database; you may need to bootstrap to a service account; the process there is:
+   ```
+   # Fetch a key
+   gcloud iam service-accounts keys create ./staging-key.json --iam-account staging@django-vaccinateca.iam.gserviceaccount.com
+   # Enable it:
+   gcloud auth activate-service-account --key-file=./staging-key.json
+   ```
+2. [Download](https://cloud.google.com/sql/docs/mysql/connect-admin-proxy#install) and start the cloud SQL proxy:
+   ```
+   ./cloud_sql_proxy -instances=django-vaccinateca:us-west2:staging=tcp:5432
+   ```
+3. Look up [the `django-staging-env` secret in Secret Manager](https://console.cloud.google.com/security/secret-manager/secret/django-staging-env/versions?project=django-vaccinateca), click the triple-dots, and show the current value; pull out the secret for the `vaccinate` user from the `DATABASE_URL` line.
+4. Connect with that password:
+   ```
+   psql -U vaccinate -h localhost -p 5432 vaccinate
+   ```
+5. Grant the rights:
+   ```
+   grant select on public.api_apikey, public.api_log, public.django_migrations, public.reversion_revision, public.reversion_version to "read-only-core-tables"
+   ```
+
+...then repeat that for production.
