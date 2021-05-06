@@ -29,7 +29,6 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
-from timezonefinder import TimezoneFinder
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
 from .utils import (
@@ -244,7 +243,7 @@ def import_source_locations(request, on_request_logged):
     try:
         post_data = request.body.decode("utf-8")
         lines = post_data.split("\n")
-        json_records = [json.loads(l) for l in lines if l.strip()]
+        json_records = [json.loads(line) for line in lines if line.strip()]
     except ValueError as e:
         return JsonResponse({"error": "JSON error: " + str(e)}, status=400)
     # Validate those JSON records
