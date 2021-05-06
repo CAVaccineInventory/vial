@@ -131,6 +131,7 @@ class SourceLocationAdmin(admin.ModelAdmin):
         "last_imported_at",
     )
     readonly_fields = ("concordances_summary",)
+    raw_id_fields = ("matched_location",)
 
     def has_add_permission(self, request, obj=None):
         return False
