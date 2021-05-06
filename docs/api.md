@@ -4,11 +4,15 @@ The goal is to update this documentation as part of any commit that modifies how
   
 The base URL for every API is https://vial-staging.calltheshots.us/
 
-## GET /admin/edit-location/&lt;public_id&gt;/
+## VIAL admin utilities
+
+### GET /admin/edit-location/&lt;public_id&gt;/
 
 Not a JSON API, but this is a convenient way to link to the edit page for a specific location. You can contruct this URL with the public ID of the location and VIAL will redirect the authenticated user to the corresponding edit interface for that location.
 
-## GET /api/searchLocations
+## Search APIs
+
+### GET /api/searchLocations
 
 Under active development at the moment. This lets you search all of our locations, excluding those that have been soft-deleted.
 
@@ -32,7 +36,9 @@ The following output formats are supported:
 
 You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.
 
-## POST /api/submitReport
+## APIs used by our Scooby caller app
+
+### POST /api/submitReport
   
 This API records a new "report" in our database. A report is when someone checks with a vaccination location - usually by calling them - to find out their current status.
   
@@ -72,7 +78,7 @@ Here is an example submission:
     "Internal Notes": ""
 }
 ```
-### Availability tags
+#### Availability tags
 
 For backwards compatibility with the existing application, there is some degree of flexibility in accepting availability tags.
 
@@ -82,7 +88,7 @@ You can alternatively use the tag's full name, or one of the names contained in 
 
 A list of valid tags with their slugs, names and previous_names can be found at https://vial-staging.calltheshots.us/api/availabilityTags
 
-### Skip requests
+#### Skip requests
 
 If a `Do not call until` timestamp is provided _and_ one of the availability tags is "Call back later"/"Skip: call back later",
 a new call request is enqueued with a vesting time equal to the `Do not call until` timestamp.
@@ -99,7 +105,7 @@ An example of one of these requests:
 }
 ```
 
-### Return value
+#### Return value
 
 The API returns an indication that the record has been created, including the newly created record's public ID.
 
@@ -110,11 +116,11 @@ The API returns an indication that the record has been created, including the ne
 ```
 It currently returns other debugging data (as exposed in the API explorer) but you should ignore this - it's there for debugging and is likely to be removed soon.
 
-### Debug mode
+#### Debug mode
 
 A tool for exercising this API is available at https://vial-staging.calltheshots.us/api/submitReport/debug - if you have previously signed into the tool at https://vial-staging.calltheshots.us/ the interface will be pre-populated with a valid JWT token. If that token has expired you can get a new one by signing in and out again.
 
-## POST /api/requestCall
+### POST /api/requestCall
 
 Request a new location to call. This record will pick the request from the call queue with the highest priority and "lock" that record for twenty minutes, assigning it to your authenticated user.
 
@@ -167,9 +173,9 @@ The response from this API currently looks like this:
 }
 ```
 
-Try this API: at https://vial-staging.calltheshots.us/api/requestCall/debug
+Try this API: https://vial-staging.calltheshots.us/api/requestCall/debug
 
-## GET /api/verifyToken
+### GET /api/verifyToken
 
 Private API for testing our own API tokens (not the JWTs). Send an API key as the `Authorization: Bearer API-KEY-GOES-HERE` HTTP header.
 
@@ -183,7 +189,7 @@ Returns status 302 and an `{"error": "message"}` if the API key is invalid, othe
 }
 ```
 
-## POST /api/callerStats
+### POST /api/callerStats
 
 Returns stats for the authenticated user.
 
@@ -200,9 +206,43 @@ The response currently looks like this:
 }
 ```
 
-Try this API: at https://vial-staging.calltheshots.us/api/callerStats/debug
+Try this API: https://vial-staging.calltheshots.us/api/callerStats/debug
 
-## POST /api/importLocations
+## APIs used for getting data into VIAL
+
+### POST /api/startImportRun
+
+POST an empty body to this at the beginning of a source location import run to get an import ID, needed for the calls to `/api/importSourceLocations` in order to tie everything together.
+
+Returns the following JSON:
+
+```json
+{
+    "import_run_id": 2
+}
+```
+
+Try it: https://vial-staging.calltheshots.us/api/startImportRun/debug
+
+
+### POST /api/importSourceLocations?import_run_id=X
+
+POST this a newline-delimited list of JSON objects. The `?import_run_id` parameter must be the ID of an import run you have previously created using `POST /api/startImportRun`.
+
+Each newline-delimited JSON object should have the following shape:
+
+- `source_uid` - the ID within that other source, UUID etc or whatever they have - it’s globally unique and it includes a prefix (a copy of the source_name)
+- `source_name` - text name of the source (e.g. `vaccinespotter`)
+- `name` - optional name of the location
+- `latitude` - optional latitude
+- `longitude` - optional longitude
+- `import_json` - the big bag of JSON (required)
+
+Returns a 400 error on errors, a 200 on success.
+
+Try it: https://vial-staging.calltheshots.us/api/importSourceLocations/debug
+
+### POST /api/importLocations
 
 Private API for us to import new locations into the database - or update existing locations.
 
@@ -270,7 +310,7 @@ The `provider_name` will be used to either create a new provider or associate yo
 
 If you provide the `import_json` dictionary it should be the original, raw JSON data that your importer script is working against. This will be stored in the `import_json` column in the locations table, and can later be used for debugging purposes.
 
-### Using import_ref to import and later update locations
+#### Using import_ref to import and later update locations
 
 If you are importing locations from another source that may provide updated data in the future, you can use the `import_ref` key to specify a unique import reference for the record.
 
@@ -304,9 +344,9 @@ The existing record will be updated with those altered values.
 
 Make sure you pick import refs that won't be used by anyone else: using a prefix that matches the location you are pulling from is a good idea.
 
-Try this API: at https://vial-staging.calltheshots.us/api/importLocations/debug
+Try this API: https://vial-staging.calltheshots.us/api/importLocations/debug
 
-## POST /api/updateLocations
+### POST /api/updateLocations
 
 This API can be used to update fields on one or more locations. The POSTed JSON looks like this:
 
@@ -367,9 +407,9 @@ The following fields can be updated using this API. All are optional.
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
 
-Try this API: at https://vial-staging.calltheshots.us/api/updateLocations/debug
+Try this API: https://vial-staging.calltheshots.us/api/updateLocations/debug
 
-## POST /api/updateLocationConcordances
+### POST /api/updateLocationConcordances
 
 Bulk API for adding and removing concordances (IDs from other systems) to our locations.
 
@@ -416,9 +456,9 @@ To remove a concordance identifier, use `"remove"` instead of `"add"`:
 ```
 You can pass multiple ID references to both the `"add"` and the `"remove"` action. You can send multiple location IDs to the endpoint at once.
 
-Try this API: at https://vial-staging.calltheshots.us/api/updateLocationConcordances/debug
+Try this API: https://vial-staging.calltheshots.us/api/updateLocationConcordances/debug
 
-## POST /api/updateSourceLocationMatch
+### POST /api/updateSourceLocationMatch
 
 API for updating a specifiec source location to mark it as being a confirmed match for a specific location. This modifies the `source_location` table to update the `matched_location_id` column, and records a history record with the old and new values in the `source_location_match_history` table.
 
@@ -455,7 +495,7 @@ Returns the following:
 
 Try this API: https://vial-staging.calltheshots.us/api/updateSourceLocationMatch/debug
 
-## POST /api/createLocationFromSourceLocation
+### POST /api/createLocationFromSourceLocation
 
 Creates a new location record from an available source location, provided that source location has not yet been marked as matching an existing location.
 
@@ -485,7 +525,7 @@ Returns the following:
 
 Try this API: https://vial-staging.calltheshots.us/api/createLocationFromSourceLocation/debug
 
-## POST /api/importReports
+### POST /api/importReports
 
 Private API for us to import old reports from Airtable into the VIAL database.
 
@@ -493,7 +533,25 @@ Accepts a JSON array of items from the [airtable-data-backup/backups/Reports.jso
 
 Try this API: https://vial-staging.calltheshots.us/api/importReports/debug
 
-## GET /api/providerTypes
+## Miscellaneous read-only data APIs
+
+### GET /api/location/PUBLIC_ID/concordances
+
+Retrieve the concordances (external identifiers) for a specific location.
+
+Example output:
+```json
+{
+    "concordances": [
+        "google_places:ChIJh1Vp2AhS2YAReWQls7L8uKY",
+        "vaccinespotter:798382",
+        "vaccinefinder:bdae81b3-d682-405a-b66e-50052e4a140a"
+    ]
+}
+```
+Try this API: https://vial-staging.calltheshots.us/api/location/rec1wYYRF8RLX9B9y/concordances
+
+### GET /api/providerTypes
 
 Unauthenticated. Returns a `"provider_types"` key containing a JSON array of names of valid provider types, e.g. `Pharmacy`.
 
@@ -510,9 +568,9 @@ Example output:
 }
 ```
 
-Try this API: at https://vial-staging.calltheshots.us/api/providerTypes
+Try this API: https://vial-staging.calltheshots.us/api/providerTypes
 
-## GET /api/locationTypes
+### GET /api/locationTypes
 
 Unauthenticated. Returns a `"location_types"` key containing a JSON array of names of valid location types, e.g. `Pharmacy`.
 
@@ -545,9 +603,9 @@ Example output:
 }
 ```
 
-Try this API: at https://vial-staging.calltheshots.us/api/locationTypes
+Try this API: https://vial-staging.calltheshots.us/api/locationTypes
 
-## GET /api/availabilityTags
+### GET /api/availabilityTags
 
 Unauthenticated. Returns a `"availability_tags"` key containing a JSON array of availability tags.
 
@@ -587,9 +645,9 @@ Example output:
 }
 ```
 
-Try this API: at https://vial-staging.calltheshots.us/api/availabilityTags
+Try this API: https://vial-staging.calltheshots.us/api/availabilityTags
 
-## GET /api/counties/&lt;state&gt;
+### GET /api/counties/&lt;state&gt;
 
 Unauthenticated. Returns a list of counties for the two-letter state code.
 
@@ -629,18 +687,20 @@ Examples:
 - https://vial-staging.calltheshots.us/api/counties/OR
 - https://vial-staging.calltheshots.us/api/counties/RI
 
-## POST /api/exportMapbox
+## APIs for exporting data
+
+### POST /api/exportMapbox
 
 Uploads the location JSON to Mapbox.
 
-## GET /api/exportMapboxPreview
+### GET /api/exportMapboxPreview
 
 Preview the JSON that we generate for Mapbox. This returns 20 recent locations by default, or use one or more `?id=public_id` parameters to see specific locations.
 
 - https://vial-staging.calltheshots.us/api/exportMapboxPreview
 - https://vial-staging.calltheshots.us/api/exportMapboxPreview?id=recgP5RSXunz1yrwm
 
-## GET /api/exportPreview/Locations.json
+### GET /api/exportPreview/Locations.json
 
 Debugging endpoint showing a preview of the `Locations.json` feed generated by VIAL.
 
@@ -648,58 +708,10 @@ Defaults to returning 10 locations. You can also feed it multiple `?id=recxxx` p
 
 Try it: https://vial-staging.calltheshots.us/api/exportPreview/Locations.json
 
-## GET /api/exportPreview/Providers.json
+### GET /api/exportPreview/Providers.json
 
 Debugging endpoint showing a preview of the `Providers.json` feed generated by VIAL.
 
 Defaults to returning 10 providers. You can also feed it multiple `?id=recxxx` public location IDs to see those specific provider representations.
 
 Try it: https://vial-staging.calltheshots.us/api/exportPreview/Providers.json
-
-## POST /api/startImportRun
-
-POST an empty body to this at the beginning of a source location import run to get an import ID, needed for the calls to `/api/importSourceLocations` in order to tie everything together.
-
-Returns the following JSON:
-
-```json
-{
-    "import_run_id": 2
-}
-```
-
-Try it: https://vial-staging.calltheshots.us/api/startImportRun/debug
-
-
-## POST /api/importSourceLocations?import_run_id=X
-
-POST this a newline-delimited list of JSON objects. The `?import_run_id` parameter must be the ID of an import run you have previously created using `POST /api/startImportRun`.
-
-Each newline-delimited JSON object should have the following shape:
-
-- `source_uid` - the ID within that other source, UUID etc or whatever they have - it’s globally unique and it includes a prefix (a copy of the source_name)
-- `source_name` - text name of the source (e.g. `vaccinespotter`)
-- `name` - optional name of the location
-- `latitude` - optional latitude
-- `longitude` - optional longitude
-- `import_json` - the big bag of JSON (required)
-
-Returns a 400 error on errors, a 200 on success.
-
-Try it: https://vial-staging.calltheshots.us/api/importSourceLocations/debug
-
-## GET /api/location/PUBLIC_ID/concordances
-
-Retrieve the concordances (external identifiers) for a specific location.
-
-Example output:
-```json
-{
-    "concordances": [
-        "google_places:ChIJh1Vp2AhS2YAReWQls7L8uKY",
-        "vaccinespotter:798382",
-        "vaccinefinder:bdae81b3-d682-405a-b66e-50052e4a140a"
-    ]
-}
-```
-https://vial-staging.calltheshots.us/api/location/rec1wYYRF8RLX9B9y/concordances
