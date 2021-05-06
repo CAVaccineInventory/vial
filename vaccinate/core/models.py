@@ -357,6 +357,22 @@ class Location(gis_models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, id: str) -> Location:
+        if str(id).isdigit():
+            kwargs = {"pk": id}
+        else:
+            kwargs = {"public_id": id}
+        try:
+            obj = cls.objects.get(**kwargs)
+        except cls.DoesNotExist:
+            raise ValueError("Location '{}' does not exist".format(id))
+        return obj
+
     class Meta:
         db_table = "location"
         permissions = [
@@ -1086,7 +1102,7 @@ class SourceLocation(models.Model):
 
     @classmethod
     def pydantic_convert(cls, id: str) -> SourceLocation:
-        if id.isdigit():
+        if str(id).isdigit():
             kwargs = {"pk": id}
         else:
             kwargs = {"source_uid": id}
