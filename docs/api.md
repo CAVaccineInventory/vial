@@ -14,7 +14,7 @@ Not a JSON API, but this is a convenient way to link to the edit page for a spec
 
 ### GET /api/searchLocations
 
-Under active development at the moment. This lets you search all of our locations, excluding those that have been soft-deleted.
+Search all of our locations, excluding those that have been soft-deleted.
 
 Optional query string parameters:
 
@@ -35,6 +35,31 @@ The following output formats are supported:
 - `map` - a basic Leaflet map that renders that GeoJSON. [Example map](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=map)
 
 You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.
+
+### GET /api/searchSourceLocations
+
+Source locations are "raw" location data that has been imported into VIAL by one of our data ingestion flows. We do not expose these to end-users - we instead use them as part of our internal processes for identifying new vaccination sources and turning those into public locations.
+
+Optional query string parameters:
+
+- `q=` - a term to search for in the `name` field.
+- `size=` - the number of results to return, up to 1000.
+- `id=` - an ID for one of our source location records, can be passed multiple times. This accepts both numeric database IDs and `source_uid` values.
+- `location_id=` - a public ID for one of our locations - this will return any source locations that have been marked as matching that location.
+- `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers.
+- `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every source location in our database!
+- `unmatched=1` - returns only source locations that have not yet been matched with a location.
+- `matched=1` - returns only source locations that HAVE been matched with a location.
+- `random=1` - return results in a random order.
+
+As with `/api/searchLocations` you can add `debug=1` to the URL if you are working with the Django Debug Toolbar.
+
+Some examples:
+
+- https://vial-staging.calltheshots.us/api/searchSourceLocations
+- https://vial-staging.calltheshots.us/api/searchSourceLocations?q=walgreens
+- https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1
+- https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1&random=1
 
 ## APIs used by our Scooby caller app
 
