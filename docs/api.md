@@ -53,6 +53,7 @@ Optional query string parameters:
 - `unmatched=1` - returns only source locations that have not yet been matched with a location.
 - `matched=1` - returns only source locations that HAVE been matched with a location.
 - `random=1` - return results in a random order.
+- `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`
 - `format=` - same options as `/api/searchLocations`: `json`, `geojson`, `nlgeojson`, `map`.
 
 As with `/api/searchLocations` you can add `debug=1` to the URL if you are working with the Django Debug Toolbar.

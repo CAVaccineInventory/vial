@@ -209,6 +209,7 @@ def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
         ("source_name=test3", {"Three Matched"}),
         ("source_name=test&source_name=test3", {"One", "Two", "Three Matched"}),
         ("state=MN", {"Two"}),
+        ("latitude=37.5&longitude=-122.4&radius=100", {"One"}),
     ),
 )
 def test_search_source_locations(
@@ -226,7 +227,7 @@ def test_search_source_locations(
         source_name="test",
         source_uid="test:2",
         name="Two",
-        latitude=37.5,
+        latitude=38.5,
         longitude=-122.4,
         import_json={"address": {"state": "MN"}},
     )
@@ -236,7 +237,7 @@ def test_search_source_locations(
         source_uid="test3:3",
         name="Three Matched",
         matched_location=ten_locations[0],
-        latitude=37.5,
+        latitude=38.5,
         longitude=-122.4,
     )
     data = search_source_locations(client, api_key, query_string)

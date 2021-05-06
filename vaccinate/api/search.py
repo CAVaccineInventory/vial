@@ -75,7 +75,7 @@ def search_locations(
                     {"error": "latitude/longitude/radius should be numbers"}, status=400
                 )
         qs = qs.filter(
-            point__distance_lt=(
+            point__dwithin=(
                 Point(float(longitude), float(latitude)),
                 Distance(m=float(radius)),
             )
@@ -275,6 +275,9 @@ def search_source_locations(
     ids = request.GET.getlist("id")
     location_ids = request.GET.getlist("location_id")
     idrefs = request.GET.getlist("idref")
+    latitude = request.GET.get("latitude")
+    longitude = request.GET.get("longitude")
+    radius = request.GET.get("radius")
 
     if all and random:
         return JsonResponse({"error": "Cannot use both all and random"}, status=400)
@@ -309,6 +312,20 @@ def search_source_locations(
         qs = qs.exclude(matched_location=None)
     if state:
         qs = qs.filter(import_json__address__state=state)
+    if latitude and longitude and radius:
+        for value in (latitude, longitude, radius):
+            try:
+                float(value)
+            except ValueError:
+                return JsonResponse(
+                    {"error": "latitude/longitude/radius should be numbers"}, status=400
+                )
+        qs = qs.filter(
+            point__dwithin=(
+                Point(float(longitude), float(latitude)),
+                Distance(m=float(radius)),
+            )
+        )
     if random:
         qs = qs.order_by("?")
     qs = qs.prefetch_related("concordances")

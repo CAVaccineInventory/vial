@@ -9,7 +9,7 @@ import beeline
 import pytz
 from django.conf import settings
 from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, geometry
 from django.db import models
 from django.db.models import Max, Q
 from django.db.models.signals import m2m_changed
@@ -269,7 +269,9 @@ class Location(gis_models.Model):
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
     latitude = models.DecimalField(max_digits=9, decimal_places=5)
     longitude = models.DecimalField(max_digits=9, decimal_places=5)
-    point = gis_models.PointField(blank=True, null=True, spatial_index=True)
+    point = gis_models.PointField(
+        geography=True, blank=True, null=True, spatial_index=True
+    )
     soft_deleted = models.BooleanField(
         default=False,
         help_text="we never delete rows from this table; all deletes are soft",
@@ -1073,7 +1075,9 @@ class SourceLocation(gis_models.Model):
     longitude = models.DecimalField(
         max_digits=9, decimal_places=5, null=True, blank=True
     )
-    point = gis_models.PointField(blank=True, null=True, spatial_index=True)
+    point = gis_models.GeometryField(
+        geography=True, blank=True, null=True, spatial_index=True
+    )
     import_json = models.JSONField(
         null=True,
         blank=True,
