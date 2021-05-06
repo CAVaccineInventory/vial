@@ -1038,8 +1038,8 @@ types-python-dateutil==0.1.2 \
 types-pytz==0.1.0 \
     --hash=sha256:82b3b8cfeb1496cb856cbb7fd514ad21f70e1b2dc765cba42f55bb2927375c8e
     # via -r requirements.in
-types-requests==0.1.6 \
-    --hash=sha256:12b3d771c7cf51905dbf6d8ad4f0b77800a8f444c56623fe1e17a1c508626a2d
+types-requests==0.1.7 \
+    --hash=sha256:f54176305179bb927c0c9e69da9e0ba66ac133a2c3f4508f9d0a702d5481ef58
     # via -r requirements.in
 typing-extensions==3.7.4.3 \
     --hash=sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918 \
