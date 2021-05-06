@@ -52,6 +52,7 @@ Optional query string parameters:
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every source location in our database!
 - `unmatched=1` - returns only source locations that have not yet been matched with a location.
 - `matched=1` - returns only source locations that HAVE been matched with a location.
+- `haspoint=1` - only return locations that have a latitude and longitude
 - `random=1` - return results in a random order.
 - `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`
 - `format=` - same options as `/api/searchLocations`: `json`, `geojson`, `nlgeojson`, `map`.

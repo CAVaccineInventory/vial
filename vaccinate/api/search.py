@@ -270,6 +270,7 @@ def search_source_locations(
     unmatched = request.GET.get("unmatched")
     matched = request.GET.get("matched")
     state = (request.GET.get("state") or "").upper()
+    haspoint = request.GET.get("haspoint")
     random = request.GET.get("random")
     source_names = request.GET.getlist("source_name")
     ids = request.GET.getlist("id")
@@ -312,6 +313,8 @@ def search_source_locations(
         qs = qs.exclude(matched_location=None)
     if state:
         qs = qs.filter(import_json__address__state=state)
+    if haspoint:
+        qs = qs.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
     if latitude and longitude and radius:
         for value in (latitude, longitude, radius):
             try:

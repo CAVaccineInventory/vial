@@ -210,6 +210,7 @@ def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
         ("source_name=test&source_name=test3", {"One", "Two", "Three Matched"}),
         ("state=MN", {"Two"}),
         ("latitude=37.5&longitude=-122.4&radius=100", {"One"}),
+        ("haspoint=1", {"One", "Two"}),
     ),
 )
 def test_search_source_locations(
@@ -237,8 +238,8 @@ def test_search_source_locations(
         source_uid="test3:3",
         name="Three Matched",
         matched_location=ten_locations[0],
-        latitude=38.5,
-        longitude=-122.4,
+        latitude=None,
+        longitude=None,
     )
     data = search_source_locations(client, api_key, query_string)
     assert data["total"] == len(expected_names)
