@@ -226,3 +226,18 @@ def test_search_source_locations(
     data = search_source_locations(client, api_key, query_string)
     assert data["total"] == len(expected_names)
     assert {result["name"] for result in data["results"]} == expected_names
+
+
+def test_search_source_locations_all(client, api_key):
+    # Create 1001 source locations and check they are returned
+    expected_source_uids = set()
+    for i in range(1, 1002):
+        SourceLocation.objects.create(
+            source_name="test",
+            source_uid="test:{}".format(i),
+            name=str(i),
+        )
+        expected_source_uids.add("test:{}".format(i))
+    data = search_source_locations(client, api_key, "all=1")
+    assert data["total"] == 1001
+    assert {result["source_uid"] for result in data["results"]} == expected_source_uids

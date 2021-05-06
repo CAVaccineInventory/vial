@@ -1,7 +1,7 @@
 import json
 from collections import namedtuple
 from html import escape
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 import beeline
 from core.models import ConcordanceIdentifier, Location, SourceLocation, State
@@ -100,29 +100,9 @@ def search_locations(
     if all:
         stream_qs = keyset_pagination_iterator(qs)
 
-    trace_id = None
-    parent_id = None
-    bl = beeline.get_beeline()
-    if bl:
-        trace_id = bl.tracer_impl.get_active_trace_id()
-        parent_id = bl.tracer_impl.get_active_span().id
-
-    @beeline.traced("search_locations_stream", trace_id=trace_id, parent_id=parent_id)
-    def stream():
-        if callable(formatter.start):
-            yield formatter.start(qs)
-        else:
-            yield formatter.start
-        started = False
-        for location in stream_qs:
-            if started and formatter.separator:
-                yield formatter.separator
-            started = True
-            yield formatter.transform(location)
-        if callable(formatter.end):
-            yield formatter.end(qs)
-        else:
-            yield formatter.end
+    stream = _build_stream(
+        qs, stream_qs, formatter, beeline_trace_name="search_locations_stream"
+    )
 
     if debug:
         if all:
@@ -139,6 +119,34 @@ def search_locations(
         )
 
     return StreamingHttpResponse(stream(), content_type=formatter.content_type)
+
+
+def _build_stream(qs, stream_qs, formatter, beeline_trace_name):
+    trace_id = None
+    parent_id = None
+    bl = beeline.get_beeline()
+    if bl:
+        trace_id = bl.tracer_impl.get_active_trace_id()
+        parent_id = bl.tracer_impl.get_active_span().id
+
+    @beeline.traced(beeline_trace_name, trace_id=trace_id, parent_id=parent_id)
+    def stream():
+        if callable(formatter.start):
+            yield formatter.start(qs)
+        else:
+            yield formatter.start
+        started = False
+        for location in stream_qs:
+            if started and formatter.separator:
+                yield formatter.separator
+            started = True
+            yield formatter.transform(location)
+        if callable(formatter.end):
+            yield formatter.end(qs)
+        else:
+            yield formatter.end
+
+    return stream
 
 
 def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
@@ -249,15 +257,22 @@ FORMATS = {
 )
 def search_source_locations(
     request: HttpRequest, on_request_logged: Callable
-) -> HttpResponse:
+) -> Union[HttpResponse, StreamingHttpResponse]:
     size = min(int(request.GET.get("size", "10")), 1000)
     q = (request.GET.get("q") or "").strip().lower()
     debug = request.GET.get("debug")
+    all = request.GET.get("all")
     unmatched = request.GET.get("unmatched")
     matched = request.GET.get("matched")
     random = request.GET.get("random")
     ids = request.GET.getlist("id")
     location_ids = request.GET.getlist("location_id")
+
+    if all and random:
+        return JsonResponse({"error": "Cannot use both all and random"}, status=400)
+
+    if all and debug:
+        return JsonResponse({"error": "Cannot use both all and debug"}, status=400)
 
     qs = SourceLocation.objects.all()
     if ids:
@@ -279,10 +294,13 @@ def search_source_locations(
     if random:
         qs = qs.order_by("?")
     qs = qs.prefetch_related("concordances")
-    output = {
-        "results": [
+
+    formatter = OutputFormat(
+        start='{"results": [',
+        transform=lambda source_location: json.dumps(
             {
                 "id": source_location.id,
+                "source_uid": source_location.source_uid,
                 "source_name": source_location.source_name,
                 "name": source_location.name,
                 "latitude": float(source_location.latitude)
@@ -312,17 +330,29 @@ def search_source_locations(
                     "/admin/core/sourcelocation/{}/change/".format(source_location.id)
                 ),
             }
-            for source_location in qs[:size]
-        ],
-        "total": qs.count(),
-    }
+        ),
+        separator=",",
+        end=lambda qs: '], "total": TOTAL}'.replace("TOTAL", str(qs.count())),
+        content_type="application/json",
+    )
+
+    stream_qs = qs[:size]
+    if all:
+        stream_qs = keyset_pagination_iterator(qs)
+
+    stream = _build_stream(
+        qs, stream_qs, formatter, beeline_trace_name="search_source_locations_stream"
+    )
 
     if debug:
         return render(
             request,
             "api/search_locations_debug.html",
             {
-                "output": mark_safe(escape(json.dumps(output, indent=4))),
+                "output": mark_safe(
+                    escape(json.dumps(json.loads("".join(stream())), indent=2))
+                ),
             },
         )
-    return JsonResponse(output)
+
+    return StreamingHttpResponse(stream(), content_type=formatter.content_type)
