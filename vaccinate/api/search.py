@@ -8,8 +8,8 @@ from core.models import ConcordanceIdentifier, Location, SourceLocation, State
 from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance
-from django.db.models.query import QuerySet
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from django.http.response import (
     HttpResponse,
