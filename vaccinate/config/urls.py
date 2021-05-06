@@ -1,9 +1,9 @@
 import debug_toolbar
 import django_sql_dashboard
+from api import caller_views as caller_api_views
 from api import export_mapbox as export_mapbox_views
 from api import search as search_views
 from api import views as api_views
-from api.submit_report import submit_report
 from auth0login.views import login, logout
 from core import tool_views
 from core import views as core_views
@@ -22,7 +22,7 @@ urlpatterns = [
     path("logout", logout),
     path("dashboard/", include(django_sql_dashboard.urls)),
     path("api/docs", api_views.api_docs),
-    path("api/submitReport", submit_report),
+    path("api/submitReport", caller_api_views.submit_report),
     path(
         "api/submitReport/debug",
         api_views.api_debug_view(
@@ -31,7 +31,7 @@ urlpatterns = [
             docs="/api/docs#post-apisubmitreport",
         ),
     ),
-    path("api/requestCall", api_views.request_call),
+    path("api/requestCall", caller_api_views.request_call),
     path(
         "api/requestCall/debug",
         api_views.api_debug_view(
@@ -41,7 +41,7 @@ urlpatterns = [
             docs="/api/docs#post-apirequestcall",
         ),
     ),
-    path("api/callerStats", api_views.caller_stats),
+    path("api/callerStats", caller_api_views.caller_stats),
     path(
         "api/callerStats/debug",
         api_views.api_debug_view(
@@ -83,6 +83,17 @@ urlpatterns = [
             body_textarea=True,
             default_body="{}",
             docs="/api/docs#post-apiupdatelocationconcordances",
+        ),
+    ),
+    path("api/updateSourceLocationMatch", api_views.update_source_location_match),
+    path(
+        "api/updateSourceLocationMatch/debug",
+        api_views.api_debug_view(
+            "api/updateSourceLocationMatch",
+            use_jwt=False,
+            body_textarea=True,
+            default_body="{}",
+            docs="/api/docs#post-apiupdatesourcelocationmatch",
         ),
     ),
     path("api/startImportRun", api_views.start_import_run),

@@ -30,6 +30,19 @@ def test_submit_report_api_bad_token(client):
 
 
 @pytest.mark.django_db
+def test_submit_report_unauth_token(client, jwt_unauth_id_token):
+    # A valid JWT, but with no permissions
+    response = client.post(
+        "/api/submitReport",
+        {},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_unauth_id_token),
+    )
+    assert response.status_code == 403
+    assert response.json() == {"error": "Missing permissions: caller"}
+
+
+@pytest.mark.django_db
 def test_submit_report_api_invalid_json(client, jwt_id_token):
     response = client.post(
         "/api/submitReport",
@@ -139,7 +152,7 @@ def test_submit_report_api_example(
     actual_tags = [tag.slug for tag in report.availability_tags.all()]
     assert actual_tags == fixture["expected_availability_tags"]
     # Should have been submitted by the JWT user
-    assert report.reported_by.external_id == "auth0:auth0|6036cd942c0b2a007093cbf0"
+    assert report.reported_by.external_id == "auth0:auth0|604b00092f4fe10068f49191"
 
     if "expected_call_request" in fixture:  # this was a skip request
         # need to manually parse out date for comparison
@@ -175,9 +188,9 @@ def test_submit_report_api_example(
         "location_name": "A location",
         "location_full_address": None,
         "location_state": "OR",
-        "reporter_name": "swillison test",
-        "reporter_id": "auth0:auth0|6036cd942c0b2a007093cbf0",
-        "reporter_role": "",
+        "reporter_name": "Test User",
+        "reporter_id": "auth0:auth0|604b00092f4fe10068f49191",
+        "reporter_role": "Volunteer Caller",
         "availability_tags": list(
             report.availability_tags.values_list("name", flat=True)
         ),

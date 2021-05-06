@@ -219,6 +219,20 @@ class Location(gis_models.Model):
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
     )
+
+    vaccines_offered = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="JSON array of strings representing vaccines on offer here - enter 'null' if we do not know",
+    )
+    accepts_appointments = models.BooleanField(
+        null=True, blank=True, help_text="Does this location accept appointments"
+    )
+    accepts_walkins = models.BooleanField(
+        null=True, blank=True, help_text="Does this location accept walkins"
+    )
+    public_notes = models.TextField(blank=True, null=True)
+
     google_places_id = CharTextField(
         null=True,
         blank=True,
@@ -399,6 +413,7 @@ class Location(gis_models.Model):
             dn_latest_non_skip_report = dn_latest_non_skip_reports[0]
         else:
             dn_latest_non_skip_report = None
+
         # Has anything changed?
         def pk_or_none(record):
             if record is None:
@@ -1057,8 +1072,59 @@ class SourceLocation(models.Model):
         blank=True, null=True, help_text="When this source location was last imported"
     )
 
+    def __str__(self):
+        bits = [self.source_uid]
+        if self.name:
+            bits.extend((" - ", self.name))
+        return "".join(bits)
+
     class Meta:
         db_table = "source_location"
+
+
+class SourceLocationMatchHistory(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
+    api_key = models.ForeignKey(
+        "api.ApiKey",
+        null=True,
+        blank=True,
+        related_name="source_location_match_history",
+        on_delete=models.SET_NULL,
+    )
+    reporter = models.ForeignKey(
+        Reporter,
+        null=True,
+        blank=True,
+        related_name="source_location_match_history",
+        on_delete=models.PROTECT,
+    )
+    source_location = models.ForeignKey(
+        SourceLocation,
+        related_name="source_location_match_history",
+        on_delete=models.PROTECT,
+    )
+    old_match_location = models.ForeignKey(
+        Location,
+        blank=True,
+        null=True,
+        related_name="+",
+        on_delete=models.PROTECT,
+    )
+    new_match_location = models.ForeignKey(
+        Location, related_name="source_location_match_history", on_delete=models.PROTECT
+    )
+
+    def __str__(self):
+        return "{} set source_location {} to match {} on {}".format(
+            self.reporter or self.api_key,
+            self.source_location,
+            self.new_match_location,
+            self.created_at,
+        )
+
+    class Meta:
+        db_table = "source_location_match_history"
+        verbose_name_plural = "Source location match history"
 
 
 class ConcordanceIdentifier(models.Model):
@@ -1099,14 +1165,12 @@ class ConcordanceIdentifier(models.Model):
         return reduce(or_, (Q(authority=p[0], identifier=p[1]) for p in pairs))
 
 
-ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(
-    self.concordanceidentifier, self.location.public_id
+ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format(  # type: ignore[assignment]
+    self.concordanceidentifier, self.location.public_id  # type: ignore[attr-defined]
 )
 
-ConcordanceIdentifier.source_locations.through.__str__ = (
-    lambda self: "{} on source location {}".format(
-        self.concordanceidentifier, self.sourcelocation_id
-    )
+ConcordanceIdentifier.source_locations.through.__str__ = lambda self: "{} on source location {}".format(  # type: ignore[assignment]
+    self.concordanceidentifier, self.sourcelocation_id  # type: ignore[attr-defined]
 )
 
 

@@ -53,11 +53,9 @@ if SENTRY_DSN:
         "django.security.DisallowedModelAdminToField",
         "django.security.DisallowedRedirect",
         "django.security.InvalidSessionKey",
-        "django.security.RequestDataTooBig",
         "django.security.SuspiciousFileOperation",
         "django.security.SuspiciousMultipartForm",
         "django.security.SuspiciousSession",
-        "django.security.TooManyFieldsSent",
     ]
     for logger in IGNORE_LOGGERS:
         ignore_logger(logger)
@@ -121,6 +119,9 @@ AUTHENTICATION_BACKENDS = {
 }
 LOGIN_URL = "/login/auth0"
 LOGIN_REDIRECT_URL = "/"
+
+# Bump up maximum incoming request body to 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10_000_000
 
 REVERSION_COMPARE_IGNORE_NOT_REGISTERED = True
 

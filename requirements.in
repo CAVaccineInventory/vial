@@ -6,7 +6,7 @@
 #     ./scripts/update-requirements --upgrade
 
 # Core django
-django==3.2
+django==3.2.1
 
 # Server
 gunicorn
@@ -66,6 +66,15 @@ django-admin-tools
 
 ### Development
 
+# Typing
+mypy
+django-stubs
+types-Markdown
+types-pytz
+types-requests
+types-python-dateutil
+types-protobuf
+
 # Debug toolbar (dev only, not production)
 django-debug-toolbar>=3.2.1
 
@@ -80,7 +89,7 @@ pytest-httpx
 # Formatting
 black
 isort
-pyflakes
+flake8
 
 # Dependency management
 pip-tools

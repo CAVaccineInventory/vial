@@ -2,14 +2,21 @@ import datetime
 import json
 import secrets
 from functools import wraps
-from typing import Optional
+from typing import Any, Callable, List, Optional, Set
 
 import beeline
 import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.models import Reporter
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseServerError, JsonResponse
+from django.db import transaction
+from django.http import HttpRequest
+from django.http.response import (
+    HttpResponse,
+    HttpResponseBase,
+    HttpResponseServerError,
+    JsonResponse,
+)
 from django.utils import timezone
 
 from .models import ApiKey, ApiLog, Switch
@@ -137,80 +144,134 @@ def deny_if_api_is_disabled(view_fn):
     return inner
 
 
-@beeline.traced("reporter_from_request")
-def reporter_from_request(request, allow_test=False):
-    if allow_test and bool(request.GET.get("test")) and request.GET.get("fake_user"):
-        reporter = Reporter.objects.get_or_create(
-            external_id="auth0-fake:{}".format(request.GET["fake_user"]),
-        )[0]
-        user_info = {"fake": reporter.external_id}
-        return reporter, user_info
+@beeline.traced("jwt_auth")
+def _jwt_auth(
+    required_permissions: Set[str],
+    request: HttpRequest,
+    update_metadata: bool,
+) -> Optional[JsonResponse]:
     # Use Bearer token in Authorization header
     authorization = request.META.get("HTTP_AUTHORIZATION") or ""
     if not authorization.startswith("Bearer "):
-        return (
-            JsonResponse(
-                {"error": "Authorization header must start with 'Bearer'"}, status=403
-            ),
-            None,
+        return JsonResponse(
+            {"error": "Authorization header must start with 'Bearer'"},
+            status=403,
         )
+
     # Check JWT token is valid
-    jwt_id_token = authorization.split("Bearer ")[1]
+    jwt_access_token = authorization.split("Bearer ")[1]
+    check_permissions = True
     try:
-        jwt_payload = decode_and_verify_jwt(jwt_id_token, settings.HELP_JWT_AUDIENCE)
+        jwt_payload = decode_and_verify_jwt(
+            jwt_access_token, settings.HELP_JWT_AUDIENCE
+        )
     except Exception as e:
         try:
             # We _also_ try to decode as the VIAL audience, since the
             # /api/requestCall/debug endpoint passes in _our_ JWT, not
-            # help's.
+            # help's.  Our JWT is an id token, not an access token,
+            # which means it won't have permissions in it (see below)
             jwt_payload = decode_and_verify_jwt(
-                jwt_id_token, settings.VIAL_JWT_AUDIENCE
+                jwt_access_token, settings.VIAL_JWT_AUDIENCE
             )
+            check_permissions = False
         except Exception:
-            return (
-                JsonResponse(
-                    {"error": "Could not decode JWT", "details": str(e)}, status=403
-                ),
-                None,
+            return JsonResponse(
+                {"error": "Could not decode JWT", "details": str(e)}, status=403
             )
-    external_id = "auth0:{}".format(jwt_payload["sub"])
+
+    # We have an _access_ token, not an _id_ token.  This means that
+    # it has authorization information, but no authentication
+    # information -- just an id, and a statement that the user is
+    # authenticated to hit this API.  https://auth0.com/docs/tokens
+    # describes this in more detail.
     jwt_auth0_role_names = ", ".join(
         sorted(jwt_payload.get("https://help.vaccinateca.com/roles", []))
     )
-    try:
-        reporter = Reporter.objects.get(external_id=external_id)
-        # Have their auth0 roles changed?
-        if reporter.auth0_role_names != jwt_auth0_role_names:
-            reporter.auth0_role_names = jwt_auth0_role_names
-            reporter.save()
-        return reporter, jwt_payload
-    except Reporter.DoesNotExist:
-        pass
+    name: Optional[str] = None
+    email: Optional[str] = None
 
-    # If name is missing we need to fetch userdetails
-    if "name" not in jwt_payload or "email" not in jwt_payload:
-        with beeline.tracer(name="get user_info"):
-            user_info_response = requests.get(
-                "https://vaccinateca.us.auth0.com/userinfo",
-                headers={"Authorization": "Bearer {}".format(jwt_id_token)},
-                timeout=5,
+    external_id = "auth0:{}".format(jwt_payload["sub"])
+    with transaction.atomic():
+        # Get full metadata if the user doesn't exist; also take a lock on the user.
+        reporter = (
+            Reporter.objects.select_for_update().filter(external_id=external_id).first()
+        )
+        # We may want to update the email address and name; we do this
+        # sparingly, since it's a round-trip to the Auth0 endpoint, which
+        # is somewhat slow.  Again, we must do this because we're getting
+        # an access token, not an id token.
+        if not reporter or update_metadata:
+            with beeline.tracer(name="get user_info"):
+                user_info_response = requests.get(
+                    "https://vaccinateca.us.auth0.com/userinfo",
+                    headers={"Authorization": "Bearer {}".format(jwt_access_token)},
+                    timeout=5,
+                )
+                beeline.add_context({"status": user_info_response.status_code})
+                # If this fails, we don't fail the request; they still
+                # had a valid access token, auth0 is just being slow
+                # telling us their bio.
+                if user_info_response.status_code == 200:
+                    user_info = user_info_response.json()
+                    name = user_info["name"]
+                    if user_info["email_verified"]:
+                        email = user_info["email"]
+                    jwt_auth0_role_names = ", ".join(
+                        sorted(user_info["https://help.vaccinateca.com/roles"])
+                    )
+
+        external_id = "auth0:{}".format(jwt_payload["sub"])
+        defaults = {"auth0_role_names": jwt_auth0_role_names}
+        if name is not None:
+            defaults["name"] = name
+        if email is not None:
+            defaults["email"] = email
+        reporter = Reporter.objects.update_or_create(
+            external_id=external_id,
+            defaults=defaults,
+        )[0]
+
+    # Finally, make sure they have the required permissions
+    if check_permissions:
+        missing_perms = required_permissions - set(jwt_payload["permissions"])
+        if missing_perms:
+            return JsonResponse(
+                {
+                    "error": "Missing permissions: %s"
+                    % (", ".join(list(missing_perms)),),
+                },
+                status=403,
             )
-            beeline.add_context({"status": user_info_response.status_code})
-            user_info_response.raise_for_status()
-            user_info = user_info_response.json()
-            name = user_info["name"]
-            email = user_info["email"]
-    else:
-        name = jwt_payload["name"]
-        email = jwt_payload["email"]
-    defaults = {"auth0_role_names": jwt_auth0_role_names}
-    if name is not None:
-        defaults["name"] = name
-    if email is not None:
-        defaults["email"] = email
-    reporter = Reporter.objects.update_or_create(
-        external_id=external_id,
-        defaults=defaults,
-    )[0]
-    user_info = jwt_payload
-    return reporter, user_info
+    request.reporter = reporter  # type: ignore[attr-defined]
+    return None
+
+
+def jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=False,
+    required_permissions: List[str] = ["caller"],
+    update_metadata=False,
+) -> Callable[[Callable[..., HttpResponseBase]], Callable[..., HttpResponseBase]]:
+    def wrapper(
+        view_fn: Callable[..., HttpResponseBase]
+    ) -> Callable[..., HttpResponseBase]:
+        @wraps(view_fn)
+        def inner(request: HttpRequest, *args, **kwargs: Any) -> HttpResponseBase:
+            # Two other kinds of auth to possibly check
+            if allow_session_auth and request.user.is_authenticated:
+                return view_fn(request, *args, **kwargs)
+            if allow_internal_api_key and not check_request_for_api_key(request):
+                return view_fn(request, *args, **kwargs)
+
+            auth_failure = _jwt_auth(
+                set(required_permissions), request, update_metadata
+            )
+            if auth_failure:
+                return auth_failure
+
+            return view_fn(request, *args, **kwargs)
+
+        return inner
+
+    return wrapper

@@ -42,9 +42,12 @@ jobs:
     - name: Run isort
       run: |
         isort --check .
-    - name: Run pyflakes
+    - name: Run flake8
       run: |
-        scripts/run-pyflakes
+        scripts/run-flake8
+    - name: Run mypy
+      run: |
+        scripts/run-mypy
     - name: Run Django tests
       env:
         DJANGO_SECRET_KEY: secret for running tests

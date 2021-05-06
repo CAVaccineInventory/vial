@@ -34,12 +34,56 @@ MOCK_JWKS = {
 
 
 @pytest.fixture
-def jwt_id_token(time_machine, mock_well_known_jwts, mock_auth0_userinfo):
+def jwt_unauth_id_token(time_machine, mock_well_known_jwts, mock_auth0_userinfo):
     time_machine.move_to(datetime.datetime(2021, 3, 17, 10, 0, 0))
     # This token created for auth0 user swillison+auth0-test-user@gmail.com
     # by signing into https://help.calltheshots.us/call/ and sniffing
-    # network traffic on 17th March 2021
+    # network traffic on 17th March 2021.  It has an empty "permissions" list,
+    # and as such will fail auth:
+    # {
+    #     "https://help.vaccinateca.com/roles": [],
+    #     "iss": "https://vaccinateca.us.auth0.com/",
+    #     "sub": "auth0|6036cd942c0b2a007093cbf0",
+    #     "aud": [
+    #         "https://help.vaccinateca.com",
+    #         "https://vaccinateca.us.auth0.com/userinfo"
+    #     ],
+    #     "iat": 1616018322,
+    #     "exp": 1616104722,
+    #     "azp": "ZnpcUDelsgbXXXMTayxzdPWTX8wikGi5",
+    #     "scope": "openid profile email",
+    #     "permissions": []
+    # }
     return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZydGlQYXhnX2UyV29NMXhUb1IwRyJ9.eyJodHRwczovL2hlbHAudmFjY2luYXRlY2EuY29tL3JvbGVzIjpbXSwiaXNzIjoiaHR0cHM6Ly92YWNjaW5hdGVjYS51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjAzNmNkOTQyYzBiMmEwMDcwOTNjYmYwIiwiYXVkIjpbImh0dHBzOi8vaGVscC52YWNjaW5hdGVjYS5jb20iLCJodHRwczovL3ZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2MTYwMTgzMjIsImV4cCI6MTYxNjEwNDcyMiwiYXpwIjoiWm5wY1VEZWxzZ2JYWFhNVGF5eHpkUFdUWDh3aWtHaTUiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOltdfQ.JAcWaIjhKmVWaivlF3IIhm6S1_vQz3Imgod6zoahqS2v5wIhjSuFFB1GaKlOWNlOVvE7Q5oVSwLl3JeBxIQObKln5pWvN-O5dBKtfF8K71k6MUKj4IHFVfEWZMEn0EC6rnsCWwlzIIJSM1-VedawbStd8C07KPnBGlTaO6DdS40aaWD1rxu664dsF_bfeOMXlSH5ayqcVSt3HcaTDRr27_cOVCA06ovIKq8uerSj6NNhBOd2ui9v_G-8xvyHbNukCKV-s-Knwlm9-WQOLxXznMQR5PdAl0VprpaL886wY-F2Ewrw6BLId4hZNDC6DubSkYlwoodsEDuh5o5cDsv_Lw"
+
+
+@pytest.fixture
+def jwt_id_token(time_machine, mock_well_known_jwts, mock_auth0_userinfo):
+    time_machine.move_to(datetime.datetime(2021, 5, 4, 8, 0, 0))
+    # This token created for auth0 user alex+testuser@vaccinateca.com
+    # by signing into https://help.calltheshots.us/call/ and sniffing
+    # network traffic on 2021-05-04.
+    #
+    # This decodes to:
+    # {
+    #     "https://help.vaccinateca.com/roles": [
+    #         "Volunteer Caller"
+    #     ],
+    #     "iss": "https://vaccinateca.us.auth0.com/",
+    #     "sub": "auth0|604b00092f4fe10068f49191",
+    #     "aud": [
+    #         "https://help.vaccinateca.com",
+    #         "https://vaccinateca.us.auth0.com/userinfo"
+    #     ],
+    #     "iat": 1620114112,
+    #     "exp": 1620200512,
+    #     "azp": "ZnpcUDelsgbXXXMTayxzdPWTX8wikGi5",
+    #     "scope": "openid profile email",
+    #     "permissions": [
+    #         "caller"
+    #     ]
+    # }
+    return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZydGlQYXhnX2UyV29NMXhUb1IwRyJ9.eyJodHRwczovL2hlbHAudmFjY2luYXRlY2EuY29tL3JvbGVzIjpbIlZvbHVudGVlciBDYWxsZXIiXSwiaXNzIjoiaHR0cHM6Ly92YWNjaW5hdGVjYS51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjA0YjAwMDkyZjRmZTEwMDY4ZjQ5MTkxIiwiYXVkIjpbImh0dHBzOi8vaGVscC52YWNjaW5hdGVjYS5jb20iLCJodHRwczovL3ZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2MjAxMTQxMTIsImV4cCI6MTYyMDIwMDUxMiwiYXpwIjoiWm5wY1VEZWxzZ2JYWFhNVGF5eHpkUFdUWDh3aWtHaTUiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOlsiY2FsbGVyIl19.gbsWLsMkLkjqh-boc9ChgeNs52eQSW_PSJ7AxorfIKqYQtmuY-u52dSl4bgz0qoQ883Bl3yfGMy1KwalA3FpbVB8efqkWsNCHfMk64W4DQ4BLpANpiqI4D0T8XYREWJ8PAJdrYEvFItjinyVupZ4SLPCpf9amgamJPWiej3CbuNqvKsMFpxSmR09N8QfVU5D1bv2Ca_NYZ-QdnTvFCuDU2jJAgUBmlpHQHqQ9MsZcWV-OfKZgozZMWYkK0ZEmINC7bmSUNK7Af64QCtdCjzSpKIUG-0QwX18maWumERrrnARuqBS4WeL0EaRsIpJdiaHtpbrY-ruZf6NFpOxR8OKhw"
 
 
 @pytest.fixture
@@ -55,14 +99,14 @@ def mock_auth0_userinfo(requests_mock):
     requests_mock.get(
         "https://vaccinateca.us.auth0.com/userinfo",
         json={
-            "sub": "auth0|6036cd942c0b2a007093cbf0",
-            "nickname": "swillison+auth0-test-user",
-            "name": "swillison test",
-            "picture": "https://s.gravatar.com/avatar/dbe0dba935c7819ef93216a87988cdf9?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fsw.png",
-            "updated_at": "2021-03-17T21:58:41.450Z",
-            "email": "swillison+auth0-test-user@gmail.com",
+            "sub": "auth0|604b00092f4fe10068f49191",
+            "nickname": "test+1",
+            "name": "Test User",
+            "picture": "https://s.gravatar.com/avatar/029b23ca46bc262bef1b1fabafe07ca9?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fte.png",
+            "updated_at": "2021-05-04T07:44:07.316Z",
+            "email": "alex+testuser@vaccinateca.com",
             "email_verified": True,
-            "https://help.vaccinateca.com/roles": [],
+            "https://help.vaccinateca.com/roles": ["Volunteer Caller"],
         },
     )
 

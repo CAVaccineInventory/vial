@@ -164,7 +164,7 @@ def export_mapbox_preview(request):
     # Maximum of 20 for the debugging preview
     locations = locations.order_by("-id")[:20]
     loaded_vaccinefinder_data = _vaccinefinder_data_for_locations(
-        [l.pk for l in locations]
+        [location.pk for location in locations]
     )
     preview = {
         "geojson": [
