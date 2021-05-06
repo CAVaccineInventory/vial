@@ -1072,8 +1072,59 @@ class SourceLocation(models.Model):
         blank=True, null=True, help_text="When this source location was last imported"
     )
 
+    def __str__(self):
+        bits = [self.source_uid]
+        if self.name:
+            bits.extend((" - ", self.name))
+        return "".join(bits)
+
     class Meta:
         db_table = "source_location"
+
+
+class SourceLocationMatchHistory(models.Model):
+    created_at = models.DateTimeField(default=timezone.now)
+    api_key = models.ForeignKey(
+        "api.ApiKey",
+        null=True,
+        blank=True,
+        related_name="source_location_match_history",
+        on_delete=models.SET_NULL,
+    )
+    reporter = models.ForeignKey(
+        Reporter,
+        null=True,
+        blank=True,
+        related_name="source_location_match_history",
+        on_delete=models.PROTECT,
+    )
+    source_location = models.ForeignKey(
+        SourceLocation,
+        related_name="source_location_match_history",
+        on_delete=models.PROTECT,
+    )
+    old_match_location = models.ForeignKey(
+        Location,
+        blank=True,
+        null=True,
+        related_name="+",
+        on_delete=models.PROTECT,
+    )
+    new_match_location = models.ForeignKey(
+        Location, related_name="source_location_match_history", on_delete=models.PROTECT
+    )
+
+    def __str__(self):
+        return "{} set source_location {} to match {} on {}".format(
+            self.reporter or self.api_key,
+            self.source_location,
+            self.new_match_location,
+            self.created_at,
+        )
+
+    class Meta:
+        db_table = "source_location_match_history"
+        verbose_name_plural = "Source location match history"
 
 
 class ConcordanceIdentifier(models.Model):

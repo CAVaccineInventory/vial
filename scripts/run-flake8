@@ -1,2 +1,2 @@
 #!/bin/bash
-cd vaccinate && flake8
+(cd vaccinate && flake8)

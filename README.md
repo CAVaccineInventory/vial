@@ -135,7 +135,9 @@ This repository uses [Black](https://github.com/psf/black) and [isort](https://p
 
 Run `black .` and `isort .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
 
-Run `scripts/run-pyflakes` in the top-level directory to check for missing or unused imports.
+Run `scripts/run-flake8` in the top-level directory to check for missing or unused imports.
+
+Run `scripts/run-mypy` in the top-level directory to run the mypy type checker.
 
 Run `scripts/lint-migrations` in the top-level directory to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
 

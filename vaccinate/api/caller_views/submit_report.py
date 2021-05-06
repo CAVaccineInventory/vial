@@ -8,7 +8,7 @@ import beeline
 import pytz
 import requests
 from api.models import ApiLog
-from api.utils import JWTRequest, deny_if_api_is_disabled, jwt_auth, log_api_requests
+from api.utils import deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
 from core.models import (
     AppointmentTag,
@@ -21,7 +21,7 @@ from core.models import (
 from dateutil import parser
 from django.conf import settings
 from django.db.models import Max
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
@@ -71,9 +71,9 @@ class ReportValidator(BaseModel):
 @beeline.traced(name="submit_report")
 @log_api_requests
 @deny_if_api_is_disabled
-@jwt_auth(required_permissions=set(["caller"]))
+@jwt_auth(required_permissions=["caller"])
 def submit_report(
-    request: JWTRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
+    request: HttpRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
 ):
     try:
         post_data = json.loads(request.body.decode("utf-8"))
@@ -95,7 +95,7 @@ def submit_report(
         appointment_details=appointment_details,
         public_notes=report_data["public_notes"],
         internal_notes=report_data["internal_notes"],
-        reported_by=request.reporter,
+        reported_by=request.reporter,  # type: ignore[attr-defined]
         website=report_data["website"] or report_data["web"],
         vaccines_offered=report_data["vaccines_offered"],
         restriction_notes=report_data["restriction_notes"],
@@ -115,7 +115,7 @@ def submit_report(
         )
     else:
         should_review, why = user_should_have_reports_reviewed(
-            request.reporter, report_data
+            request.reporter, report_data  # type: ignore[attr-defined]
         )
         if should_review:
             kwargs["originally_pending_review"] = True
@@ -139,11 +139,11 @@ def submit_report(
 
     # Mark any calls to this location claimed by this user as complete
     existing_call_request = report.location.call_requests.filter(
-        claimed_by=request.reporter, completed=False
+        claimed_by=request.reporter, completed=False  # type: ignore[attr-defined]
     ).first()
-    report.location.call_requests.filter(claimed_by=request.reporter).update(
-        completed=True, completed_at=timezone.now()
-    )
+    report.location.call_requests.filter(
+        claimed_by=request.reporter  # type: ignore[attr-defined]
+    ).update(completed=True, completed_at=timezone.now())
 
     # If this was based on a call request, associate it with the report
     if existing_call_request:

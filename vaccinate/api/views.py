@@ -1,7 +1,7 @@
 import json
 import pathlib
 import re
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import beeline
 import markdown
@@ -22,7 +22,8 @@ from core.models import (
     SourceLocation,
     State,
 )
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -30,7 +31,12 @@ from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation
 
-from .utils import log_api_requests, require_api_key, require_api_key_or_cookie_user
+from .utils import (
+    jwt_auth,
+    log_api_requests,
+    require_api_key,
+    require_api_key_or_cookie_user,
+)
 
 
 @require_api_key
@@ -679,3 +685,88 @@ def location_concordances(request, public_id):
     except Location.DoesNotExist:
         return JsonResponse({"error": "Location does not exist"}, status=404)
     return JsonResponse({"concordances": [str(c) for c in location.concordances.all()]})
+
+
+class UpdateSourceLocationMatchValidator(BaseModel):
+    source_location: str
+    location: str
+
+    @validator("source_location")
+    def source_location_must_exist(cls, value):
+        if value.isdigit():
+            kwargs = {"pk": value}
+        else:
+            kwargs = {"source_uid": value}
+        try:
+            return SourceLocation.objects.get(**kwargs)
+        except SourceLocation.DoesNotExist:
+            raise ValueError("Location '{}' does not exist".format(value))
+
+    @validator("location")
+    def location_must_exist(cls, value):
+        if value.isdigit():
+            kwargs = {"pk": value}
+        else:
+            kwargs = {"public_id": value}
+        try:
+            return Location.objects.get(**kwargs)
+        except Location.DoesNotExist:
+            raise ValueError("Source location '{}' does not exist".format(value))
+
+
+@log_api_requests
+@beeline.traced("update_source_location_match")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["write:locations"],
+)
+@csrf_exempt
+def update_source_location_match(
+    request: HttpRequest, on_request_logged: Callable
+) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    try:
+        data = UpdateSourceLocationMatchValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    source_location = data.source_location
+    location = data.location
+
+    old_matched_location = source_location.matched_location  # type:ignore[attr-defined]
+
+    source_location.matched_location = location  # type:ignore[attr-defined]
+    source_location.save()  # type:ignore[attr-defined]
+
+    # Record the history record
+    kwargs = {
+        "old_match_location": old_matched_location,
+        "new_match_location": location,
+    }
+    if hasattr(request, "reporter"):
+        kwargs["reporter"] = request.reporter  # type:ignore[attr-defined]
+    else:
+        kwargs["api_key"] = request.api_key  # type:ignore[attr-defined]
+    source_location.source_location_match_history.create(  # type:ignore[attr-defined]
+        **kwargs
+    )
+
+    return JsonResponse(
+        {
+            "matched": {
+                "location": {
+                    "id": location.public_id,  # type:ignore[attr-defined]
+                    "name": location.name,  # type:ignore[attr-defined]
+                },
+                "source_location": {
+                    "source_uid": source_location.source_uid,  # type:ignore[attr-defined]
+                    "name": source_location.name,  # type:ignore[attr-defined]
+                },
+            }
+        }
+    )
