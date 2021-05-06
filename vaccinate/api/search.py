@@ -9,6 +9,7 @@ from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance
 from django.db.models.query import QuerySet
+from django.db.models import Q
 from django.http import HttpRequest
 from django.http.response import (
     HttpResponse,
@@ -267,6 +268,7 @@ def search_source_locations(
     random = request.GET.get("random")
     ids = request.GET.getlist("id")
     location_ids = request.GET.getlist("location_id")
+    idrefs = request.GET.getlist("idref")
 
     if all and random:
         return JsonResponse({"error": "Cannot use both all and random"}, status=400)
@@ -276,12 +278,18 @@ def search_source_locations(
 
     qs = SourceLocation.objects.all()
     if ids:
-        qs = qs.filter(id__in=ids)
+        numeric_ids = []
+        source_uids = []
+        for id in ids:
+            if id.isdigit():
+                numeric_ids.append(id)
+            else:
+                source_uids.append(id)
+        qs = qs.filter(Q(id__in=numeric_ids) | Q(source_uid__in=source_uids))
     if location_ids:
         qs = qs.filter(matched_location__public_id__in=location_ids)
     if q:
         qs = qs.filter(name__icontains=q)
-    idrefs = request.GET.getlist("idref")
     if idrefs:
         idref_filter = ConcordanceIdentifier.filter_for_idrefs(idrefs)
         qs = qs.filter(

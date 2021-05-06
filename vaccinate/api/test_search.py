@@ -202,21 +202,26 @@ def test_search_allows_users_with_cookie(client, admin_client, ten_locations):
         ("", {"One", "Two", "Three Matched"}),
         ("unmatched=1", {"One", "Two"}),
         ("matched=1", {"Three Matched"}),
+        ("id=test:1&id=test:2", {"One", "Two"}),
+        ("id=ID_OF_ONE", {"One"}),
+        ("idref=foo:bar", {"Two"}),
     ),
 )
 def test_search_source_locations(
     client, api_key, ten_locations, query_string, expected_names
 ):
-    SourceLocation.objects.create(
+    id_of_one = SourceLocation.objects.create(
         source_name="test",
         source_uid="test:1",
         name="One",
-    )
-    SourceLocation.objects.create(
+    ).pk
+    query_string = query_string.replace("ID_OF_ONE", str(id_of_one))
+    two = SourceLocation.objects.create(
         source_name="test",
         source_uid="test:2",
         name="Two",
     )
+    two.concordances.add(ConcordanceIdentifier.for_idref("foo:bar"))
     SourceLocation.objects.create(
         source_name="test",
         source_uid="test:3",
