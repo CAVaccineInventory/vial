@@ -1029,8 +1029,8 @@ types-futures==0.1.3 \
 types-markdown==0.1.1 \
     --hash=sha256:c1b941b4a5395a5936993524365beb40b3ae4fab0a21411d0cd3a0345f9e7f2f
     # via -r requirements.in
-types-protobuf==0.1.9 \
-    --hash=sha256:5a00448a0a2ca7700faba1dae7c25a900ba47336eae1e97ff1d9fa46a9197128
+types-protobuf==0.1.10 \
+    --hash=sha256:ba89eb475777787d12bc3e2ef419102bf50d93b41e31013f1e7b494fd830ff76
     # via -r requirements.in
 types-python-dateutil==0.1.2 \
     --hash=sha256:498492e71dfb983ecc47924fb4f0987d205901ebd1d59f9a1c6603f3f970a62b
