@@ -9,7 +9,7 @@ import beeline
 import pytz
 from django.conf import settings
 from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos import Point, geometry
+from django.contrib.gis.geos import Point
 from django.db import models
 from django.db.models import Max, Q
 from django.db.models.signals import m2m_changed
