@@ -1052,7 +1052,7 @@ class PublishedReport(models.Model):
         db_table = "published_report"
 
 
-class SourceLocation(models.Model):
+class SourceLocation(gis_models.Model):
     "Source locations are unmodified records imported from other sources"
     import_run = models.ForeignKey(
         ImportRun,
@@ -1073,6 +1073,7 @@ class SourceLocation(models.Model):
     longitude = models.DecimalField(
         max_digits=9, decimal_places=5, null=True, blank=True
     )
+    point = gis_models.PointField(blank=True, null=True, spatial_index=True)
     import_json = models.JSONField(
         null=True,
         blank=True,
@@ -1089,6 +1090,13 @@ class SourceLocation(models.Model):
     last_imported_at = models.DateTimeField(
         blank=True, null=True, help_text="When this source location was last imported"
     )
+
+    def save(self, *args, **kwargs):
+        if self.longitude and self.latitude:
+            self.point = Point(float(self.longitude), float(self.latitude), srid=4326)
+        else:
+            self.point = None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         bits = [self.source_uid]
