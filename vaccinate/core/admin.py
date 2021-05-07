@@ -341,11 +341,15 @@ class LocationInQueueFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == "yes":
             return queryset.filter(
-                Exists(CallRequest.objects.filter(location=OuterRef("pk"))),
+                Exists(
+                    CallRequest.objects.filter(location=OuterRef("pk"), completed=False)
+                ),
             )
         if self.value() == "no":
             return queryset.filter(
-                ~Exists(CallRequest.objects.filter(location=OuterRef("pk"))),
+                ~Exists(
+                    CallRequest.objects.filter(location=OuterRef("pk"), completed=False)
+                ),
             )
 
 
