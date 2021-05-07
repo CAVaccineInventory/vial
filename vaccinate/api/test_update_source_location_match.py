@@ -63,3 +63,24 @@ def test_update_source_location_match_by_api_key(
     history2 = source_location.source_location_match_history.order_by("-pk")[0]
     assert history2.old_match_location == location
     assert history2.new_match_location == second_location
+
+    # And set it to None and check the history
+    post_data["location"] = None
+    response3 = client.post(
+        "/api/updateSourceLocationMatch",
+        post_data,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response3.status_code == 200
+    assert response3.json() == {
+        "matched": {
+            "location": None,
+            "source_location": {"source_uid": "test:1", "name": None},
+        }
+    }
+    source_location.refresh_from_db()
+    assert source_location.matched_location is None
+    assert source_location.source_location_match_history.count() == 3
+    history3 = source_location.source_location_match_history.order_by("-pk")[0]
+    assert history3.new_match_location is None

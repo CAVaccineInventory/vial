@@ -505,7 +505,7 @@ POST the following JSON:
 ```
 
 - `source_location` should be a `source_uid`, but can alternatively be an internal database integer ID
-- `location` should be a public location identifier, but can also be an internal location database integer ID
+- `location` should be a public location identifier, but can also be an internal location database integer ID. You can also send `null` to un-match a location (useful for implementing undo)
 
 Returns the following:
 
@@ -523,6 +523,7 @@ Returns the following:
   }
 }
 ```
+The returned `"location"` can be `null` if you deliberately un-set the match.
 
 Try this API: https://vial-staging.calltheshots.us/api/updateSourceLocationMatch/debug
 

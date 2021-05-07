@@ -1,7 +1,7 @@
 import json
 import pathlib
 import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import beeline
 import markdown
@@ -689,7 +689,7 @@ def location_concordances(request, public_id):
 
 class UpdateSourceLocationMatchValidator(BaseModel):
     source_location: SourceLocation
-    location: Location
+    location: Union[Location, None]
 
 
 @log_api_requests
@@ -740,7 +740,9 @@ def update_source_location_match(
                 "location": {
                     "id": location.public_id,  # type:ignore[attr-defined]
                     "name": location.name,  # type:ignore[attr-defined]
-                },
+                }
+                if location
+                else None,
                 "source_location": {
                     "source_uid": source_location.source_uid,  # type:ignore[attr-defined]
                     "name": source_location.name,  # type:ignore[attr-defined]
