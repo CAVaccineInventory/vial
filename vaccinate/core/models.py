@@ -1157,7 +1157,11 @@ class SourceLocationMatchHistory(models.Model):
         on_delete=models.PROTECT,
     )
     new_match_location = models.ForeignKey(
-        Location, related_name="source_location_match_history", on_delete=models.PROTECT
+        Location,
+        blank=True,
+        null=True,
+        related_name="source_location_match_history",
+        on_delete=models.PROTECT,
     )
 
     def __str__(self):
