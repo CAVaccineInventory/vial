@@ -113,3 +113,6 @@ vaccine-feed-ingest-schema
 
 # Map location to timezone
 timezonefinder[numba]
+
+# Test data
+factory_boy
