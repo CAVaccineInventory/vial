@@ -753,16 +753,6 @@ def update_source_location_match(
 class CreateLocationFromSourceLocationValidator(BaseModel):
     source_location: SourceLocation
 
-    @validator("source_location")
-    def source_location_is_not_matched(cls, source_location):
-        if source_location.matched_location:
-            raise ValueError(
-                "SourceLocation {} is already matched to location {}".format(
-                    source_location, source_location.matched_location
-                )
-            )
-        return source_location
-
 
 @log_api_requests
 @beeline.traced("create_location_from_source_location")

@@ -528,7 +528,7 @@ Try this API: https://vial-staging.calltheshots.us/api/updateSourceLocationMatch
 
 ### POST /api/createLocationFromSourceLocation
 
-Creates a new location record from an available source location, provided that source location has not yet been marked as matching an existing location.
+Creates a new location record from an available source location.
 
 Accepts either an API key or a JWT token for authentication.
 
