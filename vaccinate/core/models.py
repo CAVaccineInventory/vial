@@ -853,6 +853,12 @@ class CallRequest(models.Model):
     location = models.ForeignKey(
         Location, related_name="call_requests", on_delete=models.PROTECT
     )
+    created_at = models.DateTimeField(
+        help_text="the time the call request entered the queue.",
+        null=True,
+        blank=True,
+        default=timezone.now,
+    )
     vesting_at = models.DateTimeField(
         help_text="the time at which this call request is considered 'active'. For example, a call request made by a skip will have a future vesting time."
     )

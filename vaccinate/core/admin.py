@@ -1329,7 +1329,7 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         for priority_group in CallRequest.PriorityGroup.choices
     ]
     raw_id_fields = ("location", "claimed_by", "tip_report")
-    readonly_fields = ("priority",)
+    readonly_fields = ("priority", "created_at")
 
     def summary(self, obj):
         bits = [escape(obj.location.name)]
