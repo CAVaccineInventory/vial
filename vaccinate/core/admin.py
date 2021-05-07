@@ -1218,7 +1218,6 @@ class CallRequestQueueStatus(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             (None, "In queue ready to be assigned"),
-            ("nophone", "In queue BUT missing phone number"),
             ("claimed", "Currently assigned"),
             ("scheduled", "Scheduled for future"),
             ("completed", "Completed"),
@@ -1246,14 +1245,6 @@ class CallRequestQueueStatus(admin.SimpleListFilter):
                 & Q(completed=False)
                 & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
             ).exclude(
-                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
-            )
-        elif self.value() == "nophone":
-            return queryset.filter(
-                Q(vesting_at__lte=now)
-                & Q(completed=False)
-                & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
-            ).filter(
                 Q(location__phone_number__isnull=True) | Q(location__phone_number="")
             )
         elif self.value() == "claimed":
