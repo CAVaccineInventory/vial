@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+
+{% block field_sets %}
+
+{% if redirect_from_create %}
+<p style="background-color: #ff8c00; color: white; padding: 0.5em">This location was already in the queue; showing the existing call request.</p>
+{% endif %}
+
+{{ block.super }}
+
+{% endblock %}

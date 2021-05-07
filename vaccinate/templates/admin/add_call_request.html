@@ -2,14 +2,11 @@
 
 {% block field_sets %}
 
-{% if existing_call_requests %}
-<div style="border: 2px solid red; background-color: #ffe9ed; padding: 0.5em 1em; margin-bottom: 20em">
-  <h2>This location is already in the queue</h2>
-  <p>You can edit the existing call request here:</p>
-  {% for call_request in existing_call_requests %}
-    <p><a href="/admin/core/callrequest/{{ call_request.pk }}/change/">{{ call_request }}</a></p>
-  {% endfor %}
-</div>
+{% if existing_call_request %}
+<script>
+  window.location =
+    "/admin/core/callrequest/{{ existing_call_request.pk }}/change/?redirect_from_create=1";
+</script>
 {% endif %}
 
 {{ block.super }}
