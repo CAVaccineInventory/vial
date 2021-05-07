@@ -1299,7 +1299,12 @@ def make_call_request_move_to_priority_group(priority_group):
 class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     add_form_template = "admin/add_call_request.html"
     change_form_template = "admin/change_call_request.html"
-    search_fields = ("location__name", "location__public_id")
+    search_fields = (
+        "location__name",
+        "location__full_address",
+        "location__public_id",
+        "location__phone_number",
+    )
     list_display = (
         "summary",
         "state",
