@@ -165,3 +165,46 @@ def test_import_location_twice_updates(client, api_key):
     source_location.refresh_from_db()
     assert source_location.last_imported_at != fake_last_imported_at
     assert source_location.name == "Rite Aid"
+
+
+def test_import_existing_source_location_with_manual_match(client, api_key):
+    fixture = json.load((tests_dir / "003-match-existing.json").open())
+
+    # Create a location to match against first
+    original_location = Location.objects.create(
+        public_id=fixture["match"]["id"],
+        name=fixture["name"],
+        latitude=fixture["latitude"],
+        longitude=fixture["longitude"],
+        location_type=LocationType.objects.filter(name="Pharmacy").get(),
+        state=State.objects.filter(abbreviation="CA").get(),
+    )
+    # Create a source location that matches this, as from Velma
+    source_location = SourceLocation.objects.create(
+        source_name=fixture["source_name"],
+        source_uid=fixture["source_uid"],
+        matched_location=original_location,
+    )
+    source_location.refresh_from_db()
+    assert source_location.matched_location is not None
+
+    # Modify the fixture to delete the match
+    del fixture["match"]
+
+    assert "match" not in fixture
+
+    # Now start an import run for that location
+    import_run_id = client.post(
+        "/api/startImportRun", HTTP_AUTHORIZATION="Bearer {}".format(api_key)
+    ).json()["import_run_id"]
+    # Make the API request
+    client.post(
+        "/api/importSourceLocations?import_run_id={}".format(import_run_id),
+        fixture,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+
+    assert SourceLocation.objects.count() == 1
+    source_location.refresh_from_db()
+    assert source_location.matched_location is not None
