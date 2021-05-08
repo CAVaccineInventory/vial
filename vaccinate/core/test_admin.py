@@ -74,7 +74,7 @@ def test_admin_location_actions_for_queue(admin_client, ten_locations):
     assert len(messages) == 1
     assert (
         messages[0].message
-        == 'Added 2 location to queue with reason: Data corrections tip. Skipped 1 location marked "do not call"'
+        == "Added 2 location to queue with reason: Data corrections tip. Skipped 1 location"
     )
     # Call requests should have been created
     assert CallRequest.objects.count() == 2
@@ -286,8 +286,10 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
             "_selected_action": [location.id for location in ten_locations],
         },
     )
-    # Ensure they have predictable vesting_at values
-    CallRequest.objects.all().update(vesting_at="2021-03-24 15:11:23")
+    # Ensure they have predictable created_at and vesting_at values
+    CallRequest.objects.all().update(
+        created_at="2021-03-24 13:11:23", vesting_at="2021-03-24 15:11:23"
+    )
     with django_assert_num_queries(9):
         response = admin_client.post(
             "/admin/core/callrequest/",
@@ -299,17 +301,17 @@ def test_admin_export_csv(admin_client, django_assert_num_queries, ten_locations
         csv_bytes = b"".join(chunk for chunk in response.streaming_content)
         csv_string = csv_bytes.decode("utf-8")
         assert csv_string == (
-            "id,location_id,location,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,completed,completed_at,priority_group,priority,tip_type,tip_report_id,tip_report\r\n"
-            "1,10,Location 10,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "2,9,Location 9,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "3,8,Location 8,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "4,7,Location 7,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "5,6,Location 6,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "6,5,Location 5,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "7,4,Location 4,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "8,3,Location 3,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "9,2,Location 2,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
-            "10,1,Location 1,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "id,location_id,location,created_at,vesting_at,claimed_by_id,claimed_by,claimed_until,call_request_reason_id,call_request_reason,completed,completed_at,priority_group,priority,tip_type,tip_report_id,tip_report\r\n"
+            "1,1,Location 1,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "2,2,Location 2,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "3,3,Location 3,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "4,4,Location 4,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "5,5,Location 5,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "6,6,Location 6,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "7,7,Location 7,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "8,8,Location 8,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "9,9,Location 9,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
+            "10,10,Location 10,2021-03-24 13:11:23+00:00,2021-03-24 15:11:23+00:00,,,,4,Data corrections tip,False,,99,0,,,\r\n"
         )
 
 

@@ -4,8 +4,9 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q, TextField
+from django.db.models.query import QuerySet
 from django.forms import Textarea
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import dateformat, timezone
@@ -304,26 +305,23 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     short_public_notes.short_description = "Public Notes"  # type:ignore[attr-defined]
 
 
-def make_call_request_queue_action(reason):
-    def add_to_call_request_queue(modeladmin, request, queryset):
-        locations = list(queryset.exclude(do_not_call=True))
-        num_do_not_call_locations = queryset.filter(do_not_call=True).count()
-        now = timezone.now()
-        reason_obj = CallRequestReason.objects.get(short_reason=reason)
-        CallRequest.objects.bulk_create(
-            [
-                CallRequest(
-                    location=location, vesting_at=now, call_request_reason=reason_obj
-                )
-                for location in locations
-            ]
-        )
+def make_call_request_queue_action(reason: str):
+    def add_to_call_request_queue(
+        modeladmin: LocationAdmin, request: HttpRequest, queryset: QuerySet[Location]
+    ):
+        # We have to flatten this into IDs to make insert able to deal
+        # -- it may have GROUP BY, which makes us unable to SELECT FOR
+        # UPDATE it.
+        queryset = Location.objects.filter(id__in=[loc.id for loc in queryset])
+        inserted = CallRequest.insert(queryset, reason)
+
         message = "Added {} location{} to queue with reason: {}".format(
-            len(locations), "s" if len(locations) == 1 else "", reason
+            len(inserted), "s" if len(inserted) == 1 else "", reason
         )
-        if num_do_not_call_locations:
-            message += '. Skipped {} location{} marked "do not call"'.format(
-                num_do_not_call_locations, "s" if num_do_not_call_locations != 1 else ""
+        if len(inserted) < queryset.count():
+            skipped = queryset.count() - len(inserted)
+            message += ". Skipped {} location{}".format(
+                skipped, "s" if skipped != 1 else ""
             )
         messages.success(request, message)
 
@@ -343,11 +341,15 @@ class LocationInQueueFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() == "yes":
             return queryset.filter(
-                Exists(CallRequest.objects.filter(location=OuterRef("pk"))),
+                Exists(
+                    CallRequest.objects.filter(location=OuterRef("pk"), completed=False)
+                ),
             )
         if self.value() == "no":
             return queryset.filter(
-                ~Exists(CallRequest.objects.filter(location=OuterRef("pk"))),
+                ~Exists(
+                    CallRequest.objects.filter(location=OuterRef("pk"), completed=False)
+                ),
             )
 
 
@@ -1216,7 +1218,6 @@ class CallRequestQueueStatus(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             (None, "In queue ready to be assigned"),
-            ("nophone", "In queue BUT missing phone number"),
             ("claimed", "Currently assigned"),
             ("scheduled", "Scheduled for future"),
             ("completed", "Completed"),
@@ -1244,14 +1245,6 @@ class CallRequestQueueStatus(admin.SimpleListFilter):
                 & Q(completed=False)
                 & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
             ).exclude(
-                Q(location__phone_number__isnull=True) | Q(location__phone_number="")
-            )
-        elif self.value() == "nophone":
-            return queryset.filter(
-                Q(vesting_at__lte=now)
-                & Q(completed=False)
-                & (Q(claimed_until__isnull=True) | Q(claimed_until__lte=now))
-            ).filter(
                 Q(location__phone_number__isnull=True) | Q(location__phone_number="")
             )
         elif self.value() == "claimed":
@@ -1305,7 +1298,13 @@ def make_call_request_move_to_priority_group(priority_group):
 @admin.register(CallRequest)
 class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     add_form_template = "admin/add_call_request.html"
-    search_fields = ("location__name", "location__public_id")
+    change_form_template = "admin/change_call_request.html"
+    search_fields = (
+        "location__name",
+        "location__full_address",
+        "location__public_id",
+        "location__phone_number",
+    )
     list_display = (
         "summary",
         "state",
@@ -1329,7 +1328,7 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         for priority_group in CallRequest.PriorityGroup.choices
     ]
     raw_id_fields = ("location", "claimed_by", "tip_report")
-    readonly_fields = ("priority",)
+    readonly_fields = ("priority", "created_at")
 
     def summary(self, obj):
         bits = [escape(obj.location.name)]
@@ -1383,15 +1382,21 @@ class CallRequestAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             )
         return "Available"
 
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["redirect_from_create"] = False
+        if request.GET.get("redirect_from_create"):
+            extra_context["redirect_from_create"] = True
+        return super().change_view(request, object_id, form_url, extra_context)
+
     def add_view(self, request, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        print("existing_call_requests change_view")
-        extra_context["existing_call_requests"] = []
+        extra_context["existing_call_request"] = None
         if request.GET.get("location"):
             location = Location.objects.get(pk=request.GET["location"])
-            extra_context["existing_call_requests"] = list(
-                location.call_requests.filter(completed=False)
-            )
+            extra_context["existing_call_request"] = location.call_requests.filter(
+                completed=False
+            ).first()
         return super().add_view(
             request,
             form_url,

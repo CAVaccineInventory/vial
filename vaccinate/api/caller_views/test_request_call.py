@@ -1,12 +1,10 @@
 import pytest
 from core.models import (
-    AppointmentTag,
     CallRequest,
     CallRequestReason,
     County,
     Location,
     LocationType,
-    Reporter,
     State,
 )
 from django.utils import timezone
@@ -124,76 +122,3 @@ def test_request_call(client, jwt_id_token):
         "confirm_website": False,
         "timezone": "America/Los_Angeles",
     }
-
-
-def test_respect_soft_deleted_and_do_not_call(ten_locations):
-    # Create a request or each of the ten locations
-    reason = CallRequestReason.objects.get(short_reason="New location")
-    for i, location in enumerate(ten_locations):
-        location.call_requests.create(
-            call_request_reason=reason, vesting_at=timezone.now(), priority=i
-        )
-    assert CallRequest.available_requests().count() == 10
-    # Make one of them do_not_call
-    location = ten_locations[0]
-    location.do_not_call = True
-    location.save()
-    assert CallRequest.available_requests().count() == 9
-    # Soft delete another one
-    location2 = ten_locations[1]
-    location2.soft_deleted = True
-    location2.save()
-    assert CallRequest.available_requests().count() == 8
-
-
-@pytest.mark.django_db()
-@pytest.mark.django_db()
-def test_backfill_queue(client, jwt_id_token, settings, ten_locations):
-    settings.MIN_CALL_REQUEST_QUEUE_ITEMS = 3
-    assert CallRequest.available_requests().count() == 0
-    response = client.post(
-        "/api/requestCall?state=OR",
-        {},
-        content_type="application/json",
-        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
-    )
-    assert response.status_code == 200
-    assert CallRequest.available_requests().count() == 2
-    # Try again but mark some of the locations as 'called'
-    CallRequest.objects.all().delete()
-    reporter = Reporter.objects.get_or_create(external_id="test:1")[0]
-    web = AppointmentTag.objects.get(slug="web")
-    for location in ten_locations[:8]:
-        location.reports.create(
-            reported_by=reporter,
-            report_source="ca",
-            appointment_tag=web,
-        )
-    response = client.post(
-        "/api/requestCall?state=OR",
-        {},
-        content_type="application/json",
-        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
-    )
-    assert response.status_code == 200
-    assert CallRequest.available_requests().count() == 2
-    call_requests = CallRequest.available_requests()
-    # These should be to the locations with no reports
-    for call_request in call_requests:
-        assert call_request.location.reports.count() == 0
-
-
-def test_backfill_queue_does_not_duplicate_locations(
-    client, jwt_id_token, settings, ten_locations
-):
-    settings.MIN_CALL_REQUEST_QUEUE_ITEMS = 20
-    assert CallRequest.available_requests().count() == 0
-    response = client.post(
-        "/api/requestCall?state=OR",
-        {},
-        content_type="application/json",
-        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
-    )
-    assert response.status_code == 200
-    assert CallRequest.available_requests().count() == 9
-    assert CallRequest.objects.count() == 10

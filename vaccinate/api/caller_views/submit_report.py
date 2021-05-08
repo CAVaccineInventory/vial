@@ -10,19 +10,10 @@ import requests
 from api.models import ApiLog
 from api.utils import deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.import_utils import derive_appointment_tag, resolve_availability_tags
-from core.models import (
-    AppointmentTag,
-    CallRequest,
-    CallRequestReason,
-    Location,
-    Report,
-    Reporter,
-)
+from core.models import AppointmentTag, CallRequest, Location, Report, Reporter
 from dateutil import parser
 from django.conf import settings
-from django.db.models import Max
 from django.http import HttpRequest, JsonResponse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from pydantic import BaseModel, Field, ValidationError, validator
 
@@ -137,58 +128,18 @@ def submit_report(
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
 
-    # Mark any calls to this location claimed by this user as complete
-    existing_call_request = report.location.call_requests.filter(
-        claimed_by=request.reporter, completed=False  # type: ignore[attr-defined]
-    ).first()
-    report.location.call_requests.filter(
-        claimed_by=request.reporter  # type: ignore[attr-defined]
-    ).update(completed=True, completed_at=timezone.now())
+    tags_to_requeue = set(
+        [
+            "skip_call_back_later",  # XXX: Change this to allow other tags to re-enqueue
+        ]
+    )
+    tag_slugs = set([tag.slug for tag in availability_tags])
+    if report_data["do_not_call_until"] and not tags_to_requeue & tag_slugs:
+        report_data["do_not_call_until"] = None
 
-    # If this was based on a call request, associate it with the report
-    if existing_call_request:
-        report.call_request = existing_call_request
-        report.save()
-
-    # Handle skip requests
-    # Only check if "Do not call until is set"
-    if report_data["do_not_call_until"] is not None:
-        skip_reason = CallRequestReason.objects.get(short_reason="Previously skipped")
-        if skip_reason is None:
-            return JsonResponse(
-                {
-                    "error": "Report set do not call time but the database is missing the skip reason."
-                },
-                status=500,
-            )
-
-        if "skip_call_back_later" not in [tag.slug for tag in availability_tags]:
-            return JsonResponse(
-                {"error": "Report set do not call time but did not request a skip."},
-                status=400,
-            )
-        priority_in_group = 0
-        if existing_call_request:
-            priority_in_group = (
-                CallRequest.objects.filter(
-                    priority_group=existing_call_request.priority_group
-                ).aggregate(max=Max("priority"))["max"]
-                - 1
-            )
-        # Priority group should match that of the original call request, BUT we
-        # use the separate priority integer to drop them to the very end of the
-        # queue within that priority group
-        CallRequest.objects.create(
-            location=report_data["location"],
-            vesting_at=report_data["do_not_call_until"],
-            call_request_reason=skip_reason,
-            tip_type=CallRequest.TipType.SCOOBY,
-            tip_report=report,
-            priority_group=existing_call_request.priority_group
-            if existing_call_request
-            else 99,
-            priority=priority_in_group,
-        )
+    CallRequest.mark_completed_by(
+        report, enqueue_again_at=report_data["do_not_call_until"]
+    )
 
     def log_created_report(log):
         log.created_report = report
