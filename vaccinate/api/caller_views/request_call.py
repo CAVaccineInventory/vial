@@ -1,14 +1,10 @@
-from datetime import timedelta
-from typing import Callable, Optional
+from typing import Callable
 
 import beeline  # type: ignore
 from api.models import ApiLog
 from api.utils import deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.models import CallRequest, Location
-from django.conf import settings
-from django.db import transaction
 from django.http import HttpRequest, JsonResponse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from timezonefinder import TimezoneFinder
 
@@ -26,13 +22,10 @@ def request_call(
             {"error": "Must be a POST"},
             status=400,
         )
-    # Ensure there are at least MIN_QUEUE items in the queue
-    CallRequest.backfill_queue()
     # Override location selection: pass the public_id of a rocation to
     # skip the normal view selection code and return that ID specifically
     location_id = request.GET.get("location_id") or None
     # Skip updating the record to lock it from other callers - use for testing
-    no_claim = bool(request.GET.get("no_claim"))
     if location_id:
         try:
             location = Location.objects.get(public_id=location_id)
@@ -42,36 +35,22 @@ def request_call(
                 status=400,
             )
     else:
-        with beeline.tracer(name="examine_queue"):
-            # Obey ?state= if present, otherwise default to California
-            state = request.GET.get("state") or "CA"
-            now = timezone.now()
-            # Pick the next item from the call list for that state
-            available_requests = CallRequest.available_requests()
-            if state != "all":
-                available_requests = available_requests.filter(
-                    location__state__abbreviation=state
-                )
-            # We need to lock the record we select so we can update
-            # it marking that we have claimed it
-            call_requests = available_requests.select_for_update()[:1]
-            with transaction.atomic():
-                try:
-                    call_request: Optional[CallRequest] = call_requests[0]
-                except IndexError:
-                    call_request = None
-                if call_request is not None and not no_claim:
-                    call_request.claimed_by = request.reporter  # type: ignore[attr-defined]
-                    call_request.claimed_until = now + timedelta(
-                        minutes=settings.CLAIM_LOCK_MINUTES
-                    )
-                    call_request.save()
-            if call_request is None:
-                return JsonResponse(
-                    {"error": "Couldn't find somewhere to call"},
-                    status=400,
-                )
-            location = call_request.location
+        no_claim = bool(request.GET.get("no_claim"))
+        state = request.GET.get("state")
+        if state is None:
+            state = "CA"
+        if state == "all":
+            state = None
+        call_request = CallRequest.get_call_request(
+            claim_for=None if no_claim else request.reporter,  # type: ignore[attr-defined]
+            state=state,
+        )
+        if call_request is None:
+            return JsonResponse(
+                {"error": "Couldn't find somewhere to call"},
+                status=400,
+            )
+        location = call_request.location
 
     latest_report = location.dn_latest_non_skip_report
 
