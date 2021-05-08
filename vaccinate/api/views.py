@@ -270,18 +270,20 @@ def import_source_locations(request, on_request_logged):
         if record.match is not None and record.match.action == "existing":
             matched_location = Location.objects.get(public_id=record.match.id)
 
+        defaults = {
+            "source_name": record.source_name,
+            "name": record.name,
+            "latitude": record.latitude,
+            "longitude": record.longitude,
+            "import_json": json_record["import_json"],
+            "import_run": import_run,
+            "last_imported_at": timezone.now(),
+        }
+        if matched_location is not None:
+            defaults["matched_location"] = matched_location
+
         source_location, was_created = SourceLocation.objects.update_or_create(
-            source_uid=record.source_uid,
-            defaults={
-                "source_name": record.source_name,
-                "name": record.name,
-                "latitude": record.latitude,
-                "longitude": record.longitude,
-                "import_json": json_record["import_json"],
-                "import_run": import_run,
-                "matched_location": matched_location,
-                "last_imported_at": timezone.now(),
-            },
+            source_uid=record.source_uid, defaults=defaults
         )
 
         import_json = record.import_json

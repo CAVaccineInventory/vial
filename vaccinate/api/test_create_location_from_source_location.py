@@ -1,7 +1,7 @@
 import json
 import pathlib
 
-from core.models import Location, SourceLocation
+from core.models import ConcordanceIdentifier, Location, SourceLocation
 from reversion.models import Revision
 
 
@@ -22,6 +22,7 @@ def test_create_location_from_source_location(client, api_key):
         longitude=fixture["longitude"],
         import_json=fixture["import_json"],
     )
+    source_location.concordances.add(ConcordanceIdentifier.for_idref("foo:bar"))
     assert SourceLocation.objects.count() == 1
     assert Location.objects.count() == 0
     assert Revision.objects.count() == 0
@@ -45,6 +46,9 @@ def test_create_location_from_source_location(client, api_key):
             ),
         }
     }
+
+    # Ensure source location concordances were copied over
+    assert [str(c) for c in location.concordances.all()] == ["foo:bar"]
 
     source_location.refresh_from_db()
     assert source_location.matched_location == location
