@@ -8,9 +8,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core import management
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
 
-from .models import CallRequest, CallRequestReason, County, Location, Report
+from .models import CallRequest, County, Location, Report
 
 
 def extract_ids(s):
@@ -29,29 +28,18 @@ def import_call_requests(request):
         for group_id, group_name in priority_groups:
             field = "location_ids_group_{}".format(group_id)
             location_ids = extract_ids(request.POST.get(field))
-            locations = list(Location.objects.filter(public_id__in=location_ids))
-            # Delete any already-existing incomplete call requests for these locations
-            num_deleted = CallRequest.objects.filter(
-                location__public_id__in=location_ids,
-                completed=False,
-            ).delete()[0]
-            reason_obj = CallRequestReason.objects.get_or_create(
-                short_reason="Imported"
-            )[0]
-            now = timezone.now()
-            CallRequest.objects.bulk_create(
-                [
-                    CallRequest(
-                        location=location,
-                        vesting_at=now,
-                        call_request_reason=reason_obj,
-                        priority_group=group_id,
-                    )
-                    for location in locations
-                ],
-                ignore_conflicts=True,
-            )
-            if len(locations):
+            locations = Location.objects.filter(public_id__in=location_ids)
+            if locations.count() != 0:
+                # Delete any already-existing incomplete call requests for these locations
+                num_deleted = CallRequest.objects.filter(
+                    location__public_id__in=location_ids,
+                    completed=False,
+                ).delete()[0]
+                CallRequest.insert(
+                    locations=locations,
+                    reason="Imported",
+                    priority_group=group_id,
+                )
                 messages.append(
                     "Added {} locations to priority {} (deleted {} existing call requests)".format(
                         len(locations), group_name, num_deleted
