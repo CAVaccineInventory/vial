@@ -55,7 +55,7 @@ docutils
 Markdown
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.11a0
+django-sql-dashboard==0.12.1
 
 # Version history in Django admin
 django-reversion
