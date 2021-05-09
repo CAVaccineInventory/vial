@@ -167,7 +167,11 @@ def test_import_location_twice_updates(client, api_key):
     assert source_location.name == "Rite Aid"
 
 
-def test_import_existing_source_location_with_manual_match(client, api_key):
+MATCH_ACTIONS = [None, {"action": "existing", "id": "foo"}, {"action": "new"}]
+
+
+@pytest.mark.parametrize("match_action", MATCH_ACTIONS)
+def test_import_does_not_overwrite_existing_match(client, api_key, match_action):
     fixture = json.load((tests_dir / "003-match-existing.json").open())
 
     # Create a location to match against first
@@ -179,6 +183,16 @@ def test_import_existing_source_location_with_manual_match(client, api_key):
         location_type=LocationType.objects.filter(name="Pharmacy").get(),
         state=State.objects.filter(abbreviation="CA").get(),
     )
+    # Create a second location
+    second_location = Location.objects.create(
+        public_id="foo",
+        name="TEST",
+        latitude=fixture["latitude"],
+        longitude=fixture["longitude"],
+        location_type=LocationType.objects.filter(name="Pharmacy").get(),
+        state=State.objects.filter(abbreviation="CA").get(),
+    )
+
     # Create a source location that matches this, as from Velma
     source_location = SourceLocation.objects.create(
         source_name=fixture["source_name"],
@@ -186,12 +200,14 @@ def test_import_existing_source_location_with_manual_match(client, api_key):
         matched_location=original_location,
     )
     source_location.refresh_from_db()
-    assert source_location.matched_location is not None
+    assert source_location.matched_location == original_location
 
     # Modify the fixture to delete the match
-    del fixture["match"]
-
-    assert "match" not in fixture
+    if match_action is None:
+        del fixture["match"]
+        assert "match" not in fixture
+    else:
+        fixture["match"] = match_action
 
     # Now start an import run for that location
     import_run_id = client.post(
@@ -207,4 +223,9 @@ def test_import_existing_source_location_with_manual_match(client, api_key):
 
     assert SourceLocation.objects.count() == 1
     source_location.refresh_from_db()
-    assert source_location.matched_location is not None
+    assert source_location.matched_location == original_location
+
+    # Check that we did not copy concordances onto the second location
+    concordances = set(second_location.concordances.all())
+    source_concordanes = set(source_location.concordances.all())
+    assert not source_concordanes.issubset(concordances)

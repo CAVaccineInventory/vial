@@ -279,12 +279,15 @@ def import_source_locations(request, on_request_logged):
             "import_run": import_run,
             "last_imported_at": timezone.now(),
         }
-        if matched_location is not None:
-            defaults["matched_location"] = matched_location
 
         source_location, was_created = SourceLocation.objects.update_or_create(
             source_uid=record.source_uid, defaults=defaults
         )
+        safe_to_match = was_created or source_location.matched_location is None
+
+        if safe_to_match and matched_location is not None:
+            source_location.matched_location = matched_location
+            source_location.save()
 
         import_json = record.import_json
         links = list(import_json.links) if import_json.links is not None else []
@@ -299,14 +302,15 @@ def import_source_locations(request, on_request_logged):
             )
             identifier.source_locations.add(source_location)
 
-        if record.match is not None and record.match.action == "new":
-            matched_location = build_location_from_source_location(source_location)
+        if safe_to_match:
+            if record.match is not None and record.match.action == "new":
+                matched_location = build_location_from_source_location(source_location)
 
-        if matched_location is not None:
-            new_concordances = source_location.concordances.difference(
-                matched_location.concordances.all()
-            )
-            matched_location.concordances.add(*new_concordances)
+            if matched_location is not None:
+                new_concordances = source_location.concordances.difference(
+                    matched_location.concordances.all()
+                )
+                matched_location.concordances.add(*new_concordances)
 
         if was_created:
             created.append(source_location.pk)
