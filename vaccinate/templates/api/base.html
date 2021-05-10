@@ -33,7 +33,6 @@
       }
       main textarea {
         width: 80%;
-        height: 10em;
       }
       h1 {
         margin-top: 0.5em;
@@ -61,31 +60,17 @@
       label {
         font-weight: bold;
       }
-      /* table styles for dashboard */
-      table {
-        margin-top: 1em;
-        border-collapse: collapse;
-        border-spacing: 0;
-        background-color: white;
+      .completed-count-total-count {
+        width: 60%;
+        background-color: #dfdfdf;
+        height: 3em;
       }
-      th {
-        white-space: nowrap;
-        text-align: left;
-        padding: 4px;
-        padding-right: 1em;
-        border-right: 1px solid #eee;
-      }
-      td {
-        border-top: 1px solid #aaa;
-        border-right: 1px solid #eee;
-        padding: 4px;
-        vertical-align: top;
-        white-space: pre-wrap;
-      }
-      pre.json {
-        margin: 0;
+      .completed-count-total-count-bar {
+        background-color: #00960f;
+        height: 3em;
       }
     </style>
+    <style>{% include "django_sql_dashboard/_css.html" %}</style>
   </head>
   <body id="app-unspecified">
     <header>
