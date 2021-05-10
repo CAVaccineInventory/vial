@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import dateformat, timezone
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
+from django.utils.text import Truncator
 from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin
 
@@ -1020,7 +1021,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             raw_details.startswith("http://") or raw_details.startswith("https://")
         ):
             details = format_html(
-                '<a target="_blank" href="{}">{}</a>', raw_details, raw_details
+                '<a target="_blank" href="{}">{}</a>',
+                raw_details,
+                Truncator(raw_details).chars(75),
             )
         else:
             details = escape(raw_details or "")
