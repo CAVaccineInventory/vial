@@ -1301,6 +1301,7 @@ class SourceLocation(gis_models.Model):
 
     class Meta:
         db_table = "source_location"
+        indexes = [models.Index(fields=["matched_location"])]
 
 
 class SourceLocationMatchHistory(models.Model):
