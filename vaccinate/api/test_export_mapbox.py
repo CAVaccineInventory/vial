@@ -215,3 +215,34 @@ def test_planned_closure_location_not_returned(
         assert len(geojson) == 0
     else:
         assert len(geojson) == 1
+
+
+@pytest.mark.parametrize(
+    "tag",
+    (
+        "incorrect_contact_information",
+        "location_permanently_closed",
+        "may_be_a_vaccination_site_in_the_future",
+        "not_open_to_the_public",
+        "will_never_be_a_vaccination_site",
+        "only_staff",
+    ),
+)
+def test_locations_with_specific_availability_tags_not_exported(
+    client, ten_locations, tag
+):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
+    web = AppointmentTag.objects.get(slug="web")
+    report = location.reports.create(
+        reported_by=reporter,
+        report_source="ca",
+        appointment_tag=web,
+    )
+    report.availability_tags.add(AvailabilityTag.objects.get(slug=tag))
+    response = client.get(
+        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
+    )
+    geojson = json.loads(response.content)["geojson"]
+    assert isinstance(geojson, list)
+    assert len(geojson) == 0
