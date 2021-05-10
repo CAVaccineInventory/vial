@@ -6,12 +6,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0125_alter_callrequest_created_at'),
+        ("core", "0125_alter_callrequest_created_at"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='sourcelocation',
-            index=models.Index(fields=['matched_location'], name='source_loca_matched_d1b866_idx'),
+            model_name="sourcelocation",
+            index=models.Index(
+                fields=["matched_location"], name="source_loca_matched_d1b866_idx"
+            ),
         ),
     ]
