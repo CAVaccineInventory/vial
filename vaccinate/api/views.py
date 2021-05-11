@@ -919,7 +919,7 @@ def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
     )
 
 
-class RequestTaskValidator(BaseModel):
+class ResolveTaskValidator(BaseModel):
     task_id: Task
     resolution: Optional[dict]
 
@@ -944,7 +944,7 @@ def resolve_task(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     try:
-        info = RequestTaskValidator(**post_data)
+        info = ResolveTaskValidator(**post_data)
     except ValidationError as e:
         return JsonResponse({"error": e.errors()}, status=400)
 
