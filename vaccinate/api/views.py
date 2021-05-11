@@ -33,6 +33,7 @@ from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
+from .search import location_json
 from .utils import (
     jwt_auth,
     log_api_requests,
@@ -137,10 +138,10 @@ def import_locations(request, on_request_logged):
     if isinstance(post_data, dict):
         post_data = [post_data]
     with reversion.create_revision():
-        for location_json in post_data:
+        for location_raw in post_data:
             try:
                 with beeline.tracer(name="location_validator"):
-                    location_data = LocationValidator(**location_json).dict()
+                    location_data = LocationValidator(**location_raw).dict()
                 kwargs = dict(
                     name=location_data["name"],
                     latitude=location_data["latitude"],
@@ -191,9 +192,9 @@ def import_locations(request, on_request_logged):
                             )
                         )
                         continue
-                if location_json.get("import_ref"):
+                if location_raw.get("import_ref"):
                     location, created = Location.objects.update_or_create(
-                        import_ref=location_json["import_ref"], defaults=kwargs
+                        import_ref=location_raw["import_ref"], defaults=kwargs
                     )
                     if created:
                         added_locations.append(location)
@@ -203,7 +204,7 @@ def import_locations(request, on_request_logged):
                     location = Location.objects.create(**kwargs)
                     added_locations.append(location)
             except ValidationError as e:
-                errors.append((location_json, e.errors()))
+                errors.append((location_raw, e.errors()))
             reversion.set_comment(
                 "/api/importLocations called with API key {}".format(
                     str(request.api_key)
@@ -862,3 +863,57 @@ def import_tasks(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
         ]
     )
     return JsonResponse({"created": [item.pk for item in created]})
+
+
+def task_json(task: Task) -> Dict[str, object]:
+    return {
+        "id": task.id,
+        "task_type": task.task_type.name,
+        "location": location_json(task.location, include_soft_deleted=True),
+        "other_location": location_json(task.other_location, include_soft_deleted=True)
+        if task.other_location
+        else None,
+        "details": task.details,
+    }
+
+
+class RequestTaskValidator(BaseModel):
+    task_type: TaskType
+
+
+@log_api_requests
+@beeline.traced("request_task")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["caller"],
+)
+@csrf_exempt
+def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    try:
+        task_type = RequestTaskValidator(**post_data).task_type
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    tasks = task_type.tasks.filter(resolved_at=None)
+    task = tasks.order_by("?").first()
+    if not task:
+        return JsonResponse(
+            {
+                "task_type": "Potential duplicate",
+                "task": None,
+                "warning": 'No unresolved tasks of type "{}"'.format(task_type),
+            }
+        )
+
+    return JsonResponse(
+        {
+            "task_type": task.task_type.name,
+            "task": task_json(task),
+            "unresolved_of_this_type": tasks.count(),
+        }
+    )

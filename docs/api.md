@@ -67,7 +67,7 @@ Some examples:
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1&random=1
 
-## APIs used by our Scooby caller app
+## APIs used by our Scooby and Velma apps
 
 ### POST /api/submitReport
   
@@ -238,6 +238,61 @@ The response currently looks like this:
 ```
 
 Try this API: https://vial-staging.calltheshots.us/api/callerStats/debug
+
+### POST /api/requestTask
+
+Request a task to be completed by a user. Tasks are a more generic concept than call requests - they are intended to grow to cover a variety of different data checking flows.
+
+HTTP POST with a JWT token or API key.
+
+The body sent with the POST must specify the type of task to be returned - see https://vial-staging.calltheshots.us/api/taskTypes for a list:
+
+```json
+{
+  "task_type": "Potential duplicate"
+}
+```
+If there are no unresolved tasks of this type available the API will return the following (with a 200 status code):
+```json
+{
+  "task_type": "Potential duplicate",
+  "task": null,
+  "warning": "No unresolved tasks of type \"Potential duplicate\""
+}
+```
+If there are tasks available, one will be selected at random and will be returned looking like this:
+```json
+{
+  "task_type": "Potential duplicate",
+  "task": {
+    "id": 5,
+    "task_type": "Potential duplicate",
+    "location": {
+        "id": "rec5sJrYqJbKNO4N6",
+        # ...
+        "concordances": [
+            "google_places:ChIJoXTs-acp6IARE2H4ljeSOQY",
+            "on:twoe"
+        ],
+        "soft_deleted": false
+    },
+    "other_location": {
+        "id": "rec52fj1wLHnVLwxq",
+        # ...
+        "soft_deleted": false
+    },
+    "details": {
+        "details": "go here"
+    }
+  },
+  "unresolved_of_this_type": 1
+}
+```
+`other_location` can be `null`. Both `location` and `other_location` reuse the JSON format from the search API, which is unstable and may change in the future. They add one extra key to that representation, `"soft_deleted": bool` which can be used to indicate that a location has been soft deleted.
+
+The `details` key can be `null` or a JSON object - its contents will differ for different task types.
+
+The `unresolved_of_this_type` integer indicates how many unresolved tasks (including this one) are left in the queue.
 
 ## APIs used for getting data into VIAL
 

@@ -143,6 +143,7 @@ urlpatterns = [
             docs="/api/docs#post-apiimportreports",
         ),
     ),
+    path("api/importTasks", api_views.import_tasks),
     path(
         "api/importTasks/debug",
         api_views.api_debug_view(
@@ -152,7 +153,17 @@ urlpatterns = [
             docs="/api/docs#post-apiimporttasks",
         ),
     ),
-    path("api/importTasks", api_views.import_tasks),
+    path("api/requestTask", api_views.request_task),
+    path(
+        "api/requestTask/debug",
+        api_views.api_debug_view(
+            "api/requestTask",
+            use_jwt=False,
+            body_textarea=True,
+            default_body='{"task_type": "Potential duplicate"}',
+            docs="/api/docs#post-apirequesttask",
+        ),
+    ),
     path("api/locationTypes", api_views.location_types),
     path("api/providerTypes", api_views.provider_types),
     path("api/taskTypes", api_views.task_types),

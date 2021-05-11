@@ -184,8 +184,10 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
     )
 
 
-def location_json(location: Location) -> Dict[str, object]:
-    return {
+def location_json(
+    location: Location, include_soft_deleted: bool = False
+) -> Dict[str, object]:
+    data = {
         "id": location.public_id,
         "name": location.name,
         "state": location.state.abbreviation,
@@ -212,6 +214,9 @@ def location_json(location: Location) -> Dict[str, object]:
         else None,
         "concordances": [str(c) for c in location.concordances.all()],
     }
+    if include_soft_deleted:
+        data["soft_deleted"] = location.soft_deleted
+    return data
 
 
 def location_geojson(location: Location) -> Dict[str, object]:
