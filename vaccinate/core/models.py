@@ -1519,6 +1519,39 @@ class Task(models.Model):
             raise ValueError("Task {} does not exist".format(id))
 
 
+class CompletedLocationMerge(models.Model):
+    winner_location = models.ForeignKey(
+        Location, related_name="+", on_delete=models.PROTECT
+    )
+    loser_location = models.ForeignKey(
+        Location, related_name="+", on_delete=models.PROTECT
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        "auth.User", related_name="completed_location_merges", on_delete=models.PROTECT
+    )
+    task = models.ForeignKey(
+        Task,
+        null=True,
+        blank=True,
+        related_name="completed_location_merges",
+        on_delete=models.PROTECT,
+    )
+    details = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Detailed information about the merge",
+    )
+
+    def __str__(self):
+        return "winner={}, loser={}, merged by {} at {}".format(
+            self.winner_location, self.loser_location, self.created_by, self.created_at
+        )
+
+    class Meta:
+        db_table = "completed_location_merge"
+
+
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
 def denormalize_location(sender, instance, action, **kwargs):

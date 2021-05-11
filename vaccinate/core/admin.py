@@ -22,6 +22,7 @@ from .models import (
     AvailabilityTag,
     CallRequest,
     CallRequestReason,
+    CompletedLocationMerge,
     ConcordanceIdentifier,
     County,
     EvaReport,
@@ -1456,6 +1457,19 @@ class TaskAdmin(admin.ModelAdmin):
         export_as_csv_action(),
     ]
     raw_id_fields = ("location", "other_location", "created_by", "resolved_by")
+
+
+@admin.register(CompletedLocationMerge)
+class CompletedLocationMergeAdmin(admin.ModelAdmin):
+    search_fields = (
+        "winner_location__name",
+        "winner_location__full_address",
+        "winner_location__public_id",
+        "loser_location__name",
+        "loser_location__full_address",
+        "loser_location__public_id",
+    )
+    raw_id_fields = ("winner_location", "loser_location", "created_by", "task")
 
 
 # NOT CURRENTLY USED
