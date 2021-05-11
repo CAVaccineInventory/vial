@@ -158,10 +158,21 @@ urlpatterns = [
         "api/requestTask/debug",
         api_views.api_debug_view(
             "api/requestTask",
-            use_jwt=False,
+            use_jwt=True,
             body_textarea=True,
             default_body='{"task_type": "Potential duplicate"}',
             docs="/api/docs#post-apirequesttask",
+        ),
+    ),
+    path("api/resolveTask", api_views.resolve_task),
+    path(
+        "api/resolveTask/debug",
+        api_views.api_debug_view(
+            "api/resolveTask",
+            use_jwt=True,
+            body_textarea=True,
+            default_body='{"task_id": null}',
+            docs="/api/docs#post-apiresolvetask",
         ),
     ),
     path("api/locationTypes", api_views.location_types),

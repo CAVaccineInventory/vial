@@ -1507,6 +1507,17 @@ class Task(models.Model):
     class Meta:
         db_table = "task"
 
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, id: str) -> Task:
+        try:
+            return cls.objects.get(pk=id)
+        except cls.DoesNotExist:
+            raise ValueError("Task {} does not exist".format(id))
+
 
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)

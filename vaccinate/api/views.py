@@ -848,7 +848,7 @@ def import_tasks(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
         return JsonResponse({"error": e.errors()}, status=400)
 
     # Create those items!
-    user = request.api_key.user if request.api_key else request.reporter.get_user()  # type: ignore[attr-defined]
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
 
     created = Task.objects.bulk_create(
         [
@@ -916,4 +916,47 @@ def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
             "task": task_json(task),
             "unresolved_of_this_type": tasks.count(),
         }
+    )
+
+
+class RequestTaskValidator(BaseModel):
+    task_id: Task
+    resolution: Optional[dict]
+
+    @validator("task_id")
+    def task_must_not_be_resolved(cls, task):
+        if task.resolved_by:
+            raise ValueError("Task {} is already resolved".format(task.pk))
+        return task
+
+
+@log_api_requests
+@beeline.traced("resolve_task")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["caller"],
+)
+@csrf_exempt
+def resolve_task(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    try:
+        info = RequestTaskValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
+
+    task = info.task_id
+    task.resolved_by = user
+    task.resolved_at = timezone.now()
+    if info.resolution:
+        task.resolution = info.resolution
+    task.save()
+
+    return JsonResponse(
+        {"task_id": task.id, "resolution": task.resolution, "resolved": True}
     )

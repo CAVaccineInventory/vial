@@ -296,6 +296,42 @@ The `unresolved_of_this_type` integer indicates how many unresolved tasks (inclu
 
 Try this API: https://vial-staging.calltheshots.us/api/requestTask/debug
 
+### POST /api/resolveTask
+
+Mark a task as resolved. The specified task will be updated setting 'resolved_by' to the authenticated user (based on the JWT or API key). An optional `resolution` JSON object can also be passed, which will be stored in the corresponding database column.
+
+```json
+{
+  "task_id": 123,
+  "resolution": {"optional": "json"}
+}
+```
+If the task does not exist or has already been resolved, returns a 400 status code with an `"error"` message key:
+
+```json
+{
+  "error": [
+    {
+      "loc": [
+        "task_id"
+      ],
+      "msg": "Task 123 is already resolved",
+      "type": "value_error"
+    }
+  ]
+}
+```
+If the API call succeeds, returns:
+```json
+{
+  "task_id": 123,
+  "resolution": {"optional_json": "or null"},
+  "resolved": true
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/resolveTask/debug
+
 ## APIs used for getting data into VIAL
 
 ### POST /api/startImportRun
