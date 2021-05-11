@@ -6,6 +6,8 @@ from .models import (
     AvailabilityTag,
     CallRequest,
     CallRequestReason,
+    CompletedLocationMerge,
+    ConcordanceIdentifier,
     County,
     Location,
     LocationType,
@@ -93,8 +95,9 @@ def test_merge_locations_view(admin_client):
         latitude=35.279,
         longitude=-120.664,
     )
+    winner.concordances.add(ConcordanceIdentifier.for_idref("google_places:123"))
     reporter = Reporter.objects.get_or_create(external_id="test:1")[0]
-    winner.reports.create(
+    winner_report = winner.reports.create(
         report_source="ca",
         appointment_tag=AppointmentTag.objects.get(slug="web"),
         appointment_details="blah",
@@ -110,7 +113,8 @@ def test_merge_locations_view(admin_client):
         latitude=35.279,
         longitude=-120.664,
     )
-    loser.reports.create(
+    loser.concordances.add(ConcordanceIdentifier.for_idref("google_places:456"))
+    loser_report = loser.reports.create(
         report_source="ca",
         appointment_tag=AppointmentTag.objects.get(slug="web"),
         appointment_details="blah",
@@ -121,6 +125,7 @@ def test_merge_locations_view(admin_client):
     assert loser.duplicate_of is None
     assert not loser.soft_deleted
     assert Revision.objects.count() == 0
+    assert CompletedLocationMerge.objects.count() == 0
     # Now merge them
     winner.refresh_from_db()  # To get correct public_id
     loser.refresh_from_db()
@@ -136,6 +141,11 @@ def test_merge_locations_view(admin_client):
     assert loser.reports.count() == 0
     assert loser.duplicate_of == winner
     assert loser.soft_deleted
+    # Winner should have all those concordances
+    assert {str(c) for c in winner.concordances.all()} == {
+        "google_places:123",
+        "google_places:456",
+    }
     # And a Revision should have been created
     assert Revision.objects.count() == 1
     revision = Revision.objects.get()
@@ -143,6 +153,18 @@ def test_merge_locations_view(admin_client):
         revision.comment
         == f"Merged locations, winner = {winner.public_id}, loser = {loser.public_id}"
     )
+    # And a CompletedLocationMerge record
+    assert CompletedLocationMerge.objects.count() == 1
+    merge = CompletedLocationMerge.objects.first()
+    assert merge.winner_location == winner
+    assert merge.loser_location == loser
+    assert merge.created_by.username == "admin"
+    assert merge.details == {
+        "loser_report_ids": [loser_report.pk],
+        "winner_report_ids": [winner_report.pk],
+        "loser_concordances": ["google_places:456"],
+        "winner_concordances": ["google_places:123"],
+    }
 
 
 def test_bulk_delete_reports(admin_client, ten_locations):
