@@ -565,6 +565,29 @@ Accepts a JSON array of items from the [airtable-data-backup/backups/Reports.jso
 
 Try this API: https://vial-staging.calltheshots.us/api/importReports/debug
 
+### POST /api/importTasks
+
+API for adding tasks to be completed by our volunteers. Authentication is either an API key of a JWT token.
+
+Accepts either a single item or a list of items. Each item should look like this:
+
+```json
+{
+  "task_type": "Potential duplicate",
+  "location": "recxxx",
+  "other_location": "recyyy",
+  "details": {
+    "details": "go here"
+  }
+}
+```
+
+The only required fields are `task_type` and `location`. The `other_location` and `details` fields may be required depending on the task type.
+
+See https://vial-staging.calltheshots.us/api/taskTypes for a list of available task types.
+
+Try this API: https://vial-staging.calltheshots.us/api/importTasks/debug
+
 ## Miscellaneous read-only data APIs
 
 ### GET /api/location/PUBLIC_ID/concordances
@@ -636,6 +659,22 @@ Example output:
 ```
 
 Try this API: https://vial-staging.calltheshots.us/api/locationTypes
+
+### GET /api/taskTypes
+
+Unauthenticated. Returns a `"task_types"` key containing a JSON array of names of valid task types, e.g. `Potential duplicate`.
+
+Example output:
+
+```json
+{
+    "task_types": [
+        "Potential duplicates"
+    ]
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/taskTypes
 
 ### GET /api/availabilityTags
 

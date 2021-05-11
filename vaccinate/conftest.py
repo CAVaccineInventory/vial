@@ -143,8 +143,12 @@ def two_hundred_locations(db):
 @pytest.fixture
 def api_key(db):
     from api.models import ApiKey
+    from django.contrib.auth.models import User
 
     api_key = ApiKey.objects.create(
-        id=1, key="1953b7a735274809f4ff230048b60a4a", description="Test"
+        id=1,
+        key="1953b7a735274809f4ff230048b60a4a",
+        description="Test",
+        user=User.objects.create(username="user"),
     )
     return api_key.token

@@ -21,6 +21,8 @@ from core.models import (
     ProviderType,
     SourceLocation,
     State,
+    Task,
+    TaskType,
 )
 from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
@@ -389,6 +391,12 @@ def location_types(request):
 def provider_types(request):
     return JsonResponse(
         {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
+    )
+
+
+def task_types(request):
+    return JsonResponse(
+        {"task_types": list(TaskType.objects.values_list("name", flat=True))}
     )
 
 
@@ -803,3 +811,54 @@ def create_location_from_source_location(
             }
         }
     )
+
+
+class TaskValidator(BaseModel):
+    task_type: TaskType
+    location: Location
+    other_location: Optional[Location]
+    details: Optional[dict]
+
+
+class ImportTasksValidator(BaseModel):
+    items: List[TaskValidator]
+
+
+@log_api_requests
+@beeline.traced("import_tasks")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["write:tasks"],
+)
+@csrf_exempt
+def import_tasks(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    if isinstance(post_data, dict):
+        post_data = [post_data]
+
+    try:
+        items = ImportTasksValidator(items=post_data).items
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    # Create those items!
+    user = request.api_key.user if request.api_key else request.reporter.get_user()
+
+    created = Task.objects.bulk_create(
+        [
+            Task(
+                task_type=item.task_type,
+                created_by=user,
+                location=item.location,
+                other_location=item.other_location,
+                details=item.details,
+            )
+            for item in items
+        ]
+    )
+    return JsonResponse({"created": [item.pk for item in created]})

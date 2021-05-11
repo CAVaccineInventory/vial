@@ -1453,6 +1453,17 @@ class TaskType(models.Model):
     class Meta:
         db_table = "task_type"
 
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, name: str) -> TaskType:
+        try:
+            return cls.objects.get(name=name)
+        except cls.DoesNotExist:
+            raise ValueError("TaskType '{}' does not exist".format(name))
+
 
 class Task(models.Model):
     "A task for our volunteers"
