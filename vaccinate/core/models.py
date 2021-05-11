@@ -1443,6 +1443,60 @@ ConcordanceIdentifier.source_locations.through.__str__ = lambda self: "{} on sou
 )
 
 
+class TaskType(models.Model):
+    "Types of task that we present to our volunteers"
+    name = CharTextField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = "task_type"
+
+
+class Task(models.Model):
+    "A task for our volunteers"
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        "auth.User", related_name="created_tasks", on_delete=models.PROTECT
+    )
+    location = models.ForeignKey(
+        Location, related_name="tasks", on_delete=models.PROTECT
+    )
+    other_location = models.ForeignKey(
+        Location, related_name="+", blank=True, null=True, on_delete=models.SET_NULL
+    )
+    task_type = models.ForeignKey(
+        TaskType, related_name="tasks", on_delete=models.PROTECT
+    )
+    details = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Task details",
+    )
+    resolved_at = models.DateTimeField(blank=True, null=True)
+    resolved_by = models.ForeignKey(
+        "auth.User",
+        blank=True,
+        null=True,
+        related_name="resolved_tasks",
+        on_delete=models.PROTECT,
+    )
+    resolution = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Details from when this task was resolved",
+    )
+
+    def __str__(self):
+        return "{} task against {}{}".format(
+            self.task_type, self.location, " - resolved" if self.resolved_at else ""
+        )
+
+    class Meta:
+        db_table = "task"
+
+
 # Signals
 @receiver(m2m_changed, sender=Report.availability_tags.through)
 def denormalize_location(sender, instance, action, **kwargs):

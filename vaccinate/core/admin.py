@@ -38,10 +38,12 @@ from .models import (
     SourceLocation,
     SourceLocationMatchHistory,
     State,
+    Task,
+    TaskType,
 )
 
 # Simple models first
-for model in (LocationType, ProviderType, ProviderPhase):
+for model in (LocationType, ProviderType, ProviderPhase, TaskType):
     admin.site.register(
         model, actions=[export_as_csv_action()], search_fields=("name",)
     )
@@ -1430,6 +1432,30 @@ class SourceLocationMatchHistoryAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    search_fields = (
+        "location__name",
+        "location__full_address",
+        "location__public_id",
+        "location__phone_number",
+    )
+    list_display = (
+        "task_type",
+        "location",
+        "other_location",
+        "created_by",
+        "created_at",
+        "resolved_by",
+        "resolved_at",
+    )
+    list_filter = ("task_type",)
+    actions = [
+        export_as_csv_action(),
+    ]
+    raw_id_fields = ("location", "other_location", "created_by", "resolved_by")
 
 
 # NOT CURRENTLY USED
