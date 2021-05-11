@@ -392,6 +392,7 @@ class SoftDeletedFilter(admin.SimpleListFilter):
 
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
+    change_form_template = "admin/change_location.html"
     save_on_top = True
     actions = [
         export_as_csv_action(),
