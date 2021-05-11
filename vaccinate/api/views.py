@@ -847,7 +847,7 @@ def import_tasks(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
         return JsonResponse({"error": e.errors()}, status=400)
 
     # Create those items!
-    user = request.api_key.user if request.api_key else request.reporter.get_user()
+    user = request.api_key.user if request.api_key else request.reporter.get_user()  # type: ignore[attr-defined]
 
     created = Task.objects.bulk_create(
         [
