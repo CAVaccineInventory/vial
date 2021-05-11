@@ -10,6 +10,7 @@ import beeline
 import pytz
 import sentry_sdk
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.geos import Point
 from django.db import IntegrityError, models, transaction
@@ -18,6 +19,7 @@ from django.db.models.query import QuerySet
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.utils import dateformat, timezone
+from social_django.models import UserSocialAuth
 
 from .baseconverter import pid
 from .fields import CharTextField
@@ -527,12 +529,53 @@ class Reporter(models.Model):
     )
     email = CharTextField(null=True, blank=True)
     auth0_role_names = CharTextField(null=True, blank=True)
+    user = models.ForeignKey(
+        "auth.User",
+        blank=True,
+        null=True,
+        related_name="reporters",
+        help_text="Corresponding user record for this reporter",
+        on_delete=models.PROTECT,
+    )
 
     def __str__(self):
         return self.display_name or self.name or self.external_id
 
     class Meta:
         db_table = "reporter"
+
+    def get_user(self):
+        # Populates self.user if it does not yet have a value, then returns it
+        if self.user:
+            return self.user
+        # A user may exist based on a `UserSocialAuth` record
+        assert self.external_id.startswith(
+            "auth0:"
+        ), "Only auth0 reporters can be associated with Django users, not {}".format(
+            self.external_id
+        )
+        identifier = self.external_id[len("auth0:") :]
+        user_social_auth = UserSocialAuth.objects.filter(uid=identifier).first()
+        if not user_social_auth:
+            # Create user, associate it and return
+            username = "r{}".format(self.pk)
+            # Some users have their email address as their name
+            email = self.email
+            if not email and "@" in self.name:
+                email = self.name
+            if email and "@" in email:
+                username += "-" + email.split("@")[0]
+            user = User.objects.create(
+                username=username,
+                email=email or "",
+                first_name=self.name or "",
+            )
+            UserSocialAuth.objects.create(uid=identifier, provider="auth0", user=user)
+            self.user = user
+        else:
+            self.user = user_social_auth.user
+        self.save()
+        return self.user
 
 
 class AvailabilityTag(models.Model):
