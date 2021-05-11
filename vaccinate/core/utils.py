@@ -1,3 +1,6 @@
+import reversion
+
+
 def keyset_pagination_iterator(input_queryset, batch_size=500, stop_after=None):
     all_queryset = input_queryset.order_by("pk")
     last_pk = None
@@ -15,3 +18,18 @@ def keyset_pagination_iterator(input_queryset, batch_size=500, stop_after=None):
                 return
         if not queryset:
             break
+
+
+def merge_locations(winner, loser, user):
+    with reversion.create_revision():
+        loser.reports.update(location=winner.pk)
+        loser.soft_deleted = True
+        loser.soft_deleted_because = "Merged into location {}".format(winner.public_id)
+        loser.duplicate_of = winner
+        loser.save()
+        reversion.set_user(user)
+        reversion.set_comment(
+            "Merged locations, winner = {}, loser = {}".format(
+                winner.public_id, loser.public_id
+            )
+        )

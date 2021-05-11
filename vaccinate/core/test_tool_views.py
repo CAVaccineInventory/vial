@@ -80,7 +80,7 @@ def test_command_redirects_to_tools(admin_client):
     assert response.url == "/admin/tools/"
 
 
-def test_merge_locations(admin_client):
+def test_merge_locations_view(admin_client):
     county = County.objects.get(fips_code="06079")  # San Luis Obispo
     ca = State.objects.get(abbreviation="CA")
     winner = Location.objects.create(
