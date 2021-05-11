@@ -36,15 +36,18 @@
       fetch("?{{ query_string|safe }}")
         .then((r) => r.json())
         .then((d) => {
+          let count = 0;
           var layer = L.geoJSON(d, {
             onEachFeature: (feature, layer) => {
               layer.bindPopup(JSON.stringify(feature.properties, null, 2));
+              count += 1;
             },
           });
           layer.addTo(themap);
           themap.fitBounds(layer.getBounds(), {
             maxZoom: 14,
           });
+          document.querySelector('h1').innerHTML += `, showing ${count}`;
         });
     </script>
   </body>
