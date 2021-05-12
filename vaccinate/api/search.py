@@ -93,6 +93,21 @@ def search_locations(
     qs = location_json_queryset(qs)
 
     formats = make_formats(location_json, location_geojson)
+    formats["v0preview"] = OutputFormat(
+        start=(
+            '{"usage": {"notice": "Please contact VaccinateCA and let '
+            "us know if you plan to rely on or publish this data. This "
+            "data is provided with best-effort accuracy. If you are "
+            "displaying this data, we expect you to display it responsibly. "
+            'Please do not display it in a way that is easy to misread.",'
+            '"contact": {"partnersEmail": "api@vaccinateca.com"}},'
+            '"content": ['
+        ),
+        transform=lambda l: json.dumps(location_v0_json(l)),
+        separator=",",
+        end=lambda qs: "]}",
+        content_type="application/json",
+    )
 
     if format not in formats:
         return JsonResponse({"error": "Invalid format"}, status=400)
@@ -228,6 +243,30 @@ def location_geojson(location: Location) -> Dict[str, object]:
             "type": "Point",
             "coordinates": [float(location.longitude), float(location.latitude)],
         },
+    }
+
+
+def location_v0_json(location: Location) -> Dict[str, object]:
+    return {
+        "id": location.public_id,
+        "name": location.name,
+        "state": location.state.abbreviation,
+        "latitude": float(location.latitude),
+        "longitude": float(location.longitude),
+        "location_type": location.location_type.name,
+        "full_address": location.full_address,
+        "city": location.city,
+        "county": location.county.name if location.county else None,
+        "zip_code": location.zip_code,
+        "hours": location.hours,
+        "website": location.website,
+        "provider": {
+            "name": location.provider.name,
+            "type": location.provider.provider_type.name,
+        }
+        if location.provider
+        else None,
+        "concordances": [str(c) for c in location.concordances.all()],
     }
 
 
