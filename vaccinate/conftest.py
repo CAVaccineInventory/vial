@@ -87,6 +87,35 @@ def jwt_id_token(time_machine, mock_well_known_jwts, mock_auth0_userinfo):
 
 
 @pytest.fixture
+def jwt_id_token_write_locations(
+    time_machine, mock_well_known_jwts, mock_auth0_userinfo
+):
+    time_machine.move_to(datetime.datetime(2021, 5, 11, 8, 0, 0))
+    # This token created for auth0 user simonw+write-locations-test@vaccinateca.com
+    # by signing into https://help.calltheshots.us/call/ and sniffing
+    # network traffic on 2021-05-11.
+    #
+    # This decodes to:
+    # {
+    #     "https://help.vaccinateca.com/roles": [],
+    #     "iss": "https://vaccinateca.us.auth0.com/",
+    #     "sub": "auth0|609b197a8a85860069bd53dd",
+    #     "aud": [
+    #         "https://help.vaccinateca.com",
+    #         "https://vaccinateca.us.auth0.com/userinfo"
+    #     ],
+    #     "iat": 1620777401,
+    #     "exp": 1620863801,
+    #     "azp": "ZnpcUDelsgbXXXMTayxzdPWTX8wikGi5",
+    #     "scope": "openid profile email",
+    #     "permissions": [
+    #         "write:locations"
+    #     ]
+    # }
+    return "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZydGlQYXhnX2UyV29NMXhUb1IwRyJ9.eyJodHRwczovL2hlbHAudmFjY2luYXRlY2EuY29tL3JvbGVzIjpbXSwiaXNzIjoiaHR0cHM6Ly92YWNjaW5hdGVjYS51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjA5YjE5N2E4YTg1ODYwMDY5YmQ1M2RkIiwiYXVkIjpbImh0dHBzOi8vaGVscC52YWNjaW5hdGVjYS5jb20iLCJodHRwczovL3ZhY2NpbmF0ZWNhLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2MjA3Nzc0MDEsImV4cCI6MTYyMDg2MzgwMSwiYXpwIjoiWm5wY1VEZWxzZ2JYWFhNVGF5eHpkUFdUWDh3aWtHaTUiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOlsid3JpdGU6bG9jYXRpb25zIl19.SKtWyyoNp9HkqAvxQjAdTuk1RD8GV04d7jp6Urqp7p2-JqTu-16GfVApYoZxlJq6Cp8yDi2_kGT96kfzoX2xzUwHpbdTy5HyXAzIcD22UHLWm0eH3B3aEq7y2FA3MrhbPxPWlKOuhJgpns_noDVjth3c0wytWeOYC6gWO1GOzW7NuvrtA2ENVcaBIPBts7gaIYkpkEauqZ6sUXIGMVrNSu_Cvi4WAhm50yhaOd9nLXI09lqvdCp8O9A6u0xcpEbooxP9yDL82auNEAYqYcIyTuDH51QfWc2csAa2ZAbvN_hx3CxqSr-dVZ2qHhWDUCH6W39VvSXfoUsUYmQw4s4-sQ"
+
+
+@pytest.fixture
 def mock_well_known_jwts(requests_mock):
     requests_mock.get(
         "https://vaccinateca.us.auth0.com/.well-known/jwks.json",

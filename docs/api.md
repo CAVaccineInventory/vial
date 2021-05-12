@@ -332,6 +332,49 @@ If the API call succeeds, returns:
 
 Try this API: https://vial-staging.calltheshots.us/api/resolveTask/debug
 
+### POST /api/mergeLocations
+
+Merge two locations. Requires a JWT token with the `write:locations` permission or an API key.
+
+Performs the same process as the https://vial-staging.calltheshots.us/admin/merge-locations/ tool:
+
+- The loser is marked as `soft_deleted` and has its `duplicate_of` field updated to point at the winner
+- Any call reports attached to the loser will be re-assigned to the winner
+- Any concordance identifiers on the loser that are not yet on the winner will be copied
+- A `CompletedLocationMerge` record will be created showing which user completed the merge and recording details of the relationships of the pre-merged locations, specifically which reports belonged to them and what their concordance identifiers were
+- A Django reversion record will be created tracking the changes were applied to the winner and loser Location objects
+
+The POST body should include:
+
+```json
+{
+  "winner": "recXXX",
+  "loser": "recYYY"
+}
+```
+That's the public location IDs of the winner and loser of the merge.
+
+An optional `"task_id"` can also be passed, if this merge operation was the result of a task. If a task ID is passed then that task will be marked as resolved.
+
+The response from the API looks like this:
+
+```json
+{
+  "winner": {
+    "id": "ltkqt",
+    "name": "South Carolina Oncology Associates",
+    "vial_url": "http://vial-staging.calltheshots.us/admin/core/location/46747/change/"
+  },
+  "loser": {
+    "id": "ltkqp",
+    "name": "South Carolina Oncology Associates",
+    "vial_url": "http://vial-staging.calltheshots.us/admin/core/location/46743/change/"
+  },
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/mergeLocations/debug
+
 ## APIs used for getting data into VIAL
 
 ### POST /api/startImportRun

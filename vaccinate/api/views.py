@@ -24,6 +24,7 @@ from core.models import (
     Task,
     TaskType,
 )
+from core.utils import merge_locations
 from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -959,4 +960,90 @@ def resolve_task(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
 
     return JsonResponse(
         {"task_id": task.id, "resolution": task.resolution, "resolved": True}
+    )
+
+
+class MergeLocationsValidator(BaseModel):
+    winner: Location
+    loser: Location
+    task_id: Optional[Task]
+
+    @validator("winner")
+    def winner_must_not_be_soft_deleted(cls, winner):
+        if winner.soft_deleted:
+            raise ValueError("Location {} is soft deleted".format(winner.public_id))
+        return winner
+
+    @validator("loser")
+    def loser_must_not_be_soft_deleted(cls, loser):
+        if loser.soft_deleted:
+            raise ValueError("Location {} is soft deleted".format(loser.public_id))
+        return loser
+
+    @validator("loser")
+    def winner_and_loser_differ(cls, loser, values):
+        if "winner" in values and loser.pk == values["winner"].pk:
+            raise ValueError("Winner and loser should not be the same")
+        return loser
+
+    @validator("task_id")
+    def task_must_not_be_resolved(cls, task):
+        if task.resolved_by:
+            raise ValueError("Task {} is already resolved".format(task.pk))
+        return task
+
+
+@log_api_requests
+@beeline.traced("merge_locations")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["write:locations"],
+)
+@csrf_exempt
+def merge_locations_endpoint(
+    request: HttpRequest, on_request_logged: Callable
+) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    try:
+        info = MergeLocationsValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
+
+    merge_locations(info.winner, info.loser, user)
+
+    # If task_id was provided, resolve that task
+    task = info.task_id
+    if task:
+        task.resolved_by = user
+        task.resolved_at = timezone.now()
+        task.resolution = {
+            "merged_locations": True,
+            "winner": info.winner.public_id,
+            "loser": info.loser.public_id,
+        }
+        task.save()
+
+    return JsonResponse(
+        {
+            "winner": {
+                "id": info.winner.public_id,
+                "name": info.winner.name,
+                "vial_url": request.build_absolute_uri(
+                    "/admin/core/location/{}/change/".format(info.winner.id)
+                ),
+            },
+            "loser": {
+                "id": info.loser.public_id,
+                "name": info.loser.name,
+                "vial_url": request.build_absolute_uri(
+                    "/admin/core/location/{}/change/".format(info.loser.id)
+                ),
+            },
+        }
     )

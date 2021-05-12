@@ -175,6 +175,17 @@ urlpatterns = [
             docs="/api/docs#post-apiresolvetask",
         ),
     ),
+    path("api/mergeLocations", api_views.merge_locations_endpoint),
+    path(
+        "api/mergeLocations/debug",
+        api_views.api_debug_view(
+            "api/mergeLocations",
+            use_jwt=True,
+            body_textarea=True,
+            default_body='{"winner": "", "loser": ""}',
+            docs="/api/docs#post-apimergelocations",
+        ),
+    ),
     path("api/locationTypes", api_views.location_types),
     path("api/providerTypes", api_views.provider_types),
     path("api/taskTypes", api_views.task_types),
