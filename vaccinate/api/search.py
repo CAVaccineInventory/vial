@@ -100,7 +100,7 @@ def search_locations(
 
     formatter = formats[format]
 
-    qs = formatter.prepare_qs(qs)
+    qs = formatter.prepare_queryset(qs)
 
     stream_qs = qs[:size]
     if all:

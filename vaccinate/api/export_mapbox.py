@@ -3,18 +3,12 @@ import json
 
 import beeline
 import requests
+from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.conf import settings
-from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
-
-VACCINE_FINDER_NAMES = {
-    "Moderna COVID Vaccine": "Moderna",
-    "Pfizer-BioNTech COVID Vaccine": "Pfizer",
-    "Johnson & Johnson's Janssen COVID Vaccine": "Johnson & Johnson",
-}
 
 
 def _mapbox_locations_queryset():
@@ -72,8 +66,7 @@ def _mapbox_locations_queryset():
     )
 
 
-def _mapbox_geojson(location, loaded_vaccinefinder_data=None):
-    loaded_vaccinefinder_data = loaded_vaccinefinder_data or {}
+def _mapbox_geojson(location, expansion):
     properties = {
         "id": location.public_id,
         "name": location.name,
@@ -110,7 +103,7 @@ def _mapbox_geojson(location, loaded_vaccinefinder_data=None):
             properties["available_walkins"] = True
 
     # vaccine info comes from vaccinefinder if available, falls back on report
-    vaccinefinder_inventory = loaded_vaccinefinder_data.get(location.id)
+    vaccinefinder_inventory = expansion.expand([properties])[properties["id"]]
     vaccines_offered = None
     if vaccinefinder_inventory:
         vaccines_offered = vaccinefinder_inventory
@@ -139,35 +132,6 @@ def _mapbox_geojson(location, loaded_vaccinefinder_data=None):
     }
 
 
-@beeline.traced("_vaccinefinder_data_for_locations")
-def _vaccinefinder_data_for_locations(location_ids=None):
-    sql = """
-        select
-          matched_location_id,
-          json_extract_path(import_json::json, 'source', 'data', 'inventory')
-        from source_location where
-    """
-    if location_ids:
-        sql += " matched_location_id in ({})".format(
-            ", ".join(str(id) for id in location_ids)
-        )
-    else:
-        sql += " matched_location_id is not null"
-    id_to_vaccines = {}
-    with connection.cursor() as cursor:
-        cursor.execute(sql)
-        for id, inventory in cursor.fetchall():
-            if not inventory:
-                continue
-            in_stock_vaccines = [
-                VACCINE_FINDER_NAMES[item["name"]]
-                for item in inventory
-                if item["in_stock"] == "TRUE"
-            ]
-            id_to_vaccines[id] = in_stock_vaccines
-    return id_to_vaccines
-
-
 def export_mapbox_preview(request):
     # For debugging: shows the GeoJSON we would send to Mapbox. Also
     # used by our unit tests.
@@ -177,14 +141,11 @@ def export_mapbox_preview(request):
         locations = locations.filter(public_id__in=ids)
     # Maximum of 20 for the debugging preview
     locations = locations.order_by("-id")[:20]
-    loaded_vaccinefinder_data = _vaccinefinder_data_for_locations(
-        [location.pk for location in locations]
-    )
+
+    expansion = VaccineFinderInventoryExpansion(load_all=True)
+
     preview = {
-        "geojson": [
-            _mapbox_geojson(location, loaded_vaccinefinder_data)
-            for location in locations
-        ]
+        "geojson": [_mapbox_geojson(location, expansion) for location in locations]
     }
     # Defaults to wrapping in HTML so you can see Django debug toolbar
     # Use ?raw=1 to get back a raw JSON response
@@ -219,12 +180,12 @@ def export_mapbox(request):
         )
 
     locations = _mapbox_locations_queryset()
-    loaded_vaccinefinder_data = _vaccinefinder_data_for_locations()
+    expansion = VaccineFinderInventoryExpansion(load_all=True)
 
     post_data = ""
     for location in locations.all():
         post_data += (
-            json.dumps(_mapbox_geojson(location, loaded_vaccinefinder_data)) + "\n"
+            json.dumps(_mapbox_geojson(location, expansion)) + "\n"
         )
 
     access_token = settings.MAPBOX_ACCESS_TOKEN
