@@ -94,22 +94,6 @@ def search_locations(
     qs = location_json_queryset(qs)
 
     formats = make_formats(location_json, location_geojson)
-    formats["v0preview"] = OutputFormat(
-        prepare_qs=lambda qs: qs.select_related("dn_latest_non_skip_report"),
-        start=(
-            '{"usage": {"notice": "Please contact Vaccinate The States and let '
-            "us know if you plan to rely on or publish this data. This "
-            "data is provided with best-effort accuracy. If you are "
-            "displaying this data, we expect you to display it responsibly. "
-            'Please do not display it in a way that is easy to misread.",'
-            '"contact": {"partnersEmail": "api@vaccinatethestates.com"}},'
-            '"content": ['
-        ),
-        transform=lambda l: json.dumps(location_v0_json(l)),
-        separator=",",
-        end=lambda qs: "]}",
-        content_type="application/json",
-    )
 
     if format not in formats:
         return JsonResponse({"error": "Invalid format"}, status=400)
@@ -302,6 +286,22 @@ def make_formats(json_convert, geojson_convert):
             separator="\n",
             end="",
             content_type="text/plain",
+        ),
+        "v0preview": OutputFormat(
+            prepare_qs=lambda qs: qs.select_related("dn_latest_non_skip_report"),
+            start=(
+                '{"usage": {"notice": "Please contact Vaccinate The States and let '
+                "us know if you plan to rely on or publish this data. This "
+                "data is provided with best-effort accuracy. If you are "
+                "displaying this data, we expect you to display it responsibly. "
+                'Please do not display it in a way that is easy to misread.",'
+                '"contact": {"partnersEmail": "api@vaccinatethestates.com"}},'
+                '"content": ['
+            ),
+            transform=lambda l: json.dumps(location_v0_json(l)),
+            separator=",",
+            end=lambda qs: "]}",
+            content_type="application/json",
         ),
     }
 
