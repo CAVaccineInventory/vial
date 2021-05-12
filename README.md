@@ -151,7 +151,7 @@ You can set the `DJANGO_DEBUG_LOG_ALL_SQL=1` environment variable to log all SQL
 
 ## Django SQL Dashboard
 
-https://vial.calltheshots.us/dashboard/ and https://vial-staging.calltheshots.us/dashboard/ offer an interface for running read-only SQL queries against our database and bookmarking the results.
+https://vial.calltheshots.us/dashboard/ and https://vial-staging.calltheshots.us/dashboard/ offer an interface for running read-only SQL queries against our database and bookmarking the results, using [Django SQL Dashboard](https://django-sql-dashboard.datasette.io/).
 
 You can create saved dashboards at https://vial.calltheshots.us/admin/django_sql_dashboard/dashboard/ - these will then be available at URLs like https://vial.calltheshots.us/dashboard/closest-locations/
 
@@ -175,7 +175,15 @@ Only a specific list of tables are available through that interface. To make a n
    ```
 5. Grant the rights:
    ```
-   grant select on public.api_apikey, public.api_log, public.django_migrations, public.reversion_revision, public.reversion_version to "read-only-core-tables"
+   grant select on
+     public.api_apikey,
+     public.api_log
+   to "read-only-core-tables";
+   
+   grant select on
+     public.api_apikey,
+     public.api_log
+   to "datascience";
    ```
 
-...then repeat that for production.
+...then repeat that for production. The `read-only-core-tables` role is used by Django SQL Dashboard, and the `datascience` role is used by Mode.

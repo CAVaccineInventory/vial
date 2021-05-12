@@ -67,7 +67,7 @@ Some examples:
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1&random=1
 
-## APIs used by our Scooby caller app
+## APIs used by our Scooby and Velma apps
 
 ### POST /api/submitReport
   
@@ -239,6 +239,142 @@ The response currently looks like this:
 
 Try this API: https://vial-staging.calltheshots.us/api/callerStats/debug
 
+### POST /api/requestTask
+
+Request a task to be completed by a user. Tasks are a more generic concept than call requests - they are intended to grow to cover a variety of different data checking flows.
+
+HTTP POST with a JWT token or API key.
+
+The body sent with the POST must specify the type of task to be returned - see https://vial-staging.calltheshots.us/api/taskTypes for a list:
+
+```json
+{
+  "task_type": "Potential duplicate"
+}
+```
+If there are no unresolved tasks of this type available the API will return the following (with a 200 status code):
+```json
+{
+  "task_type": "Potential duplicate",
+  "task": null,
+  "warning": "No unresolved tasks of type \"Potential duplicate\""
+}
+```
+If there are tasks available, one will be selected at random and will be returned looking like this:
+```json
+{
+  "task_type": "Potential duplicate",
+  "task": {
+    "id": 5,
+    "task_type": "Potential duplicate",
+    "location": {
+        "id": "rec5sJrYqJbKNO4N6",
+        # ...
+        "concordances": [
+            "google_places:ChIJoXTs-acp6IARE2H4ljeSOQY",
+            "on:twoe"
+        ],
+        "soft_deleted": false
+    },
+    "other_location": {
+        "id": "rec52fj1wLHnVLwxq",
+        # ...
+        "soft_deleted": false
+    },
+    "details": {
+        "details": "go here"
+    }
+  },
+  "unresolved_of_this_type": 1
+}
+```
+`other_location` can be `null`. Both `location` and `other_location` reuse the JSON format from the search API, which is unstable and may change in the future. They add one extra key to that representation, `"soft_deleted": bool` which can be used to indicate that a location has been soft deleted.
+
+The `details` key can be `null` or a JSON object - its contents will differ for different task types.
+
+The `unresolved_of_this_type` integer indicates how many unresolved tasks (including this one) are left in the queue.
+
+Try this API: https://vial-staging.calltheshots.us/api/requestTask/debug
+
+### POST /api/resolveTask
+
+Mark a task as resolved. The specified task will be updated setting 'resolved_by' to the authenticated user (based on the JWT or API key). An optional `resolution` JSON object can also be passed, which will be stored in the corresponding database column.
+
+```json
+{
+  "task_id": 123,
+  "resolution": {"optional": "json"}
+}
+```
+If the task does not exist or has already been resolved, returns a 400 status code with an `"error"` message key:
+
+```json
+{
+  "error": [
+    {
+      "loc": [
+        "task_id"
+      ],
+      "msg": "Task 123 is already resolved",
+      "type": "value_error"
+    }
+  ]
+}
+```
+If the API call succeeds, returns:
+```json
+{
+  "task_id": 123,
+  "resolution": {"optional_json": "or null"},
+  "resolved": true
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/resolveTask/debug
+
+### POST /api/mergeLocations
+
+Merge two locations. Requires a JWT token with the `write:locations` permission or an API key.
+
+Performs the same process as the https://vial-staging.calltheshots.us/admin/merge-locations/ tool:
+
+- The loser is marked as `soft_deleted` and has its `duplicate_of` field updated to point at the winner
+- Any call reports attached to the loser will be re-assigned to the winner
+- Any concordance identifiers on the loser that are not yet on the winner will be copied
+- A `CompletedLocationMerge` record will be created showing which user completed the merge and recording details of the relationships of the pre-merged locations, specifically which reports belonged to them and what their concordance identifiers were
+- A Django reversion record will be created tracking the changes were applied to the winner and loser Location objects
+
+The POST body should include:
+
+```json
+{
+  "winner": "recXXX",
+  "loser": "recYYY"
+}
+```
+That's the public location IDs of the winner and loser of the merge.
+
+An optional `"task_id"` can also be passed, if this merge operation was the result of a task. If a task ID is passed then that task will be marked as resolved.
+
+The response from the API looks like this:
+
+```json
+{
+  "winner": {
+    "id": "ltkqt",
+    "name": "South Carolina Oncology Associates",
+    "vial_url": "http://vial-staging.calltheshots.us/admin/core/location/46747/change/"
+  },
+  "loser": {
+    "id": "ltkqp",
+    "name": "South Carolina Oncology Associates",
+    "vial_url": "http://vial-staging.calltheshots.us/admin/core/location/46743/change/"
+  },
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/mergeLocations/debug
+
 ## APIs used for getting data into VIAL
 
 ### POST /api/startImportRun
@@ -253,7 +389,7 @@ Returns the following JSON:
 }
 ```
 
-Try it: https://vial-staging.calltheshots.us/api/startImportRun/debug
+Try this API: https://vial-staging.calltheshots.us/api/startImportRun/debug
 
 
 ### POST /api/importSourceLocations?import_run_id=X
@@ -271,7 +407,7 @@ Each newline-delimited JSON object should have the following shape:
 
 Returns a 400 error on errors, a 200 on success.
 
-Try it: https://vial-staging.calltheshots.us/api/importSourceLocations/debug
+Try this API: https://vial-staging.calltheshots.us/api/importSourceLocations/debug
 
 ### POST /api/importLocations
 
@@ -565,6 +701,29 @@ Accepts a JSON array of items from the [airtable-data-backup/backups/Reports.jso
 
 Try this API: https://vial-staging.calltheshots.us/api/importReports/debug
 
+### POST /api/importTasks
+
+API for adding tasks to be completed by our volunteers. Authentication is either an API key of a JWT token.
+
+Accepts either a single item or a list of items. Each item should look like this:
+
+```json
+{
+  "task_type": "Potential duplicate",
+  "location": "recxxx",
+  "other_location": "recyyy",
+  "details": {
+    "details": "go here"
+  }
+}
+```
+
+The only required fields are `task_type` and `location`. The `other_location` and `details` fields may be required depending on the task type.
+
+See https://vial-staging.calltheshots.us/api/taskTypes for a list of available task types.
+
+Try this API: https://vial-staging.calltheshots.us/api/importTasks/debug
+
 ## Miscellaneous read-only data APIs
 
 ### GET /api/location/PUBLIC_ID/concordances
@@ -636,6 +795,22 @@ Example output:
 ```
 
 Try this API: https://vial-staging.calltheshots.us/api/locationTypes
+
+### GET /api/taskTypes
+
+Unauthenticated. Returns a `"task_types"` key containing a JSON array of names of valid task types, e.g. `Potential duplicate`.
+
+Example output:
+
+```json
+{
+    "task_types": [
+        "Potential duplicates"
+    ]
+}
+```
+
+Try this API: https://vial-staging.calltheshots.us/api/taskTypes
 
 ### GET /api/availabilityTags
 
@@ -738,7 +913,7 @@ Debugging endpoint showing a preview of the `Locations.json` feed generated by V
 
 Defaults to returning 10 locations. You can also feed it multiple `?id=recxxx` public location IDs to see those specific location representations.
 
-Try it: https://vial-staging.calltheshots.us/api/exportPreview/Locations.json
+Try this API: https://vial-staging.calltheshots.us/api/exportPreview/Locations.json
 
 ### GET /api/exportPreview/Providers.json
 
@@ -746,4 +921,4 @@ Debugging endpoint showing a preview of the `Providers.json` feed generated by V
 
 Defaults to returning 10 providers. You can also feed it multiple `?id=recxxx` public location IDs to see those specific provider representations.
 
-Try it: https://vial-staging.calltheshots.us/api/exportPreview/Providers.json
+Try this API: https://vial-staging.calltheshots.us/api/exportPreview/Providers.json

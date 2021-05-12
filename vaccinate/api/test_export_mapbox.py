@@ -26,6 +26,7 @@ def test_export_mapbox_location_with_no_report(client, ten_locations):
             "vaccinefinder_location_id": None,
             "vaccinespotter_location_id": None,
             "hours": None,
+            "fidelity": 0,
         },
         "geometry": {"type": "Point", "coordinates": [40.0, 30.0]},
     }
@@ -177,6 +178,9 @@ def test_export_mapbox_location_with_report(
         "latest_contact": report.created_at.isoformat(),
         "planned_closure": "2029-05-01",
         "restriction_notes": "No notes",
+        "fidelity": 1
+        if any(v for v in expected_booleans if v.startswith("vaccine_"))
+        else 0,
     }
     for property in expected_booleans:
         expected_properties[property] = True

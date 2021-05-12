@@ -117,6 +117,7 @@ def _mapbox_geojson(location, loaded_vaccinefinder_data=None):
     elif report:
         vaccines_offered = report.vaccines_offered
 
+    fidelity = 0
     for property, vaccine_name in (
         ("vaccine_moderna", "Moderna"),
         ("vaccine_pfizer", "Pfizer"),
@@ -124,6 +125,9 @@ def _mapbox_geojson(location, loaded_vaccinefinder_data=None):
     ):
         if vaccines_offered and vaccine_name in vaccines_offered:
             properties[property] = True
+            fidelity = 1
+
+    properties["fidelity"] = fidelity
 
     return {
         "type": "Feature",

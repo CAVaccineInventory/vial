@@ -10,6 +10,7 @@ from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 
 from .models import CallRequest, County, Location, Report
+from .utils import merge_locations
 
 
 def extract_ids(s):
@@ -209,7 +210,7 @@ def get_winner_loser(d):
 
 @login_required
 @user_passes_test(lambda user: user.has_perm("core.merge_locations"))
-def merge_locations(request):
+def merge_locations_view(request):
     if request.method == "POST":
         winner, loser = get_winner_loser(request.POST)
         if (
@@ -219,20 +220,7 @@ def merge_locations(request):
             and not (winner.soft_deleted or loser.soft_deleted)
         ):
             # Merge them
-            with reversion.create_revision():
-                loser.reports.update(location=winner.pk)
-                loser.soft_deleted = True
-                loser.soft_deleted_because = "Merged into location {}".format(
-                    winner.public_id
-                )
-                loser.duplicate_of = winner
-                loser.save()
-                reversion.set_user(request.user)
-                reversion.set_comment(
-                    "Merged locations, winner = {}, loser = {}".format(
-                        winner.public_id, loser.public_id
-                    )
-                )
+            merge_locations(winner, loser, request.user)
             messages.success(request, "Locations merged")
             return HttpResponseRedirect(
                 f"/admin/core/location/{winner.pk}/change/#location-h2"

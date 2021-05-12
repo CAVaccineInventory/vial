@@ -10,6 +10,7 @@ import beeline
 import pytz
 import sentry_sdk
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.geos import Point
 from django.db import IntegrityError, models, transaction
@@ -18,6 +19,7 @@ from django.db.models.query import QuerySet
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.utils import dateformat, timezone
+from social_django.models import UserSocialAuth
 
 from .baseconverter import pid
 from .fields import CharTextField
@@ -527,12 +529,53 @@ class Reporter(models.Model):
     )
     email = CharTextField(null=True, blank=True)
     auth0_role_names = CharTextField(null=True, blank=True)
+    user = models.ForeignKey(
+        "auth.User",
+        blank=True,
+        null=True,
+        related_name="reporters",
+        help_text="Corresponding user record for this reporter",
+        on_delete=models.PROTECT,
+    )
 
     def __str__(self):
         return self.display_name or self.name or self.external_id
 
     class Meta:
         db_table = "reporter"
+
+    def get_user(self):
+        # Populates self.user if it does not yet have a value, then returns it
+        if self.user:
+            return self.user
+        # A user may exist based on a `UserSocialAuth` record
+        assert self.external_id.startswith(
+            "auth0:"
+        ), "Only auth0 reporters can be associated with Django users, not {}".format(
+            self.external_id
+        )
+        identifier = self.external_id[len("auth0:") :]
+        user_social_auth = UserSocialAuth.objects.filter(uid=identifier).first()
+        if not user_social_auth:
+            # Create user, associate it and return
+            username = "r{}".format(self.pk)
+            # Some users have their email address as their name
+            email = self.email
+            if not email and "@" in self.name:
+                email = self.name
+            if email and "@" in email:
+                username += "-" + email.split("@")[0]
+            user = User.objects.create(
+                username=username,
+                email=email or "",
+                first_name=self.name or "",
+            )
+            UserSocialAuth.objects.create(uid=identifier, provider="auth0", user=user)
+            self.user = user
+        else:
+            self.user = user_social_auth.user
+        self.save()
+        return self.user
 
 
 class AvailabilityTag(models.Model):
@@ -1398,6 +1441,115 @@ ConcordanceIdentifier.locations.through.__str__ = lambda self: "{} on {}".format
 ConcordanceIdentifier.source_locations.through.__str__ = lambda self: "{} on source location {}".format(  # type: ignore[assignment]
     self.concordanceidentifier, self.sourcelocation_id  # type: ignore[attr-defined]
 )
+
+
+class TaskType(models.Model):
+    "Types of task that we present to our volunteers"
+    name = CharTextField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = "task_type"
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, name: str) -> TaskType:
+        try:
+            return cls.objects.get(name=name)
+        except cls.DoesNotExist:
+            raise ValueError("TaskType '{}' does not exist".format(name))
+
+
+class Task(models.Model):
+    "A task for our volunteers"
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        "auth.User", related_name="created_tasks", on_delete=models.PROTECT
+    )
+    location = models.ForeignKey(
+        Location, related_name="tasks", on_delete=models.PROTECT
+    )
+    other_location = models.ForeignKey(
+        Location, related_name="+", blank=True, null=True, on_delete=models.SET_NULL
+    )
+    task_type = models.ForeignKey(
+        TaskType, related_name="tasks", on_delete=models.PROTECT
+    )
+    details = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Task details",
+    )
+    resolved_at = models.DateTimeField(blank=True, null=True)
+    resolved_by = models.ForeignKey(
+        "auth.User",
+        blank=True,
+        null=True,
+        related_name="resolved_tasks",
+        on_delete=models.PROTECT,
+    )
+    resolution = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Details from when this task was resolved",
+    )
+
+    def __str__(self):
+        return "{} task against {}{}".format(
+            self.task_type, self.location, " - resolved" if self.resolved_at else ""
+        )
+
+    class Meta:
+        db_table = "task"
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, id: str) -> Task:
+        try:
+            return cls.objects.get(pk=id)
+        except cls.DoesNotExist:
+            raise ValueError("Task {} does not exist".format(id))
+
+
+class CompletedLocationMerge(models.Model):
+    winner_location = models.ForeignKey(
+        Location, related_name="+", on_delete=models.PROTECT
+    )
+    loser_location = models.ForeignKey(
+        Location, related_name="+", on_delete=models.PROTECT
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        "auth.User", related_name="completed_location_merges", on_delete=models.PROTECT
+    )
+    task = models.ForeignKey(
+        Task,
+        null=True,
+        blank=True,
+        related_name="completed_location_merges",
+        on_delete=models.PROTECT,
+    )
+    details = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Detailed information about the merge",
+    )
+
+    def __str__(self):
+        return "winner={}, loser={}, merged by {} at {}".format(
+            self.winner_location, self.loser_location, self.created_by, self.created_at
+        )
+
+    class Meta:
+        db_table = "completed_location_merge"
 
 
 # Signals

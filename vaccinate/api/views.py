@@ -21,7 +21,10 @@ from core.models import (
     ProviderType,
     SourceLocation,
     State,
+    Task,
+    TaskType,
 )
+from core.utils import merge_locations
 from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -31,6 +34,7 @@ from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
+from .search import location_json
 from .utils import (
     jwt_auth,
     log_api_requests,
@@ -135,10 +139,10 @@ def import_locations(request, on_request_logged):
     if isinstance(post_data, dict):
         post_data = [post_data]
     with reversion.create_revision():
-        for location_json in post_data:
+        for location_raw in post_data:
             try:
                 with beeline.tracer(name="location_validator"):
-                    location_data = LocationValidator(**location_json).dict()
+                    location_data = LocationValidator(**location_raw).dict()
                 kwargs = dict(
                     name=location_data["name"],
                     latitude=location_data["latitude"],
@@ -189,9 +193,9 @@ def import_locations(request, on_request_logged):
                             )
                         )
                         continue
-                if location_json.get("import_ref"):
+                if location_raw.get("import_ref"):
                     location, created = Location.objects.update_or_create(
-                        import_ref=location_json["import_ref"], defaults=kwargs
+                        import_ref=location_raw["import_ref"], defaults=kwargs
                     )
                     if created:
                         added_locations.append(location)
@@ -201,7 +205,7 @@ def import_locations(request, on_request_logged):
                     location = Location.objects.create(**kwargs)
                     added_locations.append(location)
             except ValidationError as e:
-                errors.append((location_json, e.errors()))
+                errors.append((location_raw, e.errors()))
             reversion.set_comment(
                 "/api/importLocations called with API key {}".format(
                     str(request.api_key)
@@ -389,6 +393,12 @@ def location_types(request):
 def provider_types(request):
     return JsonResponse(
         {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
+    )
+
+
+def task_types(request):
+    return JsonResponse(
+        {"task_types": list(TaskType.objects.values_list("name", flat=True))}
     )
 
 
@@ -801,5 +811,239 @@ def create_location_from_source_location(
                     "/admin/core/location/{}/change/".format(location.id)
                 ),
             }
+        }
+    )
+
+
+class TaskValidator(BaseModel):
+    task_type: TaskType
+    location: Location
+    other_location: Optional[Location]
+    details: Optional[dict]
+
+
+class ImportTasksValidator(BaseModel):
+    items: List[TaskValidator]
+
+
+@log_api_requests
+@beeline.traced("import_tasks")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["write:tasks"],
+)
+@csrf_exempt
+def import_tasks(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    if isinstance(post_data, dict):
+        post_data = [post_data]
+
+    try:
+        items = ImportTasksValidator(items=post_data).items
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    # Create those items!
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
+
+    created = Task.objects.bulk_create(
+        [
+            Task(
+                task_type=item.task_type,
+                created_by=user,
+                location=item.location,
+                other_location=item.other_location,
+                details=item.details,
+            )
+            for item in items
+        ]
+    )
+    return JsonResponse({"created": [item.pk for item in created]})
+
+
+def task_json(task: Task) -> Dict[str, object]:
+    return {
+        "id": task.id,
+        "task_type": task.task_type.name,
+        "location": location_json(task.location, include_soft_deleted=True),
+        "other_location": location_json(task.other_location, include_soft_deleted=True)
+        if task.other_location
+        else None,
+        "details": task.details,
+    }
+
+
+class RequestTaskValidator(BaseModel):
+    task_type: TaskType
+
+
+@log_api_requests
+@beeline.traced("request_task")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["caller"],
+)
+@csrf_exempt
+def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    try:
+        task_type = RequestTaskValidator(**post_data).task_type
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    tasks = task_type.tasks.filter(resolved_at=None)
+    task = tasks.order_by("?").first()
+    if not task:
+        return JsonResponse(
+            {
+                "task_type": "Potential duplicate",
+                "task": None,
+                "warning": 'No unresolved tasks of type "{}"'.format(task_type),
+            }
+        )
+
+    return JsonResponse(
+        {
+            "task_type": task.task_type.name,
+            "task": task_json(task),
+            "unresolved_of_this_type": tasks.count(),
+        }
+    )
+
+
+class ResolveTaskValidator(BaseModel):
+    task_id: Task
+    resolution: Optional[dict]
+
+    @validator("task_id")
+    def task_must_not_be_resolved(cls, task):
+        if task.resolved_by:
+            raise ValueError("Task {} is already resolved".format(task.pk))
+        return task
+
+
+@log_api_requests
+@beeline.traced("resolve_task")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["caller"],
+)
+@csrf_exempt
+def resolve_task(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    try:
+        info = ResolveTaskValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
+
+    task = info.task_id
+    task.resolved_by = user
+    task.resolved_at = timezone.now()
+    if info.resolution:
+        task.resolution = info.resolution
+    task.save()
+
+    return JsonResponse(
+        {"task_id": task.id, "resolution": task.resolution, "resolved": True}
+    )
+
+
+class MergeLocationsValidator(BaseModel):
+    winner: Location
+    loser: Location
+    task_id: Optional[Task]
+
+    @validator("winner")
+    def winner_must_not_be_soft_deleted(cls, winner):
+        if winner.soft_deleted:
+            raise ValueError("Location {} is soft deleted".format(winner.public_id))
+        return winner
+
+    @validator("loser")
+    def loser_must_not_be_soft_deleted(cls, loser):
+        if loser.soft_deleted:
+            raise ValueError("Location {} is soft deleted".format(loser.public_id))
+        return loser
+
+    @validator("loser")
+    def winner_and_loser_differ(cls, loser, values):
+        if "winner" in values and loser.pk == values["winner"].pk:
+            raise ValueError("Winner and loser should not be the same")
+        return loser
+
+    @validator("task_id")
+    def task_must_not_be_resolved(cls, task):
+        if task.resolved_by:
+            raise ValueError("Task {} is already resolved".format(task.pk))
+        return task
+
+
+@log_api_requests
+@beeline.traced("merge_locations")
+@jwt_auth(
+    allow_session_auth=False,
+    allow_internal_api_key=True,
+    required_permissions=["write:locations"],
+)
+@csrf_exempt
+def merge_locations_endpoint(
+    request: HttpRequest, on_request_logged: Callable
+) -> HttpResponse:
+    try:
+        post_data = json.loads(request.body.decode("utf-8"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    try:
+        info = MergeLocationsValidator(**post_data)
+    except ValidationError as e:
+        return JsonResponse({"error": e.errors()}, status=400)
+
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
+
+    merge_locations(info.winner, info.loser, user)
+
+    # If task_id was provided, resolve that task
+    task = info.task_id
+    if task:
+        task.resolved_by = user
+        task.resolved_at = timezone.now()
+        task.resolution = {
+            "merged_locations": True,
+            "winner": info.winner.public_id,
+            "loser": info.loser.public_id,
+        }
+        task.save()
+
+    return JsonResponse(
+        {
+            "winner": {
+                "id": info.winner.public_id,
+                "name": info.winner.name,
+                "vial_url": request.build_absolute_uri(
+                    "/admin/core/location/{}/change/".format(info.winner.id)
+                ),
+            },
+            "loser": {
+                "id": info.loser.public_id,
+                "name": info.loser.name,
+                "vial_url": request.build_absolute_uri(
+                    "/admin/core/location/{}/change/".format(info.loser.id)
+                ),
+            },
         }
     )
