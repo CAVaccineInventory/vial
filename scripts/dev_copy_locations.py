@@ -8,8 +8,8 @@ from click.exceptions import ClickException
 @click.command()
 @click.option(
     "--source-url",
-    default="https://vial.calltheshots.us/api/searchSourceLocations",
-    help="API URL to fetch source locations from",
+    default="https://vial.calltheshots.us/api/searchLocations",
+    help="API URL to fetch locations from",
 )
 @click.option(
     "--source-token",
@@ -19,8 +19,8 @@ from click.exceptions import ClickException
 )
 @click.option(
     "--destination-url",
-    default="http://0.0.0.0:3000/api/importSourceLocations",
-    help="API URL to send source locations to",
+    default="http://0.0.0.0:3000/api/importLocations",
+    help="API URL to send locations to",
 )
 @click.option(
     "--destination-token",
@@ -29,27 +29,20 @@ from click.exceptions import ClickException
     required=True,
 )
 def cli(source_url, source_token, destination_url, destination_token):
-    "Export source locations from one instance and submit them via the import API to another instance - intended for populating development environments"
+    "Export locations from one instance and submit them via the import API to another instance - intended for populating development environments"
     # Run the import, twenty at a time
-    source_locations = yield_source_locations(source_url, source_token)
+    locations = yield_locations(source_url, source_token)
     batch = []
-    # Create an import run
-    response = httpx.post(
-        destination_url.replace("/api/importSourceLocations", "/api/startImportRun"),
-        headers={"Authorization": "Bearer {}".format(destination_token)},
-    )
-    response.raise_for_status()
-    import_run_id = response.json()["import_run_id"]
-    for source_location in source_locations:
-        batch.append(source_location)
+    for location in locations:
+        batch.append(location)
         if len(batch) == 20:
-            import_batch(batch, destination_url, destination_token, import_run_id)
+            import_batch(batch, destination_url, destination_token)
             batch = []
     if batch:
-        import_batch(batch, destination_url, destination_token, import_run_id)
+        import_batch(batch, destination_url, destination_token)
 
 
-def yield_source_locations(base_url, source_token):
+def yield_locations(base_url, source_token):
     # Use format=nlgeojson
     if "?" not in base_url:
         base_url += "?"
@@ -61,24 +54,29 @@ def yield_source_locations(base_url, source_token):
     ) as response:
         for line in response.iter_lines():
             properties = json.loads(line)["properties"]
-            # We just want source_uid, source_name, name, latitude, longitude, import_json
             yield {
                 key: properties[key]
                 for key in (
-                    "source_uid",
-                    "source_name",
                     "name",
+                    "state",
                     "latitude",
                     "longitude",
-                    "import_json",
+                    "location_type",
+                    "phone_number",
+                    "full_address",
+                    "city",
+                    "county",
+                    "zip_code",
+                    "hours",
+                    "website",
                 )
             }
 
 
-def import_batch(batch, destination_url, destination_token, import_run_id):
+def import_batch(batch, destination_url, destination_token):
     response = httpx.post(
-        destination_url + "?import_run_id={}".format(import_run_id),
-        data="\n".join(json.dumps(record) for record in batch),
+        destination_url,
+        json=batch,
         headers={"Authorization": "Bearer {}".format(destination_token)},
         timeout=20,
     )
