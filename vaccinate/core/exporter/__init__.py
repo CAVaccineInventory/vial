@@ -1,7 +1,8 @@
 import datetime
+import json
 import os
 from contextlib import contextmanager
-from typing import Callable, Dict, Generator, List, Optional
+from typing import Callable, Dict, Generator, Iterator, List, Optional
 
 import beeline
 from core import models
@@ -137,6 +138,10 @@ def remove_null_values(
     return lambda *args, **kwargs: [nonnull_row(r) for r in f(*args, **kwargs)]
 
 
+def data_to_content_stream(data: object) -> Iterator[str]:
+    yield json.dumps(data)
+
+
 class APIProducer:
     ds: Dataset
 
@@ -242,8 +247,8 @@ class V0(APIProducer):
 
     @beeline.traced(name="core.exporter.V0.write")
     def write(self, sw: StorageWriter) -> None:
-        sw.write("Locations.json", self.get_locations())
-        sw.write("Counties.json", self.get_counties())
+        sw.write("Locations.json", data_to_content_stream(self.get_locations()))
+        sw.write("Counties.json", data_to_content_stream(self.get_counties()))
 
 
 class V1(V0):
@@ -291,9 +296,18 @@ class V1(V0):
 
     @beeline.traced(name="core.exporter.V1.write")
     def write(self, sw: StorageWriter):
-        sw.write("locations.json", self.metadata_wrap(self.get_locations()))
-        sw.write("counties.json", self.metadata_wrap(self.get_counties()))
-        sw.write("providers.json", self.metadata_wrap(self.get_providers()))
+        sw.write(
+            "locations.json",
+            data_to_content_stream(self.metadata_wrap(self.get_locations())),
+        )
+        sw.write(
+            "counties.json",
+            data_to_content_stream(self.metadata_wrap(self.get_counties())),
+        )
+        sw.write(
+            "providers.json",
+            data_to_content_stream(self.metadata_wrap(self.get_providers())),
+        )
 
 
 def api(version: int, ds: Dataset) -> APIProducer:

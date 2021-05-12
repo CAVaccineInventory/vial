@@ -2,6 +2,7 @@ import gzip
 import json
 from functools import cache
 from pathlib import Path
+from typing import Iterator
 
 import beeline
 from google.cloud import (  # type: ignore  # XXX: This works when mypy is re-run with a cache?
@@ -10,7 +11,7 @@ from google.cloud import (  # type: ignore  # XXX: This works when mypy is re-ru
 
 
 class StorageWriter:
-    def write(self, path: str, data: object) -> None:
+    def write(self, path: str, content_stream: Iterator[str]) -> None:
         ...
 
 
@@ -20,11 +21,12 @@ class LocalWriter(StorageWriter):
     def __init__(self, prefix: str = ""):
         self.prefix = prefix
 
-    def write(self, path: str, data: object) -> None:
+    def write(self, path: str, content_stream: Iterator[str]) -> None:
         local_path = Path(self.prefix, path)
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with local_path.open("w") as f:
-            json.dump(data, f)
+            for chunk in content_stream:
+                f.write(chunk)
 
 
 class DebugWriter(StorageWriter):
@@ -35,7 +37,8 @@ class DebugWriter(StorageWriter):
             prefix += "/"
         self.prefix = prefix
 
-    def write(self, path: str, data: object) -> None:
+    def write(self, path: str, content_stream: Iterator[str]) -> None:
+        data = json.loads("".join(content_stream))
         print(f"Would write to {self.prefix}{path}:")
         print(json.dumps(data, indent=4, sort_keys=True))
         print()
@@ -56,7 +59,7 @@ class GoogleStorageWriter(StorageWriter):
         return storage_client.bucket(self.bucket_name)
 
     @beeline.traced(name="core.exporter.storage.GoogleStorageWriter.write")
-    def write(self, path: str, data: object) -> None:
+    def write(self, path: str, content_stream: Iterator[str]) -> None:
         if self.prefix:
             path = self.prefix + "/" + path
         blob = self.get_bucket().blob(path)
@@ -64,7 +67,7 @@ class GoogleStorageWriter(StorageWriter):
         blob.cache_control = "public,max-age=120"
         blob.content_encoding = "gzip"
         blob.upload_from_string(
-            gzip.compress(json.dumps(data).encode("ascii")),
+            gzip.compress("".join(content_stream).encode("ascii")),
             content_type="application/json",
             timeout=30,
         )
