@@ -95,12 +95,12 @@ def search_locations(
     formats = make_formats(location_json, location_geojson)
     formats["v0preview"] = OutputFormat(
         start=(
-            '{"usage": {"notice": "Please contact VaccinateCA and let '
+            '{"usage": {"notice": "Please contact Vaccinate The States and let '
             "us know if you plan to rely on or publish this data. This "
             "data is provided with best-effort accuracy. If you are "
             "displaying this data, we expect you to display it responsibly. "
             'Please do not display it in a way that is easy to misread.",'
-            '"contact": {"partnersEmail": "api@vaccinateca.com"}},'
+            '"contact": {"partnersEmail": "api@vaccinatethestates.com"}},'
             '"content": ['
         ),
         transform=lambda l: json.dumps(location_v0_json(l)),
@@ -260,12 +260,6 @@ def location_v0_json(location: Location) -> Dict[str, object]:
         "zip_code": location.zip_code,
         "hours": location.hours,
         "website": location.website,
-        "provider": {
-            "name": location.provider.name,
-            "type": location.provider.provider_type.name,
-        }
-        if location.provider
-        else None,
         "concordances": [str(c) for c in location.concordances.all()],
     }
 
