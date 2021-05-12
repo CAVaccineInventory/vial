@@ -1,9 +1,8 @@
 from typing import Dict
 
+import beeline
 from django.db import connection
 from django.db.models.query import QuerySet
-
-import beeline
 
 
 class BaseExpansion:

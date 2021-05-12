@@ -184,9 +184,7 @@ def export_mapbox(request):
 
     post_data = ""
     for location in locations.all():
-        post_data += (
-            json.dumps(_mapbox_geojson(location, expansion)) + "\n"
-        )
+        post_data += json.dumps(_mapbox_geojson(location, expansion)) + "\n"
 
     access_token = settings.MAPBOX_ACCESS_TOKEN
     if not access_token:
