@@ -23,7 +23,8 @@ from django.utils.safestring import mark_safe
 from .utils import jwt_auth, log_api_requests
 
 OutputFormat = namedtuple(
-    "OutputFormat", ("start", "transform", "separator", "end", "content_type")
+    "OutputFormat",
+    ("prepare_qs", "start", "transform", "separator", "end", "content_type"),
 )
 
 
@@ -94,6 +95,7 @@ def search_locations(
 
     formats = make_formats(location_json, location_geojson)
     formats["v0preview"] = OutputFormat(
+        prepare_qs=lambda qs: qs.select_related("dn_latest_non_skip_report"),
         start=(
             '{"usage": {"notice": "Please contact Vaccinate The States and let '
             "us know if you plan to rely on or publish this data. This "
@@ -113,6 +115,8 @@ def search_locations(
         return JsonResponse({"error": "Invalid format"}, status=400)
 
     formatter = formats[format]
+
+    qs = formatter.prepare_qs(qs)
 
     stream_qs = qs[:size]
     if all:
@@ -196,6 +200,7 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
         "preferred_contact_method",
         "provider__name",
         "provider__provider_type__name",
+        "dn_latest_non_skip_report",
     )
 
 
@@ -254,19 +259,28 @@ def location_v0_json(location: Location) -> Dict[str, object]:
         "latitude": float(location.latitude),
         "longitude": float(location.longitude),
         "location_type": location.location_type.name,
+        "phone_number": location.phone_number,
+        "vaccines_offered": location.vaccines_offered,
         "full_address": location.full_address,
         "city": location.city,
         "county": location.county.name if location.county else None,
         "zip_code": location.zip_code,
-        "hours": location.hours,
+        "hours": {"unstructured": location.hours},
         "website": location.website,
         "concordances": [str(c) for c in location.concordances.all()],
+        "last_verified_by_vts": location.dn_latest_non_skip_report.created_at.isoformat()
+        if location.dn_latest_non_skip_report
+        else None,
+        "vts_url": "https://www.vaccinatethestates.com/?lng={}&lat={}#{}".format(
+            location.longitude, location.latitude, location.public_id
+        ),
     }
 
 
 def make_formats(json_convert, geojson_convert):
     return {
         "json": OutputFormat(
+            prepare_qs=lambda qs: qs,
             start='{"results": [',
             transform=lambda l: json.dumps(json_convert(l)),
             separator=",",
@@ -274,6 +288,7 @@ def make_formats(json_convert, geojson_convert):
             content_type="application/json",
         ),
         "geojson": OutputFormat(
+            prepare_qs=lambda qs: qs,
             start='{"type": "FeatureCollection", "features": [',
             transform=lambda l: json.dumps(geojson_convert(l)),
             separator=",",
@@ -281,6 +296,7 @@ def make_formats(json_convert, geojson_convert):
             content_type="application/json",
         ),
         "nlgeojson": OutputFormat(
+            prepare_qs=lambda qs: qs,
             start="",
             transform=lambda l: json.dumps(geojson_convert(l)),
             separator="\n",
