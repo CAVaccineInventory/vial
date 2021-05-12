@@ -46,7 +46,10 @@ def api_export_vaccinate_the_states() -> bool:
     request.skip_jwt_auth = True  # type: ignore[attr-defined]
     request.skip_api_logging = True  # type: ignore[attr-defined]
     response = search_locations(request)
-    writer = VTS_DEPLOYS[os.environ.get("DEPLOY", "testing")]
+    deploy = os.environ.get("DEPLOY", "testing")
+    if deploy == "unknown":  # Cloud Build
+        deploy = "testing"
+    writer = VTS_DEPLOYS[deploy]
     ok = True
     try:
         writer.write(
