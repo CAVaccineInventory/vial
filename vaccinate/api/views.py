@@ -508,6 +508,22 @@ def api_export(request):
     return JsonResponse({"ok": 1})
 
 
+@csrf_exempt
+@beeline.traced(name="api_export_vaccinate_the_states")
+def api_export_vaccinate_the_states(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Must be a POST"},
+            status=400,
+        )
+    if not exporter.api_export_vaccinate_the_states():
+        return JsonResponse(
+            {"error": "Failed to export; check Sentry"},
+            status=500,
+        )
+    return JsonResponse({"ok": 1})
+
+
 def api_export_preview_locations(request):
     # Show a preview of the export API for a subset of locations
     location_ids = request.GET.getlist("id")

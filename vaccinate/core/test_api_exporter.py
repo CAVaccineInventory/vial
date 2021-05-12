@@ -345,3 +345,8 @@ def test_api_serialization():
     with dataset() as ds:
         api(1, ds).write(writer)
         api(0, ds).write(writer)
+
+
+@pytest.mark.django_db
+def test_api_export_vaccinate_the_states(client, ten_locations):
+    client.post("/api/exportVaccinateTheStates")

@@ -90,6 +90,8 @@ def log_api_requests(view_fn):
         finally:
             if response is None:
                 response = HttpResponseServerError()
+            if getattr(request, "skip_api_logging", False):
+                return response
             # Create the log record
             post_body = None
             post_body_json = None
@@ -258,6 +260,8 @@ def jwt_auth(
     ) -> Callable[..., HttpResponseBase]:
         @wraps(view_fn)
         def inner(request: HttpRequest, *args, **kwargs: Any) -> HttpResponseBase:
+            if getattr(request, "skip_jwt_auth", False):
+                return view_fn(request, *args, **kwargs)
             # Two other kinds of auth to possibly check
             if allow_session_auth and request.user.is_authenticated:
                 return view_fn(request, *args, **kwargs)

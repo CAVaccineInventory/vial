@@ -5,10 +5,13 @@ from contextlib import contextmanager
 from typing import Callable, Dict, Generator, Iterator, List, Optional
 
 import beeline
+from django.contrib.auth.models import AnonymousUser
 from core import models
 from core.exporter.storage import GoogleStorageWriter, LocalWriter, StorageWriter
+from api.search import search_locations
 from django.db import transaction
 from django.db.models import Count, F, Q, QuerySet
+from django.test.client import RequestFactory
 from sentry_sdk import capture_exception
 
 DEPLOYS: Dict[str, List[StorageWriter]] = {
@@ -28,6 +31,32 @@ DEPLOYS: Dict[str, List[StorageWriter]] = {
         GoogleStorageWriter("vaccinateca-api", "v1"),
     ],
 }
+
+
+VTS_DEPLOYS: Dict[str, StorageWriter] = {
+    "testing": LocalWriter("local/api/vaccinatethestates"),
+    "staging": GoogleStorageWriter("vaccinateca-api-staging", "v0-vts"),
+    "production": GoogleStorageWriter("vaccinateca-api", "v0-vts"),
+}
+
+
+def api_export_vaccinate_the_states() -> bool:
+    request = RequestFactory().get("/api/searchLocations?all=1&format=v0preview")
+    request.user = AnonymousUser()
+    request.skip_jwt_auth = True  # type: ignore[attr-defined]
+    request.skip_api_logging = True  # type: ignore[attr-defined]
+    response = search_locations(request)
+    writer = VTS_DEPLOYS[os.environ.get("DEPLOY", "testing")]
+    ok = True
+    try:
+        writer.write(
+            "locations.json",
+            (chunk.decode("utf-8") for chunk in response.streaming_content),
+        )
+    except Exception as e:
+        capture_exception(e)
+        ok = False
+    return ok
 
 
 def api_export() -> bool:
