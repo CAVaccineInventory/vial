@@ -34,7 +34,7 @@ from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
-from .search import location_json
+from .serialize import location_json
 from .utils import (
     jwt_auth,
     log_api_requests,
