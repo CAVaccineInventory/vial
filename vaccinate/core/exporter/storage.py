@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Iterator
 
 import beeline
+import smart_open
 from google.cloud import (  # type: ignore  # XXX: This works when mypy is re-run with a cache?
     storage,
 )
@@ -62,12 +63,14 @@ class GoogleStorageWriter(StorageWriter):
     def write(self, path: str, content_stream: Iterator[str]) -> None:
         if self.prefix:
             path = self.prefix + "/" + path
-        blob = self.get_bucket().blob(path)
 
+        full_path = "gs://" + self.bucket_name + "/" + path
+        with smart_open.open(full_path, "wb") as f:
+            with gzip.open(f, "w") as gzip_f:
+                for chunk in content_stream:
+                    gzip_f.write(chunk.encode("ascii"))
+
+        blob = self.get_bucket().blob(path)
         blob.cache_control = "public,max-age=120"
         blob.content_encoding = "gzip"
-        blob.upload_from_string(
-            gzip.compress("".join(content_stream).encode("ascii")),
-            content_type="application/json",
-            timeout=30,
-        )
+        blob.patch()
