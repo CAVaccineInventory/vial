@@ -8,7 +8,7 @@ from django.db.models.query import QuerySet
 
 OutputFormat = namedtuple(
     "OutputFormat",
-    ("prepare_qs", "start", "transform", "separator", "end", "content_type"),
+    ("prepare_queryset", "start", "transform", "separator", "end", "content_type"),
 )
 
 
@@ -150,7 +150,7 @@ def location_formats():
 def make_formats(json_convert, geojson_convert):
     return {
         "json": OutputFormat(
-            prepare_qs=lambda qs: qs,
+            prepare_queryset=lambda qs: qs,
             start='{"results": [',
             transform=lambda l: json.dumps(json_convert(l)),
             separator=",",
@@ -158,7 +158,7 @@ def make_formats(json_convert, geojson_convert):
             content_type="application/json",
         ),
         "geojson": OutputFormat(
-            prepare_qs=lambda qs: qs,
+            prepare_queryset=lambda qs: qs,
             start='{"type": "FeatureCollection", "features": [',
             transform=lambda l: json.dumps(geojson_convert(l)),
             separator=",",
@@ -166,7 +166,7 @@ def make_formats(json_convert, geojson_convert):
             content_type="application/json",
         ),
         "nlgeojson": OutputFormat(
-            prepare_qs=lambda qs: qs,
+            prepare_queryset=lambda qs: qs,
             start="",
             transform=lambda l: json.dumps(geojson_convert(l)),
             separator="\n",
@@ -174,7 +174,7 @@ def make_formats(json_convert, geojson_convert):
             content_type="text/plain",
         ),
         "v0preview": OutputFormat(
-            prepare_qs=lambda qs: qs.select_related("dn_latest_non_skip_report"),
+            prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
             start=(
                 '{"usage": {"notice": "Please contact Vaccinate The States and let '
                 "us know if you plan to rely on or publish this data. This "
