@@ -5,10 +5,10 @@ from contextlib import contextmanager
 from typing import Callable, Dict, Generator, Iterator, List, Optional
 
 import beeline
-from django.contrib.auth.models import AnonymousUser
+from api.search import search_locations
 from core import models
 from core.exporter.storage import GoogleStorageWriter, LocalWriter, StorageWriter
-from api.search import search_locations
+from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from django.db.models import Count, F, Q, QuerySet
 from django.test.client import RequestFactory
