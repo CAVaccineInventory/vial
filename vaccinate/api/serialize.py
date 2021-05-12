@@ -32,10 +32,7 @@ def build_stream(qs, stream_qs, formatter, beeline_trace_name):
                 yield formatter.separator
             started = True
             yield formatter.transform(location)
-        if callable(formatter.end):
-            yield formatter.end(qs)
-        else:
-            yield formatter.end
+        yield formatter.end(qs)
 
     return stream
 
@@ -173,7 +170,7 @@ def make_formats(json_convert, geojson_convert):
             start="",
             transform=lambda l: json.dumps(geojson_convert(l)),
             separator="\n",
-            end="",
+            end=lambda qs: "",
             content_type="text/plain",
         ),
         "v0preview": OutputFormat(
