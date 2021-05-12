@@ -3,6 +3,7 @@ from collections import namedtuple
 from typing import Dict
 
 import beeline
+from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.db.models.query import QuerySet
 
@@ -117,8 +118,58 @@ def location_geojson(location: Location) -> Dict[str, object]:
     }
 
 
-def location_formats():
-    return make_formats(location_json, location_geojson)
+def make_location_v0_json(expansion):
+    def location_v0_json(location: Location) -> Dict[str, object]:
+        record = {
+            "id": location.public_id,
+            "name": location.name,
+            "state": location.state.abbreviation,
+            "latitude": float(location.latitude),
+            "longitude": float(location.longitude),
+            "location_type": location.location_type.name,
+            "phone_number": location.phone_number,
+            "vaccines_offered": None,
+            "full_address": location.full_address,
+            "city": location.city,
+            "county": location.county.name if location.county else None,
+            "zip_code": location.zip_code,
+            "hours": {"unstructured": location.hours},
+            "website": location.website,
+            "concordances": [str(c) for c in location.concordances.all()],
+            "last_verified_by_vts": location.dn_latest_non_skip_report.created_at.isoformat()
+            if location.dn_latest_non_skip_report
+            else None,
+            "vts_url": "https://www.vaccinatethestates.com/?lng={}&lat={}#{}".format(
+                location.longitude, location.latitude, location.public_id
+            ),
+        }
+        record["vaccines_offered"] = expansion.expand([record])[record["id"]] or []
+        return record
+
+    return location_v0_json
+
+
+def location_formats(preload_vaccinefinder=False):
+    formats = make_formats(location_json, location_geojson)
+    expansion = VaccineFinderInventoryExpansion(preload_vaccinefinder)
+    location_v0_json = make_location_v0_json(expansion)
+    formats["v0preview"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
+        start=(
+            '{"usage": {"notice": "Please contact Vaccinate The States and let '
+            "us know if you plan to rely on or publish this data. This "
+            "data is provided with best-effort accuracy. If you are "
+            "displaying this data, we expect you to display it responsibly. "
+            'Please do not display it in a way that is easy to misread.",'
+            '"contact": {"partnersEmail": "api@vaccinatethestates.com"}},'
+            '"content": ['
+        ),
+        transform=lambda l: json.dumps(location_v0_json(l)),
+        separator=",",
+        end=lambda qs: "]}",
+        content_type="application/json",
+    )
+    return formats
 
 
 def make_formats(json_convert, geojson_convert):
