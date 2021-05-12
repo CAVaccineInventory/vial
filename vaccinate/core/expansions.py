@@ -40,8 +40,8 @@ class VaccineFinderInventoryExpansion(BaseExpansion):
                 on location.id = source_location.matched_location_id
         """
         if location_ids:
-            sql += " matched_location_id in (select id from location where public_id in {})".format(
-                ", ".join(str(id) for id in location_ids)
+            sql += "where matched_location_id in (select id from location where public_id in ({}))".format(
+                ", ".join("'{}'".format(id) for id in location_ids)
             )
         id_to_vaccines = {}
         with connection.cursor() as cursor:
