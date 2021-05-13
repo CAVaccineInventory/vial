@@ -10,10 +10,6 @@ appdirs==1.4.4 \
     # via
     #   black
     #   django-migration-linter
-appnope==0.1.2 \
-    --hash=sha256:93aa393e9d6c54c5cd570ccadd8edad61ea0c4b9ea7a01409020c9aa019eb442 \
-    --hash=sha256:dd83cd4b5b460958838f6eb3000c660b1f9caf2a5b1de4264e941512f603258a
-    # via ipython
 asgiref==3.3.4 \
     --hash=sha256:92906c611ce6c967347bbfea733f13d6313901d54dcca88195eaeb52b2a8e8ee \
     --hash=sha256:d1216dfbdfb63826470995d31caed36225dcaf34f182e0fa257a4dd9e86f1b78
@@ -209,9 +205,9 @@ django-reversion==3.0.9 \
     # via
     #   -r requirements.in
     #   django-reversion-compare
-django-sql-dashboard==0.12.3 \
-    --hash=sha256:3d2e12b9064764e4c8583c97c066ec299e336547caf1e1eb336ae0be0ca875de \
-    --hash=sha256:f8c94a8c30ff3f6be545eb3b0e0116f90fbb2d96a48280837988c6ce2f95d25b
+django-sql-dashboard==0.13 \
+    --hash=sha256:0d0147ab246030dbea957937847e5a27554f0151374e9463ba0a0c4d93d2d438 \
+    --hash=sha256:57dce06949624da3b77f125da5f5595fa2c5f9aefef8abf4867498d3fe0a12e0
     # via -r requirements.in
 django-stubs-ext==0.2.0 \
     --hash=sha256:bd4a1e36ef2ba0ef15801933c85c68e59b383302c873795c6ecfc25950c7ecdb \
@@ -289,7 +285,9 @@ google-cloud-secret-manager==2.4.0 \
 google-cloud-storage==1.38.0 \
     --hash=sha256:162011d66f64b8dc5d7936609a5daf0066cc521231546aea02c126a5559446c4 \
     --hash=sha256:69499560ec8234339ce831704419a2288c409a422f6e9ed1facc9345412ee637
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   smart-open
 google-crc32c==1.1.2 \
     --hash=sha256:0ae3cf54e0d4d83c8af1afe96fc0970fbf32f1b29275f3bfd44ce25c4b622a2b \
     --hash=sha256:0dd9b61d0c63043b013349c9ec8a83ec2b05c96410c5bc257da5d0de743fc171 \
@@ -927,6 +925,10 @@ six==1.15.0 \
     #   python-jose
     #   requests-mock
     #   social-auth-app-django
+smart-open[gcs]==5.0.0 \
+    --hash=sha256:02e5e02207d955a1f9fd924c37900ac272536bd24393ae731b6945d4f766015f \
+    --hash=sha256:ed310ac51a797051b42f9437a566ac8149a3abf8c80ab994a8bd92d96fb7cf44
+    # via -r requirements.in
 sniffio==1.2.0 \
     --hash=sha256:471b71698eac1c2112a40ce2752bb2f4a4814c22a54a3eed3676bc0f5ca9f663 \
     --hash=sha256:c4666eecec1d3f50960c6bdf61ab7bc350648da6c126e3cf6898d8cd4ddcd3de

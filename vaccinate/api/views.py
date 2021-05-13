@@ -34,7 +34,7 @@ from mdx_urlize import UrlizeExtension
 from pydantic import BaseModel, ValidationError, validator
 from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
-from .search import location_json
+from .serialize import location_json
 from .utils import (
     jwt_auth,
     log_api_requests,
@@ -503,6 +503,22 @@ def api_export(request):
     if not exporter.api_export():
         return JsonResponse(
             {"error": "Failed to write one or more endpoints; check Sentry"},
+            status=500,
+        )
+    return JsonResponse({"ok": 1})
+
+
+@csrf_exempt
+@beeline.traced(name="api_export_vaccinate_the_states")
+def api_export_vaccinate_the_states(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Must be a POST"},
+            status=400,
+        )
+    if not exporter.api_export_vaccinate_the_states():
+        return JsonResponse(
+            {"error": "Failed to export; check Sentry"},
             status=500,
         )
     return JsonResponse({"ok": 1})

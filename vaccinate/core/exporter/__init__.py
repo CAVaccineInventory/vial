@@ -1,13 +1,17 @@
 import datetime
+import json
 import os
 from contextlib import contextmanager
-from typing import Callable, Dict, Generator, List, Optional
+from typing import Callable, Dict, Generator, Iterator, List, Optional
 
 import beeline
+from api.search import search_locations
 from core import models
 from core.exporter.storage import GoogleStorageWriter, LocalWriter, StorageWriter
+from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from django.db.models import Count, F, Q, QuerySet
+from django.test.client import RequestFactory
 from sentry_sdk import capture_exception
 
 DEPLOYS: Dict[str, List[StorageWriter]] = {
@@ -27,6 +31,35 @@ DEPLOYS: Dict[str, List[StorageWriter]] = {
         GoogleStorageWriter("vaccinateca-api", "v1"),
     ],
 }
+
+
+VTS_DEPLOYS: Dict[str, StorageWriter] = {
+    "testing": LocalWriter("local/api/vaccinatethestates"),
+    "staging": GoogleStorageWriter("vaccinatethestates-api-staging", "v0"),
+    "production": GoogleStorageWriter("vaccinatethestates-api", "v0"),
+}
+
+
+def api_export_vaccinate_the_states() -> bool:
+    request = RequestFactory().get("/api/searchLocations?all=1&format=v0preview")
+    request.user = AnonymousUser()
+    request.skip_jwt_auth = True  # type: ignore[attr-defined]
+    request.skip_api_logging = True  # type: ignore[attr-defined]
+    response = search_locations(request)
+    deploy = os.environ.get("DEPLOY", "testing")
+    if deploy == "unknown":  # Cloud Build
+        deploy = "testing"
+    writer = VTS_DEPLOYS[deploy]
+    ok = True
+    try:
+        writer.write(
+            "locations.json",
+            (chunk.decode("utf-8") for chunk in response.streaming_content),
+        )
+    except Exception as e:
+        capture_exception(e)
+        ok = False
+    return ok
 
 
 def api_export() -> bool:
@@ -137,6 +170,10 @@ def remove_null_values(
     return lambda *args, **kwargs: [nonnull_row(r) for r in f(*args, **kwargs)]
 
 
+def data_to_content_stream(data: object) -> Iterator[str]:
+    yield json.dumps(data)
+
+
 class APIProducer:
     ds: Dataset
 
@@ -242,8 +279,8 @@ class V0(APIProducer):
 
     @beeline.traced(name="core.exporter.V0.write")
     def write(self, sw: StorageWriter) -> None:
-        sw.write("Locations.json", self.get_locations())
-        sw.write("Counties.json", self.get_counties())
+        sw.write("Locations.json", data_to_content_stream(self.get_locations()))
+        sw.write("Counties.json", data_to_content_stream(self.get_counties()))
 
 
 class V1(V0):
@@ -291,9 +328,18 @@ class V1(V0):
 
     @beeline.traced(name="core.exporter.V1.write")
     def write(self, sw: StorageWriter):
-        sw.write("locations.json", self.metadata_wrap(self.get_locations()))
-        sw.write("counties.json", self.metadata_wrap(self.get_counties()))
-        sw.write("providers.json", self.metadata_wrap(self.get_providers()))
+        sw.write(
+            "locations.json",
+            data_to_content_stream(self.metadata_wrap(self.get_locations())),
+        )
+        sw.write(
+            "counties.json",
+            data_to_content_stream(self.metadata_wrap(self.get_counties())),
+        )
+        sw.write(
+            "providers.json",
+            data_to_content_stream(self.metadata_wrap(self.get_providers())),
+        )
 
 
 def api(version: int, ds: Dataset) -> APIProducer:

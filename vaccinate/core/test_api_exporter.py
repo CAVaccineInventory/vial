@@ -1,4 +1,5 @@
 import datetime
+import json
 from unittest.mock import MagicMock
 
 import pytest
@@ -281,7 +282,8 @@ def test_api_v0_framing():
     # Verify that they have no metadata
     for c in calls:
         output = c.args[1]
-        assert isinstance(output, list)
+        data = json.loads("".join(output))
+        assert isinstance(data, list)
 
 
 @pytest.mark.django_db
@@ -308,10 +310,10 @@ def test_api_v1_framing():
     # Verify that the V1 had metadata on it
     for c in calls:
         output = c.args[1]
-        assert isinstance(output, dict)
-        assert "usage" in output
-        assert "content" in output
-        assert isinstance(output["content"], list)
+        data = json.loads("".join(output))
+        assert "usage" in data
+        assert "content" in data
+        assert isinstance(data["content"], list)
 
 
 @pytest.mark.django_db
@@ -343,3 +345,8 @@ def test_api_serialization():
     with dataset() as ds:
         api(1, ds).write(writer)
         api(0, ds).write(writer)
+
+
+@pytest.mark.django_db
+def test_api_export_vaccinate_the_states(client, ten_locations):
+    client.post("/api/exportVaccinateTheStates")

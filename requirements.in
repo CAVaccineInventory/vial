@@ -55,7 +55,7 @@ docutils
 Markdown
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.12.3
+django-sql-dashboard==0.13
 
 # Version history in Django admin
 django-reversion
@@ -116,3 +116,6 @@ timezonefinder[numba]
 
 # Test data
 factory_boy
+
+# Streaming GCS uploads
+smart_open[gcs]

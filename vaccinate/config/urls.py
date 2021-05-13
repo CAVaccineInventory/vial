@@ -191,6 +191,7 @@ urlpatterns = [
     path("api/taskTypes", api_views.task_types),
     path("api/availabilityTags", api_views.availability_tags),
     path("api/export", api_views.api_export),
+    path("api/exportVaccinateTheStates", api_views.api_export_vaccinate_the_states),
     path("api/exportPreview/Locations.json", api_views.api_export_preview_locations),
     path("api/exportPreview/Providers.json", api_views.api_export_preview_providers),
     path("api/exportMapbox", export_mapbox_views.export_mapbox),
