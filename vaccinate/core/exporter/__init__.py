@@ -35,8 +35,8 @@ DEPLOYS: Dict[str, List[StorageWriter]] = {
 
 VTS_DEPLOYS: Dict[str, StorageWriter] = {
     "testing": LocalWriter("local/api/vaccinatethestates"),
-    "staging": GoogleStorageWriter("vaccinateca-api-staging", "v0-vts"),
-    "production": GoogleStorageWriter("vaccinateca-api", "v0-vts"),
+    "staging": GoogleStorageWriter("vaccinatethestates-api-staging", "v0"),
+    "production": GoogleStorageWriter("vaccinatethestates-api", "v0"),
 }
 
 
