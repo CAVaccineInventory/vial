@@ -25,7 +25,7 @@ OutputFormat = namedtuple(
 
 
 def build_stream(
-    qs, stream_qs, formatter, beeline_trace_name, transform_batch_size=100
+    qs, stream_qs, formatter, beeline_trace_name, transform_batch_size=1000
 ):
     trace_id = None
     parent_id = None
