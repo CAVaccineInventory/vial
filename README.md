@@ -36,24 +36,14 @@ If you want to grant permissions to specific users within VIAL independent of th
   - _All_ data is stored in PostgreSQL - even data that might be a better fit for a dedicated logging system or message queue. We'll adopt additional storage mechanisms only when PostgreSQL starts creaking at the seams.
 - Django migrations are great. We use these enthusiastically, with a goal of making schema changes boring and common, not exciting and rare.
 
-As a result, hosting this (or moving this to a different host) should be as easy as setting up a Django app with an attached PostgreSQL database.
+## API documentation
 
-## What this does so far
+Comprehensive documentation for the VIAL web API is available in [docs/api.md](docs/api.md). This documentation should be updated in sync with changes made to the APIs - any time the documentation becomes out of sync with the implementation should be considered a bug and fixed ASAP!
 
-- SSO using Auth0 to sign users in with a Django user account
-- Allows users to make changes to locations and other entities through the Django admin. These changes are tracked using [django-reversion](https://django-reversion.readthedocs.io/)
-- Run tests in GitHub Actions CI using pytest-django
-- Enforce Black code style in GitHub Actions
-- Django ORM models for the new schema currently under discussion
-- Populates the state and county tables with 50 states + every county in CA
-- Configures Django Admin to run against those new models
-- Continuous Deployment to a staging environment
-- Imports existing location and reports data from Airtable
-- Provides a number of [fully documented](docs/api.md) APIs
+This documentation is also included in VIAL deployments:
 
-For ongoing updates, see [simonw-internal-blog](https://github.com/CAVaccineInventory/simonw-internal-blog).
-
-The [issues](https://github.com/CAVaccineInventory/vial/issues) in this repo closely track upcoming work.
+- https://vial.calltheshots.us/api/docs for production
+- https://vial-staging.calltheshots.us/api/docs for staging (which is continually deployed from this repo so should reflect the most recent `main` branch)
 
 ## Setting up a development environment
 
@@ -124,6 +114,39 @@ Then create a database called `vaccinate` by running this in the terminal:
     createdb vaccinate
 
 If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`. You can place this in the `.env` file.
+
+## Importing sample data from live or staging
+
+Two scripts are provided for importing data from our live or staging instances into your development environment, using the export and import APIs.
+
+To use these scripts, you will need two API keys: one for your development environment (which you can create at http://0.0.0.0:3000/admin/api/apikey/) and one for the production or staging environment that you wish to import data from.
+
+To import locations:
+```bash
+python scripts/dev_copy_locations.py \
+   --source-token '17:ce619e0...' \
+   --destination-token '4:09b190...' \
+   --source-url 'https://vial.calltheshots.us/api/searchLocations?size=100'
+```
+Where `source-token` is the API key from production, and `destination-token` is your API key created for your local development environment.
+
+You can pass different arguments in the query string for `--source-url` to retrieve different subsets of our data. If you wanted to import every location in Puerto Rico for example you could use:
+
+```
+   --source-url 'https://vial.calltheshots.us/api/searchLocations?state=PR&all=1'
+```
+Be careful with the `all=1` argument - used carelessly you could accidentally pull 60,000+ records into your local environment!
+
+Source locations are raw, unprocessed location data gathered by our [vaccine-feed-ingest](https://github.com/CAVaccineInventory/vaccine-feed-ingest) mechanism.
+
+You can import these in a similar way to locations, using this script:
+```bash
+python dev_copy_source_locations.py 
+  --source-token '17:ce619e0...' \
+  --destination-token '4:09b19...' \
+  --destination-url 'https://vial.calltheshots.us/api/searchSourceLocations?state=RI&source_name=vaccinefinder_org'
+```
+This will import all of the source locations in Rhode Island that were originally imported from `vaccinefinder_org`.
 
 ## Running the tests
 

@@ -96,6 +96,11 @@ def test_merge_locations_view(admin_client):
         longitude=-120.664,
     )
     winner.concordances.add(ConcordanceIdentifier.for_idref("google_places:123"))
+    winner_source_location = winner.matched_source_locations.create(
+        source_name="test",
+        source_uid="test:1",
+        name="Test 1",
+    )
     reporter = Reporter.objects.get_or_create(external_id="test:1")[0]
     winner_report = winner.reports.create(
         report_source="ca",
@@ -114,6 +119,11 @@ def test_merge_locations_view(admin_client):
         longitude=-120.664,
     )
     loser.concordances.add(ConcordanceIdentifier.for_idref("google_places:456"))
+    loser_source_location = loser.matched_source_locations.create(
+        source_name="test",
+        source_uid="test:2",
+        name="Test 2",
+    )
     loser_report = loser.reports.create(
         report_source="ca",
         appointment_tag=AppointmentTag.objects.get(slug="web"),
@@ -122,6 +132,8 @@ def test_merge_locations_view(admin_client):
     )
     assert winner.reports.count() == 1
     assert loser.reports.count() == 1
+    assert winner.matched_source_locations.count() == 1
+    assert loser.matched_source_locations.count() == 1
     assert loser.duplicate_of is None
     assert not loser.soft_deleted
     assert Revision.objects.count() == 0
@@ -139,6 +151,8 @@ def test_merge_locations_view(admin_client):
     loser.refresh_from_db()
     assert winner.reports.count() == 2
     assert loser.reports.count() == 0
+    assert winner.matched_source_locations.count() == 2
+    assert loser.matched_source_locations.count() == 0
     assert loser.duplicate_of == winner
     assert loser.soft_deleted
     # Winner should have all those concordances
@@ -162,6 +176,8 @@ def test_merge_locations_view(admin_client):
     assert merge.details == {
         "loser_report_ids": [loser_report.pk],
         "winner_report_ids": [winner_report.pk],
+        "loser_matched_source_location_ids": [loser_source_location.pk],
+        "winner_matched_source_location_ids": [winner_source_location.pk],
         "loser_concordances": ["google_places:456"],
         "winner_concordances": ["google_places:123"],
     }

@@ -340,6 +340,7 @@ Performs the same process as the https://vial-staging.calltheshots.us/admin/merg
 
 - The loser is marked as `soft_deleted` and has its `duplicate_of` field updated to point at the winner
 - Any call reports attached to the loser will be re-assigned to the winner
+- Any source locations that have been marked as matching the loser will have their `matched_location_id` column updated to point to the winner
 - Any concordance identifiers on the loser that are not yet on the winner will be copied
 - A `CompletedLocationMerge` record will be created showing which user completed the merge and recording details of the relationships of the pre-merged locations, specifically which reports belonged to them and what their concordance identifiers were
 - A Django reversion record will be created tracking the changes were applied to the winner and loser Location objects

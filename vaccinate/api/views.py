@@ -24,7 +24,7 @@ from core.models import (
     Task,
     TaskType,
 )
-from core.utils import merge_locations
+from core.utils_merge_locations import merge_locations
 from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import render
