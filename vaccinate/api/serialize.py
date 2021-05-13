@@ -124,13 +124,16 @@ def location_json(
 
 
 def location_geojson(location: Location) -> Dict[str, object]:
-    properties = location_json(location)
+    return to_geojson(location_json(location))
+
+
+def to_geojson(properties):
     return {
         "type": "Feature",
         "properties": properties,
         "geometry": {
             "type": "Point",
-            "coordinates": [float(location.longitude), float(location.latitude)],
+            "coordinates": [properties["longitude"], properties["latitude"]],
         },
     }
 
@@ -171,6 +174,14 @@ def location_formats(preload_vaccinefinder=False):
             record["vaccines_offered"] = lookups.get(record["id"]) or []
         return batch
 
+    def transform_batch_geojson(batch):
+        lookups = expansion.expand([b["properties"] for b in batch])
+        for record in batch:
+            record["properties"]["vaccines_offered"] = (
+                lookups.get(record["properties"]["id"]) or []
+            )
+        return batch
+
     formats["v0preview"] = OutputFormat(
         prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
         start=(
@@ -184,6 +195,24 @@ def location_formats(preload_vaccinefinder=False):
         ),
         transform=lambda l: location_v0_json(l),
         transform_batch=transform_batch,
+        serialize=json.dumps,
+        separator=",",
+        end=lambda qs: "]}",
+        content_type="application/json",
+    )
+    formats["v0preview-geojson"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
+        start=(
+            '{"type": "FeatureCollection", "usage": {"notice": "Please contact Vaccinate The States and let '
+            "us know if you plan to rely on or publish this data. This "
+            "data is provided with best-effort accuracy. If you are "
+            "displaying this data, we expect you to display it responsibly. "
+            'Please do not display it in a way that is easy to misread.",'
+            '"contact": {"partnersEmail": "api@vaccinatethestates.com"}},'
+            '"features": ['
+        ),
+        transform=lambda l: to_geojson(location_v0_json(l)),
+        transform_batch=transform_batch_geojson,
         serialize=json.dumps,
         separator=",",
         end=lambda qs: "]}",
