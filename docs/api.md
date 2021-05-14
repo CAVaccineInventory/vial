@@ -252,6 +252,19 @@ The body sent with the POST must specify the type of task to be returned - see h
   "task_type": "Potential duplicate"
 }
 ```
+It accepts optional arguments which will filter the tasks based on their location:
+
+- `q` - a search term, which will be used against the location's name
+- `state` - a two letter state abbreviation such as `CA`
+
+So to request a task for a Walgreens in Kansas (if one is available) you would use:
+```json
+{
+  "task_type": "Potential duplicate",
+  "state": "KS",
+  "q": "walgreens"
+}
+```
 If there are no unresolved tasks of this type available the API will return the following (with a 200 status code):
 ```json
 {

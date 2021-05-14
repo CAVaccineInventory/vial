@@ -52,3 +52,42 @@ def test_request_task(client, jwt_id_token, ten_locations):
     # location and source_location should both be locations, with soft_deleted key
     for key in ("location", "other_location"):
         assert {"id", "name", "state", "soft_deleted"}.issubset(task[key].keys())
+
+    # Check that state argument works
+    assert (
+        "warning"
+        not in client.post(
+            "/api/requestTask",
+            {"task_type": "Potential duplicate", "state": "OR"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+        ).json()
+    )
+    assert (
+        "warning"
+        in client.post(
+            "/api/requestTask",
+            {"task_type": "Potential duplicate", "state": "WY"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+        ).json()
+    )
+    # And q argument
+    assert (
+        "warning"
+        in client.post(
+            "/api/requestTask",
+            {"task_type": "Potential duplicate", "q": "missing"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+        ).json()
+    )
+    assert (
+        "warning"
+        not in client.post(
+            "/api/requestTask",
+            {"task_type": "Potential duplicate", "q": "Location"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+        ).json()
+    )
