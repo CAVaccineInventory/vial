@@ -1,7 +1,7 @@
 import json
 import pathlib
 import re
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import beeline
 import markdown
@@ -919,7 +919,7 @@ def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
     except ValidationError as e:
         return JsonResponse({"error": e.errors()}, status=400)
 
-    kwargs = {"resolved_at": None}
+    kwargs = {"resolved_at": None}  # type: Dict[str, Any]
     if info.q:
         kwargs["location__name__icontains"] = info.q
     if info.state:
