@@ -279,3 +279,13 @@ def jwt_auth(
         return inner
 
     return wrapper
+
+
+class PrettyJsonResponse(JsonResponse):
+    # Pretty-printed JSON response. Use this for API methods that return
+    # a small amount of reference data, e.g. /api/taskTypes
+    def __init__(self, *args, **kwargs):
+        if "json_dumps_params" not in kwargs:
+            kwargs["json_dumps_params"] = {}
+        kwargs["json_dumps_params"]["indent"] = 4
+        super().__init__(*args, **kwargs)
