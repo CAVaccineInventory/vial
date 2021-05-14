@@ -72,9 +72,9 @@ def api_export_vaccinate_the_states() -> bool:
             "locations.json",
             (chunk.decode("utf-8") for chunk in json_response.streaming_content),
         )
-        writer.write("locations.geojson", json.dumps(geojson))
+        writer.write("locations.geojson", iter([json.dumps(geojson)]))
         for state, state_geojson in split_geojson_by_state(geojson):
-            writer.write("{}.geojson".format(state), json.dumps(state_geojson))
+            writer.write("{}.geojson".format(state), iter([json.dumps(state_geojson)]))
 
     except Exception as e:
         capture_exception(e)
