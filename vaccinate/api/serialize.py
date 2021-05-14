@@ -205,9 +205,7 @@ def location_formats(preload_vaccinefinder=False):
     def transform_batch_geojson(batch):
         lookups = expansion.expand(batch)
         for record in batch:
-            record["properties"]["vaccines_offered"] = (
-                lookups.get(record["id"]) or []
-            )
+            record["properties"]["vaccines_offered"] = lookups.get(record["id"]) or []
         return batch
 
     formats["v0preview"] = OutputFormat(
