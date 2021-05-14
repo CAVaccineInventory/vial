@@ -36,6 +36,7 @@ from vaccine_feed_ingest_schema.schema import ImportSourceLocation, Link
 
 from .serialize import location_json
 from .utils import (
+    PrettyJsonResponse,
     jwt_auth,
     log_api_requests,
     require_api_key,
@@ -45,7 +46,7 @@ from .utils import (
 
 @require_api_key
 def verify_token(request):
-    return JsonResponse(
+    return PrettyJsonResponse(
         {
             "key_id": request.api_key.id,
             "last_seen_at": request.api_key.last_seen_at,
@@ -385,25 +386,25 @@ def import_reports(request, on_request_logged):
 
 
 def location_types(request):
-    return JsonResponse(
+    return PrettyJsonResponse(
         {"location_types": list(LocationType.objects.values_list("name", flat=True))}
     )
 
 
 def provider_types(request):
-    return JsonResponse(
+    return PrettyJsonResponse(
         {"provider_types": list(ProviderType.objects.values_list("name", flat=True))}
     )
 
 
 def task_types(request):
-    return JsonResponse(
+    return PrettyJsonResponse(
         {"task_types": list(TaskType.objects.values_list("name", flat=True))}
     )
 
 
 def availability_tags(request):
-    return JsonResponse(
+    return PrettyJsonResponse(
         {
             "availability_tags": list(
                 AvailabilityTag.objects.filter(disabled=False).values(

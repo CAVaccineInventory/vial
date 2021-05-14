@@ -6,6 +6,7 @@ from typing import Callable, Dict, Generator, Iterator, List, Optional
 
 import beeline
 from api.search import search_locations
+from api.serialize import split_geojson_by_state
 from core import models
 from core.exporter.storage import GoogleStorageWriter, LocalWriter, StorageWriter
 from django.contrib.auth.models import AnonymousUser
@@ -41,11 +42,26 @@ VTS_DEPLOYS: Dict[str, StorageWriter] = {
 
 
 def api_export_vaccinate_the_states() -> bool:
-    request = RequestFactory().get("/api/searchLocations?all=1&format=v0preview")
-    request.user = AnonymousUser()
-    request.skip_jwt_auth = True  # type: ignore[attr-defined]
-    request.skip_api_logging = True  # type: ignore[attr-defined]
-    response = search_locations(request)
+    json_request = RequestFactory().get("/api/searchLocations?all=1&format=v0preview")
+    json_request.user = AnonymousUser()
+    json_request.skip_jwt_auth = True  # type: ignore[attr-defined]
+    json_request.skip_api_logging = True  # type: ignore[attr-defined]
+    json_response = search_locations(json_request)
+    assert json_response.status_code == 200, str(json_response)
+
+    # Next the GeoJSON version
+    geojson_request = RequestFactory().get(
+        "/api/searchLocations?all=1&format=v0preview-geojson"
+    )
+    geojson_request.user = AnonymousUser()
+    geojson_request.skip_jwt_auth = True  # type: ignore[attr-defined]
+    geojson_request.skip_api_logging = True  # type: ignore[attr-defined]
+    geojson_response = search_locations(geojson_request)
+    assert geojson_response.status_code == 200, str(geojson_response)
+
+    # This one we deserialize so we can later split by state
+    geojson = json.loads(b"".join(geojson_response.streaming_content))
+
     deploy = os.environ.get("DEPLOY", "testing")
     if deploy == "unknown":  # Cloud Build
         deploy = "testing"
@@ -54,11 +70,16 @@ def api_export_vaccinate_the_states() -> bool:
     try:
         writer.write(
             "locations.json",
-            (chunk.decode("utf-8") for chunk in response.streaming_content),
+            (chunk.decode("utf-8") for chunk in json_response.streaming_content),
         )
+        writer.write("locations.geojson", iter([json.dumps(geojson)]))
+        for state, state_geojson in split_geojson_by_state(geojson):
+            writer.write("{}.geojson".format(state), iter([json.dumps(state_geojson)]))
+
     except Exception as e:
         capture_exception(e)
         ok = False
+
     return ok
 
 

@@ -8,6 +8,17 @@ from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.db.models.query import QuerySet
 
+VTS_USAGE = {
+    "notice": (
+        "Please contact Vaccinate The States and let "
+        "us know if you plan to rely on or publish this data. This "
+        "data is provided with best-effort accuracy. If you are "
+        "displaying this data, we expect you to display it responsibly. "
+        "Please do not display it in a way that is easy to misread."
+    ),
+    "contact": {"partnersEmail": "api@vaccinatethestates.com"},
+}
+
 OutputFormat = namedtuple(
     "OutputFormat",
     # transform_bach runs once against a batch that has been prepared by calling transform on each item
@@ -124,13 +135,16 @@ def location_json(
 
 
 def location_geojson(location: Location) -> Dict[str, object]:
-    properties = location_json(location)
+    return to_geojson(location_json(location))
+
+
+def to_geojson(properties):
     return {
         "type": "Feature",
         "properties": properties,
         "geometry": {
             "type": "Point",
-            "coordinates": [float(location.longitude), float(location.latitude)],
+            "coordinates": [properties["longitude"], properties["latitude"]],
         },
     }
 
@@ -161,6 +175,18 @@ def location_v0_json(location: Location) -> Dict[str, object]:
     }
 
 
+def split_geojson_by_state(locations_geojson):
+    by_state = {}
+    for feature in locations_geojson["features"]:
+        by_state.setdefault(feature["properties"]["state"], []).append(feature)
+    for state, features in by_state.items():
+        yield state, {
+            "type": "FeatureCollection",
+            "usage": VTS_USAGE,
+            "features": features,
+        }
+
+
 def location_formats(preload_vaccinefinder=False):
     formats = make_formats(location_json, location_geojson)
     expansion = VaccineFinderInventoryExpansion(preload_vaccinefinder)
@@ -169,6 +195,14 @@ def location_formats(preload_vaccinefinder=False):
         lookups = expansion.expand(batch)
         for record in batch:
             record["vaccines_offered"] = lookups.get(record["id"]) or []
+        return batch
+
+    def transform_batch_geojson(batch):
+        lookups = expansion.expand([b["properties"] for b in batch])
+        for record in batch:
+            record["properties"]["vaccines_offered"] = (
+                lookups.get(record["properties"]["id"]) or []
+            )
         return batch
 
     formats["v0preview"] = OutputFormat(
@@ -184,6 +218,21 @@ def location_formats(preload_vaccinefinder=False):
         ),
         transform=lambda l: location_v0_json(l),
         transform_batch=transform_batch,
+        serialize=json.dumps,
+        separator=",",
+        end=lambda qs: "]}",
+        content_type="application/json",
+    )
+    formats["v0preview-geojson"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
+        start=(
+            '{"type": "FeatureCollection", "usage": USAGE,'.replace(
+                "USAGE", json.dumps(VTS_USAGE)
+            )
+            + '"features": ['
+        ),
+        transform=lambda l: to_geojson(location_v0_json(l)),
+        transform_batch=transform_batch_geojson,
         serialize=json.dumps,
         separator=",",
         end=lambda qs: "]}",
