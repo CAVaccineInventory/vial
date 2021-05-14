@@ -897,6 +897,8 @@ def task_json(task: Task) -> Dict[str, object]:
 
 class RequestTaskValidator(BaseModel):
     task_type: TaskType
+    state: Optional[State]
+    q: Optional[str]
 
 
 @log_api_requests
@@ -913,18 +915,26 @@ def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpRespo
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     try:
-        task_type = RequestTaskValidator(**post_data).task_type
+        info = RequestTaskValidator(**post_data)
     except ValidationError as e:
         return JsonResponse({"error": e.errors()}, status=400)
 
-    tasks = task_type.tasks.filter(resolved_at=None)
+    kwargs = {"resolved_at": None}
+    if info.q:
+        kwargs["location__name__icontains"] = info.q
+    if info.state:
+        kwargs["location__state"] = info.state
+
+    tasks = info.task_type.tasks.filter(**kwargs)
     task = tasks.order_by("?").first()
     if not task:
         return JsonResponse(
             {
-                "task_type": "Potential duplicate",
+                "task_type": info.task_type.name,
                 "task": None,
-                "warning": 'No unresolved tasks of type "{}"'.format(task_type),
+                "warning": 'No unresolved tasks of type "{}"'.format(
+                    info.task_type.name
+                ),
             }
         )
 

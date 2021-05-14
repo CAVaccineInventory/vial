@@ -146,6 +146,17 @@ class State(models.Model):
     class Meta:
         db_table = "state"
 
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.pydantic_convert
+
+    @classmethod
+    def pydantic_convert(cls, abbreviation: str) -> State:
+        try:
+            return cls.objects.get(abbreviation=abbreviation)
+        except cls.DoesNotExist:
+            raise ValueError("State '{}' does not exist".format(abbreviation))
+
 
 class County(models.Model):
     """
