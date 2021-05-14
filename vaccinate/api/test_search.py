@@ -110,7 +110,7 @@ def test_search_locations_format_geojson(client, api_key, ten_locations):
     assert set(result.keys()) == {"type", "features"}
     assert result["type"] == "FeatureCollection"
     record = result["features"][0]
-    assert set(record.keys()) == {"type", "properties", "geometry"}
+    assert set(record.keys()) == {"type", "properties", "geometry", "id"}
     assert record["geometry"] == {"type": "Point", "coordinates": [40.0, 30.0]}
 
 
@@ -126,7 +126,7 @@ def test_search_locations_format_nlgeojson(client, api_key, ten_locations):
     assert len(lines) == 2
     for line in lines:
         record = json.loads(line)
-        assert set(record.keys()) == {"type", "properties", "geometry"}
+        assert set(record.keys()) == {"type", "properties", "geometry", "id"}
 
 
 def test_search_stream_all(client, api_key, two_hundred_locations):

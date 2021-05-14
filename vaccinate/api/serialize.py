@@ -141,7 +141,12 @@ def location_geojson(location: Location) -> Dict[str, object]:
 def to_geojson(properties):
     return {
         "type": "Feature",
-        "properties": properties,
+        "id": properties["id"],
+        "properties": {
+            key: value
+            for key, value in properties.items()
+            if key not in ("id", "latitude", "longitude")
+        },
         "geometry": {
             "type": "Point",
             "coordinates": [properties["longitude"], properties["latitude"]],
@@ -198,10 +203,10 @@ def location_formats(preload_vaccinefinder=False):
         return batch
 
     def transform_batch_geojson(batch):
-        lookups = expansion.expand([b["properties"] for b in batch])
+        lookups = expansion.expand(batch)
         for record in batch:
             record["properties"]["vaccines_offered"] = (
-                lookups.get(record["properties"]["id"]) or []
+                lookups.get(record["id"]) or []
             )
         return batch
 
