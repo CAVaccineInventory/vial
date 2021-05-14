@@ -1,3 +1,4 @@
+import datetime
 import json
 from html import escape
 from typing import Callable, Dict, Union
@@ -43,6 +44,7 @@ def search_locations(
     q = (request.GET.get("q") or "").strip().lower()
     all = request.GET.get("all")
     state = (request.GET.get("state") or "").upper()
+    exportable = request.GET.get("exportable")
     latitude = request.GET.get("latitude")
     longitude = request.GET.get("longitude")
     radius = request.GET.get("radius")
@@ -91,6 +93,9 @@ def search_locations(
         qs = qs.filter(
             concordances__in=ConcordanceIdentifier.objects.filter(idref_filter)
         )
+    if exportable:
+        qs = filter_for_export(qs)
+
     qs = location_json_queryset(qs)
 
     formats = location_formats()
@@ -296,3 +301,20 @@ def search_source_locations(
         )
 
     return StreamingHttpResponse(stream(), content_type=formatter.content_type)
+
+
+def filter_for_export(qs):
+    # Filter down to locations that we think should be exported
+    # to the public map on www.vaccinatethestates.com
+    return qs.exclude(
+        dn_latest_non_skip_report__planned_closure__lt=datetime.date.today()
+    ).exclude(
+        dn_latest_non_skip_report__availability_tags__slug__in=(
+            "incorrect_contact_information",
+            "location_permanently_closed",
+            "may_be_a_vaccination_site_in_the_future",
+            "not_open_to_the_public",
+            "will_never_be_a_vaccination_site",
+            "only_staff",
+        )
+    )

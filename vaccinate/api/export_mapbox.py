@@ -3,6 +3,7 @@ import json
 
 import beeline
 import requests
+from .search import filter_for_export
 from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.conf import settings
@@ -12,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 def _mapbox_locations_queryset():
-    return (
+    qs = (
         Location.objects.all()
         .select_related(
             "location_type",
@@ -52,18 +53,8 @@ def _mapbox_locations_queryset():
             "latitude",
         )
         .exclude(soft_deleted=True)
-        .exclude(dn_latest_non_skip_report__planned_closure__lt=datetime.date.today())
-        .exclude(
-            dn_latest_non_skip_report__availability_tags__slug__in=(
-                "incorrect_contact_information",
-                "location_permanently_closed",
-                "may_be_a_vaccination_site_in_the_future",
-                "not_open_to_the_public",
-                "will_never_be_a_vaccination_site",
-                "only_staff",
-            )
-        )
     )
+    return filter_for_export(qs)
 
 
 def _mapbox_geojson(location, expansion):

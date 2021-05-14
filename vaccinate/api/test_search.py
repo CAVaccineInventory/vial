@@ -2,7 +2,15 @@ import json
 import re
 
 import pytest
-from core.models import ConcordanceIdentifier, Location, SourceLocation, State
+from core.models import (
+    AppointmentTag,
+    AvailabilityTag,
+    ConcordanceIdentifier,
+    Location,
+    Reporter,
+    SourceLocation,
+    State,
+)
 
 
 def search_locations(
@@ -40,12 +48,36 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
             "idref=google_places:123&idref=google_places:456",
             ["Location 8", "Location 7"],
         ),
+        (
+            "exportable=1",
+            [
+                "Location 1",
+                "Location 2",
+                "Location 3",
+                "Location 4",
+                "Location 5",
+                "Location 6",
+                "Location 7",
+                "Location 8",
+                # Not Location 9
+                "Location 10",
+            ],
+        ),
     ),
 )
 def test_search_locations(client, api_key, query_string, expected, ten_locations):
     in_kansas = ten_locations[5]
     in_kansas.state = State.objects.get(name="Kansas")
     in_kansas.save()
+    not_exportable = ten_locations[8]
+    not_exportable_report = not_exportable.reports.create(
+        reported_by=Reporter.objects.get_or_create(external_id="auth0:reporter")[0],
+        report_source="ca",
+        appointment_tag=AppointmentTag.objects.get(slug="web"),
+    )
+    not_exportable_report.availability_tags.add(
+        AvailabilityTag.objects.get(slug="will_never_be_a_vaccination_site")
+    )
     with_concordances_1 = ten_locations[6]
     with_concordances_2 = ten_locations[7]
     with_concordances_1.concordances.add(
