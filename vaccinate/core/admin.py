@@ -995,9 +995,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def location_link(self, obj):
         return format_html(
-            '<strong><a href="{}">{}</a></strong>',
+            '<strong><a href="{}">{}</a></strong><br>{}',
             reverse("admin:core_location_change", args=(obj.location.id,)),
             obj.location.name,
+            obj.location.full_address,
         )
 
     location_link.short_description = "Location"  # type:ignore[attr-defined]
