@@ -45,7 +45,9 @@ VTS_DEPLOYS: Dict[str, StorageWriter] = {
 
 
 def api_export_vaccinate_the_states() -> bool:
-    json_request = RequestFactory().get("/api/searchLocations?all=1&format=v0preview")
+    json_request = RequestFactory().get(
+        "/api/searchLocations?all=1&exportable=1&format=v0preview"
+    )
     json_request.user = AnonymousUser()
     json_request.skip_jwt_auth = True  # type: ignore[attr-defined]
     json_request.skip_api_logging = True  # type: ignore[attr-defined]
@@ -54,7 +56,7 @@ def api_export_vaccinate_the_states() -> bool:
 
     # Next the GeoJSON version
     geojson_request = RequestFactory().get(
-        "/api/searchLocations?all=1&format=v0preview-geojson"
+        "/api/searchLocations?all=1&exportable=1&format=v0preview-geojson"
     )
     geojson_request.user = AnonymousUser()
     geojson_request.skip_jwt_auth = True  # type: ignore[attr-defined]
