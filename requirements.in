@@ -29,6 +29,7 @@ python-dotenv
 
 # Typing and validation on data
 pydantic==1.8.2
+email-validator==1.1.2
 
 # Authentication
 social-auth-app-django
