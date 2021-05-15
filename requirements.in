@@ -28,7 +28,7 @@ google-cloud-secret-manager
 python-dotenv
 
 # Typing and validation on data
-pydantic
+pydantic==1.8.2
 
 # Authentication
 social-auth-app-django
