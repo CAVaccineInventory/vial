@@ -17,9 +17,10 @@ class BaseExpansion:
 
 class VaccineFinderInventoryExpansion(BaseExpansion):
     VACCINE_FINDER_NAMES = {
-        "Moderna COVID Vaccine": "Moderna",
-        "Pfizer-BioNTech COVID Vaccine": "Pfizer",
-        "Johnson & Johnson's Janssen COVID Vaccine": "Johnson & Johnson",
+        # If this string exists, assume this:
+        "Moderna": "Moderna",
+        "Pfizer": "Pfizer",
+        "Johnson": "Johnson & Johnson",
     }
     key = "vaccine_finder_inventory"
 
@@ -28,6 +29,13 @@ class VaccineFinderInventoryExpansion(BaseExpansion):
             self.preloaded = self.load_inventory()
         else:
             self.preloaded = None
+
+    @classmethod
+    def _extract_vaccine(cls, name):
+        for needle, result in cls.VACCINE_FINDER_NAMES.items():
+            if needle in name:
+                return result
+        return None
 
     @beeline.traced("_vaccinefinder_data_for_locations")
     def load_inventory(self, location_ids=None):
@@ -50,9 +58,10 @@ class VaccineFinderInventoryExpansion(BaseExpansion):
                 if not inventory:
                     continue
                 in_stock_vaccines = [
-                    self.VACCINE_FINDER_NAMES[item["name"]]
+                    self._extract_vaccine(item["name"])
                     for item in inventory
-                    if item["in_stock"] == "TRUE"
+                    if self._extract_vaccine(item["name"])
+                    and item["in_stock"] == "TRUE"
                 ]
                 id_to_vaccines[id] = in_stock_vaccines
         return id_to_vaccines

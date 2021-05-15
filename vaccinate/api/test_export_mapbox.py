@@ -97,7 +97,7 @@ def test_export_mapbox_location_with_no_report(client, ten_locations):
                 },
                 {
                     "guid": "784db609-dc1f-45a5-bad6-8db02e79d44f",
-                    "name": "Johnson & Johnson's Janssen COVID Vaccine",
+                    "name": "Johnson & Johnson/Janssen (age 18+)",
                     "in_stock": "TRUE",
                     "supply_level": "NO_SUPPLY",
                 },
