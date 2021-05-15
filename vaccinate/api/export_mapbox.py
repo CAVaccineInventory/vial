@@ -3,13 +3,14 @@ import json
 
 import beeline
 import requests
-from .search import filter_for_export
 from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
+
+from .search import filter_for_export
 
 
 def _mapbox_locations_queryset():
