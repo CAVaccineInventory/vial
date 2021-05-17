@@ -751,9 +751,9 @@ pytest-cov==2.11.1 \
     --hash=sha256:359952d9d39b9f822d9d29324483e7ba04a3a17dd7d05aa6beb7ea01e359e5f7 \
     --hash=sha256:bdb9fdb0b85a7cc825269a4c56b48ccaa5c7e365054b6038772c32ddcdc969da
     # via -r requirements.in
-pytest-django==4.2.0 \
-    --hash=sha256:80f8875226ec4dc0b205f0578072034563879d98d9b1bec143a80b9045716cb0 \
-    --hash=sha256:a51150d8962200250e850c6adcab670779b9c2aa07271471059d1fb92a843fa9
+pytest-django==4.3.0 \
+    --hash=sha256:d1c6758a592fb0ef8abaa2fe12dd28858c1dcfc3d466102ffe52aa8934733dca \
+    --hash=sha256:f96c4556f4e7b15d987dd1dcc1d1526df81d40c1548d31ce840d597ed2be8c46
     # via -r requirements.in
 pytest-dotenv==0.5.2 \
     --hash=sha256:2dc6c3ac6d8764c71c6d2804e902d0ff810fa19692e95fe138aefc9b1aa73732 \
