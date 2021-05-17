@@ -21,4 +21,5 @@
     0097_rename_concordanceidentifier_source_to_authority \
     0098_concordanceidentifier_created_at \
     0107_decimal_for_latitude_longitude \
-    0120_geography_fields
+    0120_geography_fields \
+    0133_backfill_location_created_at
