@@ -117,6 +117,3 @@ timezonefinder[numba]
 
 # Test data
 factory_boy
-
-# Streaming GCS uploads
-smart_open[gcs]
