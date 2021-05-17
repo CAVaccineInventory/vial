@@ -10,10 +10,6 @@ appdirs==1.4.4 \
     # via
     #   black
     #   django-migration-linter
-appnope==0.1.2 \
-    --hash=sha256:93aa393e9d6c54c5cd570ccadd8edad61ea0c4b9ea7a01409020c9aa019eb442 \
-    --hash=sha256:dd83cd4b5b460958838f6eb3000c660b1f9caf2a5b1de4264e941512f603258a
-    # via ipython
 asgiref==3.3.4 \
     --hash=sha256:92906c611ce6c967347bbfea733f13d6313901d54dcca88195eaeb52b2a8e8ee \
     --hash=sha256:d1216dfbdfb63826470995d31caed36225dcaf34f182e0fa257a4dd9e86f1b78
@@ -209,9 +205,9 @@ django-reversion==3.0.9 \
     # via
     #   -r requirements.in
     #   django-reversion-compare
-django-sql-dashboard==0.13 \
-    --hash=sha256:0d0147ab246030dbea957937847e5a27554f0151374e9463ba0a0c4d93d2d438 \
-    --hash=sha256:57dce06949624da3b77f125da5f5595fa2c5f9aefef8abf4867498d3fe0a12e0
+django-sql-dashboard==0.14 \
+    --hash=sha256:43f6fde99c4c980a98fa1b58c157826bf35b4fc5bc10a53ccd6f31e600f62a5e \
+    --hash=sha256:fe0edcfc65aab0b6ba7f552976c6c1480cb832d77154ac764b8ece8cedead5d6
     # via -r requirements.in
 django-stubs-ext==0.2.0 \
     --hash=sha256:bd4a1e36ef2ba0ef15801933c85c68e59b383302c873795c6ecfc25950c7ecdb \
