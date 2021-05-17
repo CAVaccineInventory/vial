@@ -1,5 +1,4 @@
-import json
-
+import orjson
 from core.import_utils import import_airtable_location, load_airtable_backup
 from django.core.management.base import BaseCommand, CommandError
 
@@ -26,7 +25,7 @@ class Command(BaseCommand):
             content = load_airtable_backup("backups/Locations.json", token=github_token)
         else:
             content = open(json_file).read()
-        locations = json.loads(content)
+        locations = orjson.loads(content)
         for location in locations:
             try:
                 import_airtable_location(location)

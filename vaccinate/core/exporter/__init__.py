@@ -1,10 +1,10 @@
 import datetime
-import json
 import os
 from contextlib import contextmanager
 from typing import Callable, Dict, Generator, Iterator, List, Optional
 
 import beeline
+import orjson
 from api.search import search_locations
 from api.serialize import split_geojson_by_state
 from core import models
@@ -65,7 +65,7 @@ def api_export_vaccinate_the_states() -> bool:
     assert geojson_response.status_code == 200, str(geojson_response)
 
     # This one we deserialize so we can later split by state
-    geojson = json.loads(b"".join(geojson_response.streaming_content))
+    geojson = orjson.loads(b"".join(geojson_response.streaming_content))
 
     deploy = os.environ.get("DEPLOY", "testing")
     if deploy == "unknown":  # Cloud Build
@@ -77,9 +77,11 @@ def api_export_vaccinate_the_states() -> bool:
             "locations.json",
             (chunk.decode("utf-8") for chunk in json_response.streaming_content),
         )
-        writer.write("locations.geojson", iter([json.dumps(geojson)]))
+        writer.write("locations.geojson", iter([orjson.dumps(geojson)]))
         for state, state_geojson in split_geojson_by_state(geojson):
-            writer.write("{}.geojson".format(state), iter([json.dumps(state_geojson)]))
+            writer.write(
+                "{}.geojson".format(state), iter([orjson.dumps(state_geojson)])
+            )
 
     except Exception as e:
         capture_exception(e)
@@ -196,8 +198,8 @@ def remove_null_values(
     return lambda *args, **kwargs: [nonnull_row(r) for r in f(*args, **kwargs)]
 
 
-def data_to_content_stream(data: object) -> Iterator[str]:
-    yield json.dumps(data)
+def data_to_content_stream(data: object) -> Iterator[bytes]:
+    yield orjson.dumps(data)
 
 
 class APIProducer:

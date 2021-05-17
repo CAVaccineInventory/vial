@@ -1,7 +1,6 @@
-import json
-
 import click
 import httpx
+import orjson
 from click.exceptions import ClickException
 
 
@@ -60,7 +59,7 @@ def yield_source_locations(base_url, source_token):
         "GET", base_url, headers={"Authorization": "Bearer {}".format(source_token)}
     ) as response:
         for line in response.iter_lines():
-            properties = json.loads(line)["properties"]
+            properties = orjson.loads(line)["properties"]
             # We just want source_uid, source_name, name, latitude, longitude, import_json
             yield {
                 key: properties[key]
@@ -78,7 +77,7 @@ def yield_source_locations(base_url, source_token):
 def import_batch(batch, destination_url, destination_token, import_run_id):
     response = httpx.post(
         destination_url + "?import_run_id={}".format(import_run_id),
-        data="\n".join(json.dumps(record) for record in batch),
+        data=b"\n".join(orjson.dumps(record) for record in batch),
         headers={"Authorization": "Bearer {}".format(destination_token)},
         timeout=20,
     )
@@ -88,7 +87,7 @@ def import_batch(batch, destination_url, destination_token, import_run_id):
         print(response.text)
         raise ClickException(e)
     click.echo(response.status_code)
-    click.echo(json.dumps(response.json(), indent=2))
+    click.echo(orjson.dumps(response.json(), option=orjson.OPT_INDENT_2))
 
 
 if __name__ == "__main__":

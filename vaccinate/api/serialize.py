@@ -1,9 +1,9 @@
 import itertools
-import json
 from collections import namedtuple
 from typing import Dict
 
 import beeline
+import orjson
 from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.db.models.query import QuerySet
@@ -211,34 +211,34 @@ def location_formats(preload_vaccinefinder=False):
     formats["v0preview"] = OutputFormat(
         prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
         start=(
-            '{"usage": {"notice": "Please contact Vaccinate The States and let '
-            "us know if you plan to rely on or publish this data. This "
-            "data is provided with best-effort accuracy. If you are "
-            "displaying this data, we expect you to display it responsibly. "
-            'Please do not display it in a way that is easy to misread.",'
-            '"contact": {"partnersEmail": "api@vaccinatethestates.com"}},'
-            '"content": ['
+            b'{"usage":{"notice":"Please contact Vaccinate The States and let '
+            b"us know if you plan to rely on or publish this data. This "
+            b"data is provided with best-effort accuracy. If you are "
+            b"displaying this data, we expect you to display it responsibly. "
+            b'Please do not display it in a way that is easy to misread.",'
+            b'"contact":{"partnersEmail":"api@vaccinatethestates.com"}},'
+            b'"content":['
         ),
         transform=lambda l: location_v0_json(l),
         transform_batch=transform_batch,
-        serialize=json.dumps,
-        separator=",",
-        end=lambda qs: "]}",
+        serialize=orjson.dumps,
+        separator=b",",
+        end=lambda qs: b"]}",
         content_type="application/json",
     )
     formats["v0preview-geojson"] = OutputFormat(
         prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
         start=(
-            '{"type": "FeatureCollection", "usage": USAGE,'.replace(
-                "USAGE", json.dumps(VTS_USAGE)
+            b'{"type":"FeatureCollection","usage":USAGE,'.replace(
+                b"USAGE", orjson.dumps(VTS_USAGE)
             )
-            + '"features": ['
+            + b'"features":['
         ),
         transform=lambda l: to_geojson(location_v0_json(l)),
         transform_batch=transform_batch_geojson,
-        serialize=json.dumps,
-        separator=",",
-        end=lambda qs: "]}",
+        serialize=orjson.dumps,
+        separator=b",",
+        end=lambda qs: b"]}",
         content_type="application/json",
     )
     return formats
@@ -248,32 +248,34 @@ def make_formats(json_convert, geojson_convert):
     return {
         "json": OutputFormat(
             prepare_queryset=lambda qs: qs,
-            start='{"results": [',
+            start=b'{"results":[',
             transform=lambda l: json_convert(l),
             transform_batch=lambda batch: batch,
-            serialize=json.dumps,
-            separator=",",
-            end=lambda qs: '], "total": TOTAL}'.replace("TOTAL", str(qs.count())),
+            serialize=orjson.dumps,
+            separator=b",",
+            end=lambda qs: b'],"total":TOTAL}'.replace(
+                b"TOTAL", str(qs.count()).encode("ascii")
+            ),
             content_type="application/json",
         ),
         "geojson": OutputFormat(
             prepare_queryset=lambda qs: qs,
-            start='{"type": "FeatureCollection", "features": [',
+            start=b'{"type":"FeatureCollection","features":[',
             transform=lambda l: geojson_convert(l),
             transform_batch=lambda batch: batch,
-            serialize=json.dumps,
-            separator=",",
-            end=lambda qs: "]}",
+            serialize=orjson.dumps,
+            separator=b",",
+            end=lambda qs: b"]}",
             content_type="application/json",
         ),
         "nlgeojson": OutputFormat(
             prepare_queryset=lambda qs: qs,
-            start="",
+            start=b"",
             transform=lambda l: geojson_convert(l),
             transform_batch=lambda batch: batch,
-            serialize=json.dumps,
-            separator="\n",
-            end=lambda qs: "",
+            serialize=orjson.dumps,
+            separator=b"\n",
+            end=lambda qs: b"",
             content_type="text/plain",
         ),
     }

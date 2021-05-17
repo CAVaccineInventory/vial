@@ -1,6 +1,6 @@
-import json
 import re
 
+import orjson
 import pytest
 from core.models import (
     AppointmentTag,
@@ -25,7 +25,7 @@ def search_locations(
         content = b"".join(response.streaming_content)
     else:
         content = response.content
-    return json.loads(content)
+    return orjson.loads(content)
 
 
 def search_source_locations(client, api_key, query_string, expected_status_code=200):
@@ -157,7 +157,7 @@ def test_search_locations_format_nlgeojson(client, api_key, ten_locations):
     lines = joined.split(b"\n")
     assert len(lines) == 2
     for line in lines:
-        record = json.loads(line)
+        record = orjson.loads(line)
         assert set(record.keys()) == {"type", "properties", "geometry", "id"}
 
 
@@ -165,8 +165,8 @@ def test_search_stream_all(client, api_key, two_hundred_locations):
     # I would have used parametrize here, but that runs two_hundred_locations
     # fixture three times and I only want to run it once
     for format, check in (
-        ("json", lambda r: len(json.loads(r)["results"]) == 200),
-        ("geojson", lambda r: len(json.loads(r)["features"]) == 200),
+        ("json", lambda r: len(orjson.loads(r)["results"]) == 200),
+        ("geojson", lambda r: len(orjson.loads(r)["features"]) == 200),
         ("nlgeojson", lambda r: len(r.split(b"\n")) == 200),
     ):
         response = client.get(
@@ -301,34 +301,35 @@ def test_search_source_locations_all(client, api_key):
         # expected can use '***' for wildcards
         (
             "json",
-            '{"results": [{"id": ***, "source_uid": "test:formatted", '
-            '"source_name": "test", "name": "Formatted", '
-            '"latitude": 37.5, "longitude": -122.5, "import_json": '
-            '{"foo": "bar"}, "matched_location": null, "created_at": '
-            '"***", "last_imported_at": null, "concordances": [], '
-            '"vial_url": "http://testserver/admin/core/sourcelocation/***/change/"}], '
-            '"total": 1}',
+            '{"results":[{"id":***,"source_uid":"test:formatted",'
+            '"source_name":"test","name":"Formatted",'
+            '"latitude":37.5,"longitude":-122.5,"import_json":'
+            '{"foo":"bar"},"matched_location":null,"created_at":'
+            '"***","last_imported_at":null,"concordances":[],'
+            '"vial_url":"http://testserver/admin/core/sourcelocation/***/change/"}],'
+            '"total":1}',
         ),
         (
             "geojson",
-            '{"type": "FeatureCollection", "features": [{"type": "Feature", '
-            '"properties": {"id": ***, "source_uid": "test:formatted", '
-            '"source_name": "test", "name": "Formatted", "latitude": 37.5, '
-            '"longitude": -122.5, "import_json": {"foo": "bar"}, '
-            '"matched_location": null, "created_at": "***", '
-            '"last_imported_at": null, "concordances": [], '
-            '"vial_url": "http://testserver/admin/core/sourcelocation/***/change/"}, '
-            '"geometry": {"type": "Point", "coordinates": [-122.5, 37.5]}}]}',
+            '{"type":"FeatureCollection","features":[{"type":"Feature",'
+            '"properties":{"id":***,"source_uid":"test:formatted",'
+            '"source_name":"test","name":"Formatted","latitude":37.5,'
+            '"longitude":-122.5,"import_json":{"foo":"bar"},'
+            '"matched_location":null,"created_at":"***",'
+            '"last_imported_at":null,"concordances":[],'
+            '"vial_url":"http://testserver/admin/core/sourcelocation/***/change/"},'
+            '"geometry":{"type":"Point","coordinates":[-122.5,37.5]}}]}',
         ),
         (
             "nlgeojson",
-            '{"type": "Feature", "properties": {"id": ***, "source_uid": '
-            '"test:formatted", "source_name": "test", "name": '
-            '"Formatted", "latitude": 37.5, "longitude": -122.5, '
-            '"import_json": {"foo": "bar"}, "matched_location": null, '
-            '"created_at": "***", '
-            '"last_imported_at": null, "concordances": [], '
-            '"vial_url": "http://testserver/admin/core/sourcelocation/***/change/"}, "geometry": {"type": "Point", "coordinates": [-122.5, 37.5]}}',
+            '{"type":"Feature","properties":{"id":***,"source_uid":'
+            '"test:formatted","source_name":"test","name":'
+            '"Formatted","latitude":37.5,"longitude":-122.5,'
+            '"import_json":{"foo":"bar"},"matched_location":null,'
+            '"created_at":"***",'
+            '"last_imported_at":null,"concordances":[],'
+            '"vial_url":"http://testserver/admin/core/sourcelocation/***/change/"},'
+            '"geometry":{"type":"Point","coordinates":[-122.5,37.5]}}',
         ),
     ),
 )

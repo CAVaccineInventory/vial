@@ -1,17 +1,17 @@
 import gzip
-import json
 from functools import cache
 from pathlib import Path
 from typing import Iterator
 
 import beeline
+import orjson
 from google.cloud import (  # type: ignore  # XXX: This works when mypy is re-run with a cache?
     storage,
 )
 
 
 class StorageWriter:
-    def write(self, path: str, content_stream: Iterator[str]) -> None:
+    def write(self, path: str, content_stream: Iterator[bytes]) -> None:
         ...
 
 
@@ -21,10 +21,10 @@ class LocalWriter(StorageWriter):
     def __init__(self, prefix: str = ""):
         self.prefix = prefix
 
-    def write(self, path: str, content_stream: Iterator[str]) -> None:
+    def write(self, path: str, content_stream: Iterator[bytes]) -> None:
         local_path = Path(self.prefix, path)
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        with local_path.open("w") as f:
+        with local_path.open("bw") as f:
             for chunk in content_stream:
                 f.write(chunk)
 
@@ -37,10 +37,10 @@ class DebugWriter(StorageWriter):
             prefix += "/"
         self.prefix = prefix
 
-    def write(self, path: str, content_stream: Iterator[str]) -> None:
-        data = json.loads("".join(content_stream))
+    def write(self, path: str, content_stream: Iterator[bytes]) -> None:
+        data = orjson.loads(b"".join(content_stream))
         print(f"Would write to {self.prefix}{path}:")
-        print(json.dumps(data, indent=4, sort_keys=True))
+        print(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS))
         print()
 
 
@@ -59,7 +59,7 @@ class GoogleStorageWriter(StorageWriter):
         return storage_client.bucket(self.bucket_name)
 
     @beeline.traced(name="core.exporter.storage.GoogleStorageWriter.write")
-    def write(self, path: str, content_stream: Iterator[str]) -> None:
+    def write(self, path: str, content_stream: Iterator[bytes]) -> None:
         if self.prefix:
             path = self.prefix + "/" + path
         blob = self.get_bucket().blob(path)
@@ -69,4 +69,4 @@ class GoogleStorageWriter(StorageWriter):
         with blob.open("wb") as f:
             with gzip.open(f, "w") as gzip_f:
                 for chunk in content_stream:
-                    gzip_f.write(chunk.encode("ascii"))
+                    gzip_f.write(chunk)

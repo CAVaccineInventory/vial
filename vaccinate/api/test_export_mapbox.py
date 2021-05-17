@@ -1,6 +1,6 @@
 import datetime
-import json
 
+import orjson
 import pytest
 from core.models import AppointmentTag, AvailabilityTag, Reporter, SourceLocation
 
@@ -10,7 +10,7 @@ def test_export_mapbox_location_with_no_report(client, ten_locations):
     response = client.get(
         "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
-    data = json.loads(response.content)["geojson"][0]
+    data = orjson.loads(response.content)["geojson"][0]
     assert data == {
         "type": "Feature",
         "properties": {
@@ -119,7 +119,7 @@ def test_export_mapbox_location_with_vaccinefinder_source_location(
     response = client.get(
         "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
-    data = json.loads(response.content)["geojson"][0]
+    data = orjson.loads(response.content)["geojson"][0]
     for property in ("vaccine_moderna", "vaccine_pfizer", "vaccine_jj"):
         if property in expected_properties:
             assert data["properties"][property]
@@ -158,7 +158,7 @@ def test_export_mapbox_location_with_report(
     response = client.get(
         "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
-    data = json.loads(response.content)["geojson"][0]
+    data = orjson.loads(response.content)["geojson"][0]
     expected_properties = {
         "id": location.public_id,
         "name": "Location 1",
@@ -213,7 +213,7 @@ def test_planned_closure_location_not_returned(
     response = client.get(
         "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
-    geojson = json.loads(response.content)["geojson"]
+    geojson = orjson.loads(response.content)["geojson"]
     assert isinstance(geojson, list)
     if has_planned_closure:
         assert len(geojson) == 0
@@ -247,6 +247,6 @@ def test_locations_with_specific_availability_tags_not_exported(
     response = client.get(
         "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
     )
-    geojson = json.loads(response.content)["geojson"]
+    geojson = orjson.loads(response.content)["geojson"]
     assert isinstance(geojson, list)
     assert len(geojson) == 0

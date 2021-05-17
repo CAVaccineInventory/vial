@@ -1,10 +1,10 @@
-import json
 import os
 import random
 from datetime import date, datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import beeline
+import orjson
 import pytz
 import requests
 from api.models import ApiLog
@@ -67,7 +67,7 @@ def submit_report(
     request: HttpRequest, on_request_logged: Callable[[Callable[[ApiLog], None]], None]
 ):
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body)
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     try:

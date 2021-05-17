@@ -1,10 +1,10 @@
-import json
 import pathlib
 import re
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import beeline
 import markdown
+import orjson
 import reversion
 from api.location_metrics import LocationMetricsReport
 from bigmap.transform import source_to_location
@@ -131,7 +131,7 @@ class LocationValidator(_LocationSharedValidators):
 @beeline.traced(name="import_locations")
 def import_locations(request, on_request_logged):
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     added_locations = []
@@ -248,7 +248,7 @@ def import_source_locations(request, on_request_logged):
     try:
         post_data = request.body.decode("utf-8")
         lines = post_data.split("\n")
-        json_records = [json.loads(line) for line in lines if line.strip()]
+        json_records = [orjson.loads(line) for line in lines if line.strip()]
     except ValueError as e:
         return JsonResponse({"error": "JSON error: " + str(e)}, status=400)
     # Validate those JSON records
@@ -351,7 +351,7 @@ def build_location_from_source_location(source_location: SourceLocation):
 @beeline.traced(name="import_reports")
 def import_reports(request, on_request_logged):
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     if not isinstance(post_data, list) or any(
@@ -599,7 +599,7 @@ class UpdateLocationsValidator(BaseModel):
 @beeline.traced(name="update_locations")
 def update_locations(request, on_request_logged):
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -676,7 +676,7 @@ class UpdateLocationConcordancesValidator(BaseModel):
 @beeline.traced(name="update_location_concordances")
 def update_location_concordances(request, on_request_logged):
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -737,7 +737,7 @@ def update_source_location_match(
     request: HttpRequest, on_request_logged: Callable
 ) -> HttpResponse:
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -801,7 +801,7 @@ def create_location_from_source_location(
     request: HttpRequest, on_request_logged: Callable
 ) -> HttpResponse:
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -853,7 +853,7 @@ class ImportTasksValidator(BaseModel):
 @csrf_exempt
 def import_tasks(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -911,7 +911,7 @@ class RequestTaskValidator(BaseModel):
 @csrf_exempt
 def request_task(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     try:
@@ -968,7 +968,7 @@ class ResolveTaskValidator(BaseModel):
 @csrf_exempt
 def resolve_task(request: HttpRequest, on_request_logged: Callable) -> HttpResponse:
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     try:
@@ -1032,7 +1032,7 @@ def merge_locations_endpoint(
     request: HttpRequest, on_request_logged: Callable
 ) -> HttpResponse:
     try:
-        post_data = json.loads(request.body.decode("utf-8"))
+        post_data = orjson.loads(request.body.decode("utf-8"))
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     try:

@@ -1,7 +1,7 @@
 import datetime
-import json
 from unittest.mock import MagicMock
 
+import orjson
 import pytest
 from core.exporter import api, dataset, storage
 
@@ -282,7 +282,7 @@ def test_api_v0_framing():
     # Verify that they have no metadata
     for c in calls:
         output = c.args[1]
-        data = json.loads("".join(output))
+        data = orjson.loads(b"".join(output))
         assert isinstance(data, list)
 
 
@@ -310,7 +310,7 @@ def test_api_v1_framing():
     # Verify that the V1 had metadata on it
     for c in calls:
         output = c.args[1]
-        data = json.loads("".join(output))
+        data = orjson.loads(b"".join(output))
         assert "usage" in data
         assert "content" in data
         assert isinstance(data["content"], list)

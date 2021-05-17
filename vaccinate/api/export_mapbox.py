@@ -1,6 +1,5 @@
-import json
-
 import beeline
+import orjson
 import requests
 from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
@@ -156,7 +155,7 @@ def export_mapbox_preview(request):
         <p><a href="{}">Raw JSON</a></p>
         </body></html>
     """.format(
-            escape(json.dumps(preview, indent=4)),
+            escape(orjson.dumps(preview, option=orjson.OPT_INDENT_2)),
             escape(raw_url),
         ).strip()
     )
@@ -175,7 +174,9 @@ def export_mapbox(request):
 
     post_data = ""
     for location in locations.all():
-        post_data += json.dumps(_mapbox_geojson(location, expansion)) + "\n"
+        post_data += orjson.dumps(
+            _mapbox_geojson(location, expansion), option=orjson.OPT_APPEND_NEWLINE
+        )
 
     access_token = settings.MAPBOX_ACCESS_TOKEN
     if not access_token:
