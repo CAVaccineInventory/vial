@@ -73,6 +73,9 @@ google-cloud-storage
 ## Scooby timezone data
 timezonefinder[numba]
 
+## Serialization
+orjson
+
 
 ### Development
 
