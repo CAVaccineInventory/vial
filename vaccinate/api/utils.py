@@ -1,10 +1,10 @@
 import datetime
-import json
 import secrets
 from functools import wraps
 from typing import Any, Callable, List, Optional, Set
 
 import beeline
+import orjson
 import requests
 from auth0login.auth0_utils import decode_and_verify_jwt
 from core.models import Reporter
@@ -99,11 +99,11 @@ def log_api_requests(view_fn):
             response_body_json = None
             if request.method == "POST":
                 try:
-                    post_body_json = json.loads(request.body)
+                    post_body_json = orjson.loads(request.body)
                 except ValueError:
                     post_body = request.body
             try:
-                response_body_json = json.loads(response.content)
+                response_body_json = orjson.loads(response.content)
             except ValueError:
                 response_body = response.content
             except AttributeError:

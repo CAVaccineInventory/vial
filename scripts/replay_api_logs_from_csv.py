@@ -1,11 +1,11 @@
 import csv
-import json
 import time
 from collections import defaultdict
 from urllib.parse import urlencode
 
 import click
 import httpx
+import orjson
 import pytz
 from dateutil import parser
 
@@ -41,8 +41,8 @@ def cli(endpoint, csv_filepath, base_url):
             status, data = send_row(row, url)
             status_count[status] += 1
             if status != 200:
-                click.echo(json.dumps(data, indent=2), err=True)
-    click.echo(json.dumps(status_count))
+                click.echo(orjson.dumps(data, option=orjson.OPT_INDENT_2), err=True)
+    click.echo(orjson.dumps(status_count))
 
 
 def send_row(row, url):
@@ -57,7 +57,7 @@ def send_row(row, url):
             "fake_remote_ip": row["remote_ip"],
         }
     )
-    payload = json.loads(row["payload"])
+    payload = orjson.loads(row["payload"])
     response = None
     errors = []
     for i in range(1, 4):

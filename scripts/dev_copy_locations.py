@@ -1,7 +1,6 @@
-import json
-
 import click
 import httpx
+import orjson
 from click.exceptions import ClickException
 
 
@@ -53,7 +52,7 @@ def yield_locations(base_url, source_token):
         "GET", base_url, headers={"Authorization": "Bearer {}".format(source_token)}
     ) as response:
         for line in response.iter_lines():
-            properties = json.loads(line)["properties"]
+            properties = orjson.loads(line)["properties"]
             yield {
                 key: properties[key]
                 for key in (
@@ -86,7 +85,7 @@ def import_batch(batch, destination_url, destination_token):
         print(response.text)
         raise ClickException(e)
     click.echo(response.status_code)
-    click.echo(json.dumps(response.json(), indent=2))
+    click.echo(orjson.dumps(response.json(), option=orjson.OPT_INDENT_2))
 
 
 if __name__ == "__main__":

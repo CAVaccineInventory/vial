@@ -1,9 +1,9 @@
 import datetime
-import json
 from html import escape
 from typing import Callable, Dict, Union
 
 import beeline
+import orjson
 from core.models import ConcordanceIdentifier, Location, SourceLocation, State
 from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
@@ -118,9 +118,9 @@ def search_locations(
     if debug:
         if all:
             return JsonResponse({"error": "Cannot use both all and debug"}, status=400)
-        output = "".join(stream())
+        output = b"".join(stream())
         if formatter.content_type == "application/json":
-            output = json.dumps(json.loads(output), indent=2)
+            output = orjson.dumps(orjson.loads(output), option=orjson.OPT_INDENT_2)
         return render(
             request,
             "api/search_locations_debug.html",
@@ -224,8 +224,10 @@ def search_source_locations(
 
     def source_location_geojson(source_location: SourceLocation) -> Dict[str, object]:
         properties = source_location_json(source_location)
+        id = properties.pop("id")
         return {
             "type": "Feature",
+            "id": id,
             "properties": properties,
             "geometry": {
                 "type": "Point",
@@ -295,7 +297,11 @@ def search_source_locations(
             "api/search_locations_debug.html",
             {
                 "output": mark_safe(
-                    escape(json.dumps(json.loads("".join(stream())), indent=2))
+                    escape(
+                        orjson.dumps(
+                            orjson.loads(b"".join(stream())), option=orjson.OPT_INDENT_2
+                        )
+                    )
                 ),
             },
         )

@@ -1,19 +1,18 @@
-import json
 import pathlib
 
+import orjson
 from core.models import ConcordanceIdentifier, Location, SourceLocation
 from reversion.models import Revision
 
 
 def test_create_location_from_source_location(client, api_key):
-    fixture = json.load(
-        (
-            pathlib.Path(__file__).parent
-            / "test-data"
-            / "importSourceLocations"
-            / "002-new-location.json"
-        ).open()
-    )
+    with (
+        pathlib.Path(__file__).parent
+        / "test-data"
+        / "importSourceLocations"
+        / "002-new-location.json"
+    ).open() as fixture_file:
+        fixture = orjson.loads(fixture_file.read())
     source_location = SourceLocation.objects.create(
         source_uid=fixture["source_uid"],
         source_name=fixture["source_name"],

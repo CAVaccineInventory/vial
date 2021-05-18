@@ -1,9 +1,9 @@
-import json
 import pathlib
 import random
 import time
 from datetime import datetime
 
+import orjson
 import pytest
 from api.models import ApiLog
 from core.models import CallRequest, CallRequestReason, Location, Report, State
@@ -51,7 +51,10 @@ def test_submit_report_api_invalid_json(client, jwt_id_token):
         HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
     )
     assert response.status_code == 400
-    assert response.json()["error"] == "Expecting value: line 1 column 1 (char 0)"
+    assert (
+        response.json()["error"]
+        == "expected value at line 1 column 1: line 1 column 1 (char 0)"
+    )
 
 
 @pytest.mark.django_db
@@ -66,7 +69,8 @@ def test_submit_report_api_example(
             "ok": True,
         },
     )
-    fixture = json.load(json_path.open())
+    with json_path.open() as fixture_file:
+        fixture = orjson.loads(fixture_file.read())
     assert Report.objects.count() == 0
     assert CallRequest.objects.count() == 0
     # Ensure location exists
@@ -179,7 +183,7 @@ def test_submit_report_api_example(
 
     # Should have posted to Zapier
     assert mocked_zapier.called_once
-    assert json.loads(mocked_zapier.last_request.body) == {
+    assert orjson.loads(mocked_zapier.last_request.body) == {
         "report_url": "http://testserver/admin/core/report/{}/change/".format(
             report.pk
         ),

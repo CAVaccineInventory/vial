@@ -5,31 +5,22 @@
 # To upgrade pinned versions, run:
 #     ./scripts/update-requirements --upgrade
 
-# Core django
-django==3.2.3
 
+## Serving
 # Server
 gunicorn
 
 # Serve static files from wsgi; used in development, not production
 whitenoise
 
-# PostgreSQL backend
-psycopg2-binary
-
-# Verify that migrations are backwards compatable
-django-migration-linter
-
-# Easy reconfiguration of
-dj-database-url
-
 # Read .env files of secrets, and those from GCP secrets
 google-cloud-secret-manager
 python-dotenv
 
-# Typing and validation on data
-pydantic==1.8.2
-email-validator==1.1.2
+
+## Django and related extensions
+# Core django
+django==3.2.3
 
 # Authentication
 social-auth-app-django
@@ -37,26 +28,11 @@ social-auth-app-django
 # CORS for our /api/
 django-cors-headers
 
-# Cryptography for JWT parsing and validation
-python-jose
-
-# Error logging
-sentry-sdk
-
-# Observability
-honeycomb-beeline
-
-# Better interactive shell
-ipython
-
-# Django automatic model documentation
-docutils
-
-# Markdown documentation
-Markdown
+# Verify that migrations are backwards compatable
+django-migration-linter
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.13
+django-sql-dashboard==0.14
 
 # Version history in Django admin
 django-reversion
@@ -65,9 +41,49 @@ django-reversion-compare
 # Custom menus for Django admin interface
 django-admin-tools
 
+# Cryptography for JWT parsing and validation
+python-jose
+
+
+
+## Data storage
+psycopg2-binary
+dj-database-url
+
+
+## Observability
+sentry-sdk
+honeycomb-beeline
+prometheus_client
+
+
+## Docs
+docutils
+Markdown
+
+
+## Data validation
+vaccine-feed-ingest-schema
+pydantic==1.8.2
+email-validator==1.1.2
+
+## To upload the API export to GCS
+google-api-core==1.27.0
+google-cloud-storage
+
+## Scooby timezone data
+timezonefinder[numba]
+
+## Serialization
+orjson
+
+
 ### Development
 
-# Typing
+# Better interactive shell
+ipython
+
+# Typing and validation
 mypy
 django-stubs
 types-Markdown
@@ -86,6 +102,7 @@ pytest-dotenv
 requests-mock
 time-machine
 pytest-httpx
+factory_boy
 
 # Formatting
 black
@@ -95,25 +112,13 @@ flake8
 # Dependency management
 pip-tools
 
-# Importing data from github snapshots
-github-contents
 
-# Used for import-from-CSV command line tool
+## Manual data imports
+github-contents
 click
 httpx
 python-dateutil
 
-# To upload the API export to GCS
-google-cloud-storage
 
-# Metrics reporting
-prometheus_client
-
-# Internal tools
-vaccine-feed-ingest-schema
-
-# Map location to timezone
-timezonefinder[numba]
-
-# Test data
-factory_boy
+## Please add new dependencies in a relevant category above, or make a
+## new one.

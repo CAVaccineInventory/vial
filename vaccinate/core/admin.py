@@ -1,5 +1,4 @@
-import json
-
+import orjson
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
@@ -12,6 +11,7 @@ from django.urls import reverse
 from django.utils import dateformat, timezone
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
+from django.utils.text import Truncator
 from reversion.models import Revision, Version
 from reversion_compare.admin import CompareVersionAdmin
 
@@ -460,6 +460,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "created_by",
+                    "created_at",
                     "import_run",
                     "provenance",
                     "airtable_id",
@@ -547,6 +549,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = (
         "scooby_report_link",
+        "created_at",
+        "created_by",
         "request_a_call",
         "public_id",
         "airtable_id",
@@ -643,7 +647,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             '<div data-public-id="{}" data-authorities="{}" class="edit-concordances">'.format(
                 escape(obj.public_id),
                 escape(
-                    json.dumps(
+                    orjson.dumps(
                         list(
                             ConcordanceIdentifier.objects.values_list(
                                 "authority", flat=True
@@ -1021,7 +1025,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             raw_details.startswith("http://") or raw_details.startswith("https://")
         ):
             details = format_html(
-                '<a target="_blank" href="{}">{}</a>', raw_details, raw_details
+                '<a target="_blank" href="{}">{}</a>',
+                raw_details,
+                Truncator(raw_details).chars(75),
             )
         else:
             details = escape(raw_details or "")

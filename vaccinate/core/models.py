@@ -313,6 +313,16 @@ class Location(gis_models.Model):
     internal_notes = models.TextField(null=True, blank=True)
     do_not_call = models.BooleanField(default=False)
     do_not_call_reason = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        "auth.User",
+        blank=True,
+        null=True,
+        related_name="created_locations",
+        on_delete=models.PROTECT,
+    )
+
     airtable_id = models.CharField(
         max_length=20,
         null=True,

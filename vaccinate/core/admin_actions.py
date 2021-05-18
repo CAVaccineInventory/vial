@@ -1,7 +1,7 @@
 import csv
-import json
 from io import StringIO
 
+import orjson
 from django.db.models.fields.related import ForeignKey
 from django.http import StreamingHttpResponse
 
@@ -68,7 +68,7 @@ def export_as_csv_action(
                 # JSONify any lists or dicts
                 for i, item in enumerate(csv_row):
                     if isinstance(item, (list, dict)):
-                        csv_row[i] = json.dumps(item)
+                        csv_row[i] = orjson.dumps(item).decode("utf-8")
                 csvwriter.writerow(csv_row)
                 yield read_and_flush()
 

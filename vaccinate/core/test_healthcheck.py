@@ -1,12 +1,11 @@
-import json
-
+import orjson
 import pytest
 
 
 @pytest.mark.django_db
 def test_healthcheck(client, monkeypatch):
     response = client.get("/healthcheck")
-    data = json.loads(response.content)
+    data = orjson.loads(response.content)
     assert set(data.keys()) == {
         "deployed_sha",
         "postgresql_version",
@@ -19,5 +18,5 @@ def test_healthcheck(client, monkeypatch):
     # Monkey-patch in some environment variables
     monkeypatch.setenv("COMMIT_SHA", "COMMIT_SHA")
     assert (
-        json.loads(client.get("/healthcheck").content)["deployed_sha"] == "COMMIT_SHA"
+        orjson.loads(client.get("/healthcheck").content)["deployed_sha"] == "COMMIT_SHA"
     )

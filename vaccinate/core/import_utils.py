@@ -1,8 +1,8 @@
-import json
 from typing import Dict
 
 import beeline
 import httpx
+import orjson
 from github_contents import GithubContents
 
 from .models import (
@@ -219,7 +219,7 @@ def load_vaccinefinder_locations(path_within_repo, github_token):
         # we need to use the GithubContents class
         github = GithubContents("vaccine-feeds", "raw-feed-data", github_token)
         for item in data:
-            yield json.loads(github.read(item["path"])[0])
+            yield orjson.loads(github.read(item["path"])[0])
 
 
 def import_vaccinefinder_location(location):

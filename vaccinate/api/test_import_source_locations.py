@@ -1,7 +1,7 @@
 import datetime
-import json
 import pathlib
 
+import orjson
 import pytest
 from bigmap.transform import source_to_location
 from core.models import (
@@ -19,7 +19,8 @@ tests_dir = pathlib.Path(__file__).parent / "test-data" / "importSourceLocations
 @pytest.mark.django_db
 @pytest.mark.parametrize("json_path", tests_dir.glob("*.json"))
 def test_import_location(client, api_key, json_path):
-    fixture = json.load(json_path.open())
+    with json_path.open() as fixture_file:
+        fixture = orjson.loads(fixture_file.read())
 
     assert Location.objects.count() == 0
     assert ImportRun.objects.count() == 0
@@ -133,7 +134,8 @@ def test_import_location(client, api_key, json_path):
 
 
 def test_import_location_twice_updates(client, api_key):
-    fixture = json.load((tests_dir / "001-no-match.json").open())
+    with (tests_dir / "001-no-match.json").open() as fixture_file:
+        fixture = orjson.loads(fixture_file.read())
     import_run_id = client.post(
         "/api/startImportRun", HTTP_AUTHORIZATION="Bearer {}".format(api_key)
     ).json()["import_run_id"]
@@ -172,7 +174,8 @@ MATCH_ACTIONS = [None, {"action": "existing", "id": "foo"}, {"action": "new"}]
 
 @pytest.mark.parametrize("match_action", MATCH_ACTIONS)
 def test_import_does_not_overwrite_existing_match(client, api_key, match_action):
-    fixture = json.load((tests_dir / "003-match-existing.json").open())
+    with (tests_dir / "003-match-existing.json").open() as fixture_file:
+        fixture = orjson.loads(fixture_file.read())
 
     # Create a location to match against first
     original_location = Location.objects.create(

@@ -1,5 +1,4 @@
-import json
-
+import orjson
 from core.models import ConcordanceIdentifier
 
 
@@ -116,4 +115,4 @@ def test_get_location_concordances(client, ten_locations):
     location = ten_locations[0]
     location.concordances.add(ConcordanceIdentifier.for_idref("foo:bar"))
     response = client.get("/api/location/{}/concordances".format(location.public_id))
-    assert json.loads(response.content) == {"concordances": ["foo:bar"]}
+    assert orjson.loads(response.content) == {"concordances": ["foo:bar"]}
