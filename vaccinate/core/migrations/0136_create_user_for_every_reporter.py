@@ -46,6 +46,7 @@ def create_user_for_every_reporter(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ("social_django", "0010_uid_db_index"),
         ("core", "0135_walkins_only"),
     ]
 
