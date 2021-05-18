@@ -1,5 +1,4 @@
-import django.utils.timezone
-from django.db import migrations, models
+from django.db import migrations
 
 SQL = """
 with created_at_by_reversion as (
@@ -47,10 +46,5 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql=SQL,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.AlterField(
-            model_name="location",
-            name="created_at",
-            field=models.DateTimeField(default=django.utils.timezone.now),
         ),
     ]
