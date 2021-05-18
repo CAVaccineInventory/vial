@@ -549,6 +549,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     raw_id_fields = ("county", "provider", "duplicate_of")
     readonly_fields = (
         "scooby_report_link",
+        "created_at",
+        "created_by",
         "request_a_call",
         "public_id",
         "airtable_id",

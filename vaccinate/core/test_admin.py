@@ -28,6 +28,7 @@ def test_admin_create_location_sets_public_id(admin_client):
             "location_type": "1",
             "latitude": "0",
             "longitude": "0",
+            "vaccines_offered": "[]",
             "_save": "Save",
         },
     )
