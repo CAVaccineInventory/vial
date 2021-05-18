@@ -184,7 +184,7 @@ def export_mapbox(request):
     if not access_token:
         return JsonResponse(
             {
-                "upload": f"Would upload {len(post_data)} bytes",
+                "upload": f"Would upload {sum([len(x) for x in post_data])} bytes",
             }
         )
 
