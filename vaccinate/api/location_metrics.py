@@ -130,7 +130,17 @@ class LocationMetricsReport:
         tags = loc.dn_latest_non_skip_report.availability_tags.all()
         terminal_no = False
         if is_yes:
-            walkin = len([t for t in tags if t.name == "Walk-ins accepted"]) > 0
+            walkin = (
+                len(
+                    [
+                        t
+                        for t in tags
+                        if t.name == "Walk-ins only"
+                        or t.name == "Appointments or walk-ins accepted"
+                    ]
+                )
+                > 0
+            )
             age = "None"
             for tag in sorted(tags, key=lambda t: t.name):
                 this_age = self.age_of_tag(tag)

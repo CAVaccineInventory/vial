@@ -89,7 +89,7 @@ def _mapbox_geojson(location, expansion):
         tag_slugs = {tag.slug for tag in report.availability_tags.all()}
         if "appointments_available" in tag_slugs:
             properties["available_appointments"] = True
-        if "appointments_or_walkins" in tag_slugs or "walk_ins_accepted" in tag_slugs:
+        if "appointments_or_walkins" in tag_slugs or "walk_ins_only" in tag_slugs:
             properties["available_walkins"] = True
 
     # vaccine info comes from vaccinefinder if available, falls back on report
