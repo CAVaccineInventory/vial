@@ -172,7 +172,7 @@ def export_mapbox(request):
     locations = _mapbox_locations_queryset()
     expansion = VaccineFinderInventoryExpansion(load_all=True)
 
-    post_data = ""
+    post_data = b""
     for location in locations.all():
         post_data += orjson.dumps(
             _mapbox_geojson(location, expansion), option=orjson.OPT_APPEND_NEWLINE
