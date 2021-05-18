@@ -172,24 +172,26 @@ def export_mapbox(request):
     locations = _mapbox_locations_queryset()
     expansion = VaccineFinderInventoryExpansion(load_all=True)
 
-    post_data = b""
+    post_data = []
     for location in locations.all():
-        post_data += orjson.dumps(
-            _mapbox_geojson(location, expansion), option=orjson.OPT_APPEND_NEWLINE
+        post_data.append(
+            orjson.dumps(
+                _mapbox_geojson(location, expansion), option=orjson.OPT_APPEND_NEWLINE
+            )
         )
 
     access_token = settings.MAPBOX_ACCESS_TOKEN
     if not access_token:
         return JsonResponse(
             {
-                "upload": f"Would upload {len(post_data)} bytes",
+                "upload": f"Would upload {sum([len(x) for x in post_data])} bytes",
             }
         )
 
     with beeline.tracer(name="geojson-upload"):
         upload_resp = requests.put(
             f"https://api.mapbox.com/tilesets/v1/sources/calltheshots/vial?access_token={access_token}",
-            files={"file": post_data},
+            files={"file": b"".join(post_data)},
             timeout=30,
         )
         upload_resp.raise_for_status()
