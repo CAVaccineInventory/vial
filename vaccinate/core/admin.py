@@ -460,6 +460,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "created_by",
+                    "created_at",
                     "import_run",
                     "provenance",
                     "airtable_id",
