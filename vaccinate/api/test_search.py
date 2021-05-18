@@ -142,7 +142,7 @@ def test_search_locations_format_geojson(client, api_key, ten_locations):
     assert set(result.keys()) == {"type", "features"}
     assert result["type"] == "FeatureCollection"
     record = result["features"][0]
-    assert set(record.keys()) == {"type", "properties", "geometry", "id"}
+    assert set(record.keys()) == {"type", "id", "properties", "geometry"}
     assert record["geometry"] == {"type": "Point", "coordinates": [40.0, 30.0]}
 
 
@@ -311,8 +311,8 @@ def test_search_source_locations_all(client, api_key):
         ),
         (
             "geojson",
-            '{"type":"FeatureCollection","features":[{"type":"Feature",'
-            '"properties":{"id":***,"source_uid":"test:formatted",'
+            '{"type":"FeatureCollection","features":[{"type":"Feature","id":***,'
+            '"properties":{"source_uid":"test:formatted",'
             '"source_name":"test","name":"Formatted","latitude":37.5,'
             '"longitude":-122.5,"import_json":{"foo":"bar"},'
             '"matched_location":null,"created_at":"***",'
@@ -322,7 +322,7 @@ def test_search_source_locations_all(client, api_key):
         ),
         (
             "nlgeojson",
-            '{"type":"Feature","properties":{"id":***,"source_uid":'
+            '{"type":"Feature","id":***,"properties":{"source_uid":'
             '"test:formatted","source_name":"test","name":'
             '"Formatted","latitude":37.5,"longitude":-122.5,'
             '"import_json":{"foo":"bar"},"matched_location":null,'

@@ -224,8 +224,10 @@ def search_source_locations(
 
     def source_location_geojson(source_location: SourceLocation) -> Dict[str, object]:
         properties = source_location_json(source_location)
+        id = properties.pop("id")
         return {
             "type": "Feature",
+            "id": id,
             "properties": properties,
             "geometry": {
                 "type": "Point",
