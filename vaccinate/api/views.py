@@ -310,7 +310,9 @@ def import_source_locations(request, on_request_logged):
 
         if safe_to_match:
             if record.match is not None and record.match.action == "new":
-                matched_location = build_location_from_source_location(source_location, None)
+                matched_location = build_location_from_source_location(
+                    source_location, None
+                )
 
             if matched_location is not None:
                 new_concordances = source_location.concordances.difference(
@@ -325,7 +327,9 @@ def import_source_locations(request, on_request_logged):
     return JsonResponse({"created": created, "updated": updated})
 
 
-def build_location_from_source_location(source_location: SourceLocation, user: Optional[User]):
+def build_location_from_source_location(
+    source_location: SourceLocation, user: Optional[User]
+):
     location_kwargs = source_to_location(source_location.import_json)
     location_kwargs["created_by"] = user
     if location_kwargs["state"] is not None:
