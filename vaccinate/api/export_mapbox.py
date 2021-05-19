@@ -155,7 +155,7 @@ def export_mapbox_preview(request):
         <p><a href="{}">Raw JSON</a></p>
         </body></html>
     """.format(
-            escape(orjson.dumps(preview, option=orjson.OPT_INDENT_2)),
+            escape(orjson.dumps(preview, option=orjson.OPT_INDENT_2).decode("utf-8")),
             escape(raw_url),
         ).strip()
     )
