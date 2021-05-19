@@ -133,9 +133,17 @@ def test_export_mapbox_location_with_vaccinefinder_source_location(
         (["Pfizer", "Moderna"], [], ["vaccine_pfizer", "vaccine_moderna"]),
         (["Pfizer"], [], ["vaccine_pfizer"]),
         (["Johnson & Johnson"], [], ["vaccine_jj"]),
-        ([], ["appointments_or_walkins"], ["available_walkins"]),
-        ([], ["walk_ins_only"], ["available_walkins"]),
-        ([], ["appointments_available"], ["available_appointments"]),
+        (
+            [],
+            ["appointments_or_walkins"],
+            ["available_walkins", "accepts_appointments", "accepts_walkins"],
+        ),
+        ([], ["walk_ins_only"], ["available_walkins", "accepts_walkins"]),
+        (
+            [],
+            ["appointments_available"],
+            ["available_appointments", "accepts_appointments"],
+        ),
     ),
 )
 def test_export_mapbox_location_with_report(
