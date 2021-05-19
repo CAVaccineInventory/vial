@@ -232,14 +232,12 @@ def search_source_locations(
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    float(source_location.longitude)
-                    if source_location.longitude is not None
-                    else None,
-                    float(source_location.latitude)
-                    if source_location.latitude is not None
-                    else None,
+                    float(source_location.longitude),
+                    float(source_location.latitude),
                 ],
-            },
+            }
+            if source_location.latitude is not None
+            else None,
         }
 
     def source_location_json(source_location: SourceLocation) -> Dict[str, object]:

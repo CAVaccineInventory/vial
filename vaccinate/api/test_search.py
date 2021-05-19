@@ -278,6 +278,20 @@ def test_search_source_locations(
     assert {result["name"] for result in data["results"]} == expected_names
 
 
+def test_search_source_locations_format_geojson_null_latitude(client, api_key):
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:2",
+        name="Two",
+        latitude=None,
+        longitude=None,
+        import_json={"address": {"state": "MN"}},
+    )
+    result = search_source_locations(client, api_key, "id=test:2&format=geojson")
+    record = result["features"][0]
+    assert record["geometry"] is None
+
+
 def test_search_source_locations_all(client, api_key):
     # Create 1001 source locations and check they are returned
     expected_source_uids = set()
