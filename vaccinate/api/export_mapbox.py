@@ -89,8 +89,15 @@ def _mapbox_geojson(location, expansion):
         tag_slugs = {tag.slug for tag in report.availability_tags.all()}
         if "appointments_available" in tag_slugs:
             properties["available_appointments"] = True
+            properties["accepts_appointments"] = True
         if "appointments_or_walkins" in tag_slugs or "walk_ins_only" in tag_slugs:
             properties["available_walkins"] = True
+            properties["accepts_walkins"] = True
+        if (
+            "appointment_required" in tag_slugs
+            or "appointments_or_walkins" in tag_slugs
+        ):
+            properties["accepts_appointments"] = True
 
     # vaccine info comes from vaccinefinder if available, falls back on report
     vaccinefinder_inventory = expansion.expand([properties])[properties["id"]]
@@ -155,7 +162,7 @@ def export_mapbox_preview(request):
         <p><a href="{}">Raw JSON</a></p>
         </body></html>
     """.format(
-            escape(orjson.dumps(preview, option=orjson.OPT_INDENT_2)),
+            escape(orjson.dumps(preview, option=orjson.OPT_INDENT_2).decode("utf-8")),
             escape(raw_url),
         ).strip()
     )
