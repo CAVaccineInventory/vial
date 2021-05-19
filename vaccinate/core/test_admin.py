@@ -18,7 +18,7 @@ from .models import (
 )
 
 
-def test_admin_create_location_sets_public_id(admin_client):
+def test_admin_create_location_sets_public_id_and_created_by(admin_client):
     assert Location.objects.count() == 0
     response = admin_client.post(
         "/admin/core/location/add/",
@@ -40,6 +40,7 @@ def test_admin_create_location_sets_public_id(admin_client):
     assert location.location_type.id == 1
     assert location.pid.startswith("l")
     assert location.public_id == location.pid
+    assert location.created_by.username == "admin"
 
 
 def test_admin_location_actions_for_queue(admin_client, ten_locations):

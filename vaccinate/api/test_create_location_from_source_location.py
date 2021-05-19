@@ -36,6 +36,8 @@ def test_create_location_from_source_location(client, api_key):
 
     location = Location.objects.first()
 
+    assert location.created_by.username == "user"
+
     assert response.json() == {
         "location": {
             "id": location.public_id,

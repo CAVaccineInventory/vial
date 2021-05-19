@@ -582,7 +582,7 @@ class Reporter(models.Model):
             username = "r{}".format(self.pk)
             # Some users have their email address as their name
             email = self.email
-            if not email and "@" in self.name:
+            if not email and self.name and "@" in self.name:
                 email = self.name
             if email and "@" in email:
                 username += "-" + email.split("@")[0]
