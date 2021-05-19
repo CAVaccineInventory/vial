@@ -25,6 +25,7 @@ from core.models import (
     TaskType,
 )
 from core.utils_merge_locations import merge_locations
+from django.contrib.auth.models import User
 from django.http import HttpRequest, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -324,8 +325,9 @@ def import_source_locations(request, on_request_logged):
     return JsonResponse({"created": created, "updated": updated})
 
 
-def build_location_from_source_location(source_location: SourceLocation):
+def build_location_from_source_location(source_location: SourceLocation, user: User):
     location_kwargs = source_to_location(source_location.import_json)
+    location_kwargs["created_by"] = user
     if location_kwargs["state"] is not None:
         location_kwargs["state"] = State.objects.get(
             abbreviation=location_kwargs["state"].upper()
@@ -810,8 +812,10 @@ def create_location_from_source_location(
     except ValidationError as e:
         return JsonResponse({"error": e.errors()}, status=400)
 
+    user = request.api_key.user if hasattr(request, "api_key") else request.reporter.get_user()  # type: ignore[attr-defined]
+
     with reversion.create_revision():
-        location = build_location_from_source_location(data.source_location)
+        location = build_location_from_source_location(data.source_location, user)
         credit = ""
         if getattr(request, "api_key", None):
             credit = "API key {}".format(str(request.api_key))  # type: ignore[attr-defined]

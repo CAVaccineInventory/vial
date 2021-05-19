@@ -571,6 +571,11 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "matched_source_locations",
     )
 
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
     def summary(self, obj):
         html = (
             '<a href="/admin/core/location/{}/change/"><strong>{}</strong></a>'.format(
