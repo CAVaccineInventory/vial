@@ -237,6 +237,7 @@ def search_source_locations(
                 ],
             }
             if source_location.latitude is not None
+            and source_location.longitude is not None
             else None,
         }
 
