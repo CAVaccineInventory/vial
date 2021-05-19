@@ -12,6 +12,7 @@ from reversion_version
     on reversion_revision.id = reversion_version.revision_id
   join reporter
     on (regexp_match(reversion_revision.comment, '.*Reporter (.*)'))[1] = reporter.name
+    and reporter.external_id like 'auth0:%'
 where
   reversion_revision.comment like '/api/createLocationFromSourceLocation Reporter %')
 update location
