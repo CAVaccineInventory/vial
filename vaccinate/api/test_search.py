@@ -292,6 +292,36 @@ def test_search_source_locations_format_geojson_null_latitude(client, api_key):
     assert record["geometry"] is None
 
 
+def test_search_source_locations_format_summary(client, api_key, ten_locations):
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:1",
+        content_hash="b17aac49276bb63430b5413c3f8e8dbf",
+        name="One",
+        latitude=None,
+        longitude=None,
+        import_json={"address": {"state": "MN"}},
+    )
+    SourceLocation.objects.create(
+        source_name="test",
+        source_uid="test:2",
+        name="Two",
+        matched_location=ten_locations[0],
+    )
+    response = client.get(
+        "/api/searchSourceLocations?format=summary",
+        HTTP_AUTHORIZATION=f"Bearer {api_key}",
+    )
+    assert response.status_code == 200
+    content = b"".join(response.streaming_content)
+    assert content == (
+        b'{"source_uid":"test:1","matched_location_id":null,"content_hash":"b17aac49276bb63430b5413c3f8e8dbf"}\n'
+        b'{"source_uid":"test:2","matched_location_id":X,"content_hash":null}'.replace(
+            b"X", str(ten_locations[0].pk).encode("utf-8")
+        )
+    )
+
+
 def test_search_source_locations_all(client, api_key):
     # Create 1001 source locations and check they are returned
     expected_source_uids = set()

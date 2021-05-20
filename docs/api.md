@@ -53,10 +53,10 @@ Optional query string parameters:
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every source location in our database!
 - `unmatched=1` - returns only source locations that have not yet been matched with a location.
 - `matched=1` - returns only source locations that HAVE been matched with a location.
-- `haspoint=1` - only return locations that have a latitude and longitude
+- `haspoint=1` - only return locations that have a latitude and longitude.
 - `random=1` - return results in a random order.
-- `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`
-- `format=` - same options as `/api/searchLocations`: `json`, `geojson`, `nlgeojson`, `map`.
+- `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`.
+- `format=` - similar options to `/api/searchLocations`: `json`, `geojson`, `nlgeojson`, `map` plus `summary`.
 
 As with `/api/searchLocations` you can add `debug=1` to the URL if you are working with the Django Debug Toolbar.
 
@@ -67,6 +67,10 @@ Some examples:
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?q=walgreens
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1&random=1
+
+The `summary` format returns newline-delimited JSON of just the `source_uid`, `matched_location_id` and `content_hash` fields:
+
+- https://vial-staging.calltheshots.us/api/searchSourceLocations?format=summary
 
 ## APIs used by our Scooby and Velma apps
 

@@ -25,6 +25,7 @@ from .serialize import (
     location_formats,
     location_json_queryset,
     make_formats,
+    OutputFormat,
 )
 from .utils import jwt_auth, log_api_requests
 
@@ -125,7 +126,7 @@ def search_locations(
             request,
             "api/search_locations_debug.html",
             {
-                "output": mark_safe(escape(output)),
+                "output": mark_safe(escape(output.decode("utf-8"))),
             },
         )
 
@@ -276,11 +277,29 @@ def search_source_locations(
         }
 
     formats = make_formats(source_location_json, source_location_geojson)
+    formats["summary"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.only(
+            "source_uid", "matched_location", "content_hash"
+        ).prefetch_related(None),
+        start=b"",
+        transform=lambda l: {
+            "source_uid": l.source_uid,
+            "matched_location_id": l.matched_location_id,
+            "content_hash": l.content_hash,
+        },
+        transform_batch=lambda batch: batch,
+        serialize=orjson.dumps,
+        separator=b"\n",
+        end=lambda qs: b"",
+        content_type="text/plain",
+    )
 
     if format not in formats:
         return JsonResponse({"error": "Invalid format"}, status=400)
 
     formatter = formats[format]
+
+    qs = formatter.prepare_queryset(qs)
 
     stream_qs = qs[:size]
     if all:
@@ -291,17 +310,14 @@ def search_source_locations(
     )
 
     if debug:
+        output = b"".join(stream())
+        if formatter.content_type == "application/json":
+            output = orjson.dumps(orjson.loads(output), option=orjson.OPT_INDENT_2)
         return render(
             request,
             "api/search_locations_debug.html",
             {
-                "output": mark_safe(
-                    escape(
-                        orjson.dumps(
-                            orjson.loads(b"".join(stream())), option=orjson.OPT_INDENT_2
-                        )
-                    )
-                ),
+                "output": mark_safe(escape(output.decode("utf-8"))),
             },
         )
 
