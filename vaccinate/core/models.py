@@ -1307,6 +1307,11 @@ class SourceLocation(gis_models.Model):
         help_text="The ID within that other source, UUID etc or whatever they have - globally unique because it includes a prefix which is a copy of the source_name",
     )
     source_name = CharTextField(help_text="e.g. vaccinespotter")
+    content_hash = CharTextField(
+        blank=True,
+        null=True,
+        help_text="Hash of the content JSON, to allow our importer clients to avoid sending data we already have",
+    )
     name = CharTextField(null=True, blank=True)
     latitude = models.DecimalField(
         max_digits=9, decimal_places=5, null=True, blank=True
