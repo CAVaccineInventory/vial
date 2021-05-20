@@ -68,7 +68,7 @@ Some examples:
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?unmatched=1&random=1
 
-The `summary` format returns newline-delimited JSON of just the `source_uid`, `matched_location_id` and `content_hash` fields:
+The `summary` format returns newline-delimited JSON of just the `source_uid`, `matched_location_id` (as a public location ID) and `content_hash` fields:
 
 - https://vial-staging.calltheshots.us/api/searchSourceLocations?format=summary
 

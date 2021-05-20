@@ -4,6 +4,7 @@ from typing import Callable, Dict, Union
 
 import beeline
 import orjson
+from core.baseconverter import pid
 from core.models import ConcordanceIdentifier, Location, SourceLocation, State
 from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
@@ -284,7 +285,9 @@ def search_source_locations(
         start=b"",
         transform=lambda l: {
             "source_uid": l.source_uid,
-            "matched_location_id": l.matched_location_id,
+            "matched_location_id": "l{}".format(pid.from_int(l.matched_location_id))
+            if l.matched_location_id is not None
+            else None,
             "content_hash": l.content_hash,
         },
         transform_batch=lambda batch: batch,

@@ -316,8 +316,8 @@ def test_search_source_locations_format_summary(client, api_key, ten_locations):
     content = b"".join(response.streaming_content)
     assert content == (
         b'{"source_uid":"test:1","matched_location_id":null,"content_hash":"b17aac49276bb63430b5413c3f8e8dbf"}\n'
-        b'{"source_uid":"test:2","matched_location_id":X,"content_hash":null}'.replace(
-            b"X", str(ten_locations[0].pk).encode("utf-8")
+        b'{"source_uid":"test:2","matched_location_id":"X","content_hash":null}'.replace(
+            b"X", ten_locations[0].public_id.encode("utf-8")
         )
     )
 
