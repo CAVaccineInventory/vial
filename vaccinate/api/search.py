@@ -4,6 +4,7 @@ from typing import Callable, Dict, Union
 
 import beeline
 import orjson
+from core.baseconverter import pid
 from core.models import ConcordanceIdentifier, Location, SourceLocation, State
 from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
@@ -21,15 +22,16 @@ from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 from .serialize import (
+    OutputFormat,
     build_stream,
     location_formats,
     location_json_queryset,
     make_formats,
 )
-from .utils import jwt_auth, log_api_requests
+from .utils import jwt_auth, log_api_requests_no_response_body
 
 
-@log_api_requests
+@log_api_requests_no_response_body
 @beeline.traced("search_locations")
 @jwt_auth(
     allow_session_auth=True,
@@ -125,14 +127,14 @@ def search_locations(
             request,
             "api/search_locations_debug.html",
             {
-                "output": mark_safe(escape(output)),
+                "output": mark_safe(escape(output.decode("utf-8"))),
             },
         )
 
     return StreamingHttpResponse(stream(), content_type=formatter.content_type)
 
 
-@log_api_requests
+@log_api_requests_no_response_body
 @beeline.traced("search_source_locations")
 @jwt_auth(
     allow_session_auth=True,
@@ -232,14 +234,13 @@ def search_source_locations(
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    float(source_location.longitude)
-                    if source_location.longitude is not None
-                    else None,
-                    float(source_location.latitude)
-                    if source_location.latitude is not None
-                    else None,
+                    float(source_location.longitude),
+                    float(source_location.latitude),
                 ],
-            },
+            }
+            if source_location.latitude is not None
+            and source_location.longitude is not None
+            else None,
         }
 
     def source_location_json(source_location: SourceLocation) -> Dict[str, object]:
@@ -277,11 +278,31 @@ def search_source_locations(
         }
 
     formats = make_formats(source_location_json, source_location_geojson)
+    formats["summary"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.only(
+            "source_uid", "matched_location", "content_hash"
+        ).prefetch_related(None),
+        start=b"",
+        transform=lambda l: {
+            "source_uid": l.source_uid,
+            "matched_location_id": "l{}".format(pid.from_int(l.matched_location_id))
+            if l.matched_location_id is not None
+            else None,
+            "content_hash": l.content_hash,
+        },
+        transform_batch=lambda batch: batch,
+        serialize=orjson.dumps,
+        separator=b"\n",
+        end=lambda qs: b"",
+        content_type="text/plain",
+    )
 
     if format not in formats:
         return JsonResponse({"error": "Invalid format"}, status=400)
 
     formatter = formats[format]
+
+    qs = formatter.prepare_queryset(qs)
 
     stream_qs = qs[:size]
     if all:
@@ -292,17 +313,14 @@ def search_source_locations(
     )
 
     if debug:
+        output = b"".join(stream())
+        if formatter.content_type == "application/json":
+            output = orjson.dumps(orjson.loads(output), option=orjson.OPT_INDENT_2)
         return render(
             request,
             "api/search_locations_debug.html",
             {
-                "output": mark_safe(
-                    escape(
-                        orjson.dumps(
-                            orjson.loads(b"".join(stream())), option=orjson.OPT_INDENT_2
-                        )
-                    )
-                ),
+                "output": mark_safe(escape(output.decode("utf-8"))),
             },
         )
 

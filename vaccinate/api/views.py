@@ -235,6 +235,10 @@ def start_import_run(request, on_request_logged):
         return JsonResponse({"error": "POST required"}, status=400)
 
 
+class ImportSourceLocationWithContentHash(ImportSourceLocation):
+    content_hash: Optional[str]
+
+
 @csrf_exempt
 @log_api_requests
 @require_api_key
@@ -257,7 +261,7 @@ def import_source_locations(request, on_request_logged):
     records = []
     for json_record in json_records:
         try:
-            record = ImportSourceLocation(**json_record)
+            record = ImportSourceLocationWithContentHash(**json_record)
             if (
                 record.import_json.address is not None
                 and record.import_json.address.state is None
@@ -279,6 +283,7 @@ def import_source_locations(request, on_request_logged):
         defaults = {
             "source_name": record.source_name,
             "name": record.name,
+            "content_hash": record.content_hash,
             "latitude": record.latitude,
             "longitude": record.longitude,
             "import_json": json_record["import_json"],

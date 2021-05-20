@@ -18,7 +18,7 @@ tests_dir = pathlib.Path(__file__).parent / "test-data" / "importSourceLocations
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("json_path", tests_dir.glob("*.json"))
-def test_import_location(client, api_key, json_path):
+def test_import_source_location(client, api_key, json_path):
     with json_path.open() as fixture_file:
         fixture = orjson.loads(fixture_file.read())
 
@@ -91,6 +91,9 @@ def test_import_location(client, api_key, json_path):
     assert source_location.import_json == fixture["import_json"]
     # TODO add more assertions about fields later
 
+    if fixture.get("content_hash"):
+        assert source_location.content_hash == fixture["content_hash"]
+
     # Source concordance must be associated with concordances
     source_concordance = ConcordanceIdentifier.objects.get(
         authority=fixture["import_json"]["source"]["source"],
@@ -133,7 +136,7 @@ def test_import_location(client, api_key, json_path):
         assert source_concordanes.issubset(concordances)
 
 
-def test_import_location_twice_updates(client, api_key):
+def test_import_source_location_twice_updates(client, api_key):
     with (tests_dir / "001-no-match.json").open() as fixture_file:
         fixture = orjson.loads(fixture_file.read())
     import_run_id = client.post(
@@ -173,7 +176,9 @@ MATCH_ACTIONS = [None, {"action": "existing", "id": "foo"}, {"action": "new"}]
 
 
 @pytest.mark.parametrize("match_action", MATCH_ACTIONS)
-def test_import_does_not_overwrite_existing_match(client, api_key, match_action):
+def test_import_source_location_does_not_overwrite_existing_match(
+    client, api_key, match_action
+):
     with (tests_dir / "003-match-existing.json").open() as fixture_file:
         fixture = orjson.loads(fixture_file.read())
 
