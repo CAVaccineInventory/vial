@@ -415,6 +415,7 @@ Each newline-delimited JSON object should have the following shape:
 
 - `source_uid` - the ID within that other source, UUID etc or whatever they have - it’s globally unique and it includes a prefix (a copy of the source_name)
 - `source_name` - text name of the source (e.g. `vaccinespotter`)
+- `content_hash` - optional MD5 content hash
 - `name` - optional name of the location
 - `latitude` - optional latitude
 - `longitude` - optional longitude
