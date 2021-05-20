@@ -79,7 +79,11 @@ def require_api_key(view_fn):
     return protected_view_fn
 
 
-def log_api_requests(view_fn):
+def log_api_requests_no_response_body(view_fn):
+    return log_api_requests(view_fn, log_response=False)
+
+
+def log_api_requests(view_fn, log_response=True):
     @wraps(view_fn)
     def replacement_view_function(request, *args, **kwargs):
         response: Optional[HttpResponse] = None
@@ -102,13 +106,14 @@ def log_api_requests(view_fn):
                     post_body_json = orjson.loads(request.body)
                 except ValueError:
                     post_body = request.body
-            try:
-                response_body_json = orjson.loads(response.content)
-            except ValueError:
-                response_body = response.content
-            except AttributeError:
-                # Streaming responses have no .content
-                pass
+            if log_response:
+                try:
+                    response_body_json = orjson.loads(response.content)
+                except ValueError:
+                    response_body = response.content
+                except AttributeError:
+                    # Streaming responses have no .content
+                    pass
             log = ApiLog.objects.create(
                 user=request.user if request.user.is_authenticated else None,
                 method=request.method,

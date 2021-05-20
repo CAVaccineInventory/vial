@@ -21,16 +21,16 @@ from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 from .serialize import (
+    OutputFormat,
     build_stream,
     location_formats,
     location_json_queryset,
     make_formats,
-    OutputFormat,
 )
-from .utils import jwt_auth, log_api_requests
+from .utils import jwt_auth, log_api_requests_no_response_body
 
 
-@log_api_requests
+@log_api_requests_no_response_body
 @beeline.traced("search_locations")
 @jwt_auth(
     allow_session_auth=True,
@@ -133,7 +133,7 @@ def search_locations(
     return StreamingHttpResponse(stream(), content_type=formatter.content_type)
 
 
-@log_api_requests
+@log_api_requests_no_response_body
 @beeline.traced("search_source_locations")
 @jwt_auth(
     allow_session_auth=True,
