@@ -142,8 +142,9 @@ def test_merge_locations_view(admin_client):
     winner.refresh_from_db()  # To get correct public_id
     loser.refresh_from_db()
     args = {
-        "winner": winner.public_id,
-        "loser": loser.public_id,
+        # Also check whitespace is stripped correctly
+        "winner": " " + winner.public_id,
+        "loser": loser.public_id + " ",
     }
     response = admin_client.post("/admin/merge-locations/", args, follow=False)
     assert response.status_code == 302
