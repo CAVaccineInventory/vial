@@ -198,11 +198,11 @@ def import_airtable_counties(airtable_counties, user):
 
 def get_winner_loser(d):
     try:
-        winner = Location.objects.get(public_id=d.get("winner"))
+        winner = Location.objects.get(public_id=d.get("winner", "").strip())
     except Location.DoesNotExist:
         winner = None
     try:
-        loser = Location.objects.get(public_id=d.get("loser"))
+        loser = Location.objects.get(public_id=d.get("loser", "").strip())
     except Location.DoesNotExist:
         loser = None
     return winner, loser
