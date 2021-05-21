@@ -265,9 +265,9 @@ github-contents==0.2 \
     --hash=sha256:042918b0680ac76764006f99d95784b1c27bcd702eff4a3adecd077009da6660 \
     --hash=sha256:8693bca4111bc52f2f8e752619fd06b4a00b22b609a5fb97285d622b7c891086
     # via -r requirements.in
-google-api-core[grpc]==1.27.0 \
-    --hash=sha256:407e3e52435a44f6d59d4fef7b5e115bed7b20d77cbdab79e00232bfff7bf912 \
-    --hash=sha256:edfca00d76081f359bed7b2efa2dc3a057309e55bf0a91628a0639730e31c357
+google-api-core[grpc]==1.28.0 \
+    --hash=sha256:02646803bd728e12dd1f45ee1dcc31c12614c9a1ac451b9a1ce26aa65df9b957 \
+    --hash=sha256:a658a4e367511a444c7daf2c58855ff6fd7f7d138c154e5b17186c1f8154c8cb
     # via
     #   -r requirements.in
     #   google-cloud-core
@@ -282,7 +282,9 @@ google-auth==1.30.0 \
 google-cloud-core==1.6.0 \
     --hash=sha256:40d9c2da2d03549b5ac3dcccf289d4f15e6d1210044c6381ce45c92913e62904 \
     --hash=sha256:c6abb18527545379fc82efc4de75ce9a3772ccad2fc645adace593ba097cbb02
-    # via google-cloud-storage
+    # via
+    #   -r requirements.in
+    #   google-cloud-storage
 google-cloud-secret-manager==2.4.0 \
     --hash=sha256:6db2032eb6b0fe9ada743cb26e971fbe2882d506f608b9d95d88714ac324f222 \
     --hash=sha256:fd13a780d64995dea203c5a36c92cb373bb9bc558f15435d4e291cef490d910e
