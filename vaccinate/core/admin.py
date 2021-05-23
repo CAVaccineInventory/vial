@@ -520,7 +520,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         )
         return actions
 
-    search_fields = ("name", "full_address", "public_id", "phone_number")
+    search_fields = (
+        "name",
+        "full_address",
+        "public_id",
+        "phone_number",
+        "county__name",
+    )
     list_display_links = None
     list_display = (
         "summary",
