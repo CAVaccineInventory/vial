@@ -1,7 +1,7 @@
 #!/bin/bash
-/app/vaccinate/manage.py lintmigrations \
+./vaccinate/manage.py lintmigrations \
   7aefb8cb6c19968ba7b97fdd099ccdd224e756f1 \
-  --project-root-path /app/vaccinate \
+  --project-root-path ./vaccinate \
   --ignore-name \
     0038_county_fips_code_string_not_integer \
     0040_increase_size_location_import_ref \

@@ -132,7 +132,7 @@ Run `docker exec -it vial /app/scripts/run-flake8` to check for missing or unuse
 
 Run `docker exec -it vial /app/scripts/run-mypy` run the mypy type checker.
 
-Run `docker exec -it vial /app/scripts/lint-migrations` to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
+Run `docker exec -it vial bash -c 'cd /app && /app/scripts/lint-migrations'` to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
 
 ## Rebuilding the containers
 
