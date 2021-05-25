@@ -69,13 +69,13 @@ Visit it at `http://0.0.0.0:3000/` - it's important to use `0.0.0.0:3000` as tha
 
 Once you have signed in and created an account you should grant yourself super-user access so you can use every feature of the admin site. You can do that by running the following:
 
-    docker exec -it vial_web ./manage.py shell
+    docker exec -it vial ./manage.py shell
     >>> User.objects.all().update(is_superuser=True, is_staff=True)
     >>> <Ctrl+D> to exit
 
 You'll also neet to run this command once or your static assets will 404:
 
-    docker exec -it vial_web ./manage.py collectstatic
+    docker exec -it vial ./manage.py collectstatic
 
 ## Importing sample data from live or staging
 
@@ -85,7 +85,7 @@ To use these scripts, you will need two API keys: one for your development envir
 
 To import locations:
 ```bash
-docker exec -it vial_web python /app/scripts/dev_copy_locations.py \
+docker exec -it vial python /app/scripts/dev_copy_locations.py \
    --source-token '17:ce619e0...' \
    --destination-token '4:09b190...' \
    --source-url 'https://vial.calltheshots.us/api/searchLocations?size=100'
@@ -103,7 +103,7 @@ Source locations are raw, unprocessed location data gathered by our [vaccine-fee
 
 You can import these in a similar way to locations, using this script:
 ```bash
-docker exec -it vial_web python /app/scripts/dev_copy_source_locations.py
+docker exec -it vial python /app/scripts/dev_copy_source_locations.py
   --source-token '17:ce619e0...' \
   --destination-token '4:09b19...' \
   --destination-url 'https://vial.calltheshots.us/api/searchSourceLocations?state=RI&source_name=vaccinefinder_org'
@@ -114,25 +114,35 @@ This will import all of the source locations in Rhode Island that were originall
 
 Run the tests like this:
 
-    docker exec -it vial_web pytest
+    docker exec -it vial pytest
 
 You can pass extra arguments to run specific tests - for example:
 
-- `docker exec -it vial_web pytest -k test_admin_location_actions_for_queue` - run specific test
-- `docker exec -it vial_web pytest api/test_export_mapbox.py` - run the tests in the `vaccinate/api/test_export_mapbox.py` module
-- `docker exec -it vial_web pytest --lf` - run tests that failed during the last test run
+- `docker exec -it vial pytest -k test_admin_location_actions_for_queue` - run specific test
+- `docker exec -it vial pytest api/test_export_mapbox.py` - run the tests in the `vaccinate/api/test_export_mapbox.py` module
+- `docker exec -it vial pytest --lf` - run tests that failed during the last test run
 
 ## Code formatting and linting
 
 This repository uses [Black](https://github.com/psf/black) and [isort](https://pycqa.github.io/isort/) to enforce coding style as part of the CI tests.
 
-Run `black .` and `isort .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
+Run `docker exec -it vial black .` and `docker exec -it vial isort .` to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
 
-Run `scripts/run-flake8` in the top-level directory to check for missing or unused imports.
+Run `docker exec -it vial /app/scripts/run-flake8` to check for missing or unused imports.
 
-Run `scripts/run-mypy` in the top-level directory to run the mypy type checker.
+Run `docker exec -it vial /app/scripts/run-mypy` run the mypy type checker.
 
-Run `scripts/lint-migrations` in the top-level directory to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
+Run `docker exec -it vial /app/scripts/lint-migrations` to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
+
+## Rebuilding the containers
+
+Any time you need to apply changes to `requirements.txt` or `Dockerfile.dev` you should stop the conatiners and run this:
+
+    docker-compose build
+
+Then start the environment again with:
+
+    docker-compose up
 
 ## Logging SQL
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-./vaccinate/manage.py lintmigrations \
+/app/vaccinate/manage.py lintmigrations \
   7aefb8cb6c19968ba7b97fdd099ccdd224e756f1 \
   --project-root-path ./vaccinate \
   --ignore-name \

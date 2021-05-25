@@ -13,7 +13,7 @@ services:
       POSTGRES_DB: vaccinate
       POSTGRES_PASSWORD: postgres
   web:
-    container_name: vial_web
+    container_name: vial
     build:
       context: .
       dockerfile: Dockerfile.dev
