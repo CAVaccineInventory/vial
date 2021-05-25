@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.9-buster
 
 ENV APP_HOME /app
 WORKDIR $APP_HOME
@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     binutils \
     gdal-bin \
     libproj-dev \
+    libpq-dev \
+    python-dev \
+    python-psycopg2 \
     git \
     && rm -rf /var/lib/apt/lists/*
 

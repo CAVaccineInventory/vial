@@ -22,6 +22,8 @@ services:
       DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
       DASHBOARD_DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
       DEBUG: 1
+      SOCIAL_AUTH_AUTH0_SECRET: iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx
+      DJANGO_SECRET_KEY: secret
     volumes:
       - .:/app
     ports:
@@ -36,6 +38,8 @@ services:
     command: python manage.py migrate --noinput
     environment:
       DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+      DJANGO_SECRET_KEY: secret
+      SOCIAL_AUTH_AUTH0_SECRET: iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx
     volumes:
       - .:/app
     depends_on:
