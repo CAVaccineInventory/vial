@@ -9,6 +9,11 @@ from core.models import (
 )
 from django.utils import timezone
 
+try:
+    from timezonefinder import TimezoneFinder
+except ImportError:
+    TimezoneFinder = None
+
 
 @pytest.mark.django_db
 def test_unauth_request_call(client, jwt_unauth_id_token):
@@ -120,5 +125,5 @@ def test_request_call(client, jwt_id_token):
         "confirm_address": False,
         "confirm_hours": False,
         "confirm_website": False,
-        "timezone": "America/Los_Angeles",
+        "timezone": "America/Los_Angeles" if TimezoneFinder is not None else None,
     }
