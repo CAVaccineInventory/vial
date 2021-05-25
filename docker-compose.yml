@@ -13,12 +13,15 @@ services:
       POSTGRES_DB: vaccinate
       POSTGRES_PASSWORD: postgres
   web:
+    container_name: vial_web
     build:
       context: .
       dockerfile: Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:3000
     environment:
       DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+      DASHBOARD_DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+      DEBUG: 1
     volumes:
       - .:/app
     ports:
