@@ -47,7 +47,7 @@ This documentation is also included in VIAL deployments:
 
 ## Setting up a development environment
 
-The recommended development environment for VIAL uses [Docker Compose](https://docs.docker.com/compose/). It has been tested using [Docker for Mac](https://docs.docker.com/docker-for-mac/install/).
+The recommended development environment for VIAL uses [Docker Compose](https://docs.docker.com/compose/). It has been tested using [Docker for Mac](https://docs.docker.com/docker-for-mac/install/), which can be installed using `brew install --cask docker`.
 
 Check out the `vial` repository:
 
