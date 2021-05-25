@@ -2,7 +2,7 @@ version: "3.1"
 
 services:
   database:
-    image: postgres:13.2-alpine
+    image: postgis/postgis:13-3.1
     restart: always
     expose:
       - "5432"
@@ -12,3 +12,28 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: vaccinate
       POSTGRES_PASSWORD: postgres
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:3000
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - migrations
+      - database
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: python manage.py migrate --noinput
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+    volumes:
+      - .:/app
+    depends_on:
+      - database
