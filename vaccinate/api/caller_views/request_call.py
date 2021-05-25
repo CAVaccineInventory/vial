@@ -6,7 +6,11 @@ from api.utils import deny_if_api_is_disabled, jwt_auth, log_api_requests
 from core.models import CallRequest, Location
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from timezonefinder import TimezoneFinder
+
+try:
+    from timezonefinder import TimezoneFinder
+except ImportError:
+    TimezoneFinder = None
 
 
 @csrf_exempt
@@ -122,7 +126,9 @@ def request_call(
             "county_age_floor_without_restrictions": county_age_floor_without_restrictions,
             "timezone": TimezoneFinder().timezone_at(
                 lng=float(location.longitude), lat=float(location.latitude)
-            ),
+            )
+            if TimezoneFinder is not None
+            else None,
             # TODO: these should be True sometimes for locations that need updates:
             "confirm_address": False,
             "confirm_hours": False,

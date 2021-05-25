@@ -74,7 +74,9 @@ google-cloud-core==1.6.0
 google-cloud-storage==1.38.0
 
 ## Scooby timezone data
-timezonefinder[numba]
+# Temporarily optional due to M1
+# See https://github.com/CAVaccineInventory/vial/issues/603
+# timezonefinder[numba]
 
 ## Serialization
 orjson

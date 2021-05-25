@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+# This requirement is not used in dev:
+RUN pip install timezonefinder[numba]
 
 COPY vaccinate/ vaccinate/
 COPY docs/ docs/
