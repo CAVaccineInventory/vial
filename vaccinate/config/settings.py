@@ -232,7 +232,7 @@ if "DATABASE_URL" in os.environ:
     )
 
 # 'dashboard' should be a read-only connection
-if "DASHBOARD_DATABASE_URL" in os.environ:
+if os.environ.get("DASHBOARD_DATABASE_URL"):
     DATABASES["dashboard"] = dj_database_url.parse(os.environ["DASHBOARD_DATABASE_URL"])
     DATABASES["dashboard"]["OPTIONS"] = {
         "options": "-c default_transaction_read_only=on -c statement_timeout=5000"
