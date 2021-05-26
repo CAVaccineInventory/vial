@@ -52,14 +52,13 @@ def yield_locations(base_url, source_token):
         "GET", base_url, headers={"Authorization": "Bearer {}".format(source_token)}
     ) as response:
         for line in response.iter_lines():
-            properties = orjson.loads(line)["properties"]
-            yield {
+            geojson = orjson.loads(line)
+            properties = geojson["properties"]
+            data = {
                 key: properties[key]
                 for key in (
                     "name",
                     "state",
-                    "latitude",
-                    "longitude",
                     "location_type",
                     "phone_number",
                     "full_address",
@@ -70,6 +69,10 @@ def yield_locations(base_url, source_token):
                     "website",
                 )
             }
+            longitude, latitude = geojson["geometry"]["coordinates"]
+            data["latitude"] = latitude
+            data["longitude"] = longitude
+            yield data
 
 
 def import_batch(batch, destination_url, destination_token):
