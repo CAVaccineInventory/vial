@@ -5,7 +5,7 @@
             "No: may be a vaccination site in the future"
         ],
         "Notes": "March 2: recommended to check their website for new availability in a week or more",
-        "Internal Notes": "",
+        "Private Notes": "",
         "web_banked": true
     },
     "expected_status": 200,

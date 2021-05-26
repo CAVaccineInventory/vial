@@ -5,7 +5,7 @@
             "Yes: appointments or walk-ins accepted"
         ],
         "Notes": "",
-        "Internal Notes": "",
+        "Private Notes": "",
         "web": "https://example.com/",
         "vaccines_offered": ["Moderna", "Pfizer"],
         "restriction_notes": "Restrictions go here",

@@ -3,7 +3,7 @@
         "Location": "rec5RXyYpi7IHQ2eN",
         "Availability":["skip_call_back_later"],
         "Notes": "Feb 21: This location does not currently have vaccine available but may get stock in the coming weeks.",
-        "Internal Notes": "Feb 21: The pharmacy tech transferred me to the \"dispensing pharmacy\" as the best place to get questions answered.",
+        "Private Notes": "Feb 21: The pharmacy tech transferred me to the \"dispensing pharmacy\" as the best place to get questions answered.",
         "Do not call until": "2021-03-07T18:35:03.742Z"
     },
     "expected_status": 200,
@@ -11,7 +11,7 @@
         "report_source": "ca",
         "location__public_id": "rec5RXyYpi7IHQ2eN",
         "public_notes": "Feb 21: This location does not currently have vaccine available but may get stock in the coming weeks.",
-        "internal_notes": "Feb 21: The pharmacy tech transferred me to the \"dispensing pharmacy\" as the best place to get questions answered.",
+        "private_notes": "Feb 21: The pharmacy tech transferred me to the \"dispensing pharmacy\" as the best place to get questions answered.",
         "is_pending_review": false
     },
     "expected_availability_tags": [
