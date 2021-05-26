@@ -1,10 +1,10 @@
 import datetime
+from unittest import mock
 from unittest.mock import MagicMock
 
 import orjson
 import pytest
 from core.exporter import api, dataset, storage
-from unittest import mock
 
 from .models import (
     AppointmentTag,
