@@ -172,7 +172,7 @@ def export_mapbox_preview(request):
 @require_api_key
 @log_api_requests
 @csrf_exempt
-def export_mapbox(request):
+def export_mapbox(request, on_request_logged):
     if request.method != "POST":
         return JsonResponse(
             {"error": "Must be a POST"},
