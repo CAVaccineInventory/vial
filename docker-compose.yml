@@ -1,5 +1,7 @@
 version: "3.1"
 
+volumes:
+  vial-postgresql-data:
 services:
   database:
     image: postgis/postgis:13-3.1
@@ -8,6 +10,8 @@ services:
       - "5432"
     ports:
       - "5432:5432"
+    volumes:
+      - vial-postgresql-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: vaccinate
