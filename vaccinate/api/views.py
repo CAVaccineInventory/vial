@@ -505,8 +505,10 @@ def api_docs(request):
 
 
 @csrf_exempt
+@require_api_key
+@log_api_requests
 @beeline.traced(name="api_export")
-def api_export(request):
+def api_export(request, on_request_logged):
     if request.method != "POST":
         return JsonResponse(
             {"error": "Must be a POST"},
@@ -521,8 +523,10 @@ def api_export(request):
 
 
 @csrf_exempt
+@require_api_key
+@log_api_requests
 @beeline.traced(name="api_export_vaccinate_the_states")
-def api_export_vaccinate_the_states(request):
+def api_export_vaccinate_the_states(request, on_request_logged):
     if request.method != "POST":
         return JsonResponse(
             {"error": "Must be a POST"},

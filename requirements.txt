@@ -1108,9 +1108,9 @@ urllib3==1.26.4 \
     # via
     #   requests
     #   sentry-sdk
-vaccine-feed-ingest-schema==1.2.2 \
-    --hash=sha256:571504612a60dfb07bd0226b48ccac3eb27f0df35555221784d172139cbb1a77 \
-    --hash=sha256:75e5087e04b194d75306982dedb9cc22ed2c4fedb93a7fd02f4c7af94485f0dd
+vaccine-feed-ingest-schema==1.2.4 \
+    --hash=sha256:1469a8040be6586577723ef15d959196f3d29b4d0a355b064618d9a608f22455 \
+    --hash=sha256:ff304e97a7cce07f02d4e6f31deae14c6af516a4af2a3e5d1bdf83284a4fdd22
     # via -r requirements.in
 wcwidth==0.2.5 \
     --hash=sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784 \

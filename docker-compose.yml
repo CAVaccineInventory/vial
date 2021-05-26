@@ -1,14 +1,52 @@
 version: "3.1"
 
+volumes:
+  vial-postgresql-data:
 services:
   database:
-    image: postgres:13.2-alpine
+    image: postgis/postgis:13-3.1
     restart: always
     expose:
       - "5432"
     ports:
       - "5432:5432"
+    volumes:
+      - vial-postgresql-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: vaccinate
       POSTGRES_PASSWORD: postgres
+  web:
+    container_name: vial
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:3000
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+      DASHBOARD_DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+      DEBUG: 1
+      SOCIAL_AUTH_AUTH0_SECRET: iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx
+      DJANGO_SECRET_KEY: secret
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - migrations
+      - database
+  migrations:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: python manage.py migrate --noinput
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@database:5432/vaccinate
+      SOCIAL_AUTH_AUTH0_SECRET: iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx
+      DJANGO_SECRET_KEY: secret
+    volumes:
+      - .:/app
+    depends_on:
+      - database

@@ -1,3 +1,2 @@
 #!/bin/bash
-(cd vaccinate && mypy .)
-
+(cd /app/vaccinate && mypy .)

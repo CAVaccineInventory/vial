@@ -47,73 +47,35 @@ This documentation is also included in VIAL deployments:
 
 ## Setting up a development environment
 
+The recommended development environment for VIAL uses [Docker Compose](https://docs.docker.com/compose/). It has been tested using [Docker for Mac](https://docs.docker.com/docker-for-mac/install/), which can be installed using `brew install --cask docker`.
+
+Check out the `vial` repository:
+
+    git clone git@github.com:CAVaccineInventory/vial
+
+Then `cd vial` and start Docker Compose:
+
+    docker-compose up
+
+This should run three containers: `database_1`, running PostgreSQL (and PostGIS), `web_1` running a Django development server and `migrations_1` which will run any database migrations and then stop.
+
+The `web_1` container will start a server on port 3000 - you can then access the web application at `http://0.0.0.0:3000/`
+
 If you run into issues during environment setup, start with the [FAQ][1] for troubleshooting.
 
 _If you encounter any issues in setup, please document them and add them to the [FAQ][1]._
 
-Check out the repository. Create a new Python virtual environment for it (I use `pipenv shell` to do this); we depend on Python 3.7 or later, and only test and deploy on Python 3.9.  Install the dependencies with `pip install -r requirements.txt`.
-
-Set your environment variables, see _Configuration_ section below.
-
-You'll need a PostgreSQL database called "vaccinate". On macOS I've used https://postgresapp.com/ for that.
-
-Alternatively, you can use [Docker](docs/docker.md).
-
-We use GeoDjango, so you'll need GDAL installed. If you run into trouble with this check out the [GeoDjango installation instructions](https://docs.djangoproject.com/en/3.2/ref/contrib/gis/install/).
-
-You'll need to run `./manage.py` commands from the `vaccinate` directory, so `cd vaccinate`.
-
-Then run the database migrations with `./manage.py migrate` - you'll need to run this command any time we release new migrations.
-
-Run the development server using `./manage.py runserver 0.0.0.0:3000`
-
-To enable the Django debug toolbar, run this instead:
-
-    DEBUG=1 ./manage.py runserver 0.0.0.0:3000
-
-Visit it at `http://localhost:3000/` - it's important to use `localhost:3000` as that is the URL that is allow-listed for logins by the Auth0 configuration. Click "sign in" and sign in with an Auth0 account.
+Visit it at `http://0.0.0.0:3000/` - it's important to use `0.0.0.0:3000` as that is the URL that is allow-listed for logins by the Auth0 configuration. Click "sign in" and sign in with an Auth0 account.
 
 Once you have signed in and created an account you should grant yourself super-user access so you can use every feature of the admin site. You can do that by running the following:
 
-    cd vaccinate
-    ./manage.py shell
-    >>> from django.contrib.auth.models import User
+    docker exec -it vial ./manage.py shell
     >>> User.objects.all().update(is_superuser=True, is_staff=True)
     >>> <Ctrl+D> to exit
 
 You'll also neet to run this command once or your static assets will 404:
 
-    ./manage.py collectstatic
-
-To get the `/dashboard/` interface working in your local development environment you can run this:
-
-    DASHBOARD_DATABASE_URL=postgres://localhost/vaccinate \
-        ./manage.py runserver 0.0.0.0:3000
-
-## Configuration
-
-Running this requires some secrets in environment variables:
-
-- `SOCIAL_AUTH_AUTH0_SECRET` should be set to
-  `iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx`.
-  (This secret is OK to include in this README because it is only used
-  for local development)
-- `DJANGO_SECRET_KEY` can be any random string. One way to generate
-  one is via `python -c "import secrets; print(secrets.token_urlsafe())"`
-
-Create a file like this named `.env`, which is loaded by Django:
-
-    SOCIAL_AUTH_AUTH0_SECRET="iqSZmWfTZeXMfmFCBp8Pmyb9ZaFOXHsJ69BxwslUYo4whUjVLwtthNUaMT1TWUDx"
-    DJANGO_SECRET_KEY="just a big random string"
-    DJANGO_DEBUG=1
-
-In development you will need to have a local PostgreSQL server running - I use PostgreSQL.app on my Mac for this. Alternatively, you can use [Docker][<docs/docker.md>]
-
-Then create a database called `vaccinate` by running this in the terminal:
-
-    createdb vaccinate
-
-If your database has alternative connection details you can specify them using a `DATABASE_URL` environment variable of the format `postgres://USER:PASSWORD@HOST:PORT/NAME`. You can place this in the `.env` file.
+    docker exec -it vial ./manage.py collectstatic
 
 ## Importing sample data from live or staging
 
@@ -123,7 +85,7 @@ To use these scripts, you will need two API keys: one for your development envir
 
 To import locations:
 ```bash
-python scripts/dev_copy_locations.py \
+docker exec -it vial python /app/scripts/dev_copy_locations.py \
    --source-token '17:ce619e0...' \
    --destination-token '4:09b190...' \
    --source-url 'https://vial.calltheshots.us/api/searchLocations?size=100'
@@ -141,7 +103,7 @@ Source locations are raw, unprocessed location data gathered by our [vaccine-fee
 
 You can import these in a similar way to locations, using this script:
 ```bash
-python dev_copy_source_locations.py 
+docker exec -it vial python /app/scripts/dev_copy_source_locations.py
   --source-token '17:ce619e0...' \
   --destination-token '4:09b19...' \
   --destination-url 'https://vial.calltheshots.us/api/searchSourceLocations?state=RI&source_name=vaccinefinder_org'
@@ -150,19 +112,37 @@ This will import all of the source locations in Rhode Island that were originall
 
 ## Running the tests
 
-To run the tests, change directory to the `vaccinate` folder and run `pytest`.
+Run the tests like this:
+
+    docker exec -it vial pytest
+
+You can pass extra arguments to run specific tests - for example:
+
+- `docker exec -it vial pytest -k test_admin_location_actions_for_queue` - run specific test
+- `docker exec -it vial pytest api/test_export_mapbox.py` - run the tests in the `vaccinate/api/test_export_mapbox.py` module
+- `docker exec -it vial pytest --lf` - run tests that failed during the last test run
 
 ## Code formatting and linting
 
 This repository uses [Black](https://github.com/psf/black) and [isort](https://pycqa.github.io/isort/) to enforce coding style as part of the CI tests.
 
-Run `black .` and `isort .` in the top-level directory to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
+Run `docker exec -it vial black .` and `docker exec -it vial isort .` to ensure your code is formatted correctly, then enjoy never having to think about how to best indent your Python code ever again.
 
-Run `scripts/run-flake8` in the top-level directory to check for missing or unused imports.
+Run `docker exec -it vial /app/scripts/run-flake8` to check for missing or unused imports.
 
-Run `scripts/run-mypy` in the top-level directory to run the mypy type checker.
+Run `docker exec -it vial /app/scripts/run-mypy` run the mypy type checker.
 
-Run `scripts/lint-migrations` in the top-level directory to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
+Run `docker exec -it vial bash -c 'cd /app && /app/scripts/lint-migrations'` to verify that migrations do not have any backwards-incompatible changes that could cause problems during a deploy while the site is serving traffic.
+
+## Rebuilding the containers
+
+Any time you need to apply changes to `requirements.txt` or `Dockerfile.dev` you should stop the conatiners and run this:
+
+    docker-compose build
+
+Then start the environment again with:
+
+    docker-compose up
 
 ## Logging SQL
 
