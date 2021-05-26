@@ -49,8 +49,6 @@ This documentation is also included in VIAL deployments:
 
 The recommended development environment for VIAL uses [Docker Compose](https://docs.docker.com/compose/). It has been tested using [Docker for Mac](https://docs.docker.com/docker-for-mac/install/), which can be installed using `brew install --cask docker`.
 
-**We have been unable to get this to work on Apple silicon M1 machines, see [issue 603](https://github.com/CAVaccineInventory/vial/issues/603). If you have an M1 we recommend working on another machine or using a remote development environment. If you are able to get this working on an M1 we would absolutely love to hear about it, see the issue for details on where we got stuck.**
-
 Check out the `vial` repository:
 
     git clone git@github.com:CAVaccineInventory/vial
