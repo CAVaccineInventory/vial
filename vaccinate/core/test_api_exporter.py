@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import orjson
 import pytest
 from core.exporter import api, dataset, storage
+from unittest import mock
 
 from .models import (
     AppointmentTag,
@@ -16,6 +17,23 @@ from .models import (
     Reporter,
     State,
 )
+
+
+@pytest.mark.django_db
+@mock.patch("core.exporter.api_export")
+def test_post_to_api_export_endpoint(api_export, client, api_key):
+    # Return error if not authenticated
+    assert not api_export.called
+    response = client.post("/api/export")
+    assert response.status_code == 403
+    assert not api_export.called
+    # With API key should work
+    response = client.post(
+        "/api/export", HTTP_AUTHORIZATION="Bearer {}".format(api_key)
+    )
+    assert response.status_code == 200
+    assert api_export.called
+    assert response.content == b'{"ok": 1}'
 
 
 @pytest.mark.django_db
