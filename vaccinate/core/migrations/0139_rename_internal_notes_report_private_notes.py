@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0138_sourcelocation_content_hash'),
+        ("core", "0138_sourcelocation_content_hash"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='report',
-            old_name='internal_notes',
-            new_name='private_notes',
+            model_name="report",
+            old_name="internal_notes",
+            new_name="private_notes",
         ),
     ]
