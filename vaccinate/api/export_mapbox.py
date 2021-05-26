@@ -1,6 +1,7 @@
 import beeline
 import orjson
 import requests
+from api.utils import log_api_requests, require_api_key
 from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.conf import settings
@@ -168,6 +169,8 @@ def export_mapbox_preview(request):
     )
 
 
+@require_api_key
+@log_api_requests
 @csrf_exempt
 def export_mapbox(request):
     if request.method != "POST":

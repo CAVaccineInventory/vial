@@ -505,6 +505,8 @@ def api_docs(request):
 
 
 @csrf_exempt
+@require_api_key
+@log_api_requests
 @beeline.traced(name="api_export")
 def api_export(request):
     if request.method != "POST":
@@ -521,6 +523,8 @@ def api_export(request):
 
 
 @csrf_exempt
+@require_api_key
+@log_api_requests
 @beeline.traced(name="api_export_vaccinate_the_states")
 def api_export_vaccinate_the_states(request):
     if request.method != "POST":
