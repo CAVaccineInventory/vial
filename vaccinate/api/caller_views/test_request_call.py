@@ -95,7 +95,7 @@ def test_request_call(client, jwt_id_token):
         "Name": "Multnomah Pharmacy 2",
         "Phone number": "555 555-5555",
         "Address": "5 5th Street",
-        "Internal notes": None,
+        "Private notes": None,
         "Hours": None,
         "State": "OR",
         "County": "Multnomah",
@@ -105,7 +105,7 @@ def test_request_call(client, jwt_id_token):
         "Latest report notes": [None],
         "County vaccine info URL": [None],
         "County Vaccine locations URL": [None],
-        "Latest Internal Notes": [None],
+        "Latest Private Notes": [None],
         "Availability Info": [],
         "Number of Reports": 0,
         "county_record": {
