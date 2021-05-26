@@ -850,7 +850,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "claimed_by",
         "availability",
         "public_notes",
-        "internal_notes",
+        "private_notes",
         "appointment_tag_and_scheduling",
         "reporter",
     )
@@ -938,7 +938,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                 "fields": (
                     "availability_tags",
                     "public_notes",
-                    "internal_notes",
+                    "private_notes",
                     "appointment_tag",
                     "appointment_details",
                     "call_request",
