@@ -721,7 +721,9 @@ class Report(models.Model):
         help_text="appointment details (e.g., a URL). Should not be used if the appointment_tag's has_details is false.",
     )
     public_notes = models.TextField(null=True, blank=True)
-    internal_notes = models.TextField(null=True, blank=True, verbose_name="Private notes")
+    internal_notes = models.TextField(
+        null=True, blank=True, verbose_name="Private notes"
+    )
     restriction_notes = models.TextField(null=True, blank=True)
     vaccines_offered = models.JSONField(
         null=True,
