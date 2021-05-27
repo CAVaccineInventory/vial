@@ -49,7 +49,7 @@ git --no-pager log --no-decorate --oneline --reverse "$DEPLOY_FROM" "^$ORIGIN_DE
 echo '```'
 
 echo
-echo "Type 'yes' to confirm they look right, and that you have gotten a :thumbsup: from #sysops:"
+echo "Type 'yes' to confirm they look right - paste the above into #vial-app-server so people know about the deploy"
 read -r VERIFY
 if [ "$VERIFY" != "yes" ]; then
 	exit 1
