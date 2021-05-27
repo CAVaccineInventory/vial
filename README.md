@@ -152,6 +152,22 @@ You can set the `DJANGO_DEBUG_LOG_ALL_SQL=1` environment variable to log all SQL
 
 [1]: docs/env-setup-faq.md
 
+## How to deploy
+
+Deploys work by pushing to the `production` branch in this repository. The `scripts/deploy.sh` script can run this for you - it needs to be run outside of your Docker container as it uses your regular GitHub SSH credentials:
+
+```
+% scripts/deploy.sh
+You are about to deploy the following commits:
+
+25badf0 Ran isort
+f7c45bb  Report field internal notes labeled private notes
+613fb89 Tell #vial-app-server about deploys
+
+Type 'yes' to confirm they look right - paste the above into #vial-app-server so people know about the deploy
+```
+Copy and paste the commits into `#vial-app-server` on Discord so people know about the deploy and type "yes".
+
 ## Django SQL Dashboard
 
 https://vial.calltheshots.us/dashboard/ and https://vial-staging.calltheshots.us/dashboard/ offer an interface for running read-only SQL queries against our database and bookmarking the results, using [Django SQL Dashboard](https://django-sql-dashboard.datasette.io/).
