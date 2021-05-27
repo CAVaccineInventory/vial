@@ -168,6 +168,8 @@ Type 'yes' to confirm they look right - paste the above into #vial-app-server so
 ```
 Copy and paste the commits into `#vial-app-server` on Discord so people know about the deploy and type "yes".
 
+Errors in both production and staging are recorded in Sentry. You can [view those here](https://sentry.io/organizations/vaccinateca/issues/?environment=staging&environment=production&project=5649843) - ask in `#access-requests` if you do not have access to Sentry.
+
 ## Django SQL Dashboard
 
 https://vial.calltheshots.us/dashboard/ and https://vial-staging.calltheshots.us/dashboard/ offer an interface for running read-only SQL queries against our database and bookmarking the results, using [Django SQL Dashboard](https://django-sql-dashboard.datasette.io/).
