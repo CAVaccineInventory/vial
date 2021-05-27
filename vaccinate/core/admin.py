@@ -1444,15 +1444,6 @@ class SourceLocationMatchHistoryAdmin(admin.ModelAdmin):
         "new_match_location",
     )
 
-    def has_add_permission(self, request, obj=None):
-        return True
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
