@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0138_sourcelocation_content_hash'),
+        ("core", "0138_sourcelocation_content_hash"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='report',
-            name='internal_notes',
-            field=models.TextField(blank=True, null=True, verbose_name='Private notes'),
+            model_name="report",
+            name="internal_notes",
+            field=models.TextField(blank=True, null=True, verbose_name="Private notes"),
         ),
     ]
