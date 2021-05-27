@@ -8,6 +8,7 @@ AUTH0_ROLES_TO_REFLECT = {
     "Reports QA",
     "VIAL data corrections",
     "VIAL service account",
+    "VIAL WB limited",
 }
 
 AUTH0_ROLES_TO_LOCAL_GROUP = {}
