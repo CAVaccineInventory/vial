@@ -432,10 +432,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "preferred_contact_method",
                     "provider",
                     "internal_notes",
-                    "vaccines_offered",
-                    "accepts_appointments",
-                    "accepts_walkins",
-                    "public_notes",
                 )
             },
         ),
@@ -483,6 +479,18 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         (
             "Matched source locations",
             {"classes": ("collapse",), "fields": ("matched_source_locations",)},
+        ),
+        (
+            "Location data for debugging",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "vaccines_offered",
+                    "accepts_appointments",
+                    "accepts_walkins",
+                    "public_notes",
+                ),
+            },
         ),
     )
     deliberately_omitted_from_fieldsets = ("point",)
@@ -943,12 +951,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     "appointment_details",
                     "call_request",
                     "report_source",
-                    "hours",
                     "reported_by",
                     "planned_closure",
-                    "website",
                     "vaccines_offered",
-                    "full_address",
                     "restriction_notes",
                 ),
             },
@@ -983,6 +988,17 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": ("airtable_id", "airtable_json"),
+            },
+        ),
+        (
+            "Report data for debugging",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "hours",
+                    "full_address",
+                    "website",
+                ),
             },
         ),
     )
