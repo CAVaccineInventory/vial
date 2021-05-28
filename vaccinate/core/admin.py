@@ -583,6 +583,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_skip_report_count",
         "dn_yes_report_count",
         "matched_source_locations",
+        "vaccines_offered",
+        "accepts_appointments",
+        "accepts_walkins",
+        "public_notes",
     )
 
     def save_model(self, request, obj, form, change):
@@ -851,6 +855,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__name",
         "reported_by__display_name",
     )
+
     list_display = (
         "created_id_deleted",
         "location_link",
@@ -913,6 +918,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "airtable_json",
         "reporter_qa_summary",
         "location_reports_history",
+        "hours",
+        "full_address",
+        "website",
     )
     inlines = [ReportReviewNoteInline]
     deliberately_omitted_from_fieldsets = ("location", "reported_by")
