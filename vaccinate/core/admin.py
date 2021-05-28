@@ -392,6 +392,18 @@ class SoftDeletedFilter(admin.SimpleListFilter):
 
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "preferred_contact_method":
+            kwargs["choices"] = (
+                ("", "---------"),
+                ("online_only", "online_only"),
+                ("online_preferred", "online_preferred"),
+                ("call_preferred", "call_preferred"),
+                ("call_only", "call_only"),
+            )
+
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
+
     change_form_template = "admin/change_location.html"
     save_on_top = True
     actions = [
