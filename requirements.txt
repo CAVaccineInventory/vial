@@ -396,9 +396,9 @@ h11==0.12.0 \
     --hash=sha256:36a3cb8c0a032f56e2da7084577878a035d3b61d104230d4bd49c0c6b555a9c6 \
     --hash=sha256:47222cb6067e4a307d535814917cd98fd0a57b6788ce715755fa2b6c28b56042
     # via httpcore
-honeycomb-beeline==2.16.2 \
-    --hash=sha256:76490f8817bef2b93a61b8aad08cc902b46f92c6bb82fda257d74f39f0cc0032 \
-    --hash=sha256:963c766cc3fea90e5ccbc42f6253e4d5c4e89f621ea2418b6409e3a3fd8cd7ae
+honeycomb-beeline==2.17.0 \
+    --hash=sha256:3078b701b2f43b1997d0fcf0016ffc6740643bcf1e6f36605f5c7e1f9efa25d9 \
+    --hash=sha256:9287f69afdf22998fdb1636376b3e5bb271e137d61b8ffaec1e2b6c1b2e8d690
     # via -r requirements.in
 httpcore==0.13.0 \
     --hash=sha256:1aab7711fa42a5df6043fdb62a3fb0f7a5899bccb53d0b0e500aa038acb0976c \
