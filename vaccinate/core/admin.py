@@ -410,6 +410,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     fieldsets = (
         (
             None,
+            {"fields": ("is_pending_review",)},
+        ),
+        (
+            None,
             {"fields": ("scooby_report_link",)},
         ),
         (
@@ -544,6 +548,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_skip_report_count",
     )
     list_filter = (
+        "is_pending_review",
         LocationInQueueFilter,
         SoftDeletedFilter,
         "do_not_call",
