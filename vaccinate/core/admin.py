@@ -1104,6 +1104,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         formset.save_m2m()
 
     def save_model(self, request, obj, form, change):
+        if not change:
+            is_wb_trainee = obj.is_pending_review = "WB Trainee" in request.user.roles
+            obj.is_pending_review = is_wb_trainee or obj.report_source != "ca"
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
         # If the user toggled it to is_pending_review=False, record note
