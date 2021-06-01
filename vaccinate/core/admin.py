@@ -392,6 +392,18 @@ class SoftDeletedFilter(admin.SimpleListFilter):
 
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "preferred_contact_method":
+            kwargs["choices"] = (
+                ("", "---------"),
+                ("online_only", "online_only"),
+                ("online_preferred", "online_preferred"),
+                ("call_preferred", "call_preferred"),
+                ("call_only", "call_only"),
+            )
+
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
+
     change_form_template = "admin/change_location.html"
     save_on_top = True
     actions = [
@@ -436,10 +448,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "preferred_contact_method",
                     "provider",
                     "internal_notes",
-                    "vaccines_offered",
-                    "accepts_appointments",
-                    "accepts_walkins",
-                    "public_notes",
                 )
             },
         ),
@@ -487,6 +495,18 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         (
             "Matched source locations",
             {"classes": ("collapse",), "fields": ("matched_source_locations",)},
+        ),
+        (
+            "Location data for debugging",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "vaccines_offered",
+                    "accepts_appointments",
+                    "accepts_walkins",
+                    "public_notes",
+                ),
+            },
         ),
     )
     deliberately_omitted_from_fieldsets = ("point",)
@@ -580,6 +600,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_skip_report_count",
         "dn_yes_report_count",
         "matched_source_locations",
+        "vaccines_offered",
+        "accepts_appointments",
+        "accepts_walkins",
+        "public_notes",
     )
 
     def save_model(self, request, obj, form, change):
@@ -850,6 +874,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "reported_by__name",
         "reported_by__display_name",
     )
+
     list_display = (
         "created_id_deleted",
         "location_link",
@@ -912,6 +937,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "airtable_json",
         "reporter_qa_summary",
         "location_reports_history",
+        "hours",
+        "full_address",
+        "website",
     )
     inlines = [ReportReviewNoteInline]
     deliberately_omitted_from_fieldsets = ("location", "reported_by")
@@ -950,12 +978,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     "appointment_details",
                     "call_request",
                     "report_source",
-                    "hours",
                     "reported_by",
                     "planned_closure",
-                    "website",
                     "vaccines_offered",
-                    "full_address",
                     "restriction_notes",
                 ),
             },
@@ -990,6 +1015,17 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": ("airtable_id", "airtable_json"),
+            },
+        ),
+        (
+            "Report data for debugging",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "hours",
+                    "full_address",
+                    "website",
+                ),
             },
         ),
     )
