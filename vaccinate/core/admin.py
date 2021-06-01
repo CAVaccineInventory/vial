@@ -585,6 +585,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
+            obj.is_pending_review = "WB Trainee" in request.user.roles
+
         super().save_model(request, obj, form, change)
 
     def summary(self, obj):
