@@ -73,9 +73,11 @@ Once you have signed in and created an account you should grant yourself super-u
     >>> User.objects.all().update(is_superuser=True, is_staff=True)
     >>> <Ctrl+D> to exit
 
-You'll also neet to run this command once or your static assets will 404:
+Finally, run a command to import the details of 3,000+ counties into your database. Make sure you are signed in using your super-user account, then visit this page:
 
-    docker exec -it vial ./manage.py collectstatic
+    http://0.0.0.0:3000/admin/tools/
+
+And click the "Import 3,000+ counties" button.
 
 ## Importing sample data from live or staging
 
