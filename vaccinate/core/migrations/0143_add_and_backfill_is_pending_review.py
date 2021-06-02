@@ -6,17 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0141_update_preferred_contact_method"),
+        ("core", "0142_alter_location_preferred_contact_method"),
     ]
 
     sql = "ALTER TABLE location ADD COLUMN is_pending_review boolean DEFAULT False NOT NULL;"
 
-    reverse_sql = "ALTER TABLE location DROP COLUMN is_pending_review;"
-
     operations = [
         migrations.RunSQL(
             sql=sql,
-            reverse_sql=reverse_sql,
+            reverse_sql=migrations.RunSQL.noop,
             state_operations=[
                 migrations.AddField(
                     "Location",
