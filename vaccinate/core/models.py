@@ -348,8 +348,6 @@ class Location(gis_models.Model):
     preferred_contact_method = models.CharField(
         max_length=32,
         choices=(
-            ("research_online", "research_online"),
-            ("outbound_call", "outbound_call"),
             ("online_only", "online_only"),
             ("online_preferred", "online_preferred"),
             ("call_preferred", "call_preferred"),
