@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0142_alter_location_preferred_contact_method"),
+        ("core", "0144_alter_task_created_by"),
     ]
 
     sql = "ALTER TABLE location ADD COLUMN is_pending_review boolean DEFAULT False NOT NULL;"
