@@ -186,6 +186,7 @@ urlpatterns = [
             docs="/api/docs#post-apimergelocations",
         ),
     ),
+    path("api/resolveMissingCounties", api_views.resolve_missing_counties),
     path("api/locationTypes", api_views.location_types),
     path("api/providerTypes", api_views.provider_types),
     path("api/taskTypes", api_views.task_types),

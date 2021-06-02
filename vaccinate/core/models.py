@@ -348,8 +348,6 @@ class Location(gis_models.Model):
     preferred_contact_method = models.CharField(
         max_length=32,
         choices=(
-            ("research_online", "research_online"),
-            ("outbound_call", "outbound_call"),
             ("online_only", "online_only"),
             ("online_preferred", "online_preferred"),
             ("call_preferred", "call_preferred"),
@@ -1501,7 +1499,11 @@ class Task(models.Model):
     "A task for our volunteers"
     created_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
-        "auth.User", related_name="created_tasks", on_delete=models.PROTECT
+        "auth.User",
+        related_name="created_tasks",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
     )
     location = models.ForeignKey(
         Location, related_name="tasks", on_delete=models.PROTECT

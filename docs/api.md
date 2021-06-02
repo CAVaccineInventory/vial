@@ -744,6 +744,12 @@ See https://vial-staging.calltheshots.us/api/taskTypes for a list of available t
 
 Try this API: https://vial-staging.calltheshots.us/api/importTasks/debug
 
+### POST /api/resolveMissingCounties
+
+POSTing an empty body to this will cause VIAL to find 100 locations that are missing their county and attempt to resolve that county based on their latitude and longitude.
+
+If the county cannot be resolved, VIAL will create a new task of type "Resolve county" against that location, and will not attempt to resolve the county for that location again in the future.
+
 ## Miscellaneous read-only data APIs
 
 ### GET /api/location/PUBLIC_ID/concordances
