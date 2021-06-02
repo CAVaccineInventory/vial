@@ -1,4 +1,5 @@
-import orjson
+import json
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
@@ -670,7 +671,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             '<div data-public-id="{}" data-authorities="{}" class="edit-concordances">'.format(
                 escape(obj.public_id),
                 escape(
-                    orjson.dumps(
+                    json.dumps(
                         list(
                             ConcordanceIdentifier.objects.values_list(
                                 "authority", flat=True
