@@ -597,7 +597,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
-            obj.is_pending_review = "WB Trainee" in request.user.roles
+            obj.is_pending_review = request.user.groups.filter(
+                name="WB Trainee"
+            ).exists()
 
         super().save_model(request, obj, form, change)
 
@@ -1129,7 +1131,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            is_wb_trainee = obj.is_pending_review = "WB Trainee" in request.user.roles
+            is_wb_trainee = request.user.groups.filter(name="WB Trainee").exists()
             obj.is_pending_review = is_wb_trainee or obj.report_source != "ca"
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
