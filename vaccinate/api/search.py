@@ -330,15 +330,17 @@ def search_source_locations(
 def filter_for_export(qs):
     # Filter down to locations that we think should be exported
     # to the public map on www.vaccinatethestates.com
-    return qs.exclude(
-        dn_latest_non_skip_report__planned_closure__lt=datetime.date.today()
-    ).exclude(
-        dn_latest_non_skip_report__availability_tags__slug__in=(
-            "incorrect_contact_information",
-            "location_permanently_closed",
-            "may_be_a_vaccination_site_in_the_future",
-            "not_open_to_the_public",
-            "will_never_be_a_vaccination_site",
-            "only_staff",
+    return (
+        qs.exclude(dn_latest_non_skip_report__planned_closure__lt=datetime.date.today())
+        .exclude(
+            dn_latest_non_skip_report__availability_tags__slug__in=(
+                "incorrect_contact_information",
+                "location_permanently_closed",
+                "may_be_a_vaccination_site_in_the_future",
+                "not_open_to_the_public",
+                "will_never_be_a_vaccination_site",
+                "only_staff",
+            )
         )
+        .exclude(is_pending_review=True)
     )

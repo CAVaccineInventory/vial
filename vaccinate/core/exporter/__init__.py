@@ -128,6 +128,7 @@ def dataset() -> Generator[Dataset, None, None]:
             .exclude(
                 dn_latest_non_skip_report__planned_closure__lt=datetime.date.today()
             )
+            .exclude(is_pending_review=True)
             .select_related("dn_latest_non_skip_report__appointment_tag")
             .select_related("county")
             .select_related("location_type")
