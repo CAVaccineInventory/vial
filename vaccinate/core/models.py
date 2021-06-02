@@ -1499,7 +1499,11 @@ class Task(models.Model):
     "A task for our volunteers"
     created_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
-        "auth.User", related_name="created_tasks", on_delete=models.PROTECT
+        "auth.User",
+        related_name="created_tasks",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
     )
     location = models.ForeignKey(
         Location, related_name="tasks", on_delete=models.PROTECT
