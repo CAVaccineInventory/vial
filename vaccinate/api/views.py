@@ -3,6 +3,7 @@ import re
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import beeline
+import httpx
 import markdown
 import orjson
 import reversion
@@ -1089,5 +1090,58 @@ def merge_locations_endpoint(
                     "/admin/core/location/{}/change/".format(info.loser.id)
                 ),
             },
+        }
+    )
+
+
+@beeline.traced("resolve_missing_counties")
+@csrf_exempt
+def resolve_missing_counties(request: HttpRequest) -> HttpResponse:
+    locations_to_resolve = (
+        Location.objects.filter(county=None)
+        .exclude(tasks__task_type__name="Resolve county")
+        .only("public_id", "latitude", "longitude")[:100]
+    )
+
+    client = httpx.Client(timeout=10.0)
+    resolve_county = TaskType.objects.get_or_create(name="Resolve county")[0]
+    resolved = []
+    failed = []
+    with reversion.create_revision():
+        for location in locations_to_resolve:
+            info = client.get(
+                "https://us-counties.datasette.io/counties/county_for_latitude_longitude.json?_shape=array",
+                params={
+                    "latitude": str(location.latitude),
+                    "longitude": str(location.longitude),
+                },
+            ).json()
+            county = None
+            if info:
+                county_fips = info[0]["county_fips"]
+                try:
+                    county = County.objects.get(fips_code=county_fips)
+                except County.DoesNotExist:
+                    pass
+            if county is None:
+                # Create a manual task
+                failed.append(location.public_id)
+                location.tasks.create(
+                    task_type=resolve_county,
+                    details={
+                        "from_counties_api": info,
+                    },
+                )
+            else:
+                # Update the county on that location
+                resolved.append(location.public_id)
+                location.county = county
+                location.save()
+        reversion.set_comment("/api/resolveMissingCounties")
+
+    return JsonResponse(
+        {
+            "resolved": resolved,
+            "failed": failed,
         }
     )
