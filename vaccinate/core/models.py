@@ -384,6 +384,10 @@ class Location(gis_models.Model):
     dn_skip_report_count = models.IntegerField(default=0)
     dn_yes_report_count = models.IntegerField(default=0)
 
+    is_pending_review = models.BooleanField(
+        default=False, help_text="Locations that are pending review by our QA team"
+    )
+
     def __str__(self):
         return self.name
 
