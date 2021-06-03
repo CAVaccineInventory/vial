@@ -411,6 +411,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     fieldsets = (
         (
             None,
+            {"fields": ("is_pending_review",)},
+        ),
+        (
+            None,
             {"fields": ("scooby_report_link",)},
         ),
         (
@@ -553,6 +557,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "dn_skip_report_count",
     )
     list_filter = (
+        "is_pending_review",
         LocationInQueueFilter,
         SoftDeletedFilter,
         "do_not_call",
@@ -593,6 +598,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
+            obj.is_pending_review = request.user.groups.filter(
+                name="WB Trainee"
+            ).exists()
+
         super().save_model(request, obj, form, change)
 
     def summary(self, obj):
@@ -1122,6 +1131,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         formset.save_m2m()
 
     def save_model(self, request, obj, form, change):
+        if not change:
+            is_wb_trainee = request.user.groups.filter(name="WB Trainee").exists()
+            obj.is_pending_review = is_wb_trainee or obj.report_source != "ca"
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
         # If the user toggled it to is_pending_review=False, record note
