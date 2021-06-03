@@ -68,7 +68,7 @@ def test_create_location_sets_pending_review_with_wbtrainee_role(
     location = Location.objects.order_by("-id")[0]
     assert location.name == "CVS"
     assert location.created_by.username == "admin"
-    assert location.is_pending_review == True
+    assert location.is_pending_review
 
 
 def test_admin_location_actions_for_queue(admin_client, ten_locations):
