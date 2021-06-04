@@ -14,6 +14,7 @@ from .models import (
     CallRequest,
     CallRequestReason,
     Location,
+    Report,
     Reporter,
     State,
 )
@@ -463,6 +464,30 @@ def test_adding_review_note_with_approved_tag_approves_report(
     assert list(review_note.tags.values_list("tag", flat=True)) == ["Approved"]
     # is_pending_review should have been turned off
     assert not report.is_pending_review
+
+
+def test_create_report_sets_is_pending_review_flag_true(
+    admin_client, admin_user, ten_locations
+):
+    location = ten_locations[0]
+    reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
+    group = Group.objects.get_or_create(name="WB Trainee")[0]
+    admin_user.groups.add(group)
+
+    response = admin_client.post(
+        "/admin/core/report/add/",
+        {
+            "location": location.pk,
+            "report_source": "wb",
+            "appointment_tag": "1",
+            "reported_by": reporter,
+            "_save": "Save",
+        },
+    )
+
+    assert response.status_code == 302
+    report = Report.objects.get(location=location.pk)
+    assert report.is_pending_review
 
 
 def test_setting_is_pending_review_false_adds_note(admin_client, ten_locations):
