@@ -95,6 +95,13 @@ def search_locations(
         qs = qs.filter(
             concordances__in=ConcordanceIdentifier.objects.filter(idref_filter)
         )
+    authorities = request.GET.getlist("authority")
+    if authorities:
+        qs = qs.filter(concordances__authority__in=authorities)
+    exclude_authorities = request.GET.getlist("exclude.authority")
+    if exclude_authorities:
+        qs = qs.exclude(concordances__authority__in=exclude_authorities)
+
     if exportable:
         qs = filter_for_export(qs)
 
