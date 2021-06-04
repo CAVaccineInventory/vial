@@ -24,6 +24,8 @@ Optional query string parameters:
 - `state=` - a state code such as `CA` or `OR`
 - `id=` - a public ID for one of our locations, can be passed multiple times to retrieve multiple locations at once by their IDs
 - `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers
+- `authority=` - one or more concordance authorities e.g. `google_places` - returns only results that have a concordance identifier for at least one of those places
+- `exclude.authority=` - one or more concordance authorities e.g. `google_places` - returns only results that do NOT have a concordance identifier for any of those places
 - `exportable=1` - only return locations that would be exported to our www.vaccinatethestates.com map - this excludes locations with a planned closure date in the past, or that our call reports have marked as not being active vaccination locations
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 - `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`

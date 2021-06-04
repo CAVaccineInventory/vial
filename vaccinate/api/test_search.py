@@ -44,6 +44,22 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
         ("q=location+1", ["Location 1", "Location 10"]),
         ("state=ks", ["Location 6"]),
         ("idref=google_places:123", ["Location 7"]),
+        ("authority=google_places", ["Location 7", "Location 8"]),
+        (
+            "exclude.authority=google_places",
+            [
+                "Location 1",
+                "Location 2",
+                "Location 3",
+                "Location 4",
+                "Location 5",
+                "Location 6",
+                # Not "Location 7",
+                # Not "Location 8",
+                "Location 9",
+                "Location 10",
+            ],
+        ),
         (
             "idref=google_places:123&idref=google_places:456",
             ["Location 8", "Location 7"],
