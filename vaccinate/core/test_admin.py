@@ -468,13 +468,14 @@ def test_adding_review_note_with_approved_tag_approves_report(
 def test_create_report_sets_is_pending_review_flag_true(admin_user, ten_locations):
     location = ten_locations[0]
     reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
+    web = AppointmentTag.objects.get(slug="web")
     group = Group.objects.get_or_create(name="WB Trainee")[0]
     admin_user.groups.add(group)
 
     report = location.reports.create(
         reported_by=reporter,
         report_source="ca",
-        appointment_tag=1,
+        appointment_tag=web,
     )
 
     assert report.is_pending_review
