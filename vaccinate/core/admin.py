@@ -6,7 +6,7 @@ from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q, TextField
 from django.db.models.query import QuerySet
 from django.forms import Textarea
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseNotAllowed, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import dateformat, timezone
@@ -532,6 +532,11 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             }
         )
         return actions
+
+    def _reversion_revisionform_view(self, request, version, template_name, extra_context=None):
+        if request.method == "POST":
+            return HttpResponseNotAllowed("This breaks VIAL, so we can't do it!")
+        return super()._reversion_revisionform_view(request, version, template_name, extra_context)
 
     search_fields = (
         "name",
