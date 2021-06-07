@@ -32,7 +32,7 @@ django-cors-headers
 django-migration-linter
 
 # SQL dashboard at /dashboard/
-django-sql-dashboard==0.15.1
+django-sql-dashboard==0.16
 
 # Version history in Django admin
 django-reversion
