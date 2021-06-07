@@ -436,7 +436,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "website",
                     "preferred_contact_method",
                     "provider",
-                    "internal_notes",
                 )
             },
         ),
@@ -494,6 +493,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "accepts_appointments",
                     "accepts_walkins",
                     "public_notes",
+                    "internal_notes",
                 ),
             },
         ),
