@@ -3,6 +3,7 @@ import re
 
 import pytest
 from django.contrib import admin
+from django.contrib.auth.models import Group
 from django.contrib.messages import get_messages
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel
 from django.utils import timezone
@@ -41,6 +42,33 @@ def test_admin_create_location_sets_public_id_and_created_by(admin_client):
     assert location.pid.startswith("l")
     assert location.public_id == location.pid
     assert location.created_by.username == "admin"
+
+
+def test_create_location_sets_pending_review_with_wbtrainee_role(
+    admin_client, admin_user
+):
+    assert Location.objects.count() == 0
+    group = Group.objects.get_or_create(name="WB Trainee")[0]
+    admin_user.groups.add(group)
+
+    response = admin_client.post(
+        "/admin/core/location/add/",
+        {
+            "name": "CVS",
+            "state": State.objects.get(abbreviation="OR").id,
+            "location_type": "1",
+            "latitude": "0",
+            "longitude": "0",
+            "vaccines_offered": "[]",
+            "_save": "Save",
+        },
+    )
+
+    assert response.status_code == 302
+    location = Location.objects.order_by("-id")[0]
+    assert location.name == "CVS"
+    assert location.created_by.username == "admin"
+    assert location.is_pending_review
 
 
 def test_admin_location_actions_for_queue(admin_client, ten_locations):
