@@ -299,7 +299,7 @@ def import_source_locations(request, on_request_logged):
 
         if safe_to_match and matched_location is not None:
             source_location.matched_location = matched_location
-            source_location.save()
+            source_location.save(update_fields=["matched_location"])
 
         import_json = record.import_json
         links = list(import_json.links) if import_json.links is not None else []
