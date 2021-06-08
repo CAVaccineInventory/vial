@@ -436,7 +436,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "website",
                     "preferred_contact_method",
                     "provider",
-                    "internal_notes",
                 )
             },
         ),
@@ -494,6 +493,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "accepts_appointments",
                     "accepts_walkins",
                     "public_notes",
+                    "internal_notes",
                 ),
             },
         ),
@@ -533,10 +533,14 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         )
         return actions
 
-    def _reversion_revisionform_view(self, request, version, template_name, extra_context=None):
+    def _reversion_revisionform_view(
+        self, request, version, template_name, extra_context=None
+    ):
         if request.method == "POST":
             return HttpResponseNotAllowed("This breaks VIAL, so we can't do it!")
-        return super()._reversion_revisionform_view(request, version, template_name, extra_context)
+        return super()._reversion_revisionform_view(
+            request, version, template_name, extra_context
+        )
 
     search_fields = (
         "name",
