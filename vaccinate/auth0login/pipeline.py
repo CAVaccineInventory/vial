@@ -2,22 +2,23 @@ from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group
 
-AUTH0_ROLES_TO_REFLECT = {
-    "Vaccinate CA Staff",
-    "VIAL super-user",
+AUTH0_ROLES_STAFF = {
     "Reports QA",
+    "VIAL admin",
     "VIAL data corrections",
     "VIAL service account",
     "VIAL WB limited",
+    "VIAL super-user",
+    "Vaccinate CA Staff",
 }
 
-AUTH0_ROLES_TO_LOCAL_GROUP = {}
+AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {}
 if settings.STAGING:
-    AUTH0_ROLES_TO_LOCAL_GROUP = {
-        name + " STAGING": name for name in AUTH0_ROLES_TO_REFLECT
+    AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {
+        name + " STAGING": name for name in AUTH0_ROLES_STAFF
     }
 else:
-    AUTH0_ROLES_TO_LOCAL_GROUP = {name: name for name in AUTH0_ROLES_TO_REFLECT}
+    AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {name: name for name in AUTH0_ROLES_STAFF}
 
 
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
@@ -25,22 +26,25 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
         users_roles = kwargs.get("details", {}).get("roles", {}) or []
         groups = {
             name: Group.objects.get_or_create(name=name)[0]
-            for name in AUTH0_ROLES_TO_LOCAL_GROUP.values()
+            for name in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.values()
         }
         should_be_staff = any(
             auth0_role in users_roles
-            for auth0_role in AUTH0_ROLES_TO_LOCAL_GROUP.keys()
+            for auth0_role in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.keys()
         )
+
         if should_be_staff != user.is_staff:
             user.is_staff = should_be_staff
             user.save()
-        # Add user to groups if necessary:
-        for auth0_role, local_group in AUTH0_ROLES_TO_LOCAL_GROUP.items():
+
+        # Add / update groups user belongs to
+        for auth0_role, local_group in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.items():
             group = groups[local_group]
             if auth0_role in users_roles:
                 group.user_set.add(user)
             else:
                 group.user_set.remove(user)
+
         # Stash the id_token as 'jwt' in the session
         kwargs["request"].session["jwt"] = response["id_token"]
 
