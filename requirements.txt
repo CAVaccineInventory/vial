@@ -265,9 +265,9 @@ github-contents==0.2 \
     --hash=sha256:042918b0680ac76764006f99d95784b1c27bcd702eff4a3adecd077009da6660 \
     --hash=sha256:8693bca4111bc52f2f8e752619fd06b4a00b22b609a5fb97285d622b7c891086
     # via -r requirements.in
-google-api-core[grpc]==1.29.0 \
-    --hash=sha256:dbe885011111a9afd9ea9a347db6a9c608e82e5c7648c1f7fabf2b4079a579b5 \
-    --hash=sha256:f83118319d2a28806ec3399671cbe4af5351bd0dac54c40a0395da6162ebe324
+google-api-core[grpc]==1.30.0 \
+    --hash=sha256:0724d354d394b3d763bc10dfee05807813c5210f0bd9b8e2ddf6b6925603411c \
+    --hash=sha256:92cd9e9f366e84bfcf2524e34d2dc244906c645e731962617ba620da1620a1e0
     # via
     #   -r requirements.in
     #   google-cloud-core
@@ -276,6 +276,7 @@ google-auth==1.30.0 \
     --hash=sha256:588bdb03a41ecb4978472b847881e5518b5d9ec6153d3d679aa127a55e13b39f \
     --hash=sha256:9ad25fba07f46a628ad4d0ca09f38dcb262830df2ac95b217f9b0129c9e42206
     # via
+    #   -r requirements.in
     #   google-api-core
     #   google-cloud-core
     #   google-cloud-storage
@@ -323,20 +324,27 @@ google-crc32c==1.1.2 \
     --hash=sha256:e6458c41236d37cb982120b070ebcc115687c852bee24cdd18792da2640cf44d \
     --hash=sha256:ea170341a4a9078a067b431044cd56c73553425833a7c2bb81734777a230ad4b \
     --hash=sha256:ef2ed6d0ac4de4ac602903e203eccd25ec8e37f1446fe1a3d2953a658035e0a5
-    # via google-resumable-media
+    # via
+    #   -r requirements.in
+    #   google-resumable-media
 google-resumable-media==1.2.0 \
     --hash=sha256:dbe670cd7f02f3586705fd5a108c8ab8552fa36a1cad8afbc5a54e982cf34f0c \
     --hash=sha256:ee98b1921e5bda94867a08c864e55b4763d63887664f49ee1c231988f56b9d43
-    # via google-cloud-storage
+    # via
+    #   -r requirements.in
+    #   google-cloud-storage
 googleapis-common-protos[grpc]==1.53.0 \
     --hash=sha256:a88ee8903aa0a81f6c3cec2d5cf62d3c8aa67c06439b0496b49048fb1854ebf4 \
     --hash=sha256:f6d561ab8fb16b30020b940e2dd01cd80082f4762fa9f3ee670f4419b4b8dbd0
     # via
+    #   -r requirements.in
     #   google-api-core
     #   grpc-google-iam-v1
 grpc-google-iam-v1==0.12.3 \
     --hash=sha256:0bfb5b56f648f457021a91c0df0db4934b6e0c300bd0f2de2333383fe958aa72
-    # via google-cloud-secret-manager
+    # via
+    #   -r requirements.in
+    #   google-cloud-secret-manager
 grpcio==1.37.0 \
     --hash=sha256:00f0acc463d9e6b1e74e71ce516c8cabd053619d08dd81765eb573492811de54 \
     --hash=sha256:04582b260ff0c953011819b1964e875139a7a43adb84621d3ab57f66d0f3d04e \
