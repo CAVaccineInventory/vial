@@ -140,7 +140,7 @@ def export_mapbox_preview(request):
     # Maximum of 20 for the debugging preview
     locations = locations.order_by("-id")[:20]
 
-    expansion = VaccineFinderInventoryExpansion(load_all=True)
+    expansion = VaccineFinderInventoryExpansion(load_all=not ids)
 
     preview = {
         "geojson": [_mapbox_geojson(location, expansion) for location in locations]

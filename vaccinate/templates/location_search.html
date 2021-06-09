@@ -1,0 +1,42 @@
+{% extends "api/base.html" %}
+
+{% block title %}Location debug search{% endblock %}
+
+{% block content %}
+<h1>Location debug search</h1>
+
+<form action="" method="GET">
+  <p>
+    <input type="search" name="q" style="font-size: 1.3em">
+    <input type="submit" value="Search">
+  </p>
+</form>
+<div id="results"></div>
+
+<script>
+const escape = (s) => s
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
+
+function runSearch() {
+  var q = location.search.split('?q=')[1];
+  if (!q) {
+    return;
+  }
+  q = decodeURIComponent(q).replace(/\+/g, ' ');
+  document.querySelector('[name=q]').value = q
+  fetch(`/api/searchLocations?q=${encodeURIComponent(q)}&size=50`).then(d => d.json()).then(results => {
+    var html = results["results"].map(r => `
+      <h3><a href="/location/${r.id}">${escape(r.name)}</a> - ${escape(r.full_address)}</h3>
+    `).join('');
+    document.querySelector('#results').innerHTML = html || 'No results';
+  })
+}
+
+window.addEventListener('load', runSearch);
+</script>
+
+{% endblock %}
