@@ -20,6 +20,8 @@ urlpatterns = [
     path("", core_views.index),
     path("healthcheck", core_views.healthcheck),
     path("logout", logout),
+    path("location", core_views.location_search),
+    path("location/<public_id>", core_views.location),
     path("dashboard/", include(django_sql_dashboard.urls)),
     path("api/docs", api_views.api_docs),
     path("api/submitReport", caller_api_views.submit_report),
