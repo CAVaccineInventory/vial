@@ -321,8 +321,10 @@ def import_source_locations(request, on_request_logged):
                 )
 
             if matched_location is not None:
-                new_concordances = source_location.concordances.difference(
-                    matched_location.concordances.all()
+                new_concordances = list(
+                    source_location.concordances.values_list(
+                        "pk", flat=True
+                    ).difference(matched_location.concordances.all())
                 )
                 matched_location.concordances.add(*new_concordances)
 
