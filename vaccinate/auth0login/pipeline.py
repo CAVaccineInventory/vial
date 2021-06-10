@@ -1,3 +1,4 @@
+from core.models import Reporter
 from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group
@@ -37,13 +38,21 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
             user.is_staff = should_be_staff
             user.save()
 
-        # Add / update groups user belongs to
+        # Add / update the user's groups
         for auth0_role, local_group in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.items():
             group = groups[local_group]
             if auth0_role in users_roles:
                 group.user_set.add(user)
             else:
                 group.user_set.remove(user)
+
+        # Note: Not all users are reporters
+        reporter = Reporter.objects.filter(user=user)[0]
+
+        # Update auth0 roles on Reporter
+        if reporter:
+            reporter.auth0_role_names = " ".join(users_roles)
+            reporter.save()
 
         # Stash the id_token as 'jwt' in the session
         kwargs["request"].session["jwt"] = response["id_token"]
