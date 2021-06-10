@@ -22,12 +22,19 @@ else:
     AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {name: name for name in AUTH0_ROLES_STAFF}
 
 
+def get_roles_by_env(role):
+    if settings.STAGING:
+        return "STAGING" in role
+    else:
+        return "STAGING" not in role
+
+
 def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **kwargs):
     if backend.name == "auth0":
         users_roles = kwargs.get("details", {}).get("roles", {}) or []
+        local_roles = list(filter(get_roles_by_env, users_roles))
         groups = {
-            name: Group.objects.get_or_create(name=name)[0]
-            for name in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.values()
+            name: Group.objects.get_or_create(name=name)[0] for name in local_roles
         }
         should_be_staff = any(
             auth0_role in users_roles
@@ -38,10 +45,13 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
             user.is_staff = should_be_staff
             user.save()
 
-        # Add / update the user's groups
-        for auth0_role, local_group in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.items():
-            group = groups[local_group]
-            if auth0_role in users_roles:
+        # Update user's group membership
+        # TODO: Update groups using a webhook - see Issue #663
+        user_groups = user.groups.all()
+        user.groups.clear()
+
+        for group in user_groups:
+            if group in local_roles:
                 group.user_set.add(user)
             else:
                 group.user_set.remove(user)
