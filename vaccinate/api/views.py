@@ -772,6 +772,16 @@ def update_source_location_match(
     source_location.matched_location = location
     source_location.save()
 
+    # Copy across concordances
+    if location is not None:
+        missing_concordance_ids = list(
+            source_location.concordances.all()
+            .difference(location.concordances.all())
+            .values_list("pk", flat=True)
+        )
+        if missing_concordance_ids:
+            location.concordances.add(*missing_concordance_ids)
+
     # Record the history record
     kwargs = {
         "old_match_location": old_matched_location,

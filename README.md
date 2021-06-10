@@ -11,6 +11,15 @@ Project background: [Spinning up a new Django app to act as a backend for Vaccin
 - https://vial.calltheshots.us/ is production - manually deployed using `scripts/deploy.sh`
 - https://vial-staging.calltheshots.us/ is our Google Cloud Run staging server - code is automatically deployed there on every commit
 
+## Velma and Scooby
+
+Scooby is our app for filing reports against locations.
+
+Velma is our app for verifying details about new imported locations and handling potential duplicate merges.
+
+- https://staging-help-vaccinateca.netlify.app/call/ is Scooby running against VIAL staging
+- https://staging-help-vaccinateca.netlify.app/velma/ is Velma running against VIAL staging
+
 ## Auth0 user permissions
 
 This app is built around the Django admin, but uses Auth0 for authentication.
