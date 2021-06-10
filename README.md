@@ -11,6 +11,16 @@ Project background: [Spinning up a new Django app to act as a backend for Vaccin
 - https://vial.calltheshots.us/ is production - manually deployed using `scripts/deploy.sh`
 - https://vial-staging.calltheshots.us/ is our Google Cloud Run staging server - code is automatically deployed there on every commit
 
+## API exports
+
+VIAL exports data to static JSON (and GeoJSON) in Google Cloud buckets for use by other applications. These exports are triggered by Google Cloud Scheduler - see https://console.cloud.google.com/cloudscheduler?project=django-vaccinateca
+
+- https://api.vaccinatethestates.com/ has the production exports from the `/api/exportVaccinateTheStates` endpoint
+- https://staging-api.vaccinatethestates.com/ has the staging equivalent
+- https://api.vaccinateca.com/ has API exports triggered by `/api/export` for our VaccinateCA data
+- https://staging-api.vaccinateca.com/ has staging for that
+- We also have an export to Mapbox, triggered by `/api/exportMapbox` - this export goes directly into their system
+
 ## Velma and Scooby
 
 Scooby is our app for filing reports against locations.
