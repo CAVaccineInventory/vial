@@ -73,10 +73,7 @@ def api_export_vaccinate_the_states() -> bool:
     writer = VTS_DEPLOYS[deploy]
     ok = True
     try:
-        writer.write(
-            "locations.json",
-            (chunk.decode("utf-8") for chunk in json_response.streaming_content),
-        )
+        writer.write("locations.json", json_response.streaming_content)
         writer.write("locations.geojson", iter([orjson.dumps(geojson)]))
         for state, state_geojson in split_geojson_by_state(geojson):
             writer.write(

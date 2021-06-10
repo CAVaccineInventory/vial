@@ -1,0 +1,466 @@
+{% extends "api/base.html" %}
+
+{% block title %}{{ location }} - VIAL{% endblock %}
+
+{% block content %}
+<h1>{{ location }}</h1>
+<h2><samp style="font-size: 1.25em">{{ location.public_id }}</samp> - {{ location.full_address }}</h2>
+<p><a href="/location">Find another location</a></p>
+
+{% for title, content in api_previews %}
+  <h2>{{ title }}</h2>
+  <pre>{{ content }}</pre>
+{% endfor %}
+
+<h2>In our database</h2>
+<details><summary>View model in our database</summary>
+
+<p>
+  <strong>ID:</strong>
+  <span>{{ location.public_id }}</span>
+</p>
+<p>
+  <strong>name:</strong>
+  <span>{{ location.name }}</span>
+</p>
+<p>
+  <strong>phone_number:</strong>
+  <span>{{ location.phone_number }}</span>
+</p>
+<p>
+  <strong>location_type:</strong>
+  <span>{{ location.location_type }}</span>
+</p>
+
+
+<p>
+  <strong>full_address:</strong>
+  <span>{{ location.full_address }}</span>
+</p>
+<p>
+  <strong>street_address:</strong>
+  <span>{{ location.street_address }}</span>
+</p>
+<p>
+  <strong>city:</strong>
+  <span>{{ location.city }}</span>
+</p>
+
+<p>
+  <strong>state:</strong>
+  <span>{{ location.state }}</span>
+</p>
+<p>
+  <strong>county:</strong>
+  <span>{{ location.county }}</span>
+</p>
+
+<p>
+  <strong>zip_code:</strong>
+  <span>{{ location.zip_code }}</span>
+</p>
+
+
+<p>
+  <strong>hours:</strong>
+  <span>{{ location.hours }}</span>
+</p>
+
+
+
+<p>
+  <strong>website:</strong>
+  <span>{{ location.website }}</span>
+</p>
+
+
+
+<p>
+  <strong>vaccines_offered:</strong>
+  <span>{{ location.vaccines_offered }}</span>
+</p>
+
+
+<p>
+  <strong>accepts_appointments:</strong>
+  <span>{{ location.accepts_appointments }}</span>
+</p>
+
+
+<p>
+  <strong>accepts_walkins:</strong>
+  <span>{{ location.accepts_walkins }}</span>
+</p>
+
+<p>
+  <strong>public_notes:</strong>
+  <span>{{ location.public_notes }}</span>
+</p>
+
+
+
+<p>
+  <strong>google_places_id:</strong>
+  <span>{{ location.google_places_id }}</span>
+</p>
+
+<p>
+  <strong>vaccinespotter_location_id:</strong>
+  <span>{{ location.vaccinespotter_location_id }}</span>
+</p>
+
+<p>
+  <strong>vaccinefinder_location_id:</strong>
+  <span>{{ location.vaccinefinder_location_id }}</span>
+</p>
+
+<p>
+  <strong>provider:</strong>
+  <span>{{ location.provider }}</span>
+</p>
+
+
+<p>
+  <strong>latitude:</strong>
+  <span>{{ location.latitude }}</span>
+</p>
+
+
+
+<p>
+  <strong>longitude:</strong>
+  <span>{{ location.longitude }}</span>
+</p>
+
+
+
+<p>
+  <strong>point:</strong>
+  <span>{{ location.point }}</span>
+</p>
+
+<p>
+  <strong>soft_deleted:</strong>
+  <span>{{ location.soft_deleted }}</span>
+</p>
+
+<p>
+  <strong>soft_deleted_because:</strong>
+  <span>{{ location.soft_deleted_because }}</span>
+</p>
+
+<p>
+  <strong>duplicate_of:</strong>
+  <span>{{ location.duplicate_of }}</span>
+</p>
+
+<p>
+  <strong>import_run:</strong>
+  <span>{{ location.import_run }}</span>
+</p>
+
+
+<p>
+  <strong>provenance:</strong>
+  <span>{{ location.provenance }}</span>
+</p>
+
+
+
+<p>
+  <strong>internal_notes:</strong>
+  <span>{{ location.internal_notes }}</span>
+</p>
+
+
+
+<p>
+  <strong>do_not_call:</strong>
+  <span>{{ location.do_not_call }}</span>
+</p>
+
+
+
+<p>
+  <strong>do_not_call_reason:</strong>
+  <span>{{ location.do_not_call_reason }}</span>
+</p>
+
+
+
+
+<p>
+  <strong>created_at:</strong>
+  <span>{{ location.created_at }}</span>
+</p>
+
+<p>
+  <strong>created_by:</strong>
+  <span>{{ location.created_by }}</span>
+</p>
+
+
+<p>
+  <strong>airtable_id:</strong>
+  <span>{{ location.airtable_id }}</span>
+</p>
+
+
+<p>
+  <strong>public_id:</strong>
+  <span>{{ location.public_id }}</span>
+</p>
+
+<p>
+  <strong>import_json:</strong>
+  <span>{{ location.import_json }}</span>
+</p>
+
+<p>
+  <strong>import_ref:</strong>
+  <span>{{ location.import_ref }}</span>
+</p>
+
+
+
+<p>
+  <strong>preferred_contact_method:</strong>
+  <span>{{ location.preferred_contact_method }}</span>
+</p>
+
+
+<p>
+  <strong>is_pending_review:</strong>
+  <span>{{ location.is_pending_review }}</span>
+</p>
+</details>
+
+<h2>Denormalized values</h2>
+<details><summary>View denormalized values</summary>
+<p>
+  <strong>dn_latest_report:</strong>
+  <span>{{ location.dn_latest_report }}</span>
+</p>
+
+<p>
+  <strong>dn_latest_report_including_pending:</strong>
+  <span>{{ location.dn_latest_report_including_pending }}</span>
+</p>
+<p>
+  <strong>dn_latest_yes_report:</strong>
+  <span>{{ location.dn_latest_yes_report }}</span>
+</p>
+<p>
+  <strong>dn_latest_skip_report:</strong>
+  <span>{{ location.dn_latest_skip_report }}</span>
+</p>
+<p>
+  <strong>dn_latest_non_skip_report:</strong>
+  <span>{{ location.dn_latest_non_skip_report }}</span>
+</p>
+<p>
+  <strong>dn_skip_report_count:</strong>
+  <span>{{ location.dn_skip_report_count }}</span>
+</p>
+
+<p>
+  <strong>dn_yes_report_count:</strong>
+  <span>{{ location.dn_yes_report_count }}</span>
+</p>
+</details>
+
+{% if location.dn_latest_non_skip_report %}
+  <h2>Latest non-skip report</h2>
+  <details><summary>View latest non-skip report</summary>
+  <div style="padding-left: 2em">
+  {{ location.dn_latest_non_skip_report }}
+  <p>
+    <strong>is_pending_review:</strong>
+    <span>{{ location.is_pending_review }}</span>
+  </p>
+  <p>
+    <strong>originally_pending_review:</strong>
+    <span>{{ location.originally_pending_review }}</span>
+  </p>
+  <p>
+    <strong>pending_review_because:</strong>
+    <span>{{ location.pending_review_because }}</span>
+  </p>
+  <p>
+    <strong>claimed_by:</strong>
+    <span>{{ location.claimed_by }}</span>
+  </p>
+  <p>
+    <strong>claimed_at:</strong>
+    <span>{{ location.claimed_at }}</span>
+  </p>
+  <p>
+    <strong>soft_deleted:</strong>
+    <span>{{ location.soft_deleted }}</span>
+  </p>
+  <p>
+    <strong>soft_deleted_because:</strong>
+    <span>{{ location.soft_deleted_because }}</span>
+  </p>
+  <p>
+    <strong>report_source:</strong>
+    <span>{{ location.report_source }}</span>
+  </p>
+  <p>
+    <strong>appointment_tag:</strong>
+    <span>{{ location.appointment_tag }}</span>
+  </p>
+  <p>
+    <strong>appointment_details:</strong>
+    <span>{{ location.appointment_details }}</span>
+  </p>
+  <p>
+    <strong>public_notes:</strong>
+    <span>{{ location.public_notes }}</span>
+  </p>
+  <p>
+    <strong>internal_notes:</strong>
+    <span>{{ location.internal_notes }}</span>
+  </p>
+  <p>
+    <strong>restriction_notes:</strong>
+    <span>{{ location.restriction_notes }}</span>
+  </p>
+  <p>
+    <strong>vaccines_offered:</strong>
+    <span>{{ location.vaccines_offered }}</span>
+  </p>
+  <p>
+    <strong>website:</strong>
+    <span>{{ location.website }}</span>
+  </p>
+  <p>
+    <strong>full_address:</strong>
+    <span>{{ location.full_address }}</span>
+  </p>
+  <p>
+    <strong>hours:</strong>
+    <span>{{ location.hours }}</span>
+  </p>
+  <p>
+    <strong>planned_closure:</strong>
+    <span>{{ location.planned_closure }}</span>
+  </p>
+  <p>
+    <strong>reported_by:</strong>
+    <span>{{ location.reported_by }}</span>
+  </p>
+  <p>
+    <strong>created_at:</strong>
+    <span>{{ location.created_at }}</span>
+  </p>
+  <p>
+    <strong>call_request:</strong>
+    <span>{{ location.call_request }}</span>
+  </p>
+  <p>
+    <strong>availability_tags:</strong>
+    <span>{{ location.availability_tags }}</span>
+  </p>
+  <p>
+    <strong>airtable_id:</strong>
+    <span>{{ location.airtable_id }}</span>
+  </p>
+  <p>
+    <strong>airtable_json:</strong>
+    <span>{{ location.airtable_json }}</span>
+  </p>
+  <p>
+    <strong>public_id:</strong>
+    <span>{{ location.public_id }}</span>
+  </p>
+</div>
+</details>
+{% endif %}
+
+<h2>Concordances</h2>
+
+{% for concordance in location.concordances.all %}
+  {{ concordance }}
+{% empty %}
+  None
+{% endfor %}
+
+<h2>Matched source locations</h2>
+<details><summary>View matched source locations</summary>
+{% for source_location in source_locations %}
+  <h3>{{ source_location }}</h3>
+  <p>Created at {{ source_location.created_at }}, last imported at {{ source_location.last_imported_at }}</p>
+  <strong>Availability: <pre>{{ source_location.import_json.availability|pprint }}</pre></strong>
+  <strong>Inventory: <pre>{{ source_location.import_json.inventory|pprint }}</pre></strong>
+  <pre>{{ source_location.import_json|pprint }}</pre>
+{% endfor %}
+</details>
+
+<script>
+var LEAFLET_CSS = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.css";
+var LEAFLET_JS = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.js";
+var TILE_LAYER = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+var TILE_LAYER_OPTIONS = {
+  maxZoom: 19,
+  detectRetina: true,
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+};
+
+function onLoadAddMap() {
+  var latitude = {{ location.latitude }};
+  var longitude = {{ location.longitude }};
+
+  function configureMap() {
+    var container = document.createElement("div");
+    var h2 = document.querySelector('h2');
+    h2.parentNode.insertBefore(container, h2.nextSibling);
+    container.style.border = "1px solid #666";
+    container.style.padding = "5px";
+    // Now the map
+    let mapDiv = document.createElement("div");
+    mapDiv.style.marginTop = "1em";
+    mapDiv.style.height = "400px";
+    container.appendChild(mapDiv);
+    let tiles = L.tileLayer(TILE_LAYER, TILE_LAYER_OPTIONS);
+    let center = L.latLng(latitude, longitude);
+    let zoom = 14;
+    var marker = new L.marker(center, { draggable: true, autoPan: true });
+    let map = L.map(mapDiv, {
+      center: center,
+      zoom: zoom,
+      layers: [tiles],
+    });
+    map.addLayer(marker);
+  }
+
+  /* Load modules and CSS */
+  let loadDependencies = (callback) => {
+    let loaded = [];
+    function hasLoaded() {
+      loaded.push(this);
+      if (loaded.length == 2) {
+        callback();
+      }
+    }
+    let stylesheet = document.createElement("link");
+    stylesheet.setAttribute("rel", "stylesheet");
+    stylesheet.setAttribute("href", LEAFLET_CSS);
+    stylesheet.onload = hasLoaded;
+    document.head.appendChild(stylesheet);
+    var script = document.createElement("script");
+    script.setAttribute("src", LEAFLET_JS);
+    script.onload = hasLoaded;
+    document.head.appendChild(script);
+  };
+  loadDependencies(() => {
+    configureMap();
+  });
+}
+
+window.addEventListener('load', onLoadAddMap);
+
+</script>
+
+{% endblock %}

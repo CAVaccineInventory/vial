@@ -299,7 +299,7 @@ def import_source_locations(request, on_request_logged):
 
         if safe_to_match and matched_location is not None:
             source_location.matched_location = matched_location
-            source_location.save()
+            source_location.save(update_fields=["matched_location"])
 
         import_json = record.import_json
         links = list(import_json.links) if import_json.links is not None else []
@@ -321,8 +321,10 @@ def import_source_locations(request, on_request_logged):
                 )
 
             if matched_location is not None:
-                new_concordances = source_location.concordances.difference(
-                    matched_location.concordances.all()
+                new_concordances = list(
+                    source_location.concordances.values_list(
+                        "pk", flat=True
+                    ).difference(matched_location.concordances.all())
                 )
                 matched_location.concordances.add(*new_concordances)
 
@@ -769,6 +771,16 @@ def update_source_location_match(
 
     source_location.matched_location = location
     source_location.save()
+
+    # Copy across concordances
+    if location is not None:
+        missing_concordance_ids = list(
+            source_location.concordances.all()
+            .difference(location.concordances.all())
+            .values_list("pk", flat=True)
+        )
+        if missing_concordance_ids:
+            location.concordances.add(*missing_concordance_ids)
 
     # Record the history record
     kwargs = {
