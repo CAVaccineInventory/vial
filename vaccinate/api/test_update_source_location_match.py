@@ -1,5 +1,5 @@
 import pytest
-from core.models import SourceLocation
+from core.models import ConcordanceIdentifier, SourceLocation
 
 
 @pytest.mark.parametrize("use_location_pk", (True, False))
@@ -8,11 +8,14 @@ def test_update_source_location_match_by_api_key(
     client, api_key, ten_locations, use_location_pk, use_source_location_pk
 ):
     location = ten_locations[0]
+    location.concordances.add(ConcordanceIdentifier.for_idref("foo:already-there"))
     source_location = SourceLocation.objects.create(
         source_name="test",
         source_uid="test:1",
     )
+    source_location.concordances.add(ConcordanceIdentifier.for_idref("foo:newly-added"))
     assert source_location.matched_location is None
+    assert {str(c) for c in location.concordances.all()} == {"foo:already-there"}
 
     post_data = {}
     if use_location_pk:
@@ -40,6 +43,12 @@ def test_update_source_location_match_by_api_key(
 
     source_location.refresh_from_db()
     assert source_location.matched_location.public_id == location.public_id
+
+    # Location should have the new identifier copied over
+    assert {str(c) for c in location.concordances.all()} == {
+        "foo:already-there",
+        "foo:newly-added",
+    }
 
     # History record should have been created
     history = source_location.source_location_match_history.first()

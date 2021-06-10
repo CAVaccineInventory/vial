@@ -651,6 +651,8 @@ Try this API: https://vial-staging.calltheshots.us/api/updateLocationConcordance
 
 API for updating a source location to mark it as being a confirmed match for a specific location. This modifies the `source_location` table to update the `matched_location_id` column, and records a history record with the old and new values in the `source_location_match_history` table.
 
+Any concordance identifiers attached to the source location that are not yet attached to the location will be copied across.
+
 Accepts either an API key or a JWT token for authentication.
 
 POST the following JSON:
