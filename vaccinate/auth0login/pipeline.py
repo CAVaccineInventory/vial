@@ -56,10 +56,11 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
                 group.user_set.remove(user)
 
         # Note: Not all users are reporters
-        reporter = Reporter.objects.filter(user=user)[0]
+        reporter_qs = Reporter.objects.filter(user=user)
 
         # Update auth0 roles on Reporter
-        if reporter:
+        if reporter_qs:
+            reporter = reporter_qs[0]
             reporter.auth0_role_names = ", ".join(local_roles)
             reporter.save()
 
