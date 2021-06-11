@@ -48,7 +48,7 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
         # Update user's group membership
         # TODO: Update groups using a webhook - see Issue #663
         user.groups.clear()
-        
+
         for name, group in groups.items():
             if name in local_roles:
                 group.user_set.add(user)
@@ -60,7 +60,7 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
 
         # Update auth0 roles on Reporter
         if reporter:
-            reporter.auth0_role_names = " ".join(users_roles)
+            reporter.auth0_role_names = ", ".join(local_roles)
             reporter.save()
 
         # Stash the id_token as 'jwt' in the session
