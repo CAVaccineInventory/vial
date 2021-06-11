@@ -47,11 +47,10 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
 
         # Update user's group membership
         # TODO: Update groups using a webhook - see Issue #663
-        user_groups = user.groups.all()
         user.groups.clear()
-
-        for group in user_groups:
-            if group in local_roles:
+        
+        for name, group in groups.items():
+            if name in local_roles:
                 group.user_set.add(user)
             else:
                 group.user_set.remove(user)
