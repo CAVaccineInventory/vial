@@ -13,13 +13,12 @@ AUTH0_ROLES_STAFF = {
     "Vaccinate CA Staff",
 }
 
-AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {}
-if settings.STAGING:
-    AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {
-        name + " STAGING": name for name in AUTH0_ROLES_STAFF
-    }
-else:
-    AUTH0_STAFF_ROLES_TO_LOCAL_GROUP = {name: name for name in AUTH0_ROLES_STAFF}
+
+def get_staff_roles_by_env(staff):
+    if settings.STAGING:
+        return [name + " STAGING" for name in AUTH0_ROLES_STAFF]
+    else:
+        return [name for name in AUTH0_ROLES_STAFF]
 
 
 def get_roles_by_env(role):
@@ -36,9 +35,9 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
         groups = {
             name: Group.objects.get_or_create(name=name)[0] for name in local_roles
         }
+        staff_roles_to_local_group = get_staff_roles_by_env(AUTH0_ROLES_STAFF)
         should_be_staff = any(
-            auth0_role in users_roles
-            for auth0_role in AUTH0_STAFF_ROLES_TO_LOCAL_GROUP.keys()
+            auth0_role in users_roles for auth0_role in staff_roles_to_local_group
         )
 
         if should_be_staff != user.is_staff:
@@ -46,7 +45,7 @@ def provide_admin_access_based_on_auth0_role(backend, user, response, *args, **k
             user.save()
 
         # Update user's group membership
-        # TODO: Update groups using a webhook - see Issue #663
+        # TODO: Update groups after logging in using a webhook - see Issue #663
         user.groups.clear()
 
         for name, group in groups.items():
