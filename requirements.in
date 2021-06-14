@@ -62,7 +62,7 @@ Markdown
 
 
 ## Data validation
-vaccine-feed-ingest-schema==1.2.4
+vaccine-feed-ingest-schema==1.2.5
 pydantic==1.8.2
 email-validator==1.1.2
 
