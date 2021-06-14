@@ -71,7 +71,7 @@ email-validator==1.1.2
 google-api-core==1.30.0
 google-auth==1.30.0
 google-cloud-core==1.6.0
-google-cloud-secret-manager==2.4.0
+google-cloud-secret-manager==2.5.0
 google-cloud-storage==1.38.0
 google-crc32c==1.1.2
 google-resumable-media==1.2.0
@@ -98,6 +98,8 @@ types-pytz
 types-requests
 types-python-dateutil
 types-protobuf
+types-orjson
+types-pkg_resources
 
 # Debug toolbar (dev only, not production)
 django-debug-toolbar>=3.2.1
