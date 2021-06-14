@@ -98,6 +98,8 @@ types-pytz
 types-requests
 types-python-dateutil
 types-protobuf
+types-orjson
+types-pkg_resources
 
 # Debug toolbar (dev only, not production)
 django-debug-toolbar>=3.2.1
