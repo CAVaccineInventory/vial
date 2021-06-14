@@ -1050,6 +1050,9 @@ types-markdown==0.1.2 \
 types-orjson==0.1.0 \
     --hash=sha256:7c5036f31615179a3154079d144329f868667e15ac9d041f388de3a823328b0c
     # via -r requirements.in
+types-pkg-resources==0.1.2 \
+    --hash=sha256:42d640500de564f1ccc21f918117afadf78039e4fa7f513c647ccf742d609aeb
+    # via -r requirements.in
 types-protobuf==0.1.10 \
     --hash=sha256:ba89eb475777787d12bc3e2ef419102bf50d93b41e31013f1e7b494fd830ff76
     # via -r requirements.in
