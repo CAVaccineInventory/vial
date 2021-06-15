@@ -388,6 +388,20 @@ class Location(gis_models.Model):
         default=False, help_text="Locations that are pending review by our QA team"
     )
 
+    claimed_by = models.ForeignKey(
+        "auth.User",
+        related_name="claimed_locations",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        help_text="QA reviewer who has claimed this report",
+    )
+    claimed_at = models.DateTimeField(
+        help_text="When the QA reviewer claimed this report",
+        blank=True,
+        null=True,
+    )
+
     def __str__(self):
         return self.name
 
