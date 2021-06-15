@@ -394,10 +394,10 @@ class Location(gis_models.Model):
         on_delete=models.PROTECT,
         blank=True,
         null=True,
-        help_text="QA reviewer who has claimed this report",
+        help_text="QA reviewer who has claimed this location",
     )
     claimed_at = models.DateTimeField(
-        help_text="When the QA reviewer claimed this report",
+        help_text="When the QA reviewer claimed this location",
         blank=True,
         null=True,
     )
