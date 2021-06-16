@@ -357,6 +357,27 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
+class ClaimFilter(admin.SimpleListFilter):
+    title = "Claim status"
+
+    parameter_name = "claim_status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("you", "Claimed by you"),
+            ("anyone", "Claimed by anyone"),
+            ("unclaimed", "Unclaimed"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "you":
+            return queryset.filter(claimed_by=request.user)
+        elif self.value() == "anyone":
+            return queryset.exclude(claimed_by=None)
+        elif self.value() == "unclaimed":
+            return queryset.filter(claimed_by=None)
+
+
 class SoftDeletedFilter(admin.SimpleListFilter):
     title = "soft deleted"
 
@@ -567,6 +588,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     )
     list_filter = (
         "is_pending_review",
+        ClaimFilter,
         LocationInQueueFilter,
         SoftDeletedFilter,
         "do_not_call",
@@ -838,27 +860,6 @@ def bulk_approve_reports(modeladmin, request, queryset):
         request,
         "Approved {} report{}".format(count, "s" if count != 1 else ""),
     )
-
-
-class ClaimFilter(admin.SimpleListFilter):
-    title = "Claim status"
-
-    parameter_name = "claim_status"
-
-    def lookups(self, request, model_admin):
-        return (
-            ("you", "Claimed by you"),
-            ("anyone", "Claimed by anyone"),
-            ("unclaimed", "Unclaimed"),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == "you":
-            return queryset.filter(claimed_by=request.user)
-        elif self.value() == "anyone":
-            return queryset.exclude(claimed_by=None)
-        elif self.value() == "unclaimed":
-            return queryset.filter(claimed_by=None)
 
 
 @admin.register(Report)
