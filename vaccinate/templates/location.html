@@ -21,7 +21,7 @@
       {% if item.type == "source_location" %}
         {{ item.source_location.import_json.availability }} according to {{ item.source_location.source_uid }}
       {% else %}
-        <em>{{ item.report.availability }}</em> according to {{ item.report }}
+        <em>{{ item.report.availability }}</em> according to report {{ item.report }}
       {% endif %}
       </li>
     {% endfor %}
@@ -36,7 +36,7 @@
       {% if item.type == "source_location" %}
         {{ item.source_location.import_json.inventory }} according to {{ item.source_location.source_uid }}
       {% else %}
-        <em>{{ item.report.vaccines_offered }}</em> according to {{ item.report }}
+        <em>{{ item.report.vaccines_offered }}</em> according to report {{ item.report }}
       {% endif %}
       </li>
     {% endfor %}
