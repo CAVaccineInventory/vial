@@ -1068,7 +1068,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             dateformat.format(timezone.localtime(obj.created_at), "j M g:iA e")
             .replace("PM", "pm")
             .replace("AM", "am")
-            .replace(" ", u"\u00a0")
+            .replace(" ", "\u00a0")
         )
         html = format_html(
             '<a href="{}">{}<br><b>{}</b></a>',
