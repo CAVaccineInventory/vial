@@ -432,14 +432,20 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     fieldsets = (
         (
             None,
-            {"fields": ("is_pending_review",)},
-        ),
-        (
-            None,
             {"fields": ("scooby_report_link",)},
         ),
         (
-            None,
+            "QA summary",
+            {
+                "fields": (
+                    "is_pending_review",
+                    "claimed_by",
+                    "claimed_at",
+                ),
+            },
+        ),
+        (
+            "Location Details",
             {
                 "fields": (
                     "name",
