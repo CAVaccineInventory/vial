@@ -451,9 +451,7 @@ def unclaim_locations_you_have_claimed(modeladmin, request, queryset):
 
 
 def bulk_approve_locations(modeladmin, request, queryset):
-    count = queryset.filter(is_pending_review=True).update(
-        is_pending_review=False
-    )
+    count = queryset.filter(is_pending_review=True).update(is_pending_review=False)
 
     messages.success(
         request,
@@ -465,6 +463,9 @@ def bulk_approve_locations(modeladmin, request, queryset):
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
     save_on_top = True
+    autocomplete_fields = [
+        "claimed_by",
+    ]
     actions = [
         claim_locations,
         unclaim_locations_you_have_claimed,
@@ -684,6 +685,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "accepts_appointments",
         "accepts_walkins",
         "public_notes",
+        "claimed_at",
     )
 
     def save_model(self, request, obj, form, change):
