@@ -577,6 +577,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "times_reported",
         "scooby_report_link",
         "request_a_call",
+        "is_pending_review",
+        "claimed_by",
         "full_address",
         "state",
         "county",
