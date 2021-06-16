@@ -90,6 +90,11 @@ def location(request, public_id):
         "location.html",
         {
             "location": location,
+            "derived_availability_and_inventory": json.dumps(
+                location.derive_availability_and_inventory()._asdict(),
+                indent=4,
+                default=lambda v: v.isoformat() if hasattr(v, "isoformat") else repr(v),
+            ),
             "source_locations": location.matched_source_locations.order_by(
                 "-created_at"
             ).prefetch_related("concordances"),

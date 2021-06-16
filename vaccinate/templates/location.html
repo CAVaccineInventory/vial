@@ -7,6 +7,12 @@
 <h2><samp style="font-size: 1.25em">{{ location.public_id }}</samp> - {{ location.full_address }}</h2>
 <p><a href="/location">Find another location</a></p>
 
+<h2>Derived availability and inventory</h2>
+
+<p>We have logic that derives vaccine inventory and availability based on a combination of recently filed reports and recently scraped source locations. The <code>location.derived_availability_and_inventory()</code> method for this location currently returns:</p>
+
+<pre>{{ derived_availability_and_inventory }}</pre>
+
 {% for title, content in api_previews %}
   <h2>{{ title }}</h2>
   <pre>{{ content }}</pre>
