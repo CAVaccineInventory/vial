@@ -7,6 +7,42 @@
 <h2><samp style="font-size: 1.25em">{{ location.public_id }}</samp> - {{ location.full_address }}</h2>
 <p><a href="/location">Find another location</a></p>
 
+<h2>Derived availability and inventory</h2>
+
+<p>We have logic that derives vaccine inventory and availability based on a combination of recently filed reports and recently scraped source locations. The <code>location.derived_availability_and_inventory()</code> method for this location currently returns:</p>
+
+<pre>{{ derived_availability_and_inventory }}</pre>
+
+{% if availability_timeline %}
+  <p>Availability:</p>
+  <ul>
+    {% for item in availability_timeline %}
+      <li><strong>{{ item.when }}</strong> ({{ item.type }})<br>
+      {% if item.type == "source_location" %}
+        {{ item.source_location.import_json.availability }} according to {{ item.source_location.source_uid }}
+      {% else %}
+        <em>{{ item.report.availability }}</em> according to {{ item.report }}
+      {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if vaccines_offered_timeline %}
+  <p>Vaccines offered:</p>
+  <ul>
+    {% for item in vaccines_offered_timeline %}
+      <li><strong>{{ item.when }}</strong> ({{ item.type }})<br>
+      {% if item.type == "source_location" %}
+        {{ item.source_location.import_json.inventory }} according to {{ item.source_location.source_uid }}
+      {% else %}
+        <em>{{ item.report.vaccines_offered }}</em> according to {{ item.report }}
+      {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
 {% for title, content in api_previews %}
   <h2>{{ title }}</h2>
   <pre>{{ content }}</pre>

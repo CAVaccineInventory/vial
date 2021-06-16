@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timedelta
 from functools import reduce
 from operator import or_
-from typing import Any, List, Optional
+from typing import Any, List, NamedTuple, Optional
 
 import beeline
 import pytz
@@ -212,6 +212,23 @@ class ImportRun(models.Model):
         db_table = "import_run"
 
 
+class DeriveAvailabilityAndInventoryResults(NamedTuple):
+    vaccines_offered: Optional[list[str]]
+    vaccines_offered_provenance_report: Optional[Report]
+    vaccines_offered_provenance_source_location: Optional[SourceLocation]
+    vaccines_offered_last_updated_at: Optional[datetime]
+    accepts_appointments: Optional[bool]
+    accepts_walkins: Optional[bool]
+    appointments_walkins_provenance_report: Optional[Report]
+    appointments_walkins_provenance_source_location: Optional[SourceLocation]
+    appointments_walkins_last_updated_at: Optional[datetime]
+    # Additional debugging info:
+    most_recent_report_on_vaccines_offered: Optional[Report]
+    most_recent_source_location_on_vaccines_offered: Optional[SourceLocation]
+    most_recent_report_on_availability: Optional[Report]
+    most_recent_source_location_on_availability: Optional[SourceLocation]
+
+
 class Location(gis_models.Model):
     "A location is a distinct place where one can receive a COVID vaccine."
     name = CharTextField()
@@ -243,12 +260,56 @@ class Location(gis_models.Model):
         blank=True,
         help_text="JSON array of strings representing vaccines on offer here - enter 'null' if we do not know",
     )
+    vaccines_offered_provenance_report = models.ForeignKey(
+        "Report",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The report that last populated vaccines_offered",
+        on_delete=models.PROTECT,
+    )
+    vaccines_offered_provenance_source_location = models.ForeignKey(
+        "SourceLocation",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The source location that last populated vaccines_offered",
+        on_delete=models.PROTECT,
+    )
+    vaccines_offered_last_updated_at = models.DateTimeField(
+        help_text="When vaccines_offered was last updated",
+        blank=True,
+        null=True,
+    )
+
     accepts_appointments = models.BooleanField(
         null=True, blank=True, help_text="Does this location accept appointments"
     )
     accepts_walkins = models.BooleanField(
         null=True, blank=True, help_text="Does this location accept walkins"
     )
+    appointments_walkins_provenance_report = models.ForeignKey(
+        "Report",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The report that last populated accepts_walkins and accepts_appointments",
+        on_delete=models.PROTECT,
+    )
+    appointments_walkins_provenance_source_location = models.ForeignKey(
+        "SourceLocation",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The source location that last populated accepts_walkins and accepts_appointments",
+        on_delete=models.PROTECT,
+    )
+    appointments_walkins_last_updated_at = models.DateTimeField(
+        help_text="When accepts_walkins and accepts_appointments were last updated",
+        blank=True,
+        null=True,
+    )
+
     public_notes = models.TextField(blank=True, null=True)
 
     google_places_id = CharTextField(
@@ -426,6 +487,182 @@ class Location(gis_models.Model):
             .exclude(
                 preferred_contact_method="research_online",
             )
+        )
+
+    def derive_availability_and_inventory(
+        self, save=False
+    ) -> DeriveAvailabilityAndInventoryResults:
+        """
+        Use recent reports and matched source_locations to derive inventory/availability
+
+        This populates self.vaccines_offered, .accepts_appointments and .accepts_walkins
+        plus the columns that track when and why they were updated based on finding the
+        reports or source locations with the most recent opinions on these.
+
+        Returns namedtuple of changes it would make. save=True to save those changes.
+        """
+        vaccines_offered = None
+        vaccines_offered_provenance_report = None
+        vaccines_offered_provenance_source_location = None
+        vaccines_offered_last_updated_at = None
+        accepts_appointments = None
+        accepts_walkins = None
+        appointments_walkins_provenance_report = None
+        appointments_walkins_provenance_source_location = None
+        appointments_walkins_last_updated_at = None
+        most_recent_report_on_vaccines_offered = None
+        most_recent_source_location_on_vaccines_offered = None
+        most_recent_report_on_availability = None
+        most_recent_source_location_on_availability = None
+
+        most_recent_report_on_vaccines_offered = (
+            self.reports.all()
+            .exclude(soft_deleted=True)
+            .prefetch_related("availability_tags")
+            .exclude(availability_tags__group="skip")
+            .exclude(vaccines_offered__isnull=True)
+            .order_by("-created_at")
+            .first()
+        )
+        most_recent_source_location_on_vaccines_offered = (
+            self.matched_source_locations.all()
+            .order_by("-last_imported_at")
+            .exclude(import_json__inventory=None)
+            .first()
+        )
+
+        report_to_use_for_vaccines_offered = most_recent_report_on_vaccines_offered
+        source_location_to_use_for_vaccines_offered = (
+            most_recent_source_location_on_vaccines_offered
+        )
+
+        if (
+            report_to_use_for_vaccines_offered
+            and source_location_to_use_for_vaccines_offered
+        ):
+            # Should we go with the report or the source location? Depends which is most recent
+            if (
+                source_location_to_use_for_vaccines_offered.last_imported_at
+                and source_location_to_use_for_vaccines_offered.last_imported_at
+                > report_to_use_for_vaccines_offered.created_at
+            ):
+                # Use the source_location, ignore the report
+                report_to_use_for_vaccines_offered = None
+            else:
+                # Use the report, ignore the source location
+                source_location_to_use_for_vaccines_offered = None
+
+        if source_location_to_use_for_vaccines_offered:
+            inventory = source_location_to_use_for_vaccines_offered.import_json[
+                "inventory"
+            ]
+            inventory_mapping = {
+                "moderna": "Moderna",
+                "pfizer_biontech": "Pfizer",
+                "johnson_johnson_janssen": "Johnson & Johnson",
+                "oxford_astrazeneca": "Astrazeneca",
+            }
+            in_stock = [
+                stock["vaccine"]
+                for stock in inventory
+                if stock.get("supply_level") != "out_of_stock"
+            ]
+            vaccines_offered = list(sorted([inventory_mapping[v] for v in in_stock]))
+            vaccines_offered_provenance_source_location = (
+                source_location_to_use_for_vaccines_offered
+            )
+            vaccines_offered_last_updated_at = (
+                source_location_to_use_for_vaccines_offered.last_imported_at
+            )
+        elif report_to_use_for_vaccines_offered:
+            vaccines_offered = report_to_use_for_vaccines_offered.vaccines_offered
+            vaccines_offered_provenance_report = report_to_use_for_vaccines_offered
+            vaccines_offered_last_updated_at = (
+                report_to_use_for_vaccines_offered.created_at
+            )
+
+        # Now do accepts_appointments and accepts_walkins based on most recent report
+        # or source_location that provides useful data on those
+        most_recent_report_on_availability = (
+            self.reports.all()
+            .exclude(soft_deleted=True)
+            .prefetch_related("availability_tags")
+            .exclude(availability_tags__group="skip")
+            .order_by("-created_at")
+            .first()
+        )
+        most_recent_source_location_on_availability = (
+            self.matched_source_locations.all()
+            .order_by("-last_imported_at")
+            .exclude(import_json__availability=None)
+            .first()
+        )
+
+        report_to_use_for_availability = most_recent_report_on_availability
+        source_location_to_use_for_availability = (
+            most_recent_source_location_on_availability
+        )
+
+        if report_to_use_for_availability and source_location_to_use_for_availability:
+            # Should we go with the report or the source location? Depends which is most recent
+            if source_location_to_use_for_availability.last_imported_at and (
+                source_location_to_use_for_availability.last_imported_at
+                > report_to_use_for_availability.created_at
+            ):
+                # Use the source_location, ignore the report
+                report_to_use_for_availability = None
+            else:
+                # Use the report, ignore the source location
+                source_location_to_use_for_availability = None
+
+        if source_location_to_use_for_availability:
+            availability = source_location_to_use_for_availability.import_json[
+                "availability"
+            ]
+            accepts_appointments = bool(availability.get("appointments"))
+            accepts_walkins = bool(availability.get("drop_in"))
+            appointments_walkins_provenance_source_location = (
+                source_location_to_use_for_availability
+            )
+            appointments_walkins_last_updated_at = (
+                source_location_to_use_for_availability.last_imported_at
+            )
+        elif report_to_use_for_availability:
+            # Use the availability tags
+            tags = {
+                t.slug for t in report_to_use_for_availability.availability_tags.all()
+            }
+            accepts_appointments = any(
+                tag in tags
+                for tag in (
+                    "appointment_calendar_currently_full",
+                    "appointment_required",
+                    "appointments_available",
+                    "appointments_or_walkins",
+                )
+            )
+            accepts_walkins = any(
+                tag in tags for tag in ("walk_ins_only", "appointments_or_walkins")
+            )
+            appointments_walkins_provenance_report = report_to_use_for_availability
+            appointments_walkins_last_updated_at = (
+                report_to_use_for_availability.created_at
+            )
+
+        return DeriveAvailabilityAndInventoryResults(
+            vaccines_offered=vaccines_offered,
+            vaccines_offered_provenance_report=vaccines_offered_provenance_report,
+            vaccines_offered_provenance_source_location=vaccines_offered_provenance_source_location,
+            vaccines_offered_last_updated_at=vaccines_offered_last_updated_at,
+            accepts_appointments=accepts_appointments,
+            accepts_walkins=accepts_walkins,
+            appointments_walkins_provenance_report=appointments_walkins_provenance_report,
+            appointments_walkins_provenance_source_location=appointments_walkins_provenance_source_location,
+            appointments_walkins_last_updated_at=appointments_walkins_last_updated_at,
+            most_recent_report_on_vaccines_offered=most_recent_report_on_vaccines_offered,
+            most_recent_source_location_on_vaccines_offered=most_recent_source_location_on_vaccines_offered,
+            most_recent_report_on_availability=most_recent_report_on_availability,
+            most_recent_source_location_on_availability=most_recent_source_location_on_availability,
         )
 
     @beeline.traced("update_denormalizations")

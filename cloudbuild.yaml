@@ -113,7 +113,7 @@ steps:
       - "DATABASE_URL=postgres://postgres:postgres@vaccinate-db:5432/vaccinate"
       - "${_IMAGE_NAME}:latest"
       - "pytest"
-      - "-v"
+      - "-vv"
 
   - id: "stop postgres"
     name: "gcr.io/cloud-builders/docker"
