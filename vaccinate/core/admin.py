@@ -412,11 +412,51 @@ class SoftDeletedFilter(admin.SimpleListFilter):
             return queryset.filter(soft_deleted=True)
 
 
+def claim_objects(modeladmin, request, queryset, object_name):
+    count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
+    messages.success(
+        request,
+        f"You claimed {count} {object_name}{'s' if count != 1 else ''}",
+    )
+
+
+def unclaim_objects_you_have_claimed(modeladmin, request, queryset, object_name):
+    count = queryset.filter(claimed_by=request.user).update(
+        claimed_by=None, claimed_at=None
+    )
+    messages.success(
+        request,
+        f"You unclaimed {count} {object_name}{'s' if count != 1 else ''}",
+    )
+
+
+def claim_reports(modeladmin, request, queryset):
+    claim_objects(modeladmin, request, queryset, object_name="report")
+
+
+def claim_locations(modeladmin, request, queryset):
+    claim_objects(modeladmin, request, queryset, object_name="location")
+
+
+def unclaim_reports_you_have_claimed(modeladmin, request, queryset):
+    unclaim_objects_you_have_claimed(
+        modeladmin, request, queryset, object_name="report"
+    )
+
+
+def unclaim_locations_you_have_claimed(modeladmin, request, queryset):
+    unclaim_objects_you_have_claimed(
+        modeladmin, request, queryset, object_name="location"
+    )
+
+
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
     save_on_top = True
     actions = [
+        claim_locations,
+        unclaim_locations_you_have_claimed,
         export_as_csv_action(),
         export_as_csv_action(
             specific_columns={
@@ -836,24 +876,6 @@ class ReportReviewNoteInline(admin.StackedInline):
 
     def has_change_permission(self, request, obj=None):
         return False
-
-
-def claim_reports(modeladmin, request, queryset):
-    count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
-    messages.success(
-        request,
-        "You claimed {} report{}".format(count, "s" if count != 1 else ""),
-    )
-
-
-def unclaim_reports_you_have_claimed(modeladmin, request, queryset):
-    count = queryset.filter(claimed_by=request.user).update(
-        claimed_by=None, claimed_at=None
-    )
-    messages.success(
-        request,
-        "You unclaimed {} report{}".format(count, "s" if count != 1 else ""),
-    )
 
 
 def bulk_approve_reports(modeladmin, request, queryset):
