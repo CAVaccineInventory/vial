@@ -450,6 +450,17 @@ def unclaim_locations_you_have_claimed(modeladmin, request, queryset):
     )
 
 
+def bulk_approve_locations(modeladmin, request, queryset):
+    count = queryset.filter(is_pending_review=True).update(
+        is_pending_review=False
+    )
+
+    messages.success(
+        request,
+        f"Approved {count} location{'s' if count != 1 else ''}",
+    )
+
+
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
@@ -457,6 +468,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     actions = [
         claim_locations,
         unclaim_locations_you_have_claimed,
+        bulk_approve_locations,
         export_as_csv_action(),
         export_as_csv_action(
             specific_columns={
