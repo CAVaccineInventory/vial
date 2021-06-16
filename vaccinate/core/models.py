@@ -243,12 +243,56 @@ class Location(gis_models.Model):
         blank=True,
         help_text="JSON array of strings representing vaccines on offer here - enter 'null' if we do not know",
     )
+    vaccines_offered_provenance_report = models.ForeignKey(
+        "Report",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The report that last populated vaccines_offered",
+        on_delete=models.PROTECT,
+    )
+    vaccines_offered_provenance_source_location = models.ForeignKey(
+        "SourceLocation",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The source location that last populated vaccines_offered",
+        on_delete=models.PROTECT,
+    )
+    vaccines_offered_last_updated_at = models.DateTimeField(
+        help_text="When vaccines_offered was last updated",
+        blank=True,
+        null=True,
+    )
+
     accepts_appointments = models.BooleanField(
         null=True, blank=True, help_text="Does this location accept appointments"
     )
     accepts_walkins = models.BooleanField(
         null=True, blank=True, help_text="Does this location accept walkins"
     )
+    appointments_walkins_provenance_report = models.ForeignKey(
+        "Report",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The report that last populated accepts_walkins and accepts_appointments",
+        on_delete=models.PROTECT,
+    )
+    appointments_walkins_provenance_source_location = models.ForeignKey(
+        "SourceLocation",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The source location that last populated accepts_walkins and accepts_appointments",
+        on_delete=models.PROTECT,
+    )
+    appointments_walkins_last_updated_at = models.DateTimeField(
+        help_text="When accepts_walkins and accepts_appointments were last updated",
+        blank=True,
+        null=True,
+    )
+
     public_notes = models.TextField(blank=True, null=True)
 
     google_places_id = CharTextField(
