@@ -581,7 +581,15 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "state",
         "provider",
     )
-    raw_id_fields = ("county", "provider", "duplicate_of")
+    raw_id_fields = (
+        "county",
+        "provider",
+        "duplicate_of",
+        "appointments_walkins_provenance_source_location",
+        "vaccines_offered_provenance_report",
+        "vaccines_offered_provenance_source_location",
+        "appointments_walkins_provenance_report",
+    )
     readonly_fields = (
         "scooby_report_link",
         "created_at",
@@ -608,6 +616,12 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "accepts_appointments",
         "accepts_walkins",
         "public_notes",
+        "appointments_walkins_provenance_source_location",
+        "vaccines_offered_provenance_report",
+        "vaccines_offered_provenance_source_location",
+        "appointments_walkins_provenance_report",
+        "appointments_walkins_last_updated_at",
+        "vaccines_offered_last_updated_at",
     )
 
     def save_model(self, request, obj, form, change):
