@@ -13,6 +13,36 @@
 
 <pre>{{ derived_availability_and_inventory }}</pre>
 
+{% if availability_timeline %}
+  <p>Availability:</p>
+  <ul>
+    {% for item in availability_timeline %}
+      <li><strong>{{ item.when }}</strong> ({{ item.type }})<br>
+      {% if item.type == "source_location" %}
+        {{ item.source_location.import_json.availability }} according to {{ item.source_location.source_uid }}
+      {% else %}
+        <em>{{ item.report.availability }}</em> according to {{ item.report }}
+      {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if vaccines_offered_timeline %}
+  <p>Vaccines offered:</p>
+  <ul>
+    {% for item in vaccines_offered_timeline %}
+      <li><strong>{{ item.when }}</strong> ({{ item.type }})<br>
+      {% if item.type == "source_location" %}
+        {{ item.source_location.import_json.inventory }} according to {{ item.source_location.source_uid }}
+      {% else %}
+        <em>{{ item.report.vaccines_offered }}</em> according to {{ item.report }}
+      {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
 {% for title, content in api_previews %}
   <h2>{{ title }}</h2>
   <pre>{{ content }}</pre>
