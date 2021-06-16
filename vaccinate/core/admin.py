@@ -680,6 +680,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             obj.is_pending_review = request.user.groups.filter(
                 name="WB Trainee"
             ).exists()
+        if obj.claimed_by and "claimed_by" in form.changed_data:
+            obj.claimed_at = timezone.now()
 
         super().save_model(request, obj, form, change)
 
