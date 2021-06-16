@@ -6,6 +6,7 @@ from core.models import (
     AppointmentTag,
     AvailabilityTag,
     ConcordanceIdentifier,
+    County,
     Location,
     Reporter,
     SourceLocation,
@@ -43,6 +44,7 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
     (
         ("q=location+1", ["Location 1", "Location 10"]),
         ("state=ks", ["Location 6"]),
+        ("county_fips=06025", ["Location 3"]),
         ("idref=google_places:123", ["Location 7"]),
         ("authority=google_places", ["Location 7", "Location 8"]),
         (
@@ -85,6 +87,9 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
     in_kansas = ten_locations[5]
     in_kansas.state = State.objects.get(name="Kansas")
     in_kansas.save()
+    in_imperial_county_ca = ten_locations[2]
+    in_imperial_county_ca.county = County.objects.get(fips_code="06025")
+    in_imperial_county_ca.save()
     not_exportable = ten_locations[8]
     not_exportable_report = not_exportable.reports.create(
         reported_by=Reporter.objects.get_or_create(external_id="auth0:reporter")[0],
