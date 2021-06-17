@@ -153,16 +153,19 @@ def location(request, public_id):
         )
     vaccines_offered_timeline.sort(key=lambda r: r["when"], reverse=True)
 
+    derived = location.derive_availability_and_inventory()
+
     return render(
         request,
         "location.html",
         {
             "location": location,
-            "derived_availability_and_inventory": json.dumps(
-                location.derive_availability_and_inventory()._asdict(),
+            "derived_raw": json.dumps(
+                derived._asdict(),
                 indent=4,
                 default=lambda v: v.isoformat() if hasattr(v, "isoformat") else repr(v),
             ),
+            "derived": derived,
             "availability_timeline": availability_timeline,
             "vaccines_offered_timeline": vaccines_offered_timeline,
             "source_locations": location.matched_source_locations.order_by(
