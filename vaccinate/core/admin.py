@@ -432,26 +432,6 @@ def unclaim_objects_you_have_claimed(modeladmin, request, queryset, object_name)
     )
 
 
-def claim_reports(modeladmin, request, queryset):
-    claim_objects(modeladmin, request, queryset, object_name="report")
-
-
-def claim_locations(modeladmin, request, queryset):
-    claim_objects(modeladmin, request, queryset, object_name="location")
-
-
-def unclaim_reports_you_have_claimed(modeladmin, request, queryset):
-    unclaim_objects_you_have_claimed(
-        modeladmin, request, queryset, object_name="report"
-    )
-
-
-def unclaim_locations_you_have_claimed(modeladmin, request, queryset):
-    unclaim_objects_you_have_claimed(
-        modeladmin, request, queryset, object_name="location"
-    )
-
-
 @admin.register(LocationReviewTag)
 class LocationReviewTagAdmin(admin.ModelAdmin):
     search_fields = ("tag",)
@@ -505,8 +485,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "claimed_by",
     ]
     actions = [
-        claim_locations,
-        unclaim_locations_you_have_claimed,
+        "claim_locations",
+        "unclaim_locations_you_have_claimed",
         "bulk_approve_locations",
         export_as_csv_action(),
         export_as_csv_action(
@@ -725,6 +705,14 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "public_notes",
         "claimed_at",
     )
+
+    def claim_locations(self, request, queryset):
+        claim_objects(self, request, queryset, object_name="location")
+
+    def unclaim_locations_you_have_claimed(self, request, queryset):
+        unclaim_objects_you_have_claimed(
+            self, request, queryset, object_name="location"
+        )
 
     def bulk_approve_locations(self, request, queryset):
         pending_review = queryset.filter(is_pending_review=True)
@@ -959,20 +947,6 @@ class ReportReviewNoteInline(admin.StackedInline):
         return False
 
 
-def bulk_approve_reports(modeladmin, request, queryset):
-    pending_review = queryset.filter(is_pending_review=True)
-    # Add a comment to them all
-    approved = ReportReviewTag.objects.get(tag="Approved")
-    for report in pending_review:
-        note = report.review_notes.create(author=request.user)
-        note.tags.add(approved)
-    count = pending_review.count()
-    messages.success(
-        request,
-        "Approved {} report{}".format(count, "s" if count != 1 else ""),
-    )
-
-
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     save_on_top = True
@@ -1001,9 +975,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     autocomplete_fields = ("availability_tags", "claimed_by")
     list_display_links = ("id", "created_at", "public_id")
     actions = [
-        claim_reports,
-        unclaim_reports_you_have_claimed,
-        bulk_approve_reports,
+        "claim_reports",
+        "unclaim_reports_you_have_claimed",
+        "bulk_approve_reports",
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
             extra_columns=["availability_tags"],
@@ -1141,6 +1115,31 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             },
         ),
     )
+
+    def claim_reports(self, request, queryset):
+        claim_objects(self, request, queryset, object_name="report")
+
+    def unclaim_reports_you_have_claimed(self, request, queryset):
+        unclaim_objects_you_have_claimed(self, request, queryset, object_name="report")
+
+    def bulk_approve_reports(self, request, queryset):
+        pending_review = queryset.filter(is_pending_review=True)
+        count = pending_review.count()
+
+        if count:
+            approved = ReportReviewTag.objects.get(tag="Approved")
+
+            for report in pending_review:
+                note = report.review_notes.create(author=request.user)
+                note.tags.add(approved)
+
+            pending_review.update(is_pending_review=False)
+
+        self.message_user(
+            request,
+            f"Approved {count} report{'s' if count != 1 else ''}",
+            messages.SUCCESS,
+        )
 
     def created_id_deleted(self, obj):
         date = (
