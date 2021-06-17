@@ -449,6 +449,20 @@ class Location(gis_models.Model):
         default=False, help_text="Locations that are pending review by our QA team"
     )
 
+    claimed_by = models.ForeignKey(
+        "auth.User",
+        related_name="claimed_locations",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        help_text="QA reviewer who has claimed this location",
+    )
+    claimed_at = models.DateTimeField(
+        help_text="When the QA reviewer claimed this location",
+        blank=True,
+        null=True,
+    )
+
     def __str__(self):
         return self.name
 
@@ -762,6 +776,33 @@ class Location(gis_models.Model):
         # from the call request queue
         if Location.valid_for_call().filter(pk=self.pk).count() == 0:
             CallRequest.objects.filter(location_id=self.id, completed=False).delete()
+
+
+class LocationReviewTag(models.Model):
+    tag = models.CharField(unique=True, max_length=64)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.tag
+
+
+class LocationReviewNote(models.Model):
+    location = models.ForeignKey(
+        Location, related_name="location_review_notes", on_delete=models.PROTECT
+    )
+    author = models.ForeignKey(
+        "auth.User", related_name="location_review_notes", on_delete=models.PROTECT
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    note = models.TextField(blank=True)
+    tags = models.ManyToManyField(
+        LocationReviewTag,
+        related_name="location_review_notes",
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"{self.author} review note on {self.report}"
 
 
 class Reporter(models.Model):
