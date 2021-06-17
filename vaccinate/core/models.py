@@ -563,16 +563,16 @@ class LocationReviewTag(models.Model):
 
 class LocationReviewNote(models.Model):
     location = models.ForeignKey(
-        Location, related_name="review_notes", on_delete=models.PROTECT
+        Location, related_name="location_review_notes", on_delete=models.PROTECT
     )
     author = models.ForeignKey(
-        "auth.User", related_name="review_notes", on_delete=models.PROTECT
+        "auth.User", related_name="location_review_notes", on_delete=models.PROTECT
     )
     created_at = models.DateTimeField(default=timezone.now)
     note = models.TextField(blank=True)
     tags = models.ManyToManyField(
         LocationReviewTag,
-        related_name="review_notes",
+        related_name="location_review_notes",
         blank=True,
     )
 
