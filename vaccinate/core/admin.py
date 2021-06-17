@@ -29,6 +29,8 @@ from .models import (
     EvaReport,
     ImportRun,
     Location,
+    LocationReviewNote,
+    LocationReviewTag,
     LocationType,
     Provider,
     ProviderPhase,
@@ -457,6 +459,56 @@ def bulk_approve_locations(modeladmin, request, queryset):
         request,
         f"Approved {count} location{'s' if count != 1 else ''}",
     )
+
+
+@admin.register(LocationReviewTag)
+class LocationReviewTagAdmin(admin.ModelAdmin):
+    search_fields = ("tag",)
+
+
+@admin.register(LocationReviewNote)
+class LocationReviewNoteAdmin(admin.ModelAdmin):
+    list_display_links = None
+    list_display = (
+        "created_at",
+        "author",
+        # "location_summary",
+        "note_tags",
+        "note",
+    )
+    readonly_fields = ("created_at", "author", "tags")
+    ordering = ("-created_at",)
+
+    def get_actions(self, request):
+        return []
+
+    def queryset(self, request, queryset):
+        return queryset.select_related("location__created_by")
+
+    # def report_summary(self, obj):
+    #     return mark_safe(
+    #         f"<strong>Report <a href=\"/admin/core/location/{obj.id}/change/\">{obj.public_id}</a></strong>"
+    #         '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
+    #             obj.report_id,
+    #             obj.report.public_id,
+    #             escape(obj.report.reported_by),
+    #             dateformat.format(
+    #                 timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
+    #             ),
+    #         )
+    #         + '<br>On <a href="/admin/core/location/{}/change/">{}</a>'.format(
+    #             obj.report.location_id, escape(obj.report.location.name)
+    #         )
+    #     )
+
+    def note_tags(self, obj):
+        return ", ".join([t.tag for t in obj.tags.all()])
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Location)
