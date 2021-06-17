@@ -842,6 +842,38 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             + "</div></div>"
         )
 
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["show_save_and_add_another"] = False
+        extra_context[
+            "your_pending_claimed_locations"
+        ] = request.user.claimed_locations.filter(
+            is_pending_review=True, soft_deleted=False
+        ).count()
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
+    def response_change(self, request, obj):
+        res = super().response_change(request, obj)
+        if "_review_next" in request.POST:
+            next_to_review = (
+                request.user.claimed_locations.filter(
+                    is_pending_review=True, soft_deleted=False
+                )
+                .exclude(id=obj.id)
+                .first()
+            )
+            if next_to_review:
+                return HttpResponseRedirect(
+                    "/admin/core/location/{}/change/".format(next_to_review.pk)
+                )
+        else:
+            return res
+
 
 class ReporterProviderFilter(admin.SimpleListFilter):
     title = "Provider"
