@@ -452,23 +452,6 @@ def unclaim_locations_you_have_claimed(modeladmin, request, queryset):
     )
 
 
-def bulk_approve_locations(modeladmin, request, queryset):
-    pending_review = queryset.filter(is_pending_review=True)
-    approved = LocationReviewTag.objects.get(tag="Approved")
-
-    for location in pending_review:
-        note = location.location_review_notes.create(author=request.user)
-        note.tags.add(approved)
-
-    count = pending_review.count()
-    pending_review.update(is_pending_review=False)
-
-    messages.success(
-        request,
-        f"Approved {count} location{'s' if count != 1 else ''}",
-    )
-
-
 @admin.register(LocationReviewTag)
 class LocationReviewTagAdmin(admin.ModelAdmin):
     search_fields = ("tag",)
@@ -529,7 +512,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     actions = [
         claim_locations,
         unclaim_locations_you_have_claimed,
-        bulk_approve_locations,
+        "bulk_approve_locations",
         export_as_csv_action(),
         export_as_csv_action(
             specific_columns={
@@ -747,6 +730,25 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "public_notes",
         "claimed_at",
     )
+
+    def bulk_approve_locations(self, request, queryset):
+        pending_review = queryset.filter(is_pending_review=True)
+        count = pending_review.count()
+
+        if count:
+            approved = LocationReviewTag.objects.get(tag="Approved")
+
+            for location in pending_review:
+                note = location.location_review_notes.create(author=request.user)
+                note.tags.add(approved)
+
+            pending_review.update(is_pending_review=False)
+
+        self.message_user(
+            request,
+            f"Approved {count} location{'s' if count != 1 else ''}",
+            messages.SUCCESS,
+        )
 
     def save_model(self, request, obj, form, change):
         if not change:
