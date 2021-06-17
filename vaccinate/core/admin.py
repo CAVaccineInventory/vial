@@ -454,12 +454,14 @@ def unclaim_locations_you_have_claimed(modeladmin, request, queryset):
 
 def bulk_approve_locations(modeladmin, request, queryset):
     pending_review = queryset.filter(is_pending_review=True)
-    # Add a comment to them all
     approved = LocationReviewTag.objects.get(tag="Approved")
+
     for location in pending_review:
         note = location.location_review_notes.create(author=request.user)
         note.tags.add(approved)
+
     count = pending_review.count()
+    pending_review.update(is_pending_review=False)
 
     messages.success(
         request,
