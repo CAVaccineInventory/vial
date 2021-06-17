@@ -457,7 +457,7 @@ def bulk_approve_locations(modeladmin, request, queryset):
     # Add a comment to them all
     approved = LocationReviewTag.objects.get(tag="Approved")
     for location in pending_review:
-        note = location.review_notes.create(author=request.user)
+        note = location.location_review_notes.create(author=request.user)
         note.tags.add(approved)
     count = pending_review.count()
 
