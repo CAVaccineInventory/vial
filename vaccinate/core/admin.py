@@ -767,6 +767,15 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             messages.SUCCESS,
         )
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for instance in instances:
+            instance.author = request.user
+            instance.save()
+        formset.save_m2m()
+
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
