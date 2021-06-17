@@ -477,6 +477,19 @@ class LocationReviewNoteAdmin(admin.ModelAdmin):
         return False
 
 
+class LocationReviewNoteInline(admin.StackedInline):
+    model = LocationReviewNote
+    extra = 1
+    readonly_fields = ("created_at", "author")
+    autocomplete_fields = ("tags",)
+
+    def has_add_permission(self, request, obj):
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
@@ -500,6 +513,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             description="Export CSV with phone and website info",
         ),
     ]
+    inlines = [LocationReviewNoteInline]
     fieldsets = (
         (
             None,
