@@ -463,7 +463,7 @@ class LocationReviewNoteAdmin(admin.ModelAdmin):
     list_display = (
         "created_at",
         "author",
-        # "location_summary",
+        "location_summary",
         "note_tags",
         "note",
     )
@@ -476,21 +476,16 @@ class LocationReviewNoteAdmin(admin.ModelAdmin):
     def queryset(self, request, queryset):
         return queryset.select_related("location__created_by")
 
-    # def report_summary(self, obj):
-    #     return mark_safe(
-    #         f"<strong>Report <a href=\"/admin/core/location/{obj.id}/change/\">{obj.public_id}</a></strong>"
-    #         '<strong>Report <a href="/admin/core/report/{}/change/">{}</a></strong><br>by {}<br>on {}'.format(
-    #             obj.report_id,
-    #             obj.report.public_id,
-    #             escape(obj.report.reported_by),
-    #             dateformat.format(
-    #                 timezone.localtime(obj.report.created_at), "jS M Y g:i:s A e"
-    #             ),
-    #         )
-    #         + '<br>On <a href="/admin/core/location/{}/change/">{}</a>'.format(
-    #             obj.report.location_id, escape(obj.report.location.name)
-    #         )
-    #     )
+    def location_summary(self, obj):
+        return mark_safe(
+            f"""<strong>Location <a href=\"/admin/core/location/{obj.location.id}/change/\">{obj.location.public_id}</a></strong>
+            <br>by {escape(obj.location.created_by)}</br>
+            on {dateformat.format(
+                    timezone.localtime(obj.location.created_at), "jS M Y g:i:s A e"
+                )}
+            <br>On <a href="/admin/core/location/{obj.location.id}/change/">{obj.location.name}</a>
+            """
+        )
 
     def note_tags(self, obj):
         return ", ".join([t.tag for t in obj.tags.all()])
