@@ -802,7 +802,7 @@ class LocationReviewNote(models.Model):
     )
 
     def __str__(self):
-        return f"{self.author} review note on {self.report}"
+        return f"{self.author} review note on {self.location}"
 
 
 class Reporter(models.Model):
