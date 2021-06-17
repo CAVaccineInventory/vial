@@ -85,11 +85,89 @@ def location(request, public_id):
         data = transform(json.loads(content))
         api_previews[title] = json.dumps(data, indent=4)
 
+    # Come up with a timeline of source locations and reports
+    availability_reports = (
+        location.reports.all()
+        .exclude(soft_deleted=True)
+        .prefetch_related("availability_tags")
+        .exclude(availability_tags__group="skip")
+        .order_by("-created_at")
+    )
+
+    availability_source_locations = (
+        location.matched_source_locations.all()
+        .order_by("-last_imported_at")
+        .exclude(import_json__availability=None)
+    )
+
+    vaccines_offered_reports = (
+        location.reports.all()
+        .exclude(soft_deleted=True)
+        .prefetch_related("availability_tags")
+        .exclude(availability_tags__group="skip")
+        .exclude(vaccines_offered__isnull=True)
+        .order_by("-created_at")
+    )
+
+    vaccines_offered_source_locations = (
+        location.matched_source_locations.all()
+        .order_by("-last_imported_at")
+        .exclude(import_json__inventory=None)
+    )
+
+    availability_timeline = []
+    for report in availability_reports:
+        availability_timeline.append(
+            {
+                "type": "report",
+                "report": report,
+                "when": report.created_at,
+            }
+        )
+    for source_location in availability_source_locations:
+        availability_timeline.append(
+            {
+                "type": "source_location",
+                "source_location": source_location,
+                "when": source_location.last_imported_at,
+            }
+        )
+    availability_timeline.sort(key=lambda r: r["when"], reverse=True)
+
+    vaccines_offered_timeline = []
+    for report in vaccines_offered_reports:
+        vaccines_offered_timeline.append(
+            {
+                "type": "report",
+                "report": report,
+                "when": report.created_at,
+            }
+        )
+    for source_location in vaccines_offered_source_locations:
+        vaccines_offered_timeline.append(
+            {
+                "type": "source_location",
+                "source_location": source_location,
+                "when": source_location.last_imported_at,
+            }
+        )
+    vaccines_offered_timeline.sort(key=lambda r: r["when"], reverse=True)
+
+    derived = location.derive_availability_and_inventory()
+
     return render(
         request,
         "location.html",
         {
             "location": location,
+            "derived_raw": json.dumps(
+                derived._asdict(),
+                indent=4,
+                default=lambda v: v.isoformat() if hasattr(v, "isoformat") else repr(v),
+            ),
+            "derived": derived,
+            "availability_timeline": availability_timeline,
+            "vaccines_offered_timeline": vaccines_offered_timeline,
             "source_locations": location.matched_source_locations.order_by(
                 "-created_at"
             ).prefetch_related("concordances"),

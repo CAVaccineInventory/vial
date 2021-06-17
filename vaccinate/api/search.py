@@ -5,7 +5,7 @@ from typing import Callable, Dict, Union
 import beeline
 import orjson
 from core.baseconverter import pid
-from core.models import ConcordanceIdentifier, Location, SourceLocation, State
+from core.models import ConcordanceIdentifier, County, Location, SourceLocation, State
 from core.utils import keyset_pagination_iterator
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance
@@ -46,6 +46,7 @@ def search_locations(
     q = (request.GET.get("q") or "").strip().lower()
     all = request.GET.get("all")
     state = (request.GET.get("state") or "").upper()
+    county_fips = request.GET.get("county_fips") or ""
     exportable = request.GET.get("exportable")
     latitude = request.GET.get("latitude")
     longitude = request.GET.get("longitude")
@@ -55,6 +56,13 @@ def search_locations(
             State.objects.get(abbreviation=state)
         except State.DoesNotExist:
             return JsonResponse({"error": "State does not exist"}, status=400)
+    if county_fips:
+        try:
+            County.objects.get(fips_code=county_fips)
+        except County.DoesNotExist:
+            return JsonResponse(
+                {"error": "County does not exist for that FIPS code"}, status=400
+            )
     # debug wraps in HTML so we can run django-debug-toolbar
     debug = request.GET.get("debug")
     if format == "map":
@@ -71,6 +79,8 @@ def search_locations(
         qs = qs.filter(name__icontains=q)
     if state:
         qs = qs.filter(state__abbreviation=state)
+    if county_fips:
+        qs = qs.filter(county__fips_code=county_fips)
     if latitude and longitude and radius:
         for value in (latitude, longitude, radius):
             try:

@@ -575,6 +575,12 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "dn_latest_non_skip_report",
                     "dn_skip_report_count",
                     "dn_yes_report_count",
+                    "appointments_walkins_last_updated_at",
+                    "appointments_walkins_provenance_source_location",
+                    "vaccines_offered_provenance_report",
+                    "vaccines_offered_last_updated_at",
+                    "vaccines_offered_provenance_source_location",
+                    "appointments_walkins_provenance_report",
                 ),
             },
         ),
@@ -676,7 +682,15 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "state",
         "provider",
     )
-    raw_id_fields = ("county", "provider", "duplicate_of")
+    raw_id_fields = (
+        "county",
+        "provider",
+        "duplicate_of",
+        "appointments_walkins_provenance_source_location",
+        "vaccines_offered_provenance_report",
+        "vaccines_offered_provenance_source_location",
+        "appointments_walkins_provenance_report",
+    )
     readonly_fields = (
         "scooby_report_link",
         "created_at",
@@ -704,6 +718,12 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "accepts_walkins",
         "public_notes",
         "claimed_at",
+        "appointments_walkins_provenance_source_location",
+        "vaccines_offered_provenance_report",
+        "vaccines_offered_provenance_source_location",
+        "appointments_walkins_provenance_report",
+        "appointments_walkins_last_updated_at",
+        "vaccines_offered_last_updated_at",
     )
 
     def claim_locations(self, request, queryset):

@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("core", "0147_add_claimed_at_and_claimed_by_to_location"),
+        ("core", "0149_add_claimed_at_and_claimed_by_to_location"),
     ]
 
     operations = [

@@ -22,6 +22,7 @@ Optional query string parameters:
 - `size=` - the number of results to return, up to 1000
 - `format=` - the output format, see below.
 - `state=` - a state code such as `CA` or `OR`
+- `county_fips=` - a county FIPS code such as `06025` - you can look these up using [us-counties.datasette.io/counties/counties](https://us-counties.datasette.io/counties/counties)
 - `id=` - a public ID for one of our locations, can be passed multiple times to retrieve multiple locations at once by their IDs
 - `idref=` - one or more concordance identifiers, e.g. `google_places:ChIJsb3xzpJNg4ARVC7_9DDwJnU` - will return results that match any of those identifiers
 - `authority=` - one or more concordance authorities e.g. `google_places` - returns only results that have a concordance identifier for at least one of those places

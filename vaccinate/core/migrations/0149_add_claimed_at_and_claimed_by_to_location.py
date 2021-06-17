@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("core", "0146_remove_ct_from_source_locations_issue_655"),
+        ("core", "0148_rename_ambigous_counties"),
     ]
 
     operations = [
