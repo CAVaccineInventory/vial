@@ -7,14 +7,50 @@
 <h2><samp style="font-size: 1.25em">{{ location.public_id }}</samp> - {{ location.full_address }}</h2>
 <p><a href="/location">Find another location</a></p>
 
+<section style="border: 2px solid #ccc; padding: 0.5em">
 <h2>Derived availability and inventory</h2>
 
 <p>We have logic that derives vaccine inventory and availability based on a combination of recently filed reports and recently scraped source locations. The <code>location.derived_availability_and_inventory()</code> method for this location currently returns:</p>
 
-<pre>{{ derived_availability_and_inventory }}</pre>
+<p><strong>Vaccines offered:</strong> {{ derived.vaccines_offered|default:"-" }}</p>
+  <p>According to
+  {% if derived.vaccines_offered_provenance_report %}report: {{ derived.vaccines_offered_provenance_report }}
+  {% else %}
+  source location: {{ derived.vaccines_offered_provenance_source_location }}
+  {% endif %}
+  on {{ derived.vaccines_offered_last_updated_at }}
+  {% if derived.vaccines_offered_provenance_report and derived.most_recent_source_location_on_vaccines_offered %}
+    <blockquote style="margin-top: 0">Most recent source location with an opinion was {{ derived.most_recent_source_location_on_vaccines_offered }} on {{ derived.most_recent_source_location_on_vaccines_offered.last_imported_at }} which said {{ derived.most_recent_source_location_on_vaccines_offered.vaccines_offered }}</blockquote>
+  {% endif %}
+  {% if derived.vaccines_offered_provenance_source_location and derived.most_recent_report_on_vaccines_offered %}
+    <blockquote style="margin-top: 0">Most recent report with an opinion was {{ derived.most_recent_report_on_vaccines_offered }} on {{ derived.most_recent_report_on_vaccines_offered.created_at }} which said {{ derived.most_recent_report_on_vaccines_offered.vaccines_offered }}</blockquote>
+  {% endif %}
+</p>
+
+<p>
+  <strong>Accepts appointments:</strong>{% if derived.accepts_appointments %}<span style="background-color: green; color: white; padding: 0.3em">True</span>{% else %} {{ derived.accepts_appointments }}{% endif %},
+  <strong>Accepts walk-ins:</strong>{% if derived.accepts_walkins %}<span style="background-color: green; color: white; padding: 0.3em">True</span>{% else %} {{ derived.accepts_walkins }}{% endif %}</p>
+  <p>According to
+  {% if derived.appointments_walkins_provenance_report %}report: {{ derived.appointments_walkins_provenance_report }} [{{ derived.appointments_walkins_provenance_report.availability }}]
+  {% else %}
+  source location: {{ derived.appointments_walkins_provenance_source_location }} which said {{ derived.appointments_walkins_provenance_source_location.import_json.availability }}
+  {% endif %}
+  on {{ derived.appointments_walkins_last_updated_at }}
+  {% if derived.appointments_walkins_provenance_report and derived.most_recent_source_location_on_availability %}
+    <blockquote style="margin-top: 0">Most recent source location with an opinion was {{ derived.most_recent_source_location_on_availability }} on {{ derived.most_recent_source_location_on_availability.last_imported_at }} which said {{ derived.most_recent_source_location_on_availability.import_json.availability }}</blockquote>
+  {% endif %}
+  {% if derived.vaccines_offered_provenance_source_location and derived.most_recent_report_on_availability %}
+    <blockquote style="margin-top: 0">Most recent report with an opinion was {{ derived.most_recent_report_on_availability }} on {{ derived.most_recent_report_on_availability.created_at }} which said {{ derived.most_recent_report_on_availability.availability }}</blockquote>
+  {% endif %}
+</p>
+
+<details><summary>Raw derived data</summary>
+  <pre>{{ derived_raw }}</pre>
+</details>
+
 
 {% if availability_timeline %}
-  <p>Availability:</p>
+  <p>Availability timeline:</p>
   <ul>
     {% for item in availability_timeline %}
       <li><strong>{{ item.when }}</strong> ({{ item.type }})<br>
@@ -29,7 +65,7 @@
 {% endif %}
 
 {% if vaccines_offered_timeline %}
-  <p>Vaccines offered:</p>
+  <p>Vaccines offered timeline:</p>
   <ul>
     {% for item in vaccines_offered_timeline %}
       <li><strong>{{ item.when }}</strong> ({{ item.type }})<br>
@@ -42,7 +78,7 @@
     {% endfor %}
   </ul>
 {% endif %}
-
+</section>
 {% for title, content in api_previews %}
   <h2>{{ title }}</h2>
   <pre>{{ content }}</pre>

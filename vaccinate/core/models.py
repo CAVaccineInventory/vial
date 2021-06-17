@@ -553,21 +553,9 @@ class Location(gis_models.Model):
                 source_location_to_use_for_vaccines_offered = None
 
         if source_location_to_use_for_vaccines_offered:
-            inventory = source_location_to_use_for_vaccines_offered.import_json[
-                "inventory"
-            ]
-            inventory_mapping = {
-                "moderna": "Moderna",
-                "pfizer_biontech": "Pfizer",
-                "johnson_johnson_janssen": "Johnson & Johnson",
-                "oxford_astrazeneca": "Astrazeneca",
-            }
-            in_stock = [
-                stock["vaccine"]
-                for stock in inventory
-                if stock.get("supply_level") != "out_of_stock"
-            ]
-            vaccines_offered = list(sorted([inventory_mapping[v] for v in in_stock]))
+            vaccines_offered = (
+                source_location_to_use_for_vaccines_offered.vaccines_offered
+            )
             vaccines_offered_provenance_source_location = (
                 source_location_to_use_for_vaccines_offered
             )
@@ -1612,6 +1600,25 @@ class SourceLocation(gis_models.Model):
         except cls.DoesNotExist:
             raise ValueError("SourceLocation '{}' does not exist".format(id))
         return obj
+
+    @property
+    def vaccines_offered(self):
+        try:
+            inventory = self.import_json["inventory"]
+        except KeyError:
+            return None
+        inventory_mapping = {
+            "moderna": "Moderna",
+            "pfizer_biontech": "Pfizer",
+            "johnson_johnson_janssen": "Johnson & Johnson",
+            "oxford_astrazeneca": "Astrazeneca",
+        }
+        in_stock = [
+            stock["vaccine"]
+            for stock in inventory
+            if stock.get("supply_level") != "out_of_stock"
+        ]
+        return list(sorted([inventory_mapping[v] for v in in_stock]))
 
     class Meta:
         db_table = "source_location"
