@@ -757,6 +757,14 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
 
+        # If the user toggled it to is_pending_review=False, record note
+        marked_as_reviewed = (
+            "is_pending_review" in form.changed_data and not obj.is_pending_review
+        )
+        if marked_as_reviewed:
+            note = obj.location_review_notes.create(author=request.user)
+            note.tags.add(LocationReviewTag.objects.get(tag="Approved"))
+
         super().save_model(request, obj, form, change)
 
     def summary(self, obj):
