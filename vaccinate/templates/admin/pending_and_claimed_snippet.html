@@ -1,0 +1,27 @@
+{% if original.is_pending_review %}
+    <p style="background-color: red; color: white; padding: 0.5em">
+        This {{ name }} is <strong>pending review</strong>
+    </p>
+{% endif %}
+
+{% if original.claimed_by %}
+    <p style="background-color: {% if original.claimed_by == request.user %}green{% else %}red{% endif %}; color: white; padding: 0.5em"> 
+        {% if original.claimed_by == request.user %}
+            You claimed this {{ name }} for review
+        {% else %}
+            <strong>{{ original.claimed_by }}</strong> has claimed this {{ name }} for review
+        {% endif %}
+
+        ({{ original.claimed_at|timesince }} ago)
+
+        {% if original.claimed_by == request.user %}
+            - you have
+            {% if name == "location" %}
+                {{ your_pending_claimed_locations }} 
+            {% else %}
+                {{ your_pending_claimed_reports }} 
+            {% endif %}
+            claimed {{ name }}s that are pending review
+        {% endif %}
+    </p>
+{% endif %}

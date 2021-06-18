@@ -1,32 +1,17 @@
 {% extends "admin/change_form.html" %}
 
 {% block field_sets %}
-{% if original.is_pending_review %}
-  <p style="background-color: red; color: white; padding: 0.5em">
-    This report is <strong>pending review</strong>
-  </p>
-{% endif %}
-{% if original.claimed_by %}
-  <p style="background-color: {% if original.claimed_by == request.user %}green{% else %}red{% endif %}; color: white; padding: 0.5em">
-    {% if original.claimed_by == request.user %}
-      You claimed this report for review
-    {% else %}
-      <strong>{{ original.claimed_by }}</strong> has claimed this report for review
-    {% endif %}
-    ({{ original.claimed_at|timesince }} ago)
-    {% if original.claimed_by == request.user %}
-      - you have {{ your_pending_claimed_reports }} claimed reports that are pending review
-    {% endif %}
-  </p>
-{% endif %}
 
-{{ block.super }}
-{% endblock %}
+  {% include "admin/pending_and_claimed_snippet.html" with name="report" %}
+
+  {{ block.super }}
+
+{% endblock field_sets %}
 
 {% block submit_buttons_bottom %}
-{% load admin_modify %}
-{% if your_pending_claimed_reports > 1 %}
-  <input type="submit" value="Save and review next pending report ({{ your_pending_claimed_reports|add:"-1" }} remaining)" name="_review_next">
-{% endif %}
-{% submit_row %}
-{% endblock %}
+  {% load admin_modify %}
+    {% if your_pending_claimed_reports > 1 %}
+      <input type="submit" value="Save and review next pending report ({{ your_pending_claimed_reports|add:"-1" }} remaining)" name="_review_next">
+    {% endif %}
+  {% submit_row %}
+{% endblock submit_buttons_bottom %}
