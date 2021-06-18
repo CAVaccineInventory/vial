@@ -192,6 +192,9 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [os.path.join(BASE_DIR, "templates")],
         "OPTIONS": {
+            "libraries": {
+                "admin_tags": "core.templatetags.admin_tags",
+            },
             "loaders": [
                 "django.template.loaders.filesystem.Loader",  # BASE_DIR/templates templates
                 "django.template.loaders.app_directories.Loader",  # templates from app dirs

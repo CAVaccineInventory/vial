@@ -53,6 +53,25 @@ textarea#id_full_address {
     display: grid;
     grid-template-columns: 1fr 1fr;
 }
+
+.pending-review {
+  background-color: red; 
+  color: white; 
+  padding: 0.5em
+}
+
+.claimed-by {
+  color: white; 
+  padding: 0.5em
+}
+
+.claimed-by.user {
+  background-color: red;
+}
+.claimed-by.current-user {
+  background-color: green;
+}
+}
 </style>
 {{ block.super }}
 {% endblock %}

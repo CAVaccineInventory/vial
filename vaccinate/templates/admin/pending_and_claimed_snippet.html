@@ -1,11 +1,14 @@
+{% load admin_tags %}
+{% get_claimed_by_user_style as claimed_by_user_style %}
+
 {% if original.is_pending_review %}
-    <p style="background-color: red; color: white; padding: 0.5em">
+    <p class="pending-review">
         This {{ name }} is <strong>pending review</strong>
     </p>
 {% endif %}
 
 {% if original.claimed_by %}
-    <p style="background-color: {% if original.claimed_by == request.user %}green{% else %}red{% endif %}; color: white; padding: 0.5em"> 
+    <p class="claimed-by {{ claimed_by_user_style }}"> 
         {% if original.claimed_by == request.user %}
             You claimed this {{ name }} for review
         {% else %}
@@ -15,13 +18,7 @@
         ({{ original.claimed_at|timesince }} ago)
 
         {% if original.claimed_by == request.user %}
-            - you have
-            {% if name == "location" %}
-                {{ your_pending_claimed_locations }} 
-            {% else %}
-                {{ your_pending_claimed_reports }} 
-            {% endif %}
-            claimed {{ name }}s that are pending review
+            - you have {% num_claimed_reports %} claimed {{ name }}s that are pending review
         {% endif %}
     </p>
 {% endif %}
