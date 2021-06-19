@@ -2,8 +2,8 @@
 
 {% block field_sets %}
   {% if original.soft_deleted %}
-    <p style="background-color: red; color: white; padding: 0.5em">
-    This {{ location }} has been <strong>soft deleted</strong>
+    <p class="soft-deleted">
+      This {{ location }} has been <strong>soft deleted</strong>
     </p>
   {% endif %}
 

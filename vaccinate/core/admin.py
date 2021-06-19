@@ -887,10 +887,12 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_save_and_add_another"] = False
-        extra_context[
-            "your_pending_claimed_locations"
-        ] = request.user.claimed_locations.filter(
+        location = Location.objects.get(id=object_id)
+        claimed_by_current_user = request.user == location.claimed_by
+        extra_context["claimed_by_user_style"] = (
+            "current-user" if claimed_by_current_user else "user"
+        )
+        extra_context["num_claimed"] = request.user.claimed_locations.filter(
             is_pending_review=True, soft_deleted=False
         ).count()
         return super().change_view(
@@ -1290,10 +1292,12 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_save_and_add_another"] = False
-        extra_context[
-            "your_pending_claimed_reports"
-        ] = request.user.claimed_reports.filter(
+        report = Report.objects.get(id=object_id)
+        claimed_by_current_user = request.user == report.claimed_by
+        extra_context["claimed_by_user_style"] = (
+            "current-user" if claimed_by_current_user else "user"
+        )
+        extra_context["num_claimed"] = request.user.claimed_reports.filter(
             is_pending_review=True, soft_deleted=False
         ).count()
         return super().change_view(
