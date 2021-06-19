@@ -776,6 +776,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             instance.save()
         formset.save_m2m()
 
+    def create_approved_review_note(self, obj, author):
+        note = obj.location_review_notes.create(author=author)
+        note.tags.add(LocationReviewTag.objects.get(tag="Approved"))
+
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
@@ -785,13 +789,17 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
 
+        if "_approve_claim" in request.POST:
+            obj.is_pending_review = False
+            self.create_approved_review_note(obj, author=request.user)
+
         # If the user toggled it to is_pending_review=False, record note
         marked_as_reviewed = (
             "is_pending_review" in form.changed_data and not obj.is_pending_review
         )
+
         if marked_as_reviewed:
-            note = obj.location_review_notes.create(author=request.user)
-            note.tags.add(LocationReviewTag.objects.get(tag="Approved"))
+            self.create_approved_review_note(obj, author=request.user)
 
         super().save_model(request, obj, form, change)
 
