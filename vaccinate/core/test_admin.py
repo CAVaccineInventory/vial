@@ -31,6 +31,12 @@ def test_admin_create_location_sets_public_id_and_created_by(admin_client):
             "longitude": "0",
             "vaccines_offered": "[]",
             "_save": "Save",
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
         },
     )
     # 200 means the form is being re-displayed with errors
@@ -61,6 +67,12 @@ def test_create_location_sets_pending_review_with_wbtrainee_role(
             "longitude": "0",
             "vaccines_offered": "[]",
             "_save": "Save",
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
         },
     )
 
