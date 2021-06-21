@@ -658,7 +658,7 @@ class Location(gis_models.Model):
                 report_to_use_for_availability.created_at
             )
 
-        return DeriveAvailabilityAndInventoryResults(
+        derived = DeriveAvailabilityAndInventoryResults(
             vaccines_offered=vaccines_offered,
             vaccines_offered_provenance_report=vaccines_offered_provenance_report,
             vaccines_offered_provenance_source_location=vaccines_offered_provenance_source_location,
@@ -673,6 +673,42 @@ class Location(gis_models.Model):
             most_recent_report_on_availability=most_recent_report_on_availability,
             most_recent_source_location_on_availability=most_recent_source_location_on_availability,
         )
+        if save:
+            self.vaccines_offered = derived.vaccines_offered
+            self.vaccines_offered_provenance_report = (
+                derived.vaccines_offered_provenance_report
+            )
+            self.vaccines_offered_provenance_source_location = (
+                derived.vaccines_offered_provenance_source_location
+            )
+            self.vaccines_offered_last_updated_at = (
+                derived.vaccines_offered_last_updated_at
+            )
+            self.accepts_appointments = derived.accepts_appointments
+            self.accepts_walkins = derived.accepts_walkins
+            self.appointments_walkins_provenance_report = (
+                derived.appointments_walkins_provenance_report
+            )
+            self.appointments_walkins_provenance_source_location = (
+                derived.appointments_walkins_provenance_source_location
+            )
+            self.appointments_walkins_last_updated_at = (
+                derived.appointments_walkins_last_updated_at
+            )
+            self.save(
+                update_fields=[
+                    "vaccines_offered",
+                    "vaccines_offered_provenance_report",
+                    "vaccines_offered_provenance_source_location",
+                    "vaccines_offered_last_updated_at",
+                    "accepts_appointments",
+                    "accepts_walkins",
+                    "appointments_walkins_provenance_report",
+                    "appointments_walkins_provenance_source_location",
+                    "appointments_walkins_last_updated_at",
+                ]
+            )
+        return derived
 
     @beeline.traced("update_denormalizations")
     def update_denormalizations(self):
