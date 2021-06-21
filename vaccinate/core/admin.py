@@ -29,6 +29,8 @@ from .models import (
     EvaReport,
     ImportRun,
     Location,
+    LocationReviewNote,
+    LocationReviewTag,
     LocationType,
     Provider,
     ProviderPhase,
@@ -357,6 +359,27 @@ class LocationInQueueFilter(admin.SimpleListFilter):
             )
 
 
+class ClaimFilter(admin.SimpleListFilter):
+    title = "Claim status"
+
+    parameter_name = "claim_status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("you", "Claimed by you"),
+            ("anyone", "Claimed by anyone"),
+            ("unclaimed", "Unclaimed"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "you":
+            return queryset.filter(claimed_by=request.user)
+        elif self.value() == "anyone":
+            return queryset.exclude(claimed_by=None)
+        elif self.value() == "unclaimed":
+            return queryset.filter(claimed_by=None)
+
+
 class SoftDeletedFilter(admin.SimpleListFilter):
     title = "soft deleted"
 
@@ -391,11 +414,80 @@ class SoftDeletedFilter(admin.SimpleListFilter):
             return queryset.filter(soft_deleted=True)
 
 
+def claim_objects(modeladmin, request, queryset, object_name):
+    count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
+    messages.success(
+        request,
+        f"You claimed {count} {object_name}{'s' if count != 1 else ''}",
+    )
+
+
+def unclaim_objects_you_have_claimed(modeladmin, request, queryset, object_name):
+    count = queryset.filter(claimed_by=request.user).update(
+        claimed_by=None, claimed_at=None
+    )
+    messages.success(
+        request,
+        f"You unclaimed {count} {object_name}{'s' if count != 1 else ''}",
+    )
+
+
+@admin.register(LocationReviewTag)
+class LocationReviewTagAdmin(admin.ModelAdmin):
+    search_fields = ("tag",)
+
+
+@admin.register(LocationReviewNote)
+class LocationReviewNoteAdmin(admin.ModelAdmin):
+    list_display_links = None
+    list_display = (
+        "created_at",
+        "author",
+        "location_summary",
+        "note_tags",
+        "note",
+    )
+    readonly_fields = ("created_at", "author", "tags")
+    ordering = ("-created_at",)
+
+    def get_actions(self, request):
+        return []
+
+    def queryset(self, request, queryset):
+        return queryset.select_related("location__created_by")
+
+    def location_summary(self, obj):
+        return mark_safe(
+            f"""<strong>Location <a href=\"/admin/core/location/{obj.location.id}/change/\">{obj.location.public_id}</a></strong>
+            <br>by {escape(obj.location.created_by)}</br>
+            on {dateformat.format(
+                    timezone.localtime(obj.location.created_at), "jS M Y g:i:s A e"
+                )}
+            <br>On <a href="/admin/core/location/{obj.location.id}/change/">{obj.location.name}</a>
+            """
+        )
+
+    def note_tags(self, obj):
+        return ", ".join([t.tag for t in obj.tags.all()])
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
     save_on_top = True
+    autocomplete_fields = [
+        "claimed_by",
+    ]
     actions = [
+        "claim_locations",
+        "unclaim_locations_you_have_claimed",
+        "bulk_approve_locations",
         export_as_csv_action(),
         export_as_csv_action(
             specific_columns={
@@ -411,14 +503,20 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     fieldsets = (
         (
             None,
-            {"fields": ("is_pending_review",)},
-        ),
-        (
-            None,
             {"fields": ("scooby_report_link",)},
         ),
         (
-            None,
+            "QA summary",
+            {
+                "fields": (
+                    "is_pending_review",
+                    "claimed_by",
+                    "claimed_at",
+                ),
+            },
+        ),
+        (
+            "Location Details",
             {
                 "fields": (
                     "name",
@@ -562,6 +660,8 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "times_reported",
         "scooby_report_link",
         "request_a_call",
+        "is_pending_review",
+        "claimed_by",
         "full_address",
         "state",
         "county",
@@ -573,6 +673,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     )
     list_filter = (
         "is_pending_review",
+        ClaimFilter,
         LocationInQueueFilter,
         SoftDeletedFilter,
         "do_not_call",
@@ -616,6 +717,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "accepts_appointments",
         "accepts_walkins",
         "public_notes",
+        "claimed_at",
         "appointments_walkins_provenance_source_location",
         "vaccines_offered_provenance_report",
         "vaccines_offered_provenance_source_location",
@@ -624,12 +726,49 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "vaccines_offered_last_updated_at",
     )
 
+    def claim_locations(self, request, queryset):
+        claim_objects(self, request, queryset, object_name="location")
+
+    def unclaim_locations_you_have_claimed(self, request, queryset):
+        unclaim_objects_you_have_claimed(
+            self, request, queryset, object_name="location"
+        )
+
+    def bulk_approve_locations(self, request, queryset):
+        pending_review = queryset.filter(is_pending_review=True)
+        count = pending_review.count()
+
+        if count:
+            approved = LocationReviewTag.objects.get(tag="Approved")
+
+            for location in pending_review:
+                note = location.location_review_notes.create(author=request.user)
+                note.tags.add(approved)
+
+            pending_review.update(is_pending_review=False)
+
+        self.message_user(
+            request,
+            f"Approved {count} location{'s' if count != 1 else ''}",
+            messages.SUCCESS,
+        )
+
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
             obj.is_pending_review = request.user.groups.filter(
                 name="WB Trainee"
             ).exists()
+        if obj.claimed_by and "claimed_by" in form.changed_data:
+            obj.claimed_at = timezone.now()
+
+        # If the user toggled it to is_pending_review=False, record note
+        marked_as_reviewed = (
+            "is_pending_review" in form.changed_data and not obj.is_pending_review
+        )
+        if marked_as_reviewed:
+            note = obj.location_review_notes.create(author=request.user)
+            note.tags.add(LocationReviewTag.objects.get(tag="Approved"))
 
         super().save_model(request, obj, form, change)
 
@@ -722,6 +861,38 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             + "\n".join(bits)
             + "</div></div>"
         )
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["show_save_and_add_another"] = False
+        extra_context[
+            "your_pending_claimed_locations"
+        ] = request.user.claimed_locations.filter(
+            is_pending_review=True, soft_deleted=False
+        ).count()
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
+    def response_change(self, request, obj):
+        res = super().response_change(request, obj)
+        if "_review_next" in request.POST:
+            next_to_review = (
+                request.user.claimed_locations.filter(
+                    is_pending_review=True, soft_deleted=False
+                )
+                .exclude(id=obj.id)
+                .first()
+            )
+            if next_to_review:
+                return HttpResponseRedirect(
+                    "/admin/core/location/{}/change/".format(next_to_review.pk)
+                )
+        else:
+            return res
 
 
 class ReporterProviderFilter(admin.SimpleListFilter):
@@ -828,59 +999,6 @@ class ReportReviewNoteInline(admin.StackedInline):
         return False
 
 
-def claim_reports(modeladmin, request, queryset):
-    count = queryset.update(claimed_by=request.user, claimed_at=timezone.now())
-    messages.success(
-        request,
-        "You claimed {} report{}".format(count, "s" if count != 1 else ""),
-    )
-
-
-def unclaim_reports_you_have_claimed(modeladmin, request, queryset):
-    count = queryset.filter(claimed_by=request.user).update(
-        claimed_by=None, claimed_at=None
-    )
-    messages.success(
-        request,
-        "You unclaimed {} report{}".format(count, "s" if count != 1 else ""),
-    )
-
-
-def bulk_approve_reports(modeladmin, request, queryset):
-    pending_review = queryset.filter(is_pending_review=True)
-    # Add a comment to them all
-    approved = ReportReviewTag.objects.get(tag="Approved")
-    for report in pending_review:
-        note = report.review_notes.create(author=request.user)
-        note.tags.add(approved)
-    count = pending_review.count()
-    messages.success(
-        request,
-        "Approved {} report{}".format(count, "s" if count != 1 else ""),
-    )
-
-
-class ClaimFilter(admin.SimpleListFilter):
-    title = "Claim status"
-
-    parameter_name = "claim_status"
-
-    def lookups(self, request, model_admin):
-        return (
-            ("you", "Claimed by you"),
-            ("anyone", "Claimed by anyone"),
-            ("unclaimed", "Unclaimed"),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == "you":
-            return queryset.filter(claimed_by=request.user)
-        elif self.value() == "anyone":
-            return queryset.exclude(claimed_by=None)
-        elif self.value() == "unclaimed":
-            return queryset.filter(claimed_by=None)
-
-
 @admin.register(Report)
 class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     save_on_top = True
@@ -909,9 +1027,9 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     autocomplete_fields = ("availability_tags", "claimed_by")
     list_display_links = ("id", "created_at", "public_id")
     actions = [
-        claim_reports,
-        unclaim_reports_you_have_claimed,
-        bulk_approve_reports,
+        "claim_reports",
+        "unclaim_reports_you_have_claimed",
+        "bulk_approve_reports",
         export_as_csv_action(
             customize_queryset=lambda qs: qs.prefetch_related("availability_tags"),
             extra_columns=["availability_tags"],
@@ -1050,12 +1168,37 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         ),
     )
 
+    def claim_reports(self, request, queryset):
+        claim_objects(self, request, queryset, object_name="report")
+
+    def unclaim_reports_you_have_claimed(self, request, queryset):
+        unclaim_objects_you_have_claimed(self, request, queryset, object_name="report")
+
+    def bulk_approve_reports(self, request, queryset):
+        pending_review = queryset.filter(is_pending_review=True)
+        count = pending_review.count()
+
+        if count:
+            approved = ReportReviewTag.objects.get(tag="Approved")
+
+            for report in pending_review:
+                note = report.review_notes.create(author=request.user)
+                note.tags.add(approved)
+
+            pending_review.update(is_pending_review=False)
+
+        self.message_user(
+            request,
+            f"Approved {count} report{'s' if count != 1 else ''}",
+            messages.SUCCESS,
+        )
+
     def created_id_deleted(self, obj):
         date = (
             dateformat.format(timezone.localtime(obj.created_at), "j M g:iA e")
             .replace("PM", "pm")
             .replace("AM", "am")
-            .replace(" ", u"\u00a0")
+            .replace(" ", "\u00a0")
         )
         html = format_html(
             '<a href="{}">{}<br><b>{}</b></a>',
