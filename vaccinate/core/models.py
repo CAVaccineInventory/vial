@@ -515,6 +515,11 @@ class Location(gis_models.Model):
 
         Returns namedtuple of changes it would make. save=True to save those changes.
         """
+        SOURCE_NAMES_TO_CONSIDER = (
+            "vaccinefinder_org",
+            "vaccinespotter_org",
+            "getmyvax_org",
+        )
         vaccines_offered = None
         vaccines_offered_provenance_report = None
         vaccines_offered_provenance_source_location = None
@@ -540,8 +545,9 @@ class Location(gis_models.Model):
         )
         most_recent_source_location_on_vaccines_offered = (
             self.matched_source_locations.all()
-            .order_by("-last_imported_at")
+            .filter(source_name__in=SOURCE_NAMES_TO_CONSIDER)
             .exclude(import_json__inventory=None)
+            .order_by("-last_imported_at")
             .first()
         )
 
@@ -595,8 +601,9 @@ class Location(gis_models.Model):
         )
         most_recent_source_location_on_availability = (
             self.matched_source_locations.all()
-            .order_by("-last_imported_at")
+            .filter(source_name__in=SOURCE_NAMES_TO_CONSIDER)
             .exclude(import_json__availability=None)
+            .order_by("-last_imported_at")
             .first()
         )
 

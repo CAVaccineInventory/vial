@@ -107,8 +107,8 @@ def test_two_reports_vaccines_offered_should_use_most_recent(location, reporter)
 
 def test_one_source_location_vaccines_offered(location):
     source_location = location.matched_source_locations.create(
-        source_uid="test_source_location:1",
-        source_name="test_source_location",
+        source_uid="vaccinefinder_org:1",
+        source_name="vaccinefinder_org",
         name="Blah",
         import_json={
             "inventory": [
@@ -142,8 +142,8 @@ def test_one_source_location_vaccines_offered(location):
 
 def test_two_source_locations_vaccines_offered(location):
     location.matched_source_locations.create(
-        source_uid="test_source_location:1",
-        source_name="test_source_location",
+        source_uid="vaccinefinder_org:1",
+        source_name="vaccinefinder_org",
         name="Blah",
         import_json={
             "inventory": [
@@ -153,8 +153,8 @@ def test_two_source_locations_vaccines_offered(location):
         last_imported_at=timezone.now() - datetime.timedelta(hours=2),
     )
     source_location2 = location.matched_source_locations.create(
-        source_uid="test_source_location:2",
-        source_name="test_source_location",
+        source_uid="vaccinefinder_org:2",
+        source_name="vaccinefinder_org",
         name="Blah",
         import_json={
             "inventory": [
@@ -201,8 +201,8 @@ def test_report_and_source_location_vaccines_offered_most_recent_wins(
         created_at=report_created_at,
     )
     source_location = location.matched_source_locations.create(
-        source_uid="test_source_location:1",
-        source_name="test_source_location",
+        source_uid="vaccinefinder_org:1",
+        source_name="vaccinefinder_org",
         name="Blah",
         import_json={
             "inventory": [
@@ -313,8 +313,8 @@ def test_one_source_location_availability(
     expected_accepts_walkins,
 ):
     source_location = location.matched_source_locations.create(
-        source_uid="test_source_location:1",
-        source_name="test_source_location",
+        source_uid="vaccinefinder_org:1",
+        source_name="vaccinefinder_org",
         name="Blah",
         import_json={
             "availability": import_json_availability,
@@ -341,6 +341,40 @@ def test_one_source_location_availability(
     )
 
 
+@pytest.mark.parametrize(
+    "source_name,should_be_trusted",
+    (
+        ("vaccinefinder_org", True),
+        ("vaccinespotter_org", True),
+        ("getmyvax_org", True),
+        ("not_one_of_them", False),
+    ),
+)
+def test_only_trust_source_locations_from_specific_source_names(
+    location,
+    source_name,
+    should_be_trusted,
+):
+    source_location = location.matched_source_locations.create(
+        source_uid="{}:1".format(source_name),
+        source_name=source_name,
+        name="Blah",
+        import_json={"availability": {"appointments": True, "drop_in": True}},
+        last_imported_at=timezone.now() - datetime.timedelta(hours=1),
+    )
+    derived = location.derive_availability_and_inventory()
+    if should_be_trusted:
+        assert (
+            derived.appointments_walkins_provenance_source_location == source_location
+        )
+        assert derived.accepts_appointments
+        assert derived.accepts_walkins
+    else:
+        assert derived.appointments_walkins_provenance_source_location is None
+        assert not derived.accepts_appointments
+        assert not derived.accepts_walkins
+
+
 @pytest.mark.parametrize("report_is_most_recent", (True, False))
 def test_report_and_source_location_availability_most_recent_wins(
     report_is_most_recent, reporter, location
@@ -361,8 +395,8 @@ def test_report_and_source_location_availability_most_recent_wins(
     report.availability_tags.add(AvailabilityTag.objects.get(slug="walk_ins_only"))
     # The source location says appointments only:
     source_location = location.matched_source_locations.create(
-        source_uid="test_source_location:3",
-        source_name="test_source_location",
+        source_uid="vaccinefinder_org:3",
+        source_name="vaccinefinder_org",
         name="Blah",
         import_json={"availability": {"appointments": True, "drop_in": False}},
         last_imported_at=source_location_imported_at,
