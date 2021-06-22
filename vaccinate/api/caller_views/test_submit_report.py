@@ -211,3 +211,43 @@ def test_submit_report_api_example(
         "total": 0,
         "today": 0,
     }
+
+
+def test_submit_report_updates_location_fields(location, client, jwt_id_token):
+    assert location.vaccines_offered is None
+    assert location.accepts_appointments is None
+    assert location.accepts_walkins is None
+    assert location.vaccines_offered_provenance_report is None
+    assert location.appointments_walkins_provenance_report is None
+
+    random.seed(1)
+    response = client.post(
+        "/api/submitReport",
+        {
+            "Location": location.public_id,
+            "Availability": [
+                "Yes: appointment required",
+                "Vaccinating essential workers",
+            ],
+            "vaccines_offered": ["Moderna", "Johnson & Johnson", "Other"],
+        },
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(jwt_id_token),
+    )
+    assert response.status_code == 200
+    random.seed(int(time.time()))
+
+    location2 = Location.objects.get(pk=location.pk)
+    report = location2.reports.all()[0]
+    assert (
+        report.availability() == "Appointment required, Vaccinating essential workers"
+    )
+    assert report.vaccines_offered == ["Moderna", "Johnson & Johnson", "Other"]
+    assert not report.is_pending_review
+    assert not report.soft_deleted
+    # Should have updated fields on location:
+    assert location2.vaccines_offered == ["Moderna", "Johnson & Johnson", "Other"]
+    assert location2.accepts_appointments == True
+    assert location2.accepts_walkins == False
+    assert location2.vaccines_offered_provenance_report == report
+    assert location2.appointments_walkins_provenance_report == report

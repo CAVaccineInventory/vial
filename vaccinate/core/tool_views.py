@@ -107,6 +107,7 @@ def bulk_delete_reports(request):
                 locations_qs = Location.objects.filter(pk__in=location_ids)
                 for location in locations_qs:
                     location.update_denormalizations()
+                    location.derive_availability_and_inventory(save=True)
                 message = (
                     "Delete complete - {} affected locations have been updated".format(
                         locations_qs.count()

@@ -1153,12 +1153,16 @@ class Report(models.Model):
         if set_public_id_later:
             self.public_id = self.pid
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
-        self.location.update_denormalizations()
+        location = self.location
+        location.update_denormalizations()
+        # location.derive_availability_and_inventory(save=True)
+        # will not work here because the availability tags have not yet been saved
 
     def delete(self, *args, **kwargs):
         location = self.location
         super().delete(*args, **kwargs)
         location.update_denormalizations()
+        location.derive_availability_and_inventory(save=True)
 
 
 class ReportReviewTag(models.Model):

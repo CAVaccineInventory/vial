@@ -13,11 +13,6 @@ from .models import (
 
 
 @pytest.fixture
-def location(ten_locations):
-    return ten_locations[0]
-
-
-@pytest.fixture
 def reporter(db):
     return Reporter.objects.get_or_create(external_id="auth0:reporter")[0]
 
