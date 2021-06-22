@@ -1893,3 +1893,16 @@ def approval_review_report_denormalize_location(sender, instance, action, **kwar
     #  - is_pending_review unset by unchecking the box
     #  - approval is made
     #  - approval is deleted
+
+
+@receiver(m2m_changed, sender=LocationReviewNote.tags.through)
+def approval_review_location_denormalize_location(sender, instance, action, **kwargs):
+    if action == "post_add" and len(instance.tags.filter(tag="Approved")):
+        instance.location.is_pending_review = False
+        instance.location.save()
+    # We don't _un-approve_ if the tag is removed because the flag can
+    # _also_ be just generally unset manually.  Imagine:
+    #  - location is flagged on creation
+    #  - is_pending_review unset by unchecking the box
+    #  - approval is made
+    #  - approval is deleted

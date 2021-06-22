@@ -767,13 +767,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             messages.SUCCESS,
         )
 
-    def approve_location_from_note_tag(self, objects):
-        for obj in objects:
-            if obj.tags.filter(tag="Approved"):
-                obj.location.is_pending_review = False
-                obj.location.save()
-                break
-
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
         for obj in formset.deleted_objects:
@@ -782,8 +775,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             instance.author = request.user
             instance.save()
         formset.save_m2m()
-
-        self.approve_location_from_note_tag(formset.new_objects)
 
     def create_approved_review_note(self, obj, author):
         note = obj.location_review_notes.create(author=author)
