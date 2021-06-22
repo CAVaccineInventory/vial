@@ -1065,6 +1065,7 @@ class Report(models.Model):
     hours = models.TextField(
         blank=True,
         null=True,
+        help_text="Update for hours information",
     )
     planned_closure = models.DateField(
         blank=True,
