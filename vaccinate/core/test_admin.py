@@ -124,9 +124,11 @@ def test_adding_review_note_with_approved_tag_approves_location(
     assert not location.is_pending_review
 
 
-def approving_and_saving_removes_pending_review_on_location(
+def test_approving_and_saving_removes_pending_review_on_location(
     admin_client, ten_locations
 ):
+    # You can create a review tag before you submit a review
+    LocationReviewTag.objects.create(tag="Approved")
     location = ten_locations[0]
     location.is_pending_review = True
     location.save()
@@ -140,8 +142,14 @@ def approving_and_saving_removes_pending_review_on_location(
             "latitude": "0",
             "longitude": "0",
             "vaccines_offered": "[]",
-            "is_pending_review": "on",
+            "is_pending_review": "off",
             "_approve_location": "Approve+and+Save+location",
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
         },
     )
 
