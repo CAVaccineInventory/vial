@@ -249,7 +249,11 @@ class Location(gis_models.Model):
         null=True,
         help_text="can accomodate ZIP+4 in standard formatting if needed",
     )
-    hours = models.TextField(blank=True, null=True)
+    hours = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Do not enter hours here for mobile clinics! File a report and put mobile clinic hours in the public notes.",
+    )
     website = CharTextField(blank=True, null=True)
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
@@ -1061,7 +1065,6 @@ class Report(models.Model):
     hours = models.TextField(
         blank=True,
         null=True,
-        help_text="Do not enter hours here for mobile clinics! File a report and put mobile clinic hours in the public notes.",
     )
     planned_closure = models.DateField(
         blank=True,
