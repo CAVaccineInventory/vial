@@ -124,6 +124,35 @@ def test_adding_review_note_with_approved_tag_approves_location(
     assert not location.is_pending_review
 
 
+def approving_and_saving_removes_pending_review_on_location(
+    admin_client, ten_locations
+):
+    location = ten_locations[0]
+    location.is_pending_review = True
+    location.save()
+
+    response = admin_client.post(
+        f"/admin/core/location/{location.pk}/change/",
+        {
+            "name": location.name,
+            "state": State.objects.get(abbreviation="OR").id,
+            "location_type": "1",
+            "latitude": "0",
+            "longitude": "0",
+            "vaccines_offered": "[]",
+            "is_pending_review": "on",
+            "_approve_location": "Approve+and+Save+location",
+        },
+    )
+
+    assert response.status_code == 302
+    location.refresh_from_db()
+    assert not location.is_pending_review
+    review_note = location.location_review_notes.first()
+    tag_name = review_note.tags.values_list("tag", flat=True).get()
+    assert tag_name == "Approved"
+
+
 def test_admin_location_actions_for_queue(admin_client, ten_locations):
     assert CallRequest.objects.count() == 0
     assert Location.objects.count() == 10
