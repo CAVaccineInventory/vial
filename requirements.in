@@ -64,17 +64,17 @@ Markdown
 ## Data validation
 vaccine-feed-ingest-schema==1.2.5
 pydantic==1.8.2
-email-validator==1.1.2
+email-validator==1.1.3
 
 ## To upload the API export to GCS
 # Pinned, see https://github.com/CAVaccineInventory/vial/issues/601
 google-api-core==1.30.0
-google-auth==1.30.0
+google-auth==1.32.0
 google-cloud-core==1.6.0
-google-cloud-secret-manager==2.4.0
+google-cloud-secret-manager==2.5.0
 google-cloud-storage==1.38.0
 google-crc32c==1.1.2
-google-resumable-media==1.2.0
+google-resumable-media==1.3.1
 googleapis-common-protos==1.53.0
 grpc-google-iam-v1==0.12.3
 
