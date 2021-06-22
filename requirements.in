@@ -69,7 +69,7 @@ email-validator==1.1.2
 ## To upload the API export to GCS
 # Pinned, see https://github.com/CAVaccineInventory/vial/issues/601
 google-api-core==1.30.0
-google-auth==1.30.0
+google-auth==1.32.0
 google-cloud-core==1.6.0
 google-cloud-secret-manager==2.4.0
 google-cloud-storage==1.38.0
