@@ -523,9 +523,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "location_type",
                     "phone_number",
                     "full_address",
-                    "street_address",
-                    "city",
-                    "state",
                     "zip_code",
                     "county",
                     "latitude",
@@ -593,6 +590,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "street_address",
+                    "city",
+                    "state",
                     "vaccines_offered",
                     "accepts_appointments",
                     "accepts_walkins",
