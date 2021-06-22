@@ -247,7 +247,7 @@ def test_submit_report_updates_location_fields(location, client, jwt_id_token):
     assert not report.soft_deleted
     # Should have updated fields on location:
     assert location2.vaccines_offered == ["Moderna", "Johnson & Johnson", "Other"]
-    assert location2.accepts_appointments == True
-    assert location2.accepts_walkins == False
+    assert location2.accepts_appointments is True
+    assert location2.accepts_walkins is False
     assert location2.vaccines_offered_provenance_report == report
     assert location2.appointments_walkins_provenance_report == report
