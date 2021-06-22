@@ -789,7 +789,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
 
-        if "_approve_location" in request.POST:
+        if "_approve_location" in request.POST and obj.is_pending_review:
             obj.is_pending_review = False
             self.create_approved_review_note(obj, author=request.user)
 
