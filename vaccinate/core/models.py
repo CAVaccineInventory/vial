@@ -249,7 +249,11 @@ class Location(gis_models.Model):
         null=True,
         help_text="can accomodate ZIP+4 in standard formatting if needed",
     )
-    hours = models.TextField(blank=True, null=True)
+    hours = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Do not enter hours here for mobile clinics! File a report and put mobile clinic hours in the public notes.",
+    )
     website = CharTextField(blank=True, null=True)
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
@@ -333,7 +337,7 @@ class Location(gis_models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="locations",
-        help_text="a location may or may not be associated with a provider",
+        help_text="If you're certain that this location is part of a chain or network of providers -- like CVS, Costco, or Kroger -- add the right provider network.",
     )
     county = models.ForeignKey(
         County,
@@ -341,11 +345,16 @@ class Location(gis_models.Model):
         blank=True,
         related_name="locations",
         on_delete=models.PROTECT,
+        help_text="Use the 🔍 lookup tool or enter the county number.",
     )
     # This was originally specified as a 'coordinate point' but Django doesn't easily
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
     latitude = models.DecimalField(max_digits=9, decimal_places=5)
-    longitude = models.DecimalField(max_digits=9, decimal_places=5)
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=5,
+        help_text="Enter coordinates up to 5 decimal places, or use search box and pin below to ‘pin’ the location",
+    )
     point = gis_models.PointField(
         geography=True, blank=True, null=True, spatial_index=True
     )
@@ -1054,7 +1063,9 @@ class Report(models.Model):
         help_text="Update for the entire address, including city and zip code",
     )
     hours = models.TextField(
-        blank=True, null=True, help_text="Update for hours information"
+        blank=True,
+        null=True,
+        help_text="Update for hours information",
     )
     planned_closure = models.DateField(
         blank=True,
