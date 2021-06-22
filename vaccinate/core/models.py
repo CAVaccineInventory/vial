@@ -249,7 +249,11 @@ class Location(gis_models.Model):
         null=True,
         help_text="can accomodate ZIP+4 in standard formatting if needed",
     )
-    hours = models.TextField(blank=True, null=True)
+    hours = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Do not enter hours here for mobile clinics! File a report and put mobile clinic hours in the public notes.",
+    )
     website = CharTextField(blank=True, null=True)
     location_type = models.ForeignKey(
         LocationType, related_name="locations", on_delete=models.PROTECT
@@ -333,7 +337,7 @@ class Location(gis_models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="locations",
-        help_text="a location may or may not be associated with a provider",
+        help_text="If you're certain that this location is part of a chain or network of providers -- like CVS, Costco, or Kroger -- add the right provider network.",
     )
     county = models.ForeignKey(
         County,
@@ -341,11 +345,16 @@ class Location(gis_models.Model):
         blank=True,
         related_name="locations",
         on_delete=models.PROTECT,
+        help_text="Use the 🔍 lookup tool or enter the county number.",
     )
     # This was originally specified as a 'coordinate point' but Django doesn't easily
     # expose the 'point' type - we could adopt GeoDjango later though but it's a heavy dependency
     latitude = models.DecimalField(max_digits=9, decimal_places=5)
-    longitude = models.DecimalField(max_digits=9, decimal_places=5)
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=5,
+        help_text="Enter coordinates up to 5 decimal places, or use search box and pin below to ‘pin’ the location",
+    )
     point = gis_models.PointField(
         geography=True, blank=True, null=True, spatial_index=True
     )
@@ -515,6 +524,11 @@ class Location(gis_models.Model):
 
         Returns namedtuple of changes it would make. save=True to save those changes.
         """
+        SOURCE_NAMES_TO_CONSIDER = (
+            "vaccinefinder_org",
+            "vaccinespotter_org",
+            "getmyvax_org",
+        )
         vaccines_offered = None
         vaccines_offered_provenance_report = None
         vaccines_offered_provenance_source_location = None
@@ -540,8 +554,9 @@ class Location(gis_models.Model):
         )
         most_recent_source_location_on_vaccines_offered = (
             self.matched_source_locations.all()
-            .order_by("-last_imported_at")
+            .filter(source_name__in=SOURCE_NAMES_TO_CONSIDER)
             .exclude(import_json__inventory=None)
+            .order_by("-last_imported_at")
             .first()
         )
 
@@ -595,8 +610,9 @@ class Location(gis_models.Model):
         )
         most_recent_source_location_on_availability = (
             self.matched_source_locations.all()
-            .order_by("-last_imported_at")
+            .filter(source_name__in=SOURCE_NAMES_TO_CONSIDER)
             .exclude(import_json__availability=None)
+            .order_by("-last_imported_at")
             .first()
         )
 
@@ -651,7 +667,7 @@ class Location(gis_models.Model):
                 report_to_use_for_availability.created_at
             )
 
-        return DeriveAvailabilityAndInventoryResults(
+        derived = DeriveAvailabilityAndInventoryResults(
             vaccines_offered=vaccines_offered,
             vaccines_offered_provenance_report=vaccines_offered_provenance_report,
             vaccines_offered_provenance_source_location=vaccines_offered_provenance_source_location,
@@ -666,6 +682,42 @@ class Location(gis_models.Model):
             most_recent_report_on_availability=most_recent_report_on_availability,
             most_recent_source_location_on_availability=most_recent_source_location_on_availability,
         )
+        if save:
+            self.vaccines_offered = derived.vaccines_offered
+            self.vaccines_offered_provenance_report = (
+                derived.vaccines_offered_provenance_report
+            )
+            self.vaccines_offered_provenance_source_location = (
+                derived.vaccines_offered_provenance_source_location
+            )
+            self.vaccines_offered_last_updated_at = (
+                derived.vaccines_offered_last_updated_at
+            )
+            self.accepts_appointments = derived.accepts_appointments
+            self.accepts_walkins = derived.accepts_walkins
+            self.appointments_walkins_provenance_report = (
+                derived.appointments_walkins_provenance_report
+            )
+            self.appointments_walkins_provenance_source_location = (
+                derived.appointments_walkins_provenance_source_location
+            )
+            self.appointments_walkins_last_updated_at = (
+                derived.appointments_walkins_last_updated_at
+            )
+            self.save(
+                update_fields=[
+                    "vaccines_offered",
+                    "vaccines_offered_provenance_report",
+                    "vaccines_offered_provenance_source_location",
+                    "vaccines_offered_last_updated_at",
+                    "accepts_appointments",
+                    "accepts_walkins",
+                    "appointments_walkins_provenance_report",
+                    "appointments_walkins_provenance_source_location",
+                    "appointments_walkins_last_updated_at",
+                ]
+            )
+        return derived
 
     @beeline.traced("update_denormalizations")
     def update_denormalizations(self):
@@ -802,7 +854,7 @@ class LocationReviewNote(models.Model):
     )
 
     def __str__(self):
-        return f"{self.author} review note on {self.report}"
+        return f"{self.author} review note on {self.location}"
 
 
 class Reporter(models.Model):
@@ -1011,7 +1063,9 @@ class Report(models.Model):
         help_text="Update for the entire address, including city and zip code",
     )
     hours = models.TextField(
-        blank=True, null=True, help_text="Update for hours information"
+        blank=True,
+        null=True,
+        help_text="Update for hours information",
     )
     planned_closure = models.DateField(
         blank=True,
@@ -1110,12 +1164,16 @@ class Report(models.Model):
         if set_public_id_later:
             self.public_id = self.pid
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
-        self.location.update_denormalizations()
+        location = self.location
+        location.update_denormalizations()
+        # location.derive_availability_and_inventory(save=True)
+        # will not work here because the availability tags have not yet been saved
 
     def delete(self, *args, **kwargs):
         location = self.location
         super().delete(*args, **kwargs)
         location.update_denormalizations()
+        location.derive_availability_and_inventory(save=True)
 
 
 class ReportReviewTag(models.Model):
@@ -1890,6 +1948,19 @@ def approval_review_report_denormalize_location(sender, instance, action, **kwar
     # We don't _un-approve_ if the tag is removed because the flag can
     # _also_ be just generally unset manually.  Imagine:
     #  - report is flagged on creation
+    #  - is_pending_review unset by unchecking the box
+    #  - approval is made
+    #  - approval is deleted
+
+
+@receiver(m2m_changed, sender=LocationReviewNote.tags.through)
+def approval_review_location_denormalize_location(sender, instance, action, **kwargs):
+    if action == "post_add" and len(instance.tags.filter(tag="Approved")):
+        instance.location.is_pending_review = False
+        instance.location.save()
+    # We don't _un-approve_ if the tag is removed because the flag can
+    # _also_ be just generally unset manually.  Imagine:
+    #  - location is flagged on creation
     #  - is_pending_review unset by unchecking the box
     #  - approval is made
     #  - approval is deleted

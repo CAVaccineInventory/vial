@@ -237,3 +237,25 @@ def test_import_source_location_does_not_overwrite_existing_match(
     concordances = set(second_location.concordances.all())
     source_concordanes = set(source_location.concordances.all())
     assert not source_concordanes.issubset(concordances)
+
+
+def test_import_source_location_updates_location_fields(client, api_key):
+    with (tests_dir / "002-new-location.json").open() as fixture_file:
+        fixture = orjson.loads(fixture_file.read())
+    import_run_id = client.post(
+        "/api/startImportRun", HTTP_AUTHORIZATION="Bearer {}".format(api_key)
+    ).json()["import_run_id"]
+    # Make the API request
+    client.post(
+        "/api/importSourceLocations?import_run_id={}".format(import_run_id),
+        fixture,
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    source_location = SourceLocation.objects.first()
+    location = source_location.matched_location
+    assert set(location.vaccines_offered) == {"Pfizer", "Johnson & Johnson"}
+    assert location.accepts_walkins
+    assert not location.accepts_appointments
+    assert location.vaccines_offered_provenance_source_location == source_location
+    assert location.appointments_walkins_provenance_source_location == source_location

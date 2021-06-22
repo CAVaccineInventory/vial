@@ -1,6 +1,6 @@
 {
-  "source_uid": "vaccinespotter:7382088",
-  "source_name": "vaccinespotter",
+  "source_uid": "vaccinespotter_org:7382088",
+  "source_name": "vaccinespotter_org",
   "content_hash": "6cafddd7de8861754ee23c5e4a1f64e1",
   "name": "Rite Aid",
   "latitude": 33.4962,
@@ -9,7 +9,7 @@
     "action": "new"
   },
   "import_json": {
-    "id": "vaccinespotter:7382088",
+    "id": "vaccinespotter_org:7382088",
     "name": "Rite Aid",
     "address": {
       "street1": "32121 Camino Capistrano",
@@ -26,8 +26,13 @@
       "website": "https://www.riteaid.com/pharmacy/covid-qualifier"
     }],
     "availability": {
-      "appointments": false
+      "appointments": false,
+      "drop_in": true
     },
+    "inventory": [
+      {"vaccine": "pfizer_biontech"},
+      {"vaccine": "johnson_johnson_janssen", "supply_level": "in_stock"}
+    ],
     "parent_organization": {
       "id": "rite_aid",
       "name": "Rite Aid"
@@ -43,7 +48,7 @@
       }
     ],
     "source": {
-      "source": "vaccinespotter",
+      "source": "vaccinespotter_org",
       "id": "7382088",
       "fetched_from_uri": "https://www.vaccinespotter.org/api/v0/states/CA.json",
       "fetched_at": "2021-04-06T20:17:55.148+00:00",

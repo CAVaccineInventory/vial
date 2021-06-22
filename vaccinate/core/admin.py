@@ -477,6 +477,19 @@ class LocationReviewNoteAdmin(admin.ModelAdmin):
         return False
 
 
+class LocationReviewNoteInline(admin.StackedInline):
+    model = LocationReviewNote
+    extra = 1
+    readonly_fields = ("created_at", "author")
+    autocomplete_fields = ("tags",)
+
+    def has_add_permission(self, request, obj):
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
@@ -500,6 +513,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             description="Export CSV with phone and website info",
         ),
     ]
+    inlines = [LocationReviewNoteInline]
     fieldsets = (
         (
             None,
@@ -523,10 +537,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "location_type",
                     "phone_number",
                     "full_address",
-                    "street_address",
-                    "city",
                     "state",
-                    "zip_code",
                     "county",
                     "latitude",
                     "longitude",
@@ -593,6 +604,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "street_address",
+                    "city",
+                    "zip_code",
                     "vaccines_offered",
                     "accepts_appointments",
                     "accepts_walkins",
@@ -753,6 +767,19 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             messages.SUCCESS,
         )
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for instance in instances:
+            instance.author = request.user
+            instance.save()
+        formset.save_m2m()
+
+    def create_approved_review_note(self, obj, author):
+        note = obj.location_review_notes.create(author=author)
+        note.tags.add(LocationReviewTag.objects.get(tag="Approved"))
+
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
@@ -762,13 +789,17 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         if obj.claimed_by and "claimed_by" in form.changed_data:
             obj.claimed_at = timezone.now()
 
+        if "_approve_location" in request.POST and obj.is_pending_review:
+            obj.is_pending_review = False
+            self.create_approved_review_note(obj, author=request.user)
+
         # If the user toggled it to is_pending_review=False, record note
         marked_as_reviewed = (
             "is_pending_review" in form.changed_data and not obj.is_pending_review
         )
+
         if marked_as_reviewed:
-            note = obj.location_review_notes.create(author=request.user)
-            note.tags.add(LocationReviewTag.objects.get(tag="Approved"))
+            self.create_approved_review_note(obj, author=request.user)
 
         super().save_model(request, obj, form, change)
 
@@ -864,10 +895,12 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_save_and_add_another"] = False
-        extra_context[
-            "your_pending_claimed_locations"
-        ] = request.user.claimed_locations.filter(
+        location = Location.objects.get(id=object_id)
+        claimed_by_current_user = request.user == location.claimed_by
+        extra_context["claimed_by_user_style"] = (
+            "current-user" if claimed_by_current_user else "user"
+        )
+        extra_context["num_claimed"] = request.user.claimed_locations.filter(
             is_pending_review=True, soft_deleted=False
         ).count()
         return super().change_view(
@@ -1267,10 +1300,12 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_save_and_add_another"] = False
-        extra_context[
-            "your_pending_claimed_reports"
-        ] = request.user.claimed_reports.filter(
+        report = Report.objects.get(id=object_id)
+        claimed_by_current_user = request.user == report.claimed_by
+        extra_context["claimed_by_user_style"] = (
+            "current-user" if claimed_by_current_user else "user"
+        )
+        extra_context["num_claimed"] = request.user.claimed_reports.filter(
             is_pending_review=True, soft_deleted=False
         ).count()
         return super().change_view(

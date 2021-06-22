@@ -165,6 +165,11 @@ def ten_locations(db):
 
 
 @pytest.fixture
+def location(db):
+    return make_locations(1)[0]
+
+
+@pytest.fixture
 def two_hundred_locations(db):
     return make_locations(200)
 
