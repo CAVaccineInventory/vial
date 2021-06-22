@@ -54,6 +54,39 @@ textarea#id_full_address {
     grid-template-columns: 1fr 1fr;
 }
 
+.pending-review, .soft-deleted {
+    background-color: red; 
+    color: white; 
+    padding: 0.5em
+}
+
+.claimed-by {
+    color: white; 
+    padding: 0.5em
+}
+
+.claimed-by.user {
+    background-color: red;
+}
+
+.claimed-by.current-user {
+    background-color: green;
+}
+
+input#approve-location-button {
+    background-color: green; 
+    margin-right: 5px;
+}
+
+input#approve-location-button:hover {
+    background-color: limegreen;
+    transition: background-color 0.15s ease;
+}
+
+div.qa-buttons-container {
+    margin-bottom: 30px;
+}
+
 #location_form label[for="id_phone_number"] {
     font-weight: bold;
 }

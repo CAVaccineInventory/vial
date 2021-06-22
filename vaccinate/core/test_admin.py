@@ -14,7 +14,9 @@ from .models import (
     CallRequest,
     CallRequestReason,
     Location,
+    LocationReviewTag,
     Reporter,
+    ReportReviewTag,
     State,
 )
 
@@ -31,6 +33,12 @@ def test_admin_create_location_sets_public_id_and_created_by(admin_client):
             "longitude": "0",
             "vaccines_offered": "[]",
             "_save": "Save",
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
         },
     )
     # 200 means the form is being re-displayed with errors
@@ -61,6 +69,12 @@ def test_create_location_sets_pending_review_with_wbtrainee_role(
             "longitude": "0",
             "vaccines_offered": "[]",
             "_save": "Save",
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
         },
     )
 
@@ -69,6 +83,82 @@ def test_create_location_sets_pending_review_with_wbtrainee_role(
     assert location.name == "CVS"
     assert location.created_by.username == "admin"
     assert location.is_pending_review
+
+
+def test_adding_review_note_with_approved_tag_approves_location(
+    admin_client, ten_locations
+):
+    location = ten_locations[0]
+    approved_tag = LocationReviewTag.objects.get_or_create(tag="Approved")[0]
+    location.is_pending_review = True
+    location.save()
+
+    response = admin_client.post(
+        f"/admin/core/location/{location.pk}/change/",
+        {
+            "name": location.name,
+            "state": State.objects.get(abbreviation="OR").id,
+            "location_type": "1",
+            "latitude": "0",
+            "longitude": "0",
+            "vaccines_offered": "[]",
+            "is_pending_review": "on",
+            "location_review_notes-0-note": "Test",
+            "location_review_notes-0-tags": approved_tag.pk,
+            "location_review_notes-0-id": "",
+            "location_review_notes-0-location": location.pk,
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
+        },
+    )
+
+    assert response.status_code == 302
+    location.refresh_from_db()
+    review_note = location.location_review_notes.first()
+    tag_name = review_note.tags.values_list("tag", flat=True).get()
+    assert tag_name == "Approved"
+    assert not location.is_pending_review
+
+
+def test_approving_and_saving_removes_pending_review_on_location(
+    admin_client, ten_locations
+):
+    # You can create a review tag before you submit a review
+    LocationReviewTag.objects.create(tag="Approved")
+    location = ten_locations[0]
+    location.is_pending_review = True
+    location.save()
+
+    response = admin_client.post(
+        f"/admin/core/location/{location.pk}/change/",
+        {
+            "name": location.name,
+            "state": State.objects.get(abbreviation="OR").id,
+            "location_type": "1",
+            "latitude": "0",
+            "longitude": "0",
+            "vaccines_offered": "[]",
+            "is_pending_review": "off",
+            "_approve_location": "Approve+and+Save+location",
+            # This is needed to avoid the following validation error:
+            # 'ManagementForm data is missing or has been tampered with'
+            "location_review_notes-TOTAL_FORMS": "1",
+            "location_review_notes-INITIAL_FORMS": "0",
+            "location_review_notes-MIN_NUM_FORMS": "0",
+            "location_review_notes-MAX_NUM_FORMS": "1000",
+        },
+    )
+
+    assert response.status_code == 302
+    location.refresh_from_db()
+    assert not location.is_pending_review
+    review_note = location.location_review_notes.first()
+    tag_name = review_note.tags.values_list("tag", flat=True).get()
+    assert tag_name == "Approved"
 
 
 def test_admin_location_actions_for_queue(admin_client, ten_locations):
@@ -423,6 +513,7 @@ def test_adding_review_note_with_approved_tag_approves_report(
     location = ten_locations[0]
     reporter = Reporter.objects.get_or_create(external_id="auth0:claimer")[0]
     web = AppointmentTag.objects.get(slug="web")
+    approved_tag = ReportReviewTag.objects.get_or_create(tag="Approved")[0]
     report = location.reports.create(
         reported_by=reporter,
         report_source="ca",
@@ -440,8 +531,8 @@ def test_adding_review_note_with_approved_tag_approves_report(
             "appointment_tag": "1",
             "availability_tags": "2",
             "reported_by": reporter.pk,
-            "review_notes-0-note": "",
-            "review_notes-0-tags": "1",
+            "review_notes-0-note": "Test",
+            "review_notes-0-tags": approved_tag.pk,
             "review_notes-0-id": "",
             "review_notes-0-report": report.pk,
             # This is needed to avoid the following validation error:
@@ -450,10 +541,6 @@ def test_adding_review_note_with_approved_tag_approves_report(
             "review_notes-INITIAL_FORMS": "0",
             "review_notes-MIN_NUM_FORMS": "0",
             "review_notes-MAX_NUM_FORMS": "1000",
-            # These are needed so that the review note is properly saved:
-            "review_notes-__prefix__-note": "",
-            "review_notes-__prefix__-id": "",
-            "review_notes-__prefix__-report": report.pk,
         },
     )
     assert response.status_code == 302

@@ -1,0 +1,21 @@
+{% if original.is_pending_review %}
+    <p class="pending-review">
+        This {{ name }} is <strong>pending review</strong>
+    </p>
+{% endif %}
+
+{% if original.claimed_by %}
+    <p class="claimed-by {{ claimed_by_user_style }}"> 
+        {% if original.claimed_by == request.user %}
+            You claimed this {{ name }} for review
+        {% else %}
+            <strong>{{ original.claimed_by }}</strong> has claimed this {{ name }} for review
+        {% endif %}
+
+        ({{ original.claimed_at|timesince }} ago)
+
+        {% if original.claimed_by == request.user %}
+            - you have {{ num_claimed }} claimed {{ name }}s that are pending review
+        {% endif %}
+    </p>
+{% endif %}
