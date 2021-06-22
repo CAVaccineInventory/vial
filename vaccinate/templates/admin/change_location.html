@@ -15,9 +15,9 @@
 
 {% block submit_buttons_bottom %}
   {% load admin_modify %}
-    <div style="margin-bottom: 30px;">
+    <div class="qa-buttons-container">
       {% if original.is_pending_review %}
-        <input type="submit" value="Approve and Save location" name="_approve_location" style="background-color: green; margin-right: 5px;">
+        <input type="submit" value="Approve and Save location" name="_approve_location" id="approve-location-button">
       {% endif %}
       {% if num_claimed > 1 %}
         <input type="submit" value="Save and review next pending locations ({{ num_claimed|add:"-1" }} remaining)" name="_review_next" current_location="{{ original.id }}">

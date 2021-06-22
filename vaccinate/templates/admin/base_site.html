@@ -68,9 +68,24 @@ textarea#id_full_address {
 .claimed-by.user {
   background-color: red;
 }
+
 .claimed-by.current-user {
   background-color: green;
 }
+
+input#approve-location-button {
+  background-color: green; 
+  margin-right: 5px;
+
+}
+
+input#approve-location-button:hover {
+  background-color: limegreen;
+  transition: background-color 0.15s ease;
+}
+
+div.qa-buttons-container {
+  margin-bottom: 30px;
 }
 </style>
 {{ block.super }}
