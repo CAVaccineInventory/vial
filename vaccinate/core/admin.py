@@ -629,7 +629,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     deliberately_omitted_from_fieldsets = ("point",)
 
     def get_inlines(self, request, obj):
-        inlines = self.inlines
         if obj is None and request.GET.get("_preview"):
             # Add form - include first-report inline
             return self.inlines + [FirstReportInline]
