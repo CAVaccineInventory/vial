@@ -922,6 +922,10 @@ class Reporter(models.Model):
         self.save()
         return self.user
 
+    @classmethod
+    def for_user(cls, user):
+        return user.reporters.first()
+
 
 class AvailabilityTag(models.Model):
     """

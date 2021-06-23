@@ -251,7 +251,7 @@ function addCopyToClipboard() {
 }
 
 function checkboxEditorForVaccinesOffered() {
-  var ta = document.getElementById('id_vaccines_offered');
+  var ta = document.getElementById('id_vaccines_offered') || document.getElementById('id_reports-0-vaccines_offered');
   if (!ta) {
     return;
   }
