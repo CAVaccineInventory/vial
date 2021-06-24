@@ -632,9 +632,9 @@ pickleshare==0.7.5 \
     --hash=sha256:87683d47965c1da65cdacaf31c8441d12b8044cdec9aca500cd78fc2c683afca \
     --hash=sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56
     # via ipython
-pip-tools==6.1.0 \
-    --hash=sha256:197e3f8839095ccec3ad1ef410e0804c07d9f17dff1c340fb417ca2b63feacc9 \
-    --hash=sha256:400bf77e29cca48c31abc210042932bb52dcc138ef4ea4d52c5db429aa8ae6ee
+pip-tools==6.2.0 \
+    --hash=sha256:77727ef7457d1865e61fe34c2b1439f9b971b570cc232616a22ce82ab89d357d \
+    --hash=sha256:9ed38c73da4993e531694ea151f77048b4dbf2ba7b94c4a569daa39568cc6564
     # via -r requirements.in
 pluggy==0.13.1 \
     --hash=sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0 \
@@ -1101,6 +1101,10 @@ webencodings==0.5.1 \
     --hash=sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78 \
     --hash=sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923
     # via bleach
+wheel==0.36.2 \
+    --hash=sha256:78b5b185f0e5763c26ca1e324373aadd49182ca90e825f7853f4b2509215dc0e \
+    --hash=sha256:e11eefd162658ea59a60a0f6c7d493a7190ea4b9a85e335b33489d9f17e0245e
+    # via pip-tools
 whitenoise==5.2.0 \
     --hash=sha256:05ce0be39ad85740a78750c86a93485c40f08ad8c62a6006de0233765996e5c7 \
     --hash=sha256:05d00198c777028d72d8b0bbd234db605ef6d60e9410125124002518a48e515d
@@ -1123,3 +1127,4 @@ setuptools==56.0.0 \
     #   gunicorn
     #   ipython
     #   numba
+    #   pip-tools
