@@ -156,6 +156,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    'xff.middleware.XForwardedForMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -171,6 +172,8 @@ MIDDLEWARE = [
 CORS_URLS_REGEX = r"^/api/.*$"
 # Swap this out later for CORS_ALLOWED_ORIGINS = ["https://example.com", ...]
 CORS_ALLOW_ALL_ORIGINS = True
+
+XFF_TRUSTED_PROXY_DEPTH = 1
 
 if RUNNING_IN_GCLOUD:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
