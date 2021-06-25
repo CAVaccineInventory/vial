@@ -251,6 +251,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display = (
         "name",
         "state",
+        "vts_priorty",
         "vaccine_info_url",
         "short_public_notes",
         "age_floor_without_restrictions",
@@ -264,6 +265,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 "fields": (
                     "name",
                     "state",
+                    "vts_priorty",
                     "population",
                     "internal_notes",
                     "fips_code",
@@ -298,7 +300,14 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         ),
         ("Identifiers", {"classes": ("collapse",), "fields": ("airtable_id",)}),
     )
-    readonly_fields = ("fips_code", "name", "state", "airtable_id", "population")
+    readonly_fields = (
+        "vts_priorty",
+        "fips_code",
+        "name",
+        "state",
+        "airtable_id",
+        "population",
+    )
     ordering = ("name",)
     actions = [export_as_csv_action()]
 
