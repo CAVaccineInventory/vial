@@ -43,6 +43,9 @@ django-admin-tools
 # Cryptography for JWT parsing and validation
 python-jose
 
+# django X-Forwarded-For
+django-xff
+
 
 
 ## Data storage
