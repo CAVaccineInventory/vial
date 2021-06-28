@@ -219,7 +219,7 @@ def test_planned_closure_location_not_returned(
         planned_closure=planned_closure,
     )
     response = client.get(
-        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
+        "/api/exportMapboxPreview?id={}&raw=1&export=1".format(location.public_id)
     )
     geojson = orjson.loads(response.content)["geojson"]
     assert isinstance(geojson, list)
@@ -253,7 +253,7 @@ def test_locations_with_specific_availability_tags_not_exported(
     )
     report.availability_tags.add(AvailabilityTag.objects.get(slug=tag))
     response = client.get(
-        "/api/exportMapboxPreview?id={}&raw=1".format(location.public_id)
+        "/api/exportMapboxPreview?id={}&raw=1&export=1".format(location.public_id)
     )
     geojson = orjson.loads(response.content)["geojson"]
     assert isinstance(geojson, list)
