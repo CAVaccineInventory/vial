@@ -128,7 +128,7 @@ def test_approving_and_saving_removes_pending_review_on_location(
     admin_client, ten_locations
 ):
     # You can create a review tag before you submit a review
-    LocationReviewTag.objects.create(tag="Approved")
+    LocationReviewTag.objects.get_or_create(tag="Approved")[0]
     location = ten_locations[0]
     location.is_pending_review = True
     location.save()

@@ -207,6 +207,14 @@ urlpatterns = [
     path("admin/docs/", lambda r: redirect("/admin/docs/models/", permanent=False)),
     path("admin/docs/", include("django.contrib.admindocs.urls")),
     path(
+        "admin/core/location/l<str:partial_public_id>/change/",
+        tool_views.location_public_id_redirect,
+    ),
+    path(
+        "admin/core/location/l<str:partial_public_id>/",
+        tool_views.location_public_id_redirect,
+    ),
+    path(
         # I renamed this model
         "admin/core/callreport/",
         lambda r: HttpResponsePermanentRedirect("/admin/core/report/"),

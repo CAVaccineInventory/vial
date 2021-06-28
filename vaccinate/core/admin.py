@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import LogEntry
+from django.db import transaction
 from django.db.models import Count, Exists, Max, Min, OuterRef, Q, TextField
 from django.db.models.query import QuerySet
 from django.forms import Textarea
@@ -490,6 +491,15 @@ class LocationReviewNoteInline(admin.StackedInline):
         return False
 
 
+class FirstReportInline(admin.StackedInline):
+    model = Report
+    min_num = 0
+    max_num = 1
+    raw_id_fields = ("claimed_by", "reported_by", "call_request", "location")
+    fields = ("appointment_tag", "availability_tags", "vaccines_offered")
+    autocomplete_fields = ("availability_tags",)
+
+
 @admin.register(Location)
 class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     change_form_template = "admin/change_location.html"
@@ -617,6 +627,13 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         ),
     )
     deliberately_omitted_from_fieldsets = ("point",)
+
+    def get_inlines(self, request, obj):
+        if obj is None and request.GET.get("_preview"):
+            # Add form - include first-report inline
+            return self.inlines + [FirstReportInline]
+        else:
+            return self.inlines
 
     def matched_source_locations(self, obj):
         return mark_safe(
@@ -772,8 +789,18 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         for obj in formset.deleted_objects:
             obj.delete()
         for instance in instances:
-            instance.author = request.user
-            instance.save()
+            if isinstance(instance, Report):
+                instance.reported_by = Reporter.for_user(request.user)
+                instance.save()
+                # Run after the commit to ensure availability_tags are there:
+                transaction.on_commit(
+                    lambda: instance.location.derive_availability_and_inventory(
+                        save=True
+                    )
+                )
+            else:
+                instance.author = request.user
+                instance.save()
         formset.save_m2m()
 
     def create_approved_review_note(self, obj, author):
