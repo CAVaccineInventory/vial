@@ -51,6 +51,18 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
         ("authority=google_places", ["Location 7", "Location 8"]),
         ("provider_null=1", ["Location 4", "Location 5", "Location 6"]),
         (
+            "provider=Some+provider",
+            [
+                "Location 1",
+                "Location 2",
+                "Location 3",
+                "Location 7",
+                "Location 8",
+                "Location 9",
+                "Location 10",
+            ],
+        ),
+        (
             "exclude.authority=google_places",
             [
                 "Location 1",

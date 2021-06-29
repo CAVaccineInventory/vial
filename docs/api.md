@@ -28,6 +28,7 @@ Optional query string parameters:
 - `authority=` - one or more concordance authorities e.g. `google_places` - returns only results that have a concordance identifier for at least one of those places
 - `exclude.authority=` - one or more concordance authorities e.g. `google_places` - returns only results that do NOT have a concordance identifier for any of those places
 - `exportable=1` - only return locations that would be exported to our www.vaccinatethestates.com map - this excludes locations with a planned closure date in the past, or that our call reports have marked as not being active vaccination locations
+- `provider=` - return locations with the specified provider name (provider names are unique)
 - `provider_null=1` - return locations that do not have a provider
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 - `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`
