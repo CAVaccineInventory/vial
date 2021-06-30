@@ -4,7 +4,6 @@ from typing import Dict
 
 import beeline
 import orjson
-from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.db.models.query import QuerySet
 
@@ -89,6 +88,7 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
         "google_places_id",
         "vaccinefinder_location_id",
         "vaccinespotter_location_id",
+        "vaccines_offered",
         "zip_code",
         "hours",
         "website",
@@ -177,7 +177,7 @@ def location_v0_json(location: Location) -> Dict[str, object]:
         "zip_code": location.zip_code,
         "hours": {"unstructured": location.hours},
         "website": location.website,
-        "vaccines_offered": [],
+        "vaccines_offered": location.vaccines_offered,
         "concordances": [str(c) for c in location.concordances.all()],
         "last_verified_by_vts": location.dn_latest_non_skip_report.created_at.isoformat()
         if location.dn_latest_non_skip_report
@@ -200,21 +200,8 @@ def split_geojson_by_state(locations_geojson):
         }
 
 
-def location_formats(preload_vaccinefinder=False):
+def location_formats():
     formats = make_formats(location_json, location_geojson)
-    expansion = VaccineFinderInventoryExpansion(preload_vaccinefinder)
-
-    def transform_batch(batch):
-        lookups = expansion.expand(batch)
-        for record in batch:
-            record["vaccines_offered"] = lookups.get(record["id"]) or []
-        return batch
-
-    def transform_batch_geojson(batch):
-        lookups = expansion.expand(batch)
-        for record in batch:
-            record["properties"]["vaccines_offered"] = lookups.get(record["id"]) or []
-        return batch
 
     formats["v0preview"] = OutputFormat(
         prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
@@ -228,7 +215,7 @@ def location_formats(preload_vaccinefinder=False):
             b'"content":['
         ),
         transform=lambda l: location_v0_json(l),
-        transform_batch=transform_batch,
+        transform_batch=lambda batch: batch,
         serialize=orjson.dumps,
         separator=b",",
         end=lambda qs: b"]}",
@@ -245,7 +232,7 @@ def location_formats(preload_vaccinefinder=False):
             + b'"features":['
         ),
         transform=lambda l: to_geojson(location_v0_json(l)),
-        transform_batch=transform_batch_geojson,
+        transform_batch=lambda batch: batch,
         serialize=orjson.dumps,
         separator=b",",
         end=lambda qs: b"]}",

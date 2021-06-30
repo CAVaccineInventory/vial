@@ -51,6 +51,8 @@ def search_locations(
     latitude = request.GET.get("latitude")
     longitude = request.GET.get("longitude")
     radius = request.GET.get("radius")
+    vaccines_offered = request.GET.getlist("vaccines_offered")
+    vaccines_offered_null = request.GET.get("vaccines_offered_null")
     provider = request.GET.get("provider")
     exclude_provider = request.GET.get("exclude.provider")
     provider_null = request.GET.get("provider_null")
@@ -98,6 +100,11 @@ def search_locations(
                 Distance(m=float(radius)),
             )
         )
+    if vaccines_offered:
+        for vaccine in vaccines_offered:
+            qs = qs.filter(vaccines_offered__contains=vaccine)
+    if vaccines_offered_null:
+        qs = qs.filter(Q(vaccines_offered__isnull=True) | Q(vaccines_offered=[]))
     ids = request.GET.getlist("id")
     if ids:
         qs = qs.filter(public_id__in=ids)

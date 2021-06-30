@@ -104,9 +104,50 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
                 "Location 10",
             ],
         ),
+        (
+            "vaccines_offered=Pfizer",
+            [
+                "Location 1",
+                "Location 2",
+            ],
+        ),
+        (
+            "vaccines_offered=Moderna",
+            [
+                "Location 2",
+                "Location 3",
+            ],
+        ),
+        (
+            "vaccines_offered=Moderna&vaccines_offered=Pfizer",
+            [
+                "Location 2",
+            ],
+        ),
+        (
+            "vaccines_offered_null=1",
+            [
+                "Location 4",
+                "Location 5",
+                "Location 6",
+                "Location 7",
+                "Location 8",
+                "Location 9",
+                "Location 10",
+            ],
+        ),
     ),
 )
 def test_search_locations(client, api_key, query_string, expected, ten_locations):
+    one, two, three, four = ten_locations[:4]
+    one.vaccines_offered = ["Pfizer"]
+    one.save()
+    two.vaccines_offered = ["Pfizer", "Moderna"]
+    two.save()
+    three.vaccines_offered = ["Moderna"]
+    three.save()
+    four.vaccines_offered = []  # Test empty list
+    four.save()
     in_kansas = ten_locations[5]
     in_kansas.state = State.objects.get(name="Kansas")
     in_kansas.save()
