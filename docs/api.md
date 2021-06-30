@@ -33,6 +33,8 @@ Optional query string parameters:
 - `exclude.provider=` - returns only results that are not attached to the specified provider
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 - `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`
+- `vaccines_offered=` - one or more vaccine names, e.g. `Pfizer` or `Moderna`. Returns locations that are known to offer that vaccine. [Demo showing locations with both Pfizer and Moderna](https://vial-staging.calltheshots.us/api/searchLocations?vaccines_offered=Pfizer&vaccines_offered=Moderna&format=v0preview).
+- `vaccines_offered_null=1` - returns locations where `vaccines_offered` is null.
 
 The following output formats are supported:
 

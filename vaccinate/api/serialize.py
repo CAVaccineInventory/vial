@@ -4,7 +4,6 @@ from typing import Dict
 
 import beeline
 import orjson
-from core.expansions import VaccineFinderInventoryExpansion
 from core.models import Location
 from django.db.models.query import QuerySet
 
