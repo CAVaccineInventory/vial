@@ -94,6 +94,7 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
         "website",
         "preferred_contact_method",
         "provider__name",
+        "provider__vaccine_info_url",
         "provider__provider_type__name",
         "dn_latest_non_skip_report",
     )
@@ -160,6 +161,7 @@ def location_v0_json(location: Location) -> Dict[str, object]:
         "name": location.name,
         "provider": {
             "name": location.provider.name,
+            "provider_type": location.provider.provider_type.name,
             "vaccine_info_url": location.provider.vaccine_info_url,
         }
         if location.provider
@@ -215,9 +217,7 @@ def location_formats(preload_vaccinefinder=False):
         return batch
 
     formats["v0preview"] = OutputFormat(
-        prepare_queryset=lambda qs: qs.select_related(
-            "dn_latest_non_skip_report", "provider"
-        ),
+        prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
         start=(
             b'{"usage":{"notice":"Please contact Vaccinate The States and let '
             b"us know if you plan to rely on or publish this data. This "
