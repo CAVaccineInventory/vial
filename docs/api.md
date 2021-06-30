@@ -41,6 +41,8 @@ The following output formats are supported:
 - `nlgeojson` - Newline-delimited GeoJSON. [Example nl-GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=nlgeojson)
 - `map` - a basic Leaflet map that renders that GeoJSON. [Example map](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=map)
 - `ids` - a JSON array of public location IDs.
+- `v0preview` - preview of the v0 API JSON format we publish to `api.vaccinatethestates.com`.
+- `v0preview-geojson` - preview of the v0 GeoJSON API format we publish to `api.vaccinatethestates.com`.
 
 You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.
 
