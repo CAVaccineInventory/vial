@@ -123,6 +123,8 @@ def search_locations(
     if exportable:
         qs = filter_for_export(qs)
 
+    qs = qs.distinct()
+
     qs = location_json_queryset(qs)
 
     formats = location_formats()

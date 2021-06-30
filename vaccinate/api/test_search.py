@@ -142,10 +142,15 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
     with_concordances_1.concordances.add(
         ConcordanceIdentifier.for_idref("google_places:123")
     )
+    # Check that multiple concordances don't return duplicate results, #707
+    with_concordances_1.concordances.add(
+        ConcordanceIdentifier.for_idref("google_places:234")
+    )
     with_concordances_2.concordances.add(
         ConcordanceIdentifier.for_idref("google_places:456")
     )
     data = search_locations(client, api_key, query_string)
+    assert len(expected) == len(data["results"])
     names = {r["name"] for r in data["results"]}
     assert names == set(expected)
     assert data["total"] == len(expected)
