@@ -41,6 +41,8 @@ The following output formats are supported:
 - `nlgeojson` - Newline-delimited GeoJSON. [Example nl-GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=nlgeojson)
 - `map` - a basic Leaflet map that renders that GeoJSON. [Example map](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=map)
 - `ids` - a JSON array of public location IDs.
+- `v0preview` - preview of the v0 API JSON format we publish to `api.vaccinatethestates.com`.
+- `v0preview-geojson` - preview of the v0 GeoJSON API format we publish to `api.vaccinatethestates.com`.
 
 You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.
 
@@ -600,6 +602,7 @@ The following fields can be updated using this API. All are optional.
 - `preferred_contact_method` - string, one of `research_online` or `outbound_call`
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
+- `provider_null` - bool - include this and set this to `True` to clear the current provider. You cannot also send a `provider_name` or `provider_type` if you are sending this field.
 
 Try this API: https://vial-staging.calltheshots.us/api/updateLocations/debug
 

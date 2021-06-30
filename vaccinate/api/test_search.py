@@ -201,6 +201,47 @@ def test_search_locations_format_json(client, api_key, ten_locations):
     }
 
 
+def test_search_locations_format_v0preview(client, api_key, location):
+    provider_type = ProviderType.objects.get(name="Pharmacy")
+    location.provider = Provider.objects.get_or_create(
+        name="Some provider",
+        defaults={
+            "provider_type": provider_type,
+            "vaccine_info_url": "https://example.com/",
+        },
+    )[0]
+    location.save()
+    result = search_locations(
+        client, api_key, "id={}&format=v0preview".format(location.public_id)
+    )
+    assert set(result.keys()) == {"content", "usage"}
+    record = result["content"][0]
+    assert set(record.keys()) == {
+        "id",
+        "name",
+        "provider",
+        "state",
+        "latitude",
+        "longitude",
+        "location_type",
+        "phone_number",
+        "full_address",
+        "city",
+        "county",
+        "zip_code",
+        "hours",
+        "website",
+        "vaccines_offered",
+        "concordances",
+        "last_verified_by_vts",
+        "vts_url",
+    }
+    assert record["provider"] == {
+        "name": "Some provider",
+        "vaccine_info_url": "https://example.com/",
+    }
+
+
 def test_search_locations_format_ids(client, api_key, ten_locations):
     result = search_locations(client, api_key, "format=ids")
     assert isinstance(result, list)
