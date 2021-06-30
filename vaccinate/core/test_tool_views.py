@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from reversion.models import Revision
 
@@ -75,6 +76,20 @@ def test_import_airtable_county_details(admin_client, requests_mock):
     assert county.age_floor_without_restrictions == 50
     assert county.internal_notes == "These are internal notes"
     assert county.public_notes == "These are public notes"
+
+
+def test_import_vts_priorty_numbers(admin_client):
+    file = SimpleUploadedFile(
+        "file.csv",
+        b"VIAL County ID, VTS priority\r\n1,10",
+        content_type="multipart/form-data",
+    )
+    response = admin_client.post(
+        "/admin/tools/", {"FILES": {"vts_priorty_numbers": file}}
+    )
+
+    assert response.status_code == 200
+    assert b"Updated details for 1 counties" in response.content
 
 
 def test_command_redirects_to_tools(admin_client):
