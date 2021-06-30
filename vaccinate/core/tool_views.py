@@ -167,17 +167,25 @@ def admin_tools(request):
     )
 
 
+def get_county_by_id_or_fips(data):
+    if data["VIAL County ID"] == "#N/A":
+        return County.objects.get(fips_code=data["FIPS"])
+
+    return County.objects.get(pk=data["VIAL County ID"])
+
+
 def update_counties_vts_priorty(file):
     reader = csv.DictReader(file)
-    updated = []
+    counties_to_update = []
 
     for row in reader:
-        county = County.objects.get(pk=row["VIAL County ID"])
+        county = get_county_by_id_or_fips(row)
         county.vts_priorty = row["VTS priority"]
-        county.save()
-        updated.append(county)
+        counties_to_update.append(county)
 
-    return len(updated)
+    County.objects.bulk_update(counties_to_update, ["vts_priorty"])
+
+    return len(counties_to_update)
 
 
 def import_airtable_counties(airtable_counties, user):
