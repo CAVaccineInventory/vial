@@ -1,3 +1,4 @@
+import csv
 import re
 from io import StringIO
 
@@ -139,6 +140,12 @@ def admin_tools(request):
                 message = "Updated details for {} counties".format(len(updated))
             except Exception as e:
                 error = str(e)
+        elif request.FILES.get("vts_priorty_numbers"):
+            file = (
+                request.FILES["vts_priorty_numbers"].read().decode("utf-8").splitlines()
+            )
+            updated_count = update_counties_vts_priorty(file)
+            message = f"Updated vts priorty for {updated_count} counties"
         else:
             # Run management commands
             command_to_run, args = {
@@ -158,6 +165,19 @@ def admin_tools(request):
             "message": message,
         },
     )
+
+
+def update_counties_vts_priorty(file):
+    reader = csv.DictReader(file)
+    updated = []
+
+    for row in reader:
+        county = County.objects.get(pk=row["VIAL County ID"])
+        county.vts_priorty = row["VTS priority"]
+        county.save()
+        updated.append(county)
+
+    return len(updated)
 
 
 def import_airtable_counties(airtable_counties, user):
