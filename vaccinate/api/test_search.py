@@ -181,6 +181,12 @@ def test_search_locations_format_json(client, api_key, ten_locations):
     }
 
 
+def test_search_locations_format_ids(client, api_key, ten_locations):
+    result = search_locations(client, api_key, "format=ids")
+    assert isinstance(result, list)
+    assert set(result) == {location.public_id for location in ten_locations}
+
+
 def test_search_locations_format_geojson(client, api_key, ten_locations):
     result = search_locations(client, api_key, "q=Location+1&format=geojson")
     assert set(result.keys()) == {"type", "features"}

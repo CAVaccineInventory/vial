@@ -241,6 +241,17 @@ def location_formats(preload_vaccinefinder=False):
         end=lambda qs: b"]}",
         content_type="application/json",
     )
+    formats["ids"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.only("public_id").select_related(None),
+        start=b"[",
+        transform=lambda l: l.public_id,
+        transform_batch=lambda batch: batch,
+        serialize=orjson.dumps,
+        separator=b",",
+        end=lambda qs: b"]",
+        content_type="application/json",
+    )
+
     return formats
 
 
