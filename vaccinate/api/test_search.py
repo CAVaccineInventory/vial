@@ -238,6 +238,7 @@ def test_search_locations_format_v0preview(client, api_key, location):
     }
     assert record["provider"] == {
         "name": "Some provider",
+        "provider_type": "Pharmacy",
         "vaccine_info_url": "https://example.com/",
     }
 
