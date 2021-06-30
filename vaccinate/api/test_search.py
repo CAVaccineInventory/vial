@@ -59,6 +59,14 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
                 "Location 7",
                 "Location 8",
                 "Location 9",
+            ],
+        ),
+        (
+            "exclude.provider=Some+provider",
+            [
+                "Location 4",
+                "Location 5",
+                "Location 6",
                 "Location 10",
             ],
         ),
@@ -111,13 +119,20 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
         report_source="ca",
         appointment_tag=AppointmentTag.objects.get(slug="web"),
     )
+    provider_type = ProviderType.objects.get(name="Pharmacy")
     provider = Provider.objects.get_or_create(
         name="Some provider",
-        defaults={"provider_type": ProviderType.objects.get(name="Pharmacy")},
+        defaults={"provider_type": provider_type},
+    )[0]
+    other_provider = Provider.objects.get_or_create(
+        name="Other provider",
+        defaults={"provider_type": provider_type},
     )[0]
     for location in ten_locations:
         if location.name not in ("Location 4", "Location 5", "Location 6"):
-            location.provider = provider
+            location.provider = (
+                other_provider if location.name == "Location 10" else provider
+            )
             location.save()
     not_exportable_report.availability_tags.add(
         AvailabilityTag.objects.get(slug="will_never_be_a_vaccination_site")

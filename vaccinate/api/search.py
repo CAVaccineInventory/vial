@@ -52,6 +52,7 @@ def search_locations(
     longitude = request.GET.get("longitude")
     radius = request.GET.get("radius")
     provider = request.GET.get("provider")
+    exclude_provider = request.GET.get("exclude.provider")
     provider_null = request.GET.get("provider_null")
     if state:
         try:
@@ -115,6 +116,8 @@ def search_locations(
         qs = qs.exclude(concordances__authority__in=exclude_authorities)
     if provider:
         qs = qs.filter(provider__name=provider)
+    if exclude_provider:
+        qs = qs.exclude(provider__name=exclude_provider)
     if provider_null:
         qs = qs.filter(provider__isnull=True)
     if exportable:
