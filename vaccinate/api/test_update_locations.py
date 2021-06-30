@@ -1,4 +1,5 @@
 import pytest
+from core.models import Provider, ProviderType
 from reversion.models import Revision
 
 
@@ -70,3 +71,47 @@ def test_update_locations(client, api_key, ten_locations, fields, expected):
     if fields.get("zip_code"):
         expected_comment = "Fixed zip"
     assert revision.comment == "{} by {}...".format(expected_comment, api_key[:10])
+
+
+def test_update_location_set_provider_null(client, api_key, location):
+    provider = Provider.objects.get_or_create(
+        name="Some provider",
+        defaults={"provider_type": ProviderType.objects.get(name="Pharmacy")},
+    )[0]
+    location.provider = provider
+    location.save()
+    response = client.post(
+        "/api/updateLocations",
+        {"update": {location.public_id: {"provider_null": True}}},
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert response.status_code == 200
+    assert response.json()["updated"] == [location.public_id]
+    location.refresh_from_db()
+    assert location.provider is None
+    # And check for error condition
+    error_response = client.post(
+        "/api/updateLocations",
+        {
+            "update": {
+                location.public_id: {
+                    "provider_null": True,
+                    "provider_name": "CVS",
+                    "provider_type": "Pharmacy",
+                }
+            }
+        },
+        content_type="application/json",
+        HTTP_AUTHORIZATION="Bearer {}".format(api_key),
+    )
+    assert error_response.status_code == 400
+    assert error_response.json() == {
+        "error": [
+            {
+                "loc": ["update", location.public_id, "provider_null"],
+                "msg": "provider_null must not be accompanied by provider_name or provider_type",
+                "type": "assertion_error",
+            }
+        ]
+    }

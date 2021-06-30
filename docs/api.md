@@ -602,6 +602,7 @@ The following fields can be updated using this API. All are optional.
 - `preferred_contact_method` - string, one of `research_online` or `outbound_call`
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
+- `provider_null` - bool - include this and set this to `True` to clear the current provider. You cannot also send a `provider_name` or `provider_type` if you are sending this field.
 
 Try this API: https://vial-staging.calltheshots.us/api/updateLocations/debug
 
