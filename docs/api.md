@@ -28,6 +28,9 @@ Optional query string parameters:
 - `authority=` - one or more concordance authorities e.g. `google_places` - returns only results that have a concordance identifier for at least one of those places
 - `exclude.authority=` - one or more concordance authorities e.g. `google_places` - returns only results that do NOT have a concordance identifier for any of those places
 - `exportable=1` - only return locations that would be exported to our www.vaccinatethestates.com map - this excludes locations with a planned closure date in the past, or that our call reports have marked as not being active vaccination locations
+- `provider=` - return locations with the specified provider name (provider names are unique)
+- `provider_null=1` - return locations that do not have a provider
+- `exclude.provider=` - returns only results that are not attached to the specified provider
 - `all=1` - use with caution: this causes EVERY result to be efficiently streamed back to you. Used without any other parameters this can return every location in our database!
 - `latitude=&longitude=&radius=` - return results within `radius` meters of the point defined by `latitude` and `longitude`
 
@@ -37,6 +40,9 @@ The following output formats are supported:
 - `geojson` - a GeoJSON Feature Collection. [Example GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=geojson)
 - `nlgeojson` - Newline-delimited GeoJSON. [Example nl-GeoJSON](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=nlgeojson)
 - `map` - a basic Leaflet map that renders that GeoJSON. [Example map](https://vial-staging.calltheshots.us/api/searchLocations?q=walgreens&format=map)
+- `ids` - a JSON array of public location IDs.
+- `v0preview` - preview of the v0 API JSON format we publish to `api.vaccinatethestates.com`.
+- `v0preview-geojson` - preview of the v0 GeoJSON API format we publish to `api.vaccinatethestates.com`.
 
 You can also add `debug=1` to the JSON output to wrap them in an HTML page. This is primarily useful in development as it enables the Django Debug Toolbar for those results.
 
@@ -596,6 +602,7 @@ The following fields can be updated using this API. All are optional.
 - `preferred_contact_method` - string, one of `research_online` or `outbound_call`
 - `provider_type` - one of the types from [/api/providerTypes](https://vial-staging.calltheshots.us/api/providerTypes)
 - `provider_name` - the name of the provider
+- `provider_null` - bool - include this and set this to `True` to clear the current provider. You cannot also send a `provider_name` or `provider_type` if you are sending this field.
 
 Try this API: https://vial-staging.calltheshots.us/api/updateLocations/debug
 
@@ -937,6 +944,8 @@ Preview the JSON that we generate for Mapbox. This returns 20 recent locations b
 
 - https://vial-staging.calltheshots.us/api/exportMapboxPreview
 - https://vial-staging.calltheshots.us/api/exportMapboxPreview?id=recgP5RSXunz1yrwm
+
+Add `&raw=1` to get back just the raw JSON, without it being wrapped in HTML. Use `&export=1` to simulate the export filter logic - which means you'll get back a blank document if the location would not be exported to Mapbox due to logic such as "don't export locations with a close date in the past".
 
 ### GET /api/exportPreview/Locations.json
 

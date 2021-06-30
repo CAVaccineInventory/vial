@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .search import filter_for_export
 
 
-def _mapbox_locations_queryset():
+def _mapbox_locations_queryset(skip_filter_for_exports=False):
     qs = (
         Location.objects.all()
         .select_related(
@@ -54,7 +54,9 @@ def _mapbox_locations_queryset():
         )
         .exclude(soft_deleted=True)
     )
-    return filter_for_export(qs)
+    if not skip_filter_for_exports:
+        qs = filter_for_export(qs)
+    return qs
 
 
 def _mapbox_geojson(location, expansion):
@@ -133,7 +135,9 @@ def _mapbox_geojson(location, expansion):
 def export_mapbox_preview(request):
     # For debugging: shows the GeoJSON we would send to Mapbox. Also
     # used by our unit tests.
-    locations = _mapbox_locations_queryset()
+    locations = _mapbox_locations_queryset(
+        skip_filter_for_exports=not request.GET.get("export")
+    )
     ids = request.GET.getlist("id")
     if ids:
         locations = locations.filter(public_id__in=ids)

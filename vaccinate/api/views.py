@@ -596,6 +596,15 @@ class UpdateLocationsFieldsValidator(_LocationSharedValidators):
     preferred_contact_method: Optional[str]
     provider_type: Optional[str]
     provider_name: Optional[str]
+    provider_null: Optional[bool]
+
+    @validator("provider_null", check_fields=False)
+    def provider_null_requires_no_name_or_type(cls, value, values):
+        if value:
+            assert not values.get("provider_type") and not values.get(
+                "provider_name"
+            ), "provider_null must not be accompanied by provider_name or provider_type"
+        return value
 
 
 class UpdateLocationsValidator(BaseModel):
@@ -639,7 +648,9 @@ def update_locations(request, on_request_logged):
         for location_id, fields in updates.items():
             location = Location.objects.get(public_id=location_id)
             for key, value in fields.items():
-                if key == "provider_type":
+                if key == "provider_null" and value:
+                    location.provider = None
+                elif key == "provider_type":
                     continue
                 elif key == "provider_name":
                     location.provider = Provider.objects.update_or_create(

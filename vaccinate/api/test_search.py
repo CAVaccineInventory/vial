@@ -8,6 +8,8 @@ from core.models import (
     ConcordanceIdentifier,
     County,
     Location,
+    Provider,
+    ProviderType,
     Reporter,
     SourceLocation,
     State,
@@ -47,6 +49,27 @@ def search_source_locations(client, api_key, query_string, expected_status_code=
         ("county_fips=06025", ["Location 3"]),
         ("idref=google_places:123", ["Location 7"]),
         ("authority=google_places", ["Location 7", "Location 8"]),
+        ("provider_null=1", ["Location 4", "Location 5", "Location 6"]),
+        (
+            "provider=Some+provider",
+            [
+                "Location 1",
+                "Location 2",
+                "Location 3",
+                "Location 7",
+                "Location 8",
+                "Location 9",
+            ],
+        ),
+        (
+            "exclude.provider=Some+provider",
+            [
+                "Location 4",
+                "Location 5",
+                "Location 6",
+                "Location 10",
+            ],
+        ),
         (
             "exclude.authority=google_places",
             [
@@ -96,6 +119,21 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
         report_source="ca",
         appointment_tag=AppointmentTag.objects.get(slug="web"),
     )
+    provider_type = ProviderType.objects.get(name="Pharmacy")
+    provider = Provider.objects.get_or_create(
+        name="Some provider",
+        defaults={"provider_type": provider_type},
+    )[0]
+    other_provider = Provider.objects.get_or_create(
+        name="Other provider",
+        defaults={"provider_type": provider_type},
+    )[0]
+    for location in ten_locations:
+        if location.name not in ("Location 4", "Location 5", "Location 6"):
+            location.provider = (
+                other_provider if location.name == "Location 10" else provider
+            )
+            location.save()
     not_exportable_report.availability_tags.add(
         AvailabilityTag.objects.get(slug="will_never_be_a_vaccination_site")
     )
@@ -104,10 +142,15 @@ def test_search_locations(client, api_key, query_string, expected, ten_locations
     with_concordances_1.concordances.add(
         ConcordanceIdentifier.for_idref("google_places:123")
     )
+    # Check that multiple concordances don't return duplicate results, #707
+    with_concordances_1.concordances.add(
+        ConcordanceIdentifier.for_idref("google_places:234")
+    )
     with_concordances_2.concordances.add(
         ConcordanceIdentifier.for_idref("google_places:456")
     )
     data = search_locations(client, api_key, query_string)
+    assert len(expected) == len(data["results"])
     names = {r["name"] for r in data["results"]}
     assert names == set(expected)
     assert data["total"] == len(expected)
@@ -156,6 +199,54 @@ def test_search_locations_format_json(client, api_key, ten_locations):
         "provider",
         "concordances",
     }
+
+
+def test_search_locations_format_v0preview(client, api_key, location):
+    provider_type = ProviderType.objects.get(name="Pharmacy")
+    location.provider = Provider.objects.get_or_create(
+        name="Some provider",
+        defaults={
+            "provider_type": provider_type,
+            "vaccine_info_url": "https://example.com/",
+        },
+    )[0]
+    location.save()
+    result = search_locations(
+        client, api_key, "id={}&format=v0preview".format(location.public_id)
+    )
+    assert set(result.keys()) == {"content", "usage"}
+    record = result["content"][0]
+    assert set(record.keys()) == {
+        "id",
+        "name",
+        "provider",
+        "state",
+        "latitude",
+        "longitude",
+        "location_type",
+        "phone_number",
+        "full_address",
+        "city",
+        "county",
+        "zip_code",
+        "hours",
+        "website",
+        "vaccines_offered",
+        "concordances",
+        "last_verified_by_vts",
+        "vts_url",
+    }
+    assert record["provider"] == {
+        "name": "Some provider",
+        "provider_type": "Pharmacy",
+        "vaccine_info_url": "https://example.com/",
+    }
+
+
+def test_search_locations_format_ids(client, api_key, ten_locations):
+    result = search_locations(client, api_key, "format=ids")
+    assert isinstance(result, list)
+    assert set(result) == {location.public_id for location in ten_locations}
 
 
 def test_search_locations_format_geojson(client, api_key, ten_locations):

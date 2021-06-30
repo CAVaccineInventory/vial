@@ -94,6 +94,7 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
         "website",
         "preferred_contact_method",
         "provider__name",
+        "provider__vaccine_info_url",
         "provider__provider_type__name",
         "dn_latest_non_skip_report",
     )
@@ -158,6 +159,13 @@ def location_v0_json(location: Location) -> Dict[str, object]:
     return {
         "id": location.public_id,
         "name": location.name,
+        "provider": {
+            "name": location.provider.name,
+            "provider_type": location.provider.provider_type.name,
+            "vaccine_info_url": location.provider.vaccine_info_url,
+        }
+        if location.provider
+        else None,
         "state": location.state.abbreviation,
         "latitude": float(location.latitude),
         "longitude": float(location.longitude),
@@ -227,7 +235,9 @@ def location_formats(preload_vaccinefinder=False):
         content_type="application/json",
     )
     formats["v0preview-geojson"] = OutputFormat(
-        prepare_queryset=lambda qs: qs.select_related("dn_latest_non_skip_report"),
+        prepare_queryset=lambda qs: qs.select_related(
+            "dn_latest_non_skip_report", "provider"
+        ),
         start=(
             b'{"type":"FeatureCollection","usage":USAGE,'.replace(
                 b"USAGE", orjson.dumps(VTS_USAGE)
@@ -241,6 +251,17 @@ def location_formats(preload_vaccinefinder=False):
         end=lambda qs: b"]}",
         content_type="application/json",
     )
+    formats["ids"] = OutputFormat(
+        prepare_queryset=lambda qs: qs.only("public_id").select_related(None),
+        start=b"[",
+        transform=lambda l: l.public_id,
+        transform_batch=lambda batch: batch,
+        serialize=orjson.dumps,
+        separator=b",",
+        end=lambda qs: b"]",
+        content_type="application/json",
+    )
+
     return formats
 
 

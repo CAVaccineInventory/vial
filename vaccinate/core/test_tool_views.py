@@ -1,3 +1,4 @@
+import pytest
 from django.utils import timezone
 from reversion.models import Revision
 
@@ -301,3 +302,21 @@ def test_import_call_requests(admin_client, ten_locations):
         (ten_locations[3].public_id, 4, False),
         (ten_locations[4].public_id, 99, False),
     ]
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "/admin/core/location/{public_id}",
+        "/admin/core/location/{public_id}/",
+        "/admin/core/location/{public_id}/change",
+        "/admin/core/location/{public_id}/change/",
+    ),
+)
+def test_admin_core_location_public_id_redirect(admin_client, path, location):
+    response = admin_client.get(path.format(public_id=location.public_id), follow=True)
+    assert response.status_code == 200
+    # May have been two redirects if there was a missing trailing slash:
+    assert (
+        response.redirect_chain[-1][0] == f"/admin/core/location/{location.pk}/change/"
+    )

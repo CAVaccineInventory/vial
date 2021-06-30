@@ -297,3 +297,8 @@ def bulk_delete_call_requests(request):
             "message": message,
         },
     )
+
+
+def location_public_id_redirect(request, partial_public_id):
+    location = get_object_or_404(Location, public_id=f"l{partial_public_id}")
+    return HttpResponseRedirect(f"/admin/core/location/{location.pk}/change/")
