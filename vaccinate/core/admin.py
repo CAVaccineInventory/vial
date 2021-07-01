@@ -638,7 +638,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     )
     deliberately_omitted_from_fieldsets = ("point",)
 
-    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")
+    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")  # type: ignore
     def county_vts_priorty(self, obj):
         return obj.county.vts_priorty
 
