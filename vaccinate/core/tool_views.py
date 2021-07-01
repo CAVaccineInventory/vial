@@ -145,7 +145,7 @@ def admin_tools(request):
                 request.FILES["vts_priorty_numbers"].read().decode("utf-8").splitlines()
             )
             updated_count = update_counties_vts_priorty(file)
-            message = f"Updated vts priorty for {updated_count} counties"
+            message = f"Updated the VTS priorty number for {updated_count} counties"
         else:
             # Run management commands
             command_to_run, args = {
@@ -167,19 +167,12 @@ def admin_tools(request):
     )
 
 
-def get_county_by_id_or_fips(data):
-    if data["VIAL County ID"] == "#N/A":
-        return County.objects.get(fips_code=data["FIPS"])
-
-    return County.objects.get(pk=data["VIAL County ID"])
-
-
 def update_counties_vts_priorty(file):
     reader = csv.DictReader(file)
     counties_to_update = []
 
     for row in reader:
-        county = get_county_by_id_or_fips(row)
+        county = County.objects.get(fips_code=row["FIPS"])
         county.vts_priorty = row["VTS priority"]
         counties_to_update.append(county)
 
