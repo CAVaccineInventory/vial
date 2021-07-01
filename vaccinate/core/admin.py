@@ -638,10 +638,6 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     )
     deliberately_omitted_from_fieldsets = ("point",)
 
-    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")  # type: ignore
-    def county_vts_priorty(self, obj):
-        return obj.county.vts_priorty
-
     def get_inlines(self, request, obj):
         if obj is None and request.GET.get("_preview"):
             # Add form - include first-report inline
@@ -879,6 +875,11 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             )
         else:
             return ""
+
+    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")  # type: ignore
+    def county_vts_priorty(self, obj):
+        if obj.county:
+            return obj.county.vts_priorty
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
