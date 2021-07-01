@@ -81,15 +81,15 @@ def test_import_airtable_county_details(admin_client, requests_mock):
 def test_import_vts_priorty_numbers(admin_client):
     file = SimpleUploadedFile(
         "file.csv",
-        b"VIAL County ID, VTS priority\r\n1,10",
+        b"FIPS,VTS priority\r\n06079,1967",
         content_type="multipart/form-data",
     )
-    response = admin_client.post(
-        "/admin/tools/", {"FILES": {"vts_priorty_numbers": file}}
-    )
+    response = admin_client.post("/admin/tools/", {"vts_priorty_numbers": file})
 
     assert response.status_code == 200
-    assert b"Updated details for 1 counties" in response.content
+    assert b"Updated the VTS priorty number for 1 counties" in response.content
+    county = County.objects.get(fips_code="06079")
+    assert county.vts_priorty == 1967
 
 
 def test_command_redirects_to_tools(admin_client):
