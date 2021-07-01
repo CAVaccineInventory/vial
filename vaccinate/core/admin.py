@@ -558,6 +558,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "full_address",
                     "state",
                     "county",
+                    "county_vts_priorty",
                     "latitude",
                     "longitude",
                     "hours",
@@ -637,6 +638,10 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     )
     deliberately_omitted_from_fieldsets = ("point",)
 
+    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")
+    def county_vts_priorty(self, obj):
+        return obj.county.vts_priorty
+
     def get_inlines(self, request, obj):
         if obj is None and request.GET.get("_preview"):
             # Add form - include first-report inline
@@ -705,6 +710,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "full_address",
         "state",
         "county",
+        "county_vts_priorty",
         "preferred_contact_method",
         "location_type",
         "provider",
@@ -764,6 +770,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "appointments_walkins_provenance_report",
         "appointments_walkins_last_updated_at",
         "vaccines_offered_last_updated_at",
+        "county_vts_priorty",
     )
 
     def claim_locations(self, request, queryset):
