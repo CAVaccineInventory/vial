@@ -217,9 +217,9 @@ django-reversion-compare==0.14.0 \
     --hash=sha256:72609a2e6bdc4e0e7116081cd2b3711103dff7897cc2bbe78386639413c90c9b \
     --hash=sha256:d0981c3a0c8dc8fdd6964432e4397f2fe33d521aee29cb1f232b37e6a71c61bf
     # via -r requirements.in
-django-sql-dashboard==0.16 \
-    --hash=sha256:48cfba2b9aa20c711d8477d01d0fee6b4600fed2dc1cc41c440be54617a15b7f \
-    --hash=sha256:d6aaedb490dea74b99b5e87ed023846db0ae2d0e363e61a58d37a4c84256fa93
+django-sql-dashboard==1.0 \
+    --hash=sha256:2c965619ccb3ea532bcc179a10337773148ebedec6b1cf1a084473df4df4fe18 \
+    --hash=sha256:46fff8c57851a1df75db6efec853f9f425d6871b8008ae5f1571a78b68983922
     # via -r requirements.in
 django-stubs==1.8.0 \
     --hash=sha256:717967d7fee0a6af0746724a0be80d72831a982a40fa8f245a6a46f4cafd157b \
@@ -286,9 +286,9 @@ google-cloud-secret-manager==2.5.0 \
     --hash=sha256:7e09052c347f05a1807784467d5b8ff43675afc96812fdd70914ba136cd37311 \
     --hash=sha256:e99eb9f77373b97bfc1becb7d23fae5574a33fd9e44b44a3e700abcbfbc9f94d
     # via -r requirements.in
-google-cloud-storage==1.38.0 \
-    --hash=sha256:162011d66f64b8dc5d7936609a5daf0066cc521231546aea02c126a5559446c4 \
-    --hash=sha256:69499560ec8234339ce831704419a2288c409a422f6e9ed1facc9345412ee637
+google-cloud-storage==1.40.0 \
+    --hash=sha256:560f7d112dce319a39b06c35cf53ae156ef42dfb213fc633c09aefaae7c060ec \
+    --hash=sha256:620ce1a7369e109515d5cf4c6e783afcb321f2d3a14faff394c929e00f5a35ca
     # via -r requirements.in
 google-crc32c==1.1.2 \
     --hash=sha256:0ae3cf54e0d4d83c8af1afe96fc0970fbf32f1b29275f3bfd44ce25c4b622a2b \
