@@ -251,6 +251,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display = (
         "name",
         "state",
+        "vts_priorty",
         "vaccine_info_url",
         "short_public_notes",
         "age_floor_without_restrictions",
@@ -264,6 +265,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 "fields": (
                     "name",
                     "state",
+                    "vts_priorty",
                     "population",
                     "internal_notes",
                     "fips_code",
@@ -298,7 +300,14 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         ),
         ("Identifiers", {"classes": ("collapse",), "fields": ("airtable_id",)}),
     )
-    readonly_fields = ("fips_code", "name", "state", "airtable_id", "population")
+    readonly_fields = (
+        "vts_priorty",
+        "fips_code",
+        "name",
+        "state",
+        "airtable_id",
+        "population",
+    )
     ordering = ("name",)
     actions = [export_as_csv_action()]
 
@@ -549,6 +558,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "full_address",
                     "state",
                     "county",
+                    "county_vts_priorty",
                     "latitude",
                     "longitude",
                     "hours",
@@ -696,6 +706,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "full_address",
         "state",
         "county",
+        "county_vts_priorty",
         "preferred_contact_method",
         "location_type",
         "provider",
@@ -755,6 +766,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "appointments_walkins_provenance_report",
         "appointments_walkins_last_updated_at",
         "vaccines_offered_last_updated_at",
+        "county_vts_priorty",
     )
 
     def claim_locations(self, request, queryset):
@@ -863,6 +875,11 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             )
         else:
             return ""
+
+    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")  # type: ignore
+    def county_vts_priorty(self, obj):
+        if obj.county:
+            return obj.county.vts_priorty
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

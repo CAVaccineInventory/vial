@@ -2,6 +2,9 @@
 {% if county.hotline_phone_number %}
   <p><strong>Hotline phone number</strong>: {{ county.hotline_phone_number }}</p>
 {% endif %}
+{% if county.vts_priorty %}
+  <p><strong>VTS Priorty</strong>: {{ county.vts_priorty }}</p>
+{% endif %}
 {% if county.vaccine_info_url %}
   <p><strong>Vaccine info URL</strong>: {{ county.vaccine_info_url|urlize }}</p>
 {% endif %}

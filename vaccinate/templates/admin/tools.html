@@ -31,6 +31,16 @@
     </p>
 </form>
 
+<h2>Import VTS priorty number for counties from csv file</h2>
+<p>Use this tool to import manually collected data about the VTS priorty number (derived from the CDC's Social vulnerability index) for each county.</p>
+<p>Note: in order to be processed correctly the csv should have headers named "VTS priority" and "VIAL County ID".</p>
+<form enctype="multipart/form-data" action="{{ request.path }}" method="POST">
+    {% csrf_token %}
+    <label for="id_vts_priorty_numbers">Choose the CSV file to upload</label>
+    <input id="id_vts_priorty_numbers" type="file" accept=".csv" name="vts_priorty_numbers"><br><br>
+    <input type="submit" value="Import County VTS priorty values">
+</form>
+
 <h2>Management commands</h2>
 <h3>Import counties</h3>
 <p>Import the full list of 3,000+ counties from <a href="https://us-counties.datasette.io/counties/county_fips">us-counties.datasette.io/counties/county_fips</a> - see <a href="https://github.com/CAVaccineInventory/vial/issues/88">issue 88</a></p>
