@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0154_add_vts_priorty_to_county'),
+        ("core", "0154_add_vts_priorty_to_county"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='county',
-            name='vts_priorty',
-            field=models.IntegerField(blank=True, null=True, unique=True, verbose_name='VTS priorty'),
+            model_name="county",
+            name="vts_priorty",
+            field=models.IntegerField(
+                blank=True, null=True, unique=True, verbose_name="VTS priorty"
+            ),
         ),
     ]
