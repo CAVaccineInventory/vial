@@ -1138,6 +1138,8 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "hours",
         "full_address",
         "website",
+        "location_type",
+        "location_address",
     )
     inlines = [ReportReviewNoteInline]
     deliberately_omitted_from_fieldsets = ("location", "reported_by")
@@ -1147,8 +1149,10 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
             {
                 "fields": (
                     "reporter",
-                    "public_id",
                     "location_link",
+                    "public_id",
+                    "location_address",
+                    "location_type",
                     "created_at",
                 )
             },
@@ -1274,16 +1278,22 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     created_id_deleted.short_description = "created"  # type:ignore[attr-defined]
     created_id_deleted.admin_order_field = "created_at"  # type:ignore[attr-defined]
 
+    @admin.display(  # type:ignore[attr-defined]
+        description="Location name", ordering="location__name"
+    )
     def location_link(self, obj):
         return format_html(
-            '<strong><a href="{}">{}</a></strong><br>{}',
+            '<strong><a href="{}">{}</a></strong><br>',
             reverse("admin:core_location_change", args=(obj.location.id,)),
             obj.location.name,
-            obj.location.full_address,
         )
 
-    location_link.short_description = "Location"  # type:ignore[attr-defined]
-    location_link.admin_order_field = "location__name"  # type:ignore[attr-defined]
+    @admin.display(description="Full address")  # type:ignore[attr-defined]
+    def location_address(self, obj):
+        return obj.location.full_address
+
+    def location_type(self, obj):
+        return obj.location.type
 
     def reporter(self, obj):
         return format_html(

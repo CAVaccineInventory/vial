@@ -1,5 +1,14 @@
 {% extends "admin/change_form.html" %}
 
+{% block extrahead %}{{ block.super }}
+<style>
+#report_form > div > fieldset:first-of-type {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+</style>
+{% endblock %}
+
 {% block field_sets %}
 
   {% include "admin/pending_and_claimed_snippet.html" with name="report" %}
