@@ -1140,6 +1140,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "website",
         "location_type",
         "location_address",
+        "format_created_at_time",
     )
     inlines = [ReportReviewNoteInline]
     deliberately_omitted_from_fieldsets = ("location", "reported_by")
@@ -1153,7 +1154,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
                     "public_id",
                     "location_address",
                     "location_type",
-                    "created_at",
+                    "format_created_at_time",
                 )
             },
         ),
@@ -1277,6 +1278,15 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
 
     created_id_deleted.short_description = "created"  # type:ignore[attr-defined]
     created_id_deleted.admin_order_field = "created_at"  # type:ignore[attr-defined]
+
+    @admin.display(description="Created at")  # type:ignore[attr-defined]
+    def format_created_at_time(self, obj):
+        year_month_day = dateformat.format(timezone.localtime(obj.created_at), "j M Y ")
+        hour_minute_timezone = dateformat.format(
+            timezone.localtime(obj.created_at), "g:i A e"
+        )
+
+        return f"{year_month_day}\n\n{hour_minute_timezone}"
 
     @admin.display(  # type:ignore[attr-defined]
         description="Location name", ordering="location__name"
