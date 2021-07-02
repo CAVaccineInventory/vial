@@ -1155,18 +1155,23 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "hours",
         "full_address",
         "website",
+        "location_type",
+        "location_address",
+        "format_created_at_time",
     )
     inlines = [ReportReviewNoteInline]
-    deliberately_omitted_from_fieldsets = ("location", "reported_by")
+    deliberately_omitted_from_fieldsets = ("location", "reported_by", "created_at")
     fieldsets = (
         (
             None,
             {
                 "fields": (
                     "reporter",
-                    "public_id",
                     "location_link",
-                    "created_at",
+                    "public_id",
+                    "location_address",
+                    "location_type",
+                    "format_created_at_time",
                 )
             },
         ),
@@ -1291,16 +1296,31 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     created_id_deleted.short_description = "created"  # type:ignore[attr-defined]
     created_id_deleted.admin_order_field = "created_at"  # type:ignore[attr-defined]
 
-    def location_link(self, obj):
-        return format_html(
-            '<strong><a href="{}">{}</a></strong><br>{}',
-            reverse("admin:core_location_change", args=(obj.location.id,)),
-            obj.location.name,
-            obj.location.full_address,
+    @admin.display(description="Created at")  # type:ignore[attr-defined]
+    def format_created_at_time(self, obj):
+        year_month_day = dateformat.format(timezone.localtime(obj.created_at), "j M Y ")
+        hour_minute_timezone = dateformat.format(
+            timezone.localtime(obj.created_at), "g:i A e"
         )
 
-    location_link.short_description = "Location"  # type:ignore[attr-defined]
-    location_link.admin_order_field = "location__name"  # type:ignore[attr-defined]
+        return f"{year_month_day}\n\n{hour_minute_timezone}"
+
+    @admin.display(  # type:ignore[attr-defined]
+        description="Location name", ordering="location__name"
+    )
+    def location_link(self, obj):
+        return format_html(
+            '<strong><a href="{}">{}</a></strong><br>',
+            reverse("admin:core_location_change", args=(obj.location.id,)),
+            obj.location.name,
+        )
+
+    @admin.display(description="Full address")  # type:ignore[attr-defined]
+    def location_address(self, obj):
+        return obj.location.full_address
+
+    def location_type(self, obj):
+        return obj.location.type
 
     def reporter(self, obj):
         return format_html(
