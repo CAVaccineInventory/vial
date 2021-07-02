@@ -33,7 +33,12 @@
 
 <h2>Import VTS priorty number for counties from csv file</h2>
 <p>Use this tool to import manually collected data about the VTS priorty number (derived from the CDC's Social vulnerability index) for each county.</p>
-<p>Note: in order to be processed correctly the csv should have headers named "VTS priority" and "VIAL County ID".</p>
+<p>In order to be processed correctly the csv should have:
+    <ul>
+        <li>Headers named <strong>"VTS priority"</strong> and <strong>"FIPS"</strong></li>
+        <li>FIPS column values must have 5 digits. Ex. "04444", not "4444"</li>
+    </ul>
+</p>
 <form enctype="multipart/form-data" action="{{ request.path }}" method="POST">
     {% csrf_token %}
     <label for="id_vts_priorty_numbers">Choose the CSV file to upload</label>
