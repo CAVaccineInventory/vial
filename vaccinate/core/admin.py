@@ -1143,7 +1143,7 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "format_created_at_time",
     )
     inlines = [ReportReviewNoteInline]
-    deliberately_omitted_from_fieldsets = ("location", "reported_by")
+    deliberately_omitted_from_fieldsets = ("location", "reported_by", "created_at")
     fieldsets = (
         (
             None,
