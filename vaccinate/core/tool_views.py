@@ -141,11 +141,17 @@ def admin_tools(request):
             except Exception as e:
                 error = str(e)
         elif request.FILES.get("vts_priorty_numbers"):
-            file = (
-                request.FILES["vts_priorty_numbers"].read().decode("utf-8").splitlines()
-            )
-            updated_count = update_counties_vts_priorty(file)
-            message = f"Updated the VTS priorty number for {updated_count} counties"
+            try:
+                file = (
+                    request.FILES["vts_priorty_numbers"]
+                    .read()
+                    .decode("utf-8")
+                    .splitlines()
+                )
+                updated_count = update_counties_vts_priorty(file)
+                message = f"Updated the VTS priorty number for {updated_count} counties"
+            except ValueError as e:
+                error = str(e)
         else:
             # Run management commands
             command_to_run, args = {
@@ -172,6 +178,9 @@ def update_counties_vts_priorty(file):
     counties_to_update = []
 
     for row in reader:
+        if len(row["FIPS"]) != 5:
+            raise ValueError("FIPS codes must be 5 digits long")
+
         county = County.objects.get(fips_code=row["FIPS"])
         county.vts_priorty = row["VTS priority"]
         counties_to_update.append(county)
