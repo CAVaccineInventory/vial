@@ -54,6 +54,10 @@ textarea#id_full_address {
     grid-template-columns: 1fr 1fr;
 }
 
+#report_form > div > fieldset:first-of-type > div.form-row label {
+    font-weight: bold;
+}
+
 .pending-review, .soft-deleted {
     background-color: red; 
     color: white; 
@@ -89,14 +93,22 @@ div.qa-buttons-container {
 
 #location_form label[for="id_phone_number"] {
     font-weight: bold;
+    color: var(--body-fg);
 }
 
 #location_form label[for="id_full_address"] {
     font-weight: bold;
+    color: var(--body-fg);
 }
 
 #location_form label[for="id_county"] {
     font-weight: bold;
+    color: var(--body-fg);
+}
+
+#location_form .field-county_vts_priorty label {
+    font-weight: bold;
+    color: var(--body-fg);
 }
 </style>
 {{ block.super }}

@@ -251,6 +251,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
     list_display = (
         "name",
         "state",
+        "vts_priorty",
         "vaccine_info_url",
         "short_public_notes",
         "age_floor_without_restrictions",
@@ -264,6 +265,7 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 "fields": (
                     "name",
                     "state",
+                    "vts_priorty",
                     "population",
                     "internal_notes",
                     "fips_code",
@@ -298,7 +300,14 @@ class CountyAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         ),
         ("Identifiers", {"classes": ("collapse",), "fields": ("airtable_id",)}),
     )
-    readonly_fields = ("fips_code", "name", "state", "airtable_id", "population")
+    readonly_fields = (
+        "vts_priorty",
+        "fips_code",
+        "name",
+        "state",
+        "airtable_id",
+        "population",
+    )
     ordering = ("name",)
     actions = [export_as_csv_action()]
 
@@ -549,6 +558,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "full_address",
                     "state",
                     "county",
+                    "county_vts_priorty",
                     "latitude",
                     "longitude",
                     "hours",
@@ -696,6 +706,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "full_address",
         "state",
         "county",
+        "county_vts_priorty",
         "preferred_contact_method",
         "location_type",
         "provider",
@@ -755,6 +766,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "appointments_walkins_provenance_report",
         "appointments_walkins_last_updated_at",
         "vaccines_offered_last_updated_at",
+        "county_vts_priorty",
     )
 
     def claim_locations(self, request, queryset):
@@ -863,6 +875,11 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
             )
         else:
             return ""
+
+    @admin.display(description="County VTS Priorty", ordering="county__vts_priorty")  # type: ignore
+    def county_vts_priorty(self, obj):
+        if obj.county:
+            return obj.county.vts_priorty
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -1138,18 +1155,23 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
         "hours",
         "full_address",
         "website",
+        "location_type",
+        "location_address",
+        "format_created_at_time",
     )
     inlines = [ReportReviewNoteInline]
-    deliberately_omitted_from_fieldsets = ("location", "reported_by")
+    deliberately_omitted_from_fieldsets = ("location", "reported_by", "created_at")
     fieldsets = (
         (
             None,
             {
                 "fields": (
                     "reporter",
-                    "public_id",
                     "location_link",
-                    "created_at",
+                    "public_id",
+                    "location_address",
+                    "location_type",
+                    "format_created_at_time",
                 )
             },
         ),
@@ -1274,16 +1296,31 @@ class ReportAdmin(DynamicListDisplayMixin, admin.ModelAdmin):
     created_id_deleted.short_description = "created"  # type:ignore[attr-defined]
     created_id_deleted.admin_order_field = "created_at"  # type:ignore[attr-defined]
 
-    def location_link(self, obj):
-        return format_html(
-            '<strong><a href="{}">{}</a></strong><br>{}',
-            reverse("admin:core_location_change", args=(obj.location.id,)),
-            obj.location.name,
-            obj.location.full_address,
+    @admin.display(description="Created at")  # type:ignore[attr-defined]
+    def format_created_at_time(self, obj):
+        year_month_day = dateformat.format(timezone.localtime(obj.created_at), "j M Y ")
+        hour_minute_timezone = dateformat.format(
+            timezone.localtime(obj.created_at), "g:i A e"
         )
 
-    location_link.short_description = "Location"  # type:ignore[attr-defined]
-    location_link.admin_order_field = "location__name"  # type:ignore[attr-defined]
+        return f"{year_month_day}\n\n{hour_minute_timezone}"
+
+    @admin.display(  # type:ignore[attr-defined]
+        description="Location name", ordering="location__name"
+    )
+    def location_link(self, obj):
+        return format_html(
+            '<strong><a href="{}">{}</a></strong><br>',
+            reverse("admin:core_location_change", args=(obj.location.id,)),
+            obj.location.name,
+        )
+
+    @admin.display(description="Full address")  # type:ignore[attr-defined]
+    def location_address(self, obj):
+        return obj.location.full_address
+
+    def location_type(self, obj):
+        return obj.location.type
 
     def reporter(self, obj):
         return format_html(

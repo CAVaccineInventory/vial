@@ -181,6 +181,9 @@ class County(models.Model):
     vaccine_dashboard_url = CharTextField(null=True, blank=True)
     vaccine_data_url = CharTextField(null=True, blank=True)
     vaccine_arcgis_url = CharTextField(null=True, blank=True)
+    vts_priorty = models.IntegerField(
+        null=True, blank=True, unique=True, verbose_name="VTS priorty"
+    )
     age_floor_without_restrictions = models.IntegerField(
         null=True, blank=True, verbose_name="Age Floor"
     )
