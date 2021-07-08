@@ -262,6 +262,24 @@ class Location(gis_models.Model):
         LocationType, related_name="locations", on_delete=models.PROTECT
     )
 
+    hours_json = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Structured hours information from one of our scrapers",
+    )
+    hours_json_provenance_source_location = models.ForeignKey(
+        "SourceLocation",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The source location that last populated hours_json",
+        on_delete=models.PROTECT,
+    )
+    hours_json_last_updated_at = models.DateTimeField(
+        help_text="When hours_json was last updated",
+        blank=True,
+        null=True,
+    )
     vaccines_offered = models.JSONField(
         null=True,
         blank=True,

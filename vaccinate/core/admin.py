@@ -612,6 +612,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "vaccines_offered_last_updated_at",
                     "vaccines_offered_provenance_source_location",
                     "appointments_walkins_provenance_report",
+                    "hours_json",
+                    "hours_json_provenance_source_location",
+                    "hours_json_last_updated_at",
                 ),
             },
         ),
@@ -732,6 +735,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "vaccines_offered_provenance_report",
         "vaccines_offered_provenance_source_location",
         "appointments_walkins_provenance_report",
+        "hours_json_provenance_source_location",
     )
     readonly_fields = (
         "scooby_report_link",
@@ -766,6 +770,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "appointments_walkins_provenance_report",
         "appointments_walkins_last_updated_at",
         "vaccines_offered_last_updated_at",
+        "hours_json",
+        "hours_json_provenance_source_location",
+        "hours_json_last_updated_at",
         "county_vts_priorty",
     )
 
