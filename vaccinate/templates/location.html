@@ -8,9 +8,9 @@
 <p><a href="/location">Find another location</a></p>
 
 <section style="border: 2px solid #ccc; padding: 0.5em">
-<h2>Derived availability and inventory</h2>
+<h2>Derived details</h2>
 
-<p>We have logic that derives vaccine inventory and availability based on a combination of recently filed reports and recently scraped source locations. The <code>location.derived_availability_and_inventory()</code> method for this location currently returns:</p>
+<p>We have logic that derives vaccine inventory, availability and opening hours based on a combination of recently filed reports and recently scraped source locations. The <code>location.derived_details()</code> method for this location currently returns:</p>
 
 <p><strong>Vaccines offered:</strong> {{ derived.vaccines_offered|default:"-" }}</p>
   <p>According to
@@ -43,6 +43,14 @@
     <blockquote style="margin-top: 0">Most recent report with an opinion was {{ derived.most_recent_report_on_availability }} on {{ derived.most_recent_report_on_availability.created_at }} which said {{ derived.most_recent_report_on_availability.availability }}</blockquote>
   {% endif %}
 </p>
+
+<p><strong>Structured hours:</strong> {{ derived.hours_json }}</p>
+{% if derived.hours_json_provenance_source_location %}
+<p>According to
+  source location: {{ derived.hours_json_provenance_source_location }}
+  on {{ derived.hours_json_last_updated_at }}
+</p>
+{% endif %}
 
 <details><summary>Raw derived data</summary>
   <pre>{{ derived_raw }}</pre>

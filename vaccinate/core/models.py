@@ -225,11 +225,15 @@ class DerivedResults(NamedTuple):
     appointments_walkins_provenance_report: Optional[Report]
     appointments_walkins_provenance_source_location: Optional[SourceLocation]
     appointments_walkins_last_updated_at: Optional[datetime]
+    hours_json: Optional[list[dict]]
+    hours_json_last_updated_at: Optional[datetime]
+    hours_json_provenance_source_location: Optional[SourceLocation]
     # Additional debugging info:
     most_recent_report_on_vaccines_offered: Optional[Report]
     most_recent_source_location_on_vaccines_offered: Optional[SourceLocation]
     most_recent_report_on_availability: Optional[Report]
     most_recent_source_location_on_availability: Optional[SourceLocation]
+    most_recent_source_location_on_hours_json: Optional[SourceLocation]
 
 
 class Location(gis_models.Model):
@@ -548,6 +552,7 @@ class Location(gis_models.Model):
             "vaccinespotter_org",
             "getmyvax_org",
         )
+        SOURCE_NAMES_TO_CONSIDER_FOR_HOURS = ("vaccinefinder_org",)
         vaccines_offered = None
         vaccines_offered_provenance_report = None
         vaccines_offered_provenance_source_location = None
@@ -561,6 +566,9 @@ class Location(gis_models.Model):
         most_recent_source_location_on_vaccines_offered = None
         most_recent_report_on_availability = None
         most_recent_source_location_on_availability = None
+        hours_json = None
+        hours_json_last_updated_at = None
+        most_recent_source_location_on_hours_json = None
 
         most_recent_report_on_vaccines_offered = (
             self.reports.all()
@@ -686,6 +694,22 @@ class Location(gis_models.Model):
                 report_to_use_for_availability.created_at
             )
 
+        most_recent_source_location_on_hours_json = (
+            self.matched_source_locations.all()
+            .filter(source_name__in=SOURCE_NAMES_TO_CONSIDER_FOR_HOURS)
+            .exclude(import_json__opening_hours=None)
+            .exclude(import_json__opening_hours=[])
+            .order_by("-last_imported_at")
+            .first()
+        )
+        if most_recent_source_location_on_hours_json:
+            hours_json = most_recent_source_location_on_hours_json.import_json[
+                "opening_hours"
+            ]
+            hours_json_last_updated_at = (
+                most_recent_source_location_on_hours_json.last_imported_at
+            )
+
         derived = DerivedResults(
             vaccines_offered=vaccines_offered,
             vaccines_offered_provenance_report=vaccines_offered_provenance_report,
@@ -700,6 +724,10 @@ class Location(gis_models.Model):
             most_recent_source_location_on_vaccines_offered=most_recent_source_location_on_vaccines_offered,
             most_recent_report_on_availability=most_recent_report_on_availability,
             most_recent_source_location_on_availability=most_recent_source_location_on_availability,
+            hours_json=hours_json,
+            hours_json_provenance_source_location=most_recent_source_location_on_hours_json,
+            most_recent_source_location_on_hours_json=most_recent_source_location_on_hours_json,
+            hours_json_last_updated_at=hours_json_last_updated_at,
         )
         if save:
             self.vaccines_offered = derived.vaccines_offered
