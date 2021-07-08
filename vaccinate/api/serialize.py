@@ -175,7 +175,7 @@ def location_v0_json(location: Location) -> Dict[str, object]:
         "city": location.city,
         "county": location.county.name if location.county else None,
         "zip_code": location.zip_code,
-        "hours": {"unstructured": location.hours},
+        "hours": {"unstructured": location.hours, "structured": location.hours_json},
         "website": location.website,
         "vaccines_offered": location.vaccines_offered,
         "concordances": [str(c) for c in location.concordances.all()],
