@@ -6,7 +6,7 @@ from django.utils import timezone
 from .models import (
     AppointmentTag,
     AvailabilityTag,
-    DeriveAvailabilityAndInventoryResults,
+    DerivedResults,
     Location,
     Reporter,
 )
@@ -18,9 +18,9 @@ def reporter(db):
 
 
 def assert_derived_results_match(location, expected):
-    assert location.derive_availability_and_inventory() == expected
+    assert location.derive_details() == expected
     # Now try it with save=
-    location.derive_availability_and_inventory(save=True)
+    location.derive_details(save=True)
     location2 = Location.objects.get(pk=location.pk)
     for key, value in expected._asdict().items():
         if key not in (
@@ -35,7 +35,7 @@ def assert_derived_results_match(location, expected):
 def test_no_reports_no_source_locations(location):
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -63,7 +63,7 @@ def test_one_report_vaccines_offered(location, reporter):
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Pfizer"],
             vaccines_offered_provenance_report=report,
             vaccines_offered_provenance_source_location=None,
@@ -98,7 +98,7 @@ def test_two_reports_vaccines_offered_should_use_most_recent(location, reporter)
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Pfizer"],
             vaccines_offered_provenance_report=report,
             vaccines_offered_provenance_source_location=None,
@@ -133,7 +133,7 @@ def test_one_source_location_vaccines_offered(location):
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Johnson & Johnson", "Pfizer"],
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=source_location,
@@ -176,7 +176,7 @@ def test_two_source_locations_vaccines_offered(location):
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Johnson & Johnson"],
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=source_location2,
@@ -223,7 +223,7 @@ def test_report_and_source_location_vaccines_offered_most_recent_wins(
         last_imported_at=source_location_imported_at,
     )
     if report_is_most_recent:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=["Pfizer"],
             vaccines_offered_provenance_report=report,
             vaccines_offered_provenance_source_location=None,
@@ -239,7 +239,7 @@ def test_report_and_source_location_vaccines_offered_most_recent_wins(
             most_recent_source_location_on_availability=None,
         )
     else:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=["Moderna"],
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=source_location,
@@ -285,7 +285,7 @@ def test_one_report_availability(
         report.availability_tags.add(AvailabilityTag.objects.get(slug=availability_tag))
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -334,7 +334,7 @@ def test_one_source_location_availability(
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -373,7 +373,7 @@ def test_only_trust_source_locations_from_specific_source_names(
         import_json={"availability": {"appointments": True, "drop_in": True}},
         last_imported_at=timezone.now() - datetime.timedelta(hours=1),
     )
-    derived = location.derive_availability_and_inventory()
+    derived = location.derive_details()
     if should_be_trusted:
         assert (
             derived.appointments_walkins_provenance_source_location == source_location
@@ -413,7 +413,7 @@ def test_report_and_source_location_availability_most_recent_wins(
         last_imported_at=source_location_imported_at,
     )
     if report_is_most_recent:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -429,7 +429,7 @@ def test_report_and_source_location_availability_most_recent_wins(
             most_recent_source_location_on_availability=source_location,
         )
     else:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,

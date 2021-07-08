@@ -215,7 +215,7 @@ class ImportRun(models.Model):
         db_table = "import_run"
 
 
-class DeriveAvailabilityAndInventoryResults(NamedTuple):
+class DerivedResults(NamedTuple):
     vaccines_offered: Optional[list[str]]
     vaccines_offered_provenance_report: Optional[Report]
     vaccines_offered_provenance_source_location: Optional[SourceLocation]
@@ -533,15 +533,13 @@ class Location(gis_models.Model):
             )
         )
 
-    def derive_availability_and_inventory(
-        self, save=False
-    ) -> DeriveAvailabilityAndInventoryResults:
+    def derive_details(self, save=False) -> DerivedResults:
         """
         Use recent reports and matched source_locations to derive inventory/availability
 
-        This populates self.vaccines_offered, .accepts_appointments and .accepts_walkins
-        plus the columns that track when and why they were updated based on finding the
-        reports or source locations with the most recent opinions on these.
+        This populates self.vaccines_offered, .accepts_appointments, .accepts_walkins
+        and .hours_json, plus the columns that track when and why they were updated based
+        on finding the reports or source locations with the most recent opinions on these.
 
         Returns namedtuple of changes it would make. save=True to save those changes.
         """
@@ -688,7 +686,7 @@ class Location(gis_models.Model):
                 report_to_use_for_availability.created_at
             )
 
-        derived = DeriveAvailabilityAndInventoryResults(
+        derived = DerivedResults(
             vaccines_offered=vaccines_offered,
             vaccines_offered_provenance_report=vaccines_offered_provenance_report,
             vaccines_offered_provenance_source_location=vaccines_offered_provenance_source_location,
@@ -1191,14 +1189,14 @@ class Report(models.Model):
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
         location = self.location
         location.update_denormalizations()
-        # location.derive_availability_and_inventory(save=True)
+        # location.derive_details(save=True)
         # will not work here because the availability tags have not yet been saved
 
     def delete(self, *args, **kwargs):
         location = self.location
         super().delete(*args, **kwargs)
         location.update_denormalizations()
-        location.derive_availability_and_inventory(save=True)
+        location.derive_details(save=True)
 
 
 class ReportReviewTag(models.Model):

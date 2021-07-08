@@ -153,7 +153,7 @@ def location(request, public_id):
         )
     vaccines_offered_timeline.sort(key=lambda r: r["when"], reverse=True)
 
-    derived = location.derive_availability_and_inventory()
+    derived = location.derive_details()
 
     return render(
         request,

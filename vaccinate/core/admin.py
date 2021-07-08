@@ -813,9 +813,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 instance.save()
                 # Run after the commit to ensure availability_tags are there:
                 transaction.on_commit(
-                    lambda: instance.location.derive_availability_and_inventory(
-                        save=True
-                    )
+                    lambda: instance.location.derive_details(save=True)
                 )
             else:
                 instance.author = request.user

@@ -334,9 +334,7 @@ def import_source_locations(request, on_request_logged):
             updated.append(source_location.pk)
 
         if source_location.matched_location:
-            source_location.matched_location.derive_availability_and_inventory(
-                save=True
-            )
+            source_location.matched_location.derive_details(save=True)
 
     return JsonResponse({"created": created, "updated": updated})
 
