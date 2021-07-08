@@ -91,6 +91,7 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
         "vaccines_offered",
         "zip_code",
         "hours",
+        "hours_json",
         "website",
         "preferred_contact_method",
         "provider__name",
