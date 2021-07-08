@@ -3,13 +3,7 @@ import datetime
 import pytest
 from django.utils import timezone
 
-from .models import (
-    AppointmentTag,
-    AvailabilityTag,
-    DeriveAvailabilityAndInventoryResults,
-    Location,
-    Reporter,
-)
+from .models import AppointmentTag, AvailabilityTag, DerivedResults, Location, Reporter
 
 
 @pytest.fixture
@@ -18,9 +12,9 @@ def reporter(db):
 
 
 def assert_derived_results_match(location, expected):
-    assert location.derive_availability_and_inventory() == expected
+    assert location.derive_details() == expected
     # Now try it with save=
-    location.derive_availability_and_inventory(save=True)
+    location.derive_details(save=True)
     location2 = Location.objects.get(pk=location.pk)
     for key, value in expected._asdict().items():
         if key not in (
@@ -28,6 +22,7 @@ def assert_derived_results_match(location, expected):
             "most_recent_source_location_on_vaccines_offered",
             "most_recent_report_on_availability",
             "most_recent_source_location_on_availability",
+            "most_recent_source_location_on_hours_json",
         ):
             assert getattr(location2, key) == value
 
@@ -35,7 +30,7 @@ def assert_derived_results_match(location, expected):
 def test_no_reports_no_source_locations(location):
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -45,10 +40,14 @@ def test_no_reports_no_source_locations(location):
             appointments_walkins_provenance_report=None,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=None,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=None,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -63,7 +62,7 @@ def test_one_report_vaccines_offered(location, reporter):
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Pfizer"],
             vaccines_offered_provenance_report=report,
             vaccines_offered_provenance_source_location=None,
@@ -73,10 +72,14 @@ def test_one_report_vaccines_offered(location, reporter):
             appointments_walkins_provenance_report=report,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=report.created_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=report,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -98,7 +101,7 @@ def test_two_reports_vaccines_offered_should_use_most_recent(location, reporter)
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Pfizer"],
             vaccines_offered_provenance_report=report,
             vaccines_offered_provenance_source_location=None,
@@ -108,10 +111,14 @@ def test_two_reports_vaccines_offered_should_use_most_recent(location, reporter)
             appointments_walkins_provenance_report=report,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=report.created_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=report,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -133,7 +140,7 @@ def test_one_source_location_vaccines_offered(location):
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Johnson & Johnson", "Pfizer"],
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=source_location,
@@ -143,10 +150,14 @@ def test_one_source_location_vaccines_offered(location):
             appointments_walkins_provenance_report=None,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=None,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=source_location,
             most_recent_report_on_availability=None,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -176,7 +187,7 @@ def test_two_source_locations_vaccines_offered(location):
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=["Johnson & Johnson"],
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=source_location2,
@@ -186,10 +197,14 @@ def test_two_source_locations_vaccines_offered(location):
             appointments_walkins_provenance_report=None,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=None,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=source_location2,
             most_recent_report_on_availability=None,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -223,7 +238,7 @@ def test_report_and_source_location_vaccines_offered_most_recent_wins(
         last_imported_at=source_location_imported_at,
     )
     if report_is_most_recent:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=["Pfizer"],
             vaccines_offered_provenance_report=report,
             vaccines_offered_provenance_source_location=None,
@@ -233,13 +248,17 @@ def test_report_and_source_location_vaccines_offered_most_recent_wins(
             appointments_walkins_provenance_report=report,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=report.created_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=report,
             most_recent_source_location_on_vaccines_offered=source_location,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         )
     else:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=["Moderna"],
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=source_location,
@@ -249,10 +268,14 @@ def test_report_and_source_location_vaccines_offered_most_recent_wins(
             appointments_walkins_provenance_report=report,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=report.created_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=report,
             most_recent_source_location_on_vaccines_offered=source_location,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         )
     assert_derived_results_match(location, expected)
 
@@ -285,7 +308,7 @@ def test_one_report_availability(
         report.availability_tags.add(AvailabilityTag.objects.get(slug=availability_tag))
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -295,10 +318,14 @@ def test_one_report_availability(
             appointments_walkins_provenance_report=report,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=report.created_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=None,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -334,7 +361,7 @@ def test_one_source_location_availability(
     )
     assert_derived_results_match(
         location,
-        DeriveAvailabilityAndInventoryResults(
+        DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -344,10 +371,14 @@ def test_one_source_location_availability(
             appointments_walkins_provenance_report=None,
             appointments_walkins_provenance_source_location=source_location,
             appointments_walkins_last_updated_at=source_location.last_imported_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=None,
             most_recent_source_location_on_availability=source_location,
+            most_recent_source_location_on_hours_json=None,
         ),
     )
 
@@ -373,7 +404,7 @@ def test_only_trust_source_locations_from_specific_source_names(
         import_json={"availability": {"appointments": True, "drop_in": True}},
         last_imported_at=timezone.now() - datetime.timedelta(hours=1),
     )
-    derived = location.derive_availability_and_inventory()
+    derived = location.derive_details()
     if should_be_trusted:
         assert (
             derived.appointments_walkins_provenance_source_location == source_location
@@ -413,7 +444,7 @@ def test_report_and_source_location_availability_most_recent_wins(
         last_imported_at=source_location_imported_at,
     )
     if report_is_most_recent:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -423,13 +454,17 @@ def test_report_and_source_location_availability_most_recent_wins(
             appointments_walkins_provenance_report=report,
             appointments_walkins_provenance_source_location=None,
             appointments_walkins_last_updated_at=report.created_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=source_location,
+            most_recent_source_location_on_hours_json=None,
         )
     else:
-        expected = DeriveAvailabilityAndInventoryResults(
+        expected = DerivedResults(
             vaccines_offered=None,
             vaccines_offered_provenance_report=None,
             vaccines_offered_provenance_source_location=None,
@@ -439,9 +474,46 @@ def test_report_and_source_location_availability_most_recent_wins(
             appointments_walkins_provenance_report=None,
             appointments_walkins_provenance_source_location=source_location,
             appointments_walkins_last_updated_at=source_location.last_imported_at,
+            hours_json=None,
+            hours_json_last_updated_at=None,
+            hours_json_provenance_source_location=None,
             most_recent_report_on_vaccines_offered=None,
             most_recent_source_location_on_vaccines_offered=None,
             most_recent_report_on_availability=report,
             most_recent_source_location_on_availability=source_location,
+            most_recent_source_location_on_hours_json=None,
         )
     assert_derived_results_match(location, expected)
+
+
+@pytest.mark.parametrize(
+    "source_name,should_be_trusted",
+    (
+        ("vaccinefinder_org", True),
+        ("getmyvax_org", False),
+        ("not_one_of_them", False),
+    ),
+)
+def test_hours_json_from_source_location(
+    location,
+    source_name,
+    should_be_trusted,
+):
+    hours = [
+        {"day": "monday", "opens": "08:00", "closes": "18:00"},
+        {"day": "tuesday", "opens": "08:00", "closes": "18:00"},
+    ]
+    source_location = location.matched_source_locations.create(
+        source_uid="{}:1".format(source_name),
+        source_name=source_name,
+        name="Blah",
+        import_json={"opening_hours": hours},
+        last_imported_at=timezone.now() - datetime.timedelta(hours=1),
+    )
+    derived = location.derive_details()
+    if should_be_trusted:
+        assert derived.hours_json_provenance_source_location == source_location
+        assert derived.hours_json == hours
+    else:
+        assert derived.hours_json_provenance_source_location is None
+        assert not derived.hours_json

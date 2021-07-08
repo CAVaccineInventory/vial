@@ -612,6 +612,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                     "vaccines_offered_last_updated_at",
                     "vaccines_offered_provenance_source_location",
                     "appointments_walkins_provenance_report",
+                    "hours_json",
+                    "hours_json_provenance_source_location",
+                    "hours_json_last_updated_at",
                 ),
             },
         ),
@@ -732,6 +735,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "vaccines_offered_provenance_report",
         "vaccines_offered_provenance_source_location",
         "appointments_walkins_provenance_report",
+        "hours_json_provenance_source_location",
     )
     readonly_fields = (
         "scooby_report_link",
@@ -766,6 +770,9 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
         "appointments_walkins_provenance_report",
         "appointments_walkins_last_updated_at",
         "vaccines_offered_last_updated_at",
+        "hours_json",
+        "hours_json_provenance_source_location",
+        "hours_json_last_updated_at",
         "county_vts_priorty",
     )
 
@@ -806,9 +813,7 @@ class LocationAdmin(DynamicListDisplayMixin, CompareVersionAdmin):
                 instance.save()
                 # Run after the commit to ensure availability_tags are there:
                 transaction.on_commit(
-                    lambda: instance.location.derive_availability_and_inventory(
-                        save=True
-                    )
+                    lambda: instance.location.derive_details(save=True)
                 )
             else:
                 instance.author = request.user

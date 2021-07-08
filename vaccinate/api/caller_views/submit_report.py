@@ -128,7 +128,7 @@ def submit_report(
     # Refresh Report from DB to get .public_id
     report.refresh_from_db()
 
-    report.location.derive_availability_and_inventory(save=True)
+    report.location.derive_details(save=True)
 
     tags_to_requeue = set(
         [

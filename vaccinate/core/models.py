@@ -215,7 +215,7 @@ class ImportRun(models.Model):
         db_table = "import_run"
 
 
-class DeriveAvailabilityAndInventoryResults(NamedTuple):
+class DerivedResults(NamedTuple):
     vaccines_offered: Optional[list[str]]
     vaccines_offered_provenance_report: Optional[Report]
     vaccines_offered_provenance_source_location: Optional[SourceLocation]
@@ -225,11 +225,15 @@ class DeriveAvailabilityAndInventoryResults(NamedTuple):
     appointments_walkins_provenance_report: Optional[Report]
     appointments_walkins_provenance_source_location: Optional[SourceLocation]
     appointments_walkins_last_updated_at: Optional[datetime]
+    hours_json: Optional[list[dict]]
+    hours_json_last_updated_at: Optional[datetime]
+    hours_json_provenance_source_location: Optional[SourceLocation]
     # Additional debugging info:
     most_recent_report_on_vaccines_offered: Optional[Report]
     most_recent_source_location_on_vaccines_offered: Optional[SourceLocation]
     most_recent_report_on_availability: Optional[Report]
     most_recent_source_location_on_availability: Optional[SourceLocation]
+    most_recent_source_location_on_hours_json: Optional[SourceLocation]
 
 
 class Location(gis_models.Model):
@@ -262,6 +266,24 @@ class Location(gis_models.Model):
         LocationType, related_name="locations", on_delete=models.PROTECT
     )
 
+    hours_json = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Structured hours information from one of our scrapers",
+    )
+    hours_json_provenance_source_location = models.ForeignKey(
+        "SourceLocation",
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The source location that last populated hours_json",
+        on_delete=models.PROTECT,
+    )
+    hours_json_last_updated_at = models.DateTimeField(
+        help_text="When hours_json was last updated",
+        blank=True,
+        null=True,
+    )
     vaccines_offered = models.JSONField(
         null=True,
         blank=True,
@@ -515,15 +537,13 @@ class Location(gis_models.Model):
             )
         )
 
-    def derive_availability_and_inventory(
-        self, save=False
-    ) -> DeriveAvailabilityAndInventoryResults:
+    def derive_details(self, save=False) -> DerivedResults:
         """
         Use recent reports and matched source_locations to derive inventory/availability
 
-        This populates self.vaccines_offered, .accepts_appointments and .accepts_walkins
-        plus the columns that track when and why they were updated based on finding the
-        reports or source locations with the most recent opinions on these.
+        This populates self.vaccines_offered, .accepts_appointments, .accepts_walkins
+        and .hours_json, plus the columns that track when and why they were updated based
+        on finding the reports or source locations with the most recent opinions on these.
 
         Returns namedtuple of changes it would make. save=True to save those changes.
         """
@@ -532,6 +552,7 @@ class Location(gis_models.Model):
             "vaccinespotter_org",
             "getmyvax_org",
         )
+        SOURCE_NAMES_TO_CONSIDER_FOR_HOURS = ("vaccinefinder_org",)
         vaccines_offered = None
         vaccines_offered_provenance_report = None
         vaccines_offered_provenance_source_location = None
@@ -545,6 +566,9 @@ class Location(gis_models.Model):
         most_recent_source_location_on_vaccines_offered = None
         most_recent_report_on_availability = None
         most_recent_source_location_on_availability = None
+        hours_json = None
+        hours_json_last_updated_at = None
+        most_recent_source_location_on_hours_json = None
 
         most_recent_report_on_vaccines_offered = (
             self.reports.all()
@@ -670,7 +694,23 @@ class Location(gis_models.Model):
                 report_to_use_for_availability.created_at
             )
 
-        derived = DeriveAvailabilityAndInventoryResults(
+        most_recent_source_location_on_hours_json = (
+            self.matched_source_locations.all()
+            .filter(source_name__in=SOURCE_NAMES_TO_CONSIDER_FOR_HOURS)
+            .exclude(import_json__opening_hours=None)
+            .exclude(import_json__opening_hours=[])
+            .order_by("-last_imported_at")
+            .first()
+        )
+        if most_recent_source_location_on_hours_json:
+            hours_json = most_recent_source_location_on_hours_json.import_json[
+                "opening_hours"
+            ]
+            hours_json_last_updated_at = (
+                most_recent_source_location_on_hours_json.last_imported_at
+            )
+
+        derived = DerivedResults(
             vaccines_offered=vaccines_offered,
             vaccines_offered_provenance_report=vaccines_offered_provenance_report,
             vaccines_offered_provenance_source_location=vaccines_offered_provenance_source_location,
@@ -684,6 +724,10 @@ class Location(gis_models.Model):
             most_recent_source_location_on_vaccines_offered=most_recent_source_location_on_vaccines_offered,
             most_recent_report_on_availability=most_recent_report_on_availability,
             most_recent_source_location_on_availability=most_recent_source_location_on_availability,
+            hours_json=hours_json,
+            hours_json_provenance_source_location=most_recent_source_location_on_hours_json,
+            most_recent_source_location_on_hours_json=most_recent_source_location_on_hours_json,
+            hours_json_last_updated_at=hours_json_last_updated_at,
         )
         if save:
             self.vaccines_offered = derived.vaccines_offered
@@ -1173,14 +1217,14 @@ class Report(models.Model):
             Report.objects.filter(pk=self.pk).update(public_id=self.pid)
         location = self.location
         location.update_denormalizations()
-        # location.derive_availability_and_inventory(save=True)
+        # location.derive_details(save=True)
         # will not work here because the availability tags have not yet been saved
 
     def delete(self, *args, **kwargs):
         location = self.location
         super().delete(*args, **kwargs)
         location.update_denormalizations()
-        location.derive_availability_and_inventory(save=True)
+        location.derive_details(save=True)
 
 
 class ReportReviewTag(models.Model):

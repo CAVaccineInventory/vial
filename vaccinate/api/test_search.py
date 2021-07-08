@@ -282,6 +282,8 @@ def test_search_locations_format_v0preview(client, api_key, location):
         "provider_type": "Pharmacy",
         "vaccine_info_url": "https://example.com/",
     }
+    # Should have structured and unstructured hours
+    assert set(record["hours"].keys()) == {"structured", "unstructured"}
 
 
 def test_search_locations_format_ids(client, api_key, ten_locations):
