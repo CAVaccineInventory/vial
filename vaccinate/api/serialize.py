@@ -89,6 +89,8 @@ def location_json_queryset(queryset: QuerySet[Location]) -> QuerySet[Location]:
         "vaccinefinder_location_id",
         "vaccinespotter_location_id",
         "vaccines_offered",
+        "accepts_appointments",
+        "accepts_walkins",
         "zip_code",
         "hours",
         "hours_json",
@@ -179,6 +181,8 @@ def location_v0_json(location: Location) -> Dict[str, object]:
         "hours": {"unstructured": location.hours, "structured": location.hours_json},
         "website": location.website,
         "vaccines_offered": location.vaccines_offered,
+        "accepts_appointments": location.accepts_appointments,
+        "accepts_walkins": location.accepts_walkins,
         "concordances": [str(c) for c in location.concordances.all()],
         "last_verified_by_vts": location.dn_latest_non_skip_report.created_at.isoformat()
         if location.dn_latest_non_skip_report

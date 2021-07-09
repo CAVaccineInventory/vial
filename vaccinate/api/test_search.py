@@ -273,6 +273,8 @@ def test_search_locations_format_v0preview(client, api_key, location):
         "hours",
         "website",
         "vaccines_offered",
+        "accepts_appointments",
+        "accepts_walkins",
         "concordances",
         "last_verified_by_vts",
         "vts_url",
